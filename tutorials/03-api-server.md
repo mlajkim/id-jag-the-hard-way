@@ -83,6 +83,7 @@ Start another API server with Access Token enforcement enabled:
 ```sh
 _new_api_server_port=14443
 make -C oss_sample_java_api_server local PORT=$_new_api_server_port AT_REQUIRED=true
+
 # ...
 # 🚀 Server started on port 14443 (Athenz Required: true)
 ```
@@ -102,6 +103,16 @@ curl "localhost:${_new_api_server_port}/api/docs" | jq .
 `Unauthorized` is expected.
 
 The API server is now protected, so requests without a valid Bearer Access Token are rejected.
+
+## What you have done
+
+You were able to fetch the data from the API Server, with `AT_REQUIRED=false` API Server:
+
+![03_arc_get_docs_from_api_server](./assets/03_arc_get_docs_from_api_server.png)
+
+But you also saw the Unauthorized error when you tried to fetch the data from the API Server, with `AT_REQUIRED=true` API Server:
+
+![03_arc_get_docs_from_api_server_unauthorized](./assets/03_arc_get_docs_from_api_server_unauthorized.png)
 
 ## How to Fix the Unauthorized Error
 
