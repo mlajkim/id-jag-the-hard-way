@@ -1,6 +1,6 @@
-|             Previous             |         Current          | Next |
-|:--------------------------------:|:------------------------:|:----:|
-| [API Server](./03-api-server.md) | **Authorization Server** | n/a  |
+|             Previous             |         Current          |                        Next                        |
+|:--------------------------------:|:------------------------:|:--------------------------------------------------:|
+| [API Server](./03-api-server.md) | **Authorization Server** | [Athenz Access Token](./05-athenz-access-token.md) |
 
 # Authorization Server
 
@@ -131,3 +131,7 @@ open "http://localhost:${_athenz_ui_port}"
 ```
 
 ![athenz_ui](assets/04_athenz_ui.png)
+
+In the next tutorial, we will create a domain and roles, then fetch an access token.
+
+Next: [Athenz Access Token](./05-athenz-access-token.md)

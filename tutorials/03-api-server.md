@@ -83,6 +83,7 @@ Start another API server with Access Token enforcement enabled:
 ```sh
 _new_api_server_port=14443
 make -C oss_sample_java_api_server local PORT=$_new_api_server_port AT_REQUIRED=true
+
 # ...
 # 🚀 Server started on port 14443 (Athenz Required: true)
 ```
