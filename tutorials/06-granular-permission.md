@@ -1,14 +1,14 @@
-|                      Previous                       |         Current         |                     Next                     |
-|:---------------------------------------------------:|:-----------------------:|:--------------------------------------------:|
-| [Authorization Server](./05-athenz-access-token.md) | **Granular Permission** | [Service Identity](./07-service-identity.md) |
+|                      Previous                       |         Current         |                    Next                    |
+|:---------------------------------------------------:|:-----------------------:|:------------------------------------------:|
+| [Authorization Server](./05-athenz-access-token.md) | **Granular Permission** | [AI Client Agent](./07-ai-client-agent.md) |
 
 # Granular Permission
 
-In this tutorial, you will learn how to create more granular permissions for the API server.
+In this tutorial, you will implement granular permissions by establishing a dedicated service identity to access the protected API server.
 
 ## Create Service Identity that represents you
 
-Instead of using the default athenz admin account, we will create a new service identity that represents you, a human user. This is a more realistic scenario in a real world.
+In a production environment, you should never use administrative credentials for standard operations. Instead, we will create a dedicated service identity to represent you as a human user.
 
 Let's create a script named `create-private-key.sh` that generates an RSA private and public key pair using OpenSSL:
 
@@ -43,7 +43,7 @@ EOF
 chmod +x create-private-key.sh
 ```
 
-Now, generate the key pair for your client identity. We will store these in the `./keys` directory to keep our workspace organized. And since you are a learner of this tutorial, we will name the client identity as `idjag-learner` which will represent you as a human user:
+Now, generate the key pair for your client identity. We will store these in the `./keys` directory to keep our workspace organized. Since you are working through this tutorial, we will name this client identity `idjag-learner` to represent you:
 
 ```sh
 mkdir -p ./keys
@@ -55,21 +55,21 @@ mkdir -p ./keys
 
 ## Create TLD for your future Service Identity
 
-To understand easier, let's create a tld `human`:
+In Athenz, every service identity—even those representing human users—must reside within a domain. To keep things organized, let's create a new Top-Level Domain (TLD) named `human`.
+
+Run the following command to create the TLD:
 
 ```sh
 ./create-tld.sh "human"
 ```
 
-We created a human domain in purple as the following:
+This creates the `human` domain, represented by the purple section in the following diagram:
 
 ![06_create_tld_human](./assets/06_create_tld_human.png)
 
 ## Create Service Identity
 
-
-
-Let's create a script named `create-service.sh` that reads your public key, strips out the PEM headers (as required by the Athenz API), and registers the service:
+Let's create a script named `create-service.sh` that reads your public key, strips out the PEM headers (as required by the Athenz API), and registers the service.
 
 ```sh
 cat > create-service.sh <<'EOF'
@@ -117,25 +117,25 @@ Execute the script to register your identity:
 ./create-service.sh "human" "idjag-learner" "./keys/idjag-learner.public.key"
 ```
 
-Then create a service `idjag-learner` under the domain `human` to represent you as a human user:
+This successfully creates the `idjag-learner` service under the `human` domain. You can verify the result in the Athenz UI:
 
 http://localhost:3000/domain/human/service
 
-![05_new_service](./assets/05_new_service.png)
+![06_new_service](./assets/06_new_service.png)
 
 ## Enable Certificate Provisioning (Provider Setup)
 
-In Athenz, when a service requests an X.509 certificate from ZTS, ZTS wants to verify the origin (or "Provider") of the request. This prevents a stolen private key from being used outside its designated environment. The origin could be:
+When a service requests an X.509 certificate from ZTS, ZTS verifies the origin (or "Provider") of the request to prevent a stolen private key from being used outside its designated environment. The origin could be:
 
 - Your local Mac / PC
 - A company's internal Kubernetes Cluster
 - An OpenStack platform
 
-In a production environment, you would need cryptographic proof from the platform (e.g., Kubernetes) that your workload is legitimate. However, for this tutorial, the exact origin is not important since we are testing locally.
+In a production environment, you would need cryptographic proof from the platform that your workload is legitimate. However, for local testing, the exact origin is not critical.
 
 We will authorize our `human` domain to use the default built-in ZTS provider (`sys.auth.zts`) by attaching the `zts_instance_launch_provider` template to our domain.
 
-Let's create a script named `enable-cert-provider.sh` that takes the domain and service name as arguments and uses the `zms-cli` inside our cluster to attach the template:
+Let's create a script named `enable-cert-provider.sh`:
 
 ```sh
 cat > enable-cert-provider.sh <<'EOF'
@@ -239,11 +239,9 @@ Execute the script using the parameters we configured earlier:
 
 ## Fetch Access Token (JWT)
 
-Now that you possess your Mutual TLS (mTLS) credentials (`idjag-learner.crt` and `idjag-learner.key`), you can use them to authenticate against the ZTS server and request an OAuth2 Access Token (JWT).
+Now that you possess your Mutual TLS (mTLS) credentials (`idjag-learner.crt` and `idjag-learner.key`), you can use them to authenticate against the ZTS server and request an Athenz Access Token (JWT).
 
-To enforce the principle of least privilege, we will specifically request a token scoped only to the `docs-getter` role within the `api` domain (`api:role.docs-getter`).
-
-Execute the script, using your newly generated certificate and key, and save the output directly into a variable named `_my_access_token`.
+To enforce the principle of least privilege, we will specifically request a token scoped only to the `docs-getter` role within the `api` domain (`api:role.docs-getter`):
 
 ```sh
 _scope="api:role.docs-getter"
@@ -259,42 +257,91 @@ _my_access_token=$(./fetch-access-token.sh \
 # }
 ```
 
+## Troubleshoot: Missing Role Membership
+
+Why did this request fail? Because the `human.idjag-learner` service identity is not explicitly authorized to assume the `api:role.docs-getter` role. Athenz defaults to deny. You can confirm this by checking the role members in the UI:
+
+http://localhost:3000/domain/api/role/docs-getter/members
+
+![06_id_jag_learner_not_in_role_yet](./assets/06_id_jag_learner_not_in_role_yet.png)
+
+To fix this, simply run the member addition script we created earlier:
 
 ```sh
-echo $_at | jq -R 'split(".") | .[0] | @base64d | fromjson'
-echo $_at | jq -R 'split(".") | .[1] | @base64d | fromjson'
+./add-role-member.sh "api" "docs-getter" "human.idjag-learner"
 ```
 
-> [!TIP]
-> You can inspect the decoded contents of your JWT by running: `echo "${_my_access_token}" | jq -R 'split(".") | .[1] | @base64d | fromjson'`
+Refresh your Athenz UI to verify that `human.idjag-learner` has been successfully added to the role:
 
-## Access the Protected API
+http://localhost:3000/domain/api/role/docs-getter/members
 
-You have successfully navigated the hard way! You defined a domain, established roles and policies, registered a cryptographic identity, provisioned a service certificate, and exchanged it for a scoped Access Token.
+![06_human_id_jag_learner_now_added_as_member](./assets/06_human_id_jag_learner_now_added_as_member.png)
 
-It is time to reap the rewards. Let's send a request to the protected API server you set up in the previous tutorial, this time attaching your Access Token in the `Authorization` header.
+Now that your service identity is a recognized member of the role, fetch the access token again:
 
 ```sh
-curl -s -H "Authorization: Bearer ${_my_access_token}" "localhost:${_new_api_server_port}/api/docs" | jq .
+_scope="api:role.docs-getter"
+_my_access_token=$(./fetch-access-token.sh \
+  "./keys/idjag-learner.crt" \
+  "./keys/idjag-learner.key" \
+  "${_scope}")
 
+# ✅ [SUCCESS] Issued the following access token:
+# {
+#   "kid": "athenz-zts-server-6966ff7f66-4j67d",
+#   "typ": "at+jwt",
+#   "alg": "RS256"
+# }
+# {
+#   "sub": "human.idjag-learner",
+#   "scp": [
+#     "docs-getter"
+#   ],
+#   "ver": 1,
+#   "iss": "athenz-zts-server-6966ff7f66-4j67d",
+#   "client_id": "human.idjag-learner",
+#   "aud": "api",
+#   "uid": "human.idjag-learner",
+#   "auth_time": 1778451929,
+#   "scope": "docs-getter",
+#   "cnf": {
+#     "x5t#S256": "QUXJN5ALSWRR_fK5iHMwo0hnmlp01mcnyiNcd141o1E"
+#   },
+#   "exp": 1778455529,
+#   "iat": 1778451929,
+#   "jti": "cca1a64e-f309-47bd-94b9-3cef584663ef"
+# }
 ```
 
-If everything was configured correctly, the API server will validate the signature of your token against Athenz, confirm your permissions, and return the protected documents:
+Finally, send a request to the protected API server with the newly minted access token attached to the Authorization header:
 
-```json
-{
-  "docs": [
-    {
-      "name": "first default doc",
-      "id": 1,
-      "content": "hello world"
-    },
-    {
-      "name": "second default doc",
-      "id": 2,
-      "content": "how are you?"
-    }
-  ]
-}
+```sh
+curl -s -k -H "Authorization: Bearer $_my_access_token" http://localhost:14443/api/docs | jq .
 
+# {
+#   "docs": [
+#     {
+#       "name": "first default doc",
+#       "id": 1,
+#       "content": "hello world"
+#     },
+#     {
+#       "name": "second default doc",
+#       "id": 2,
+#       "content": "how are you?"
+#     }
+#   ]
+# }
 ```
+
+## Architecture Review
+
+You successfully fetched an X.509 certificate for the non-admin service identity (`human.idjag-learner`) and exchanged it for an Athenz Access Token scoped specifically to `api:role.docs-getter`:
+
+![06_arc_fetch_at_with_non_admin_certificiate](./assets/06_arc_fetch_at_with_non_admin_certificiate.png)
+
+## What's Next?
+
+Next, we will install the AI Client Agent locally and interact with it. Ultimately, this agent will be configured to securely call the protected API server on our behalf.
+
+Next: [AI Client Agent](./07-ai-client-agent.md)
