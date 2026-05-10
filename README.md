@@ -15,10 +15,6 @@ By the end of this tutorial, you will run a real local flow where a human user (
 
 The name and concept of this tutorial series is inspired by [kelseyhightower/kubernetes-the-hard-way](https://github.com/kelseyhightower/kubernetes-the-hard-way).
 
-## Copyright
+## 🚀 Ready to dive in?
 
-This work is licensed under the Apache License, Version 2.0. See [LICENSE](./LICENSE) for details.
-
-## Tutorials
-
-Are you ready to dive in? Start from here: [Start the tutorial](tutorials/01-prerequisites.md).
+[![Start Tutorial](https://img.shields.io/badge/▶_START_THE_TUTORIAL-000000?style=for-the-badge&logoColor=white)](./tutorials/01-prerequisites.md)
