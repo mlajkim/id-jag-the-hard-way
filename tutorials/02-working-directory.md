@@ -1,6 +1,6 @@
-|               Previous               |        Current        | Next |
-|:------------------------------------:|:---------------------:|:----:|
-| [Prerequisites](01-prerequisites.md) | **Working Directory** | N/A  |
+|               Previous               |        Current        |               Next               |
+|:------------------------------------:|:---------------------:|:--------------------------------:|
+| [Prerequisites](01-prerequisites.md) | **Working Directory** | [API Server](./03-api-server.md) |
 
 # Working Directory
 
@@ -31,4 +31,4 @@ If you are using HTTPS for git:
 git clone https://github.com/mlajkim/id-jag-the-hard-way.git mlajkim_id_jag_the_hard_way
 ```
 
-Next: N/A
+Next: [API Server](./03-api-server.md)
