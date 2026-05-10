@@ -121,6 +121,4 @@ The API server expects an Access Token issued by an authorization server. In thi
 
 In the next tutorial, we will deploy Athenz locally and use it as the authorization server for this API server, and eventually pass the authorization requirement for the API & get a valid response from the API server.
 
-
-
 Next: [Authorization Server](./04-authorization-server.md)
