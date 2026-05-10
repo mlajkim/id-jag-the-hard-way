@@ -4,11 +4,11 @@
 
 # Authorization Server
 
-In this tutorial, you will deploy **Athenz** as the local authorization server and verify that it is running properly.
+In this tutorial, you will deploy Athenz as the local authorization server and verify that it is running properly.
 
 ## Create Local Kubernetes Cluster
 
-You can use any kubernetes cluster pretty much, but to simplify the step, we will use **Kind** (Kubernetes in Docker).
+You can use almost any Kubernetes cluster, but to simplify the process, we will use Kind (Kubernetes in Docker).
 
 ```sh
 go install sigs.k8s.io/kind@latest
@@ -16,30 +16,30 @@ kind create cluster
 ```
 
 > [!NOTE]
-> The SSOT guide for download/install kind is [here](https://kind.sigs.k8s.io/)
+> The Single Source of Truth (SSOT) guide for downloading and installing Kind can be found [here](https://kind.sigs.k8s.io/)
 
 
 ## Deploy Athenz Server
 
 > [!NOTE]
-> Upcoming tutorial uses the directory `athenz_dist` by defualt, so not recommended to customize it.
+> Upcoming tutorials will use the `athenz_dist` directory by default, so we do not recommend customizing this name.
 
-Athenz Community offers a one-command manifest tool to deploy kubernetes cluster. Let's clone the repository:
+The Athenz Community provides a one-command manifest tool to deploy it to a Kubernetes cluster. Let's clone the repository:
 
 ```sh
 git clone git@github.com:athenz-community/athenz-distribution.git athenz_dist
 ```
 
-After finishing the clone, run the following command which takes about 5 minutes:
+Once the repository is cloned, run the following command (this will take about 5 minutes):
 
 ```sh
 make -C athenz_dist clean-kubernetes-athenz deploy-kubernetes-athenz
 ```
 
 > [!NOTE]
-> The SSOT guide for using Athenz manifest [here](https://github.com/athenz-community/athenz-distribution/blob/main/README.md)
+> The SSOT guide for using the Athenz manifest is available [here](https://github.com/athenz-community/athenz-distribution/blob/main/README.md)
 
-## Check if Athenz server is running
+## Check if the Athenz server is running
 
 ```sh
 _athenz_components=(
@@ -64,7 +64,7 @@ done
 # pod/athenz-ui-59f7f77667-5rpf7 condition met
 ```
 
-See pods running:
+Verify that the pods are running:
 
 ```sh
 kubectl get pods -n athenz
@@ -79,7 +79,7 @@ kubectl get pods -n athenz
 
 ## Keep Athenz Endpoints Reachable
 
-`kubectl port-forward` may stop when a pod restarts. Thus we need a way to keep port-forward running. Let's create a simple shell script `keep-athenz-port-forward.sh`:
+The `kubectl port-forward` command may stop if a pod restarts. Therefore, we need a way to keep the port-forwarding active. Let's create a simple shell script `keep-athenz-port-forward.sh`:
 
 ```sh
 cat > keep-athenz-port-forward.sh <<'EOF'
@@ -113,7 +113,7 @@ EOF
 chmod +x keep-athenz-port-forward.sh
 ```
 
-You may customize, but try to stay with the default port below:
+You may customize the ports, but we recommend sticking with the defaults below:
 
 ```sh
 _zms_port=4443
@@ -132,6 +132,6 @@ open "http://localhost:${_athenz_ui_port}"
 
 ![athenz_ui](assets/04_athenz_ui.png)
 
-In the next tutorial, we will create a domain and roles, then fetch an access token.
+In the next tutorial, we will create an Athenz domain and roles, and then fetch an access token.
 
 Next: [Athenz Access Token](./05-athenz-access-token.md)
