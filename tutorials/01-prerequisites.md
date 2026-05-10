@@ -10,5 +10,9 @@ In this tutorial, we will review the machine requirements for following it.
 
 🟡
 
+|       CPU        |       Memory        |
+|:----------------:|:-------------------:|
+| M3 Pro or higher | 36 GB RAM or higher |
+
 Next: [Working Directory](02-working-directory.md)
 
