@@ -56,6 +56,10 @@ You can verify that this domain is created successfully by refreshing the **Athe
 
 ![05_create_api_tld](./assets/05_create_api_tld.png)
 
+And finally, the new domain (or TLD) `api` represents the following blue dotted line:
+
+![05_create_api_domain](./assets/05_create_api_domain.png)
+
 ## Create Athenz Role under the API domain
 
 Athenz uses **Role-Based Access Control (RBAC)**. When a user or service is added to a role, they are granted the permissions associated with that role.
@@ -108,9 +112,9 @@ Once again, you can verify these new roles by navigating to the `api` domain in 
 
 ## Create Policies
 
-The roles we just created (`docs-getter` and `docs-poster`) are currently just empty containers for members. The actual permissions are defined as **Policies** and then attached to roles. Once attached, any member of that role inherits the defined permissions.
+The role we just created (`docs-getter`) is a container for members. The actual permissions are defined as **Policies** in Athenz and then attached to roles. Once attached, a member of that role inherits the defined permissions.
 
-Let's create a script named `add-policy.sh` that helps to create policy.
+Let's create a script named `add-policy.sh` that helps to create policy:
 
 ```sh
 cat > add-policy.sh <<'EOF'
@@ -151,24 +155,24 @@ EOF
 chmod +x add-policy.sh
 ```
 
-The API server has its own rule to translate the request to Athenz resource and action.
+The API server has its own logic to translate the client request to Athenz resource and action.
 
-- Action: `get` -> `read`
-- Resource: `docs`
+- HTTP Action `get` -> Athenz Action `get`
+- HTTP Resource `docs` -> Athenz Resource `docs`
 
-Now, let's create two policies.
-
-1. Allow members of `docs-getter` to perform a `get` action on the `docs` resource.
-2. Allow members of `docs-poster` to perform a `post` action on the `docs` resource.
-
-Execute the following commands:
+Therefore, we need to create a policy like this:
 
 ```sh
 ./add-policy.sh "api" "docs-getter" "docs" "get"
 ```
+
+The command above means, attach a policy `docs-get-policy` to the role `docs-getter` under the domain `api`. This policy grants the role `docs-getter` the permission to `get` the resource `docs` under the domain `api`, or `docs:api`. The `get` action on `docs:api` is equivalent to the `GET /docs` request to the API server.
 
 You can verify these policies and their assertions by navigating to the **Policies** tab under the `api` domain in the **Athenz UI**.
 
 http://localhost:3000/domain/api/role/docs-getter/policy
 
 ![05_add_policy_to_role](./assets/05_add_policy_to_role.png)
+
+## Create Service Identity that represents you
+
