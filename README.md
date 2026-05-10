@@ -11,6 +11,10 @@ By the end of this tutorial, you will run a real local flow where a human user (
 
 ![ID-JAG The Hard Way Demo](./assets/id-jag-the-hard-way-readme-demo.gif)
 
+## Special Thanks
+
+The name and concept of this tutorial series is inspired by [kelseyhightower/kubernetes-the-hard-way](https://github.com/kelseyhightower/kubernetes-the-hard-way).
+
 ## Copyright
 
 This work is licensed under the Apache License, Version 2.0. See [LICENSE](./LICENSE) for details.
