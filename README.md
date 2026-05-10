@@ -1,6 +1,6 @@
 # ID-JAG The Hard Way
 
-*Bootstrap an ID-JAG-based AI agent authorization architecture the hard way. No magic scripts.*
+*Bootstrap ID-JAG Architecture the hard way. No scripts.*
 
 This tutorial walks you through building an ID-JAG-based AI agent authorization architecture from scratch. It is not for someone looking for a fully automated demo or a one-command installer. ID-JAG The Hard Way is optimized for learning, which means taking the long route to understand the identities, tokens, policies, and trust boundaries required to let an AI agent access protected APIs on behalf of a signed-in human user.
 
@@ -17,4 +17,4 @@ This work is licensed under the Apache License, Version 2.0. See [LICENSE](./LIC
 
 ## Tutorials
 
-Are you ready to dive in? Start from here: [Start the tutorial](tutorials/01-prerequisites.md)
+Are you ready to dive in? Start from here: [Start the tutorial](tutorials/01-prerequisites.md).
