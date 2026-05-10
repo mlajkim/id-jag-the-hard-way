@@ -6,6 +6,18 @@
 
 In this tutorial, you will get Access Token that the API server requests.
 
+<!-- TOC -->
+
+- [Athenz Access Token](#athenz-access-token)
+  - [Create Athenz Top-Level Domain (TLD) for API Service](#create-athenz-top-level-domain-tld-for-api-service)
+  - [Create Athenz Role under the API domain](#create-athenz-role-under-the-api-domain)
+  - [Create Policies](#create-policies)
+  - [Add Root User as a member](#add-root-user-as-a-member)
+  - [Get Access Token as Root User](#get-access-token-as-root-user)
+  - [Send request to the protected server](#send-request-to-the-protected-server)
+
+<!-- /TOC -->
+
 ## Create Athenz Top-Level Domain (TLD) for API Service
 
 Now that the Athenz server is running and accessible, let's create a Top-Level Domain (TLD). We can achieve this by making a `POST` request to the Athenz ZMS API, authenticating with the admin certificates generated during the deployment.
@@ -169,164 +181,142 @@ http://localhost:3000/domain/api/role/docs-getter/policy
 
 ![05_add_policy_to_role](./assets/05_add_policy_to_role.png)
 
-## Create Service Identity that represents you
+## Add Root User as a member
 
-To retrieve an access token from the Athenz server, you must first prove your identity. Unlike traditional systems that use passwords, Athenz uses asymmetric cryptography (Public Key Infrastructure). You will represent yourself using a private key that only you have access to.
-
-Let's create a script named `create-private-key.sh` that generates an RSA private and public key pair using OpenSSL:
+When we manifested Athenz server, it gives us the root user certificate by default. For now, we will use the root user to get the access token. To get the Access Token for the specific role (or scope), we first need to add the root user as a member of the role.
 
 ```sh
-cat > create-private-key.sh <<'EOF'
-#!/usr/bin/env bash
-set -euo pipefail
-
-if [ -z "${1:-}" ]; then
-  echo "Usage: $0 <service_name>"
-  exit 1
-fi
-
-service_name=$1
-echo "Generating RSA key pair for: ${service_name}..."
-
-# Generate 2048-bit RSA private key
-openssl genrsa -out "${service_name}.old.key" 2048 >/dev/null 2>&1
-
-# Extract public key
-openssl rsa -in "${service_name}.old.key" -outform PEM -pubout -out "${service_name}.public.key" 2>/dev/null
-
-# Convert private key to traditional format (PKCS#1)
-openssl pkey -in "${service_name}.old.key" -out "${service_name}.key" -traditional
-
-# Cleanup intermediate key
-rm "${service_name}.old.key"
-
-echo "Done! Keys generated: ${service_name}.key, ${service_name}.public.key"
-EOF
-
-chmod +x create-private-key.sh
-```
-
-Now, generate the key pair for your client identity. We will store these in the `./keys` directory to keep our workspace organized. And since you are a learner of this tutorial, we will name the client identity as `idjag-learner` which will represent you as a human user:
-
-```sh
-mkdir -p ./keys
-./create-private-key.sh "./keys/idjag-learner"
-
-# Generating RSA key pair for: ./keys/idjag-learner...
-# Done! Keys generated: ./keys/idjag-learner.key, ./keys/idjag-learner.public.key
-```
-
-## Create Service Identity
-
-To understand easier, let's create a tld `human`:
-
-```sh
-./create-tld.sh "human"
-```
-
-Let's create a script named `create-service.sh` that reads your public key, strips out the PEM headers (as required by the Athenz API), and registers the service:
-
-```sh
-cat > create-service.sh <<'EOF'
+cat > add-role-member.sh <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
 if [ $# -lt 3 ]; then
-  echo "Usage: $0 <domain> <service_name> <public_key_path>"
+  echo "Usage: $0 <domain> <role_name> <member_name>"
   exit 1
 fi
 
 domain=$1
-service_name=$2
-pub_key_path=$3
-key_id="v1"
+role_name=$2
+member_name=$3
 
-echo "Registering Service: ${domain}.${service_name}..."
+echo "Adding Member ${member_name} to Role: ${domain}:role.${role_name}..."
 
-# Athenz expects the FULL PEM public key text encoded as YBase64.
-# YBase64 mapping: + -> . , / -> _ , = -> -
-pub_key_y64=$(base64 < "${pub_key_path}" | tr -d '\n' | tr '+/=' '._-')
-
-curl -s -k --fail-with-body -X PUT "https://localhost:4443/zms/v1/domain/${domain}/service/${service_name}" \
+curl -s -k -X PUT "https://localhost:4443/zms/v1/domain/${domain}/role/${role_name}/member/${member_name}" \
   --cert ./athenz_dist/certs/athenz_admin.cert.pem \
   --key ./athenz_dist/keys/athenz_admin.private.pem \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "'"${domain}.${service_name}"'",
-    "publicKeys": [
-      {
-        "id": "'"${key_id}"'",
-        "key": "'"${pub_key_y64}"'"
-      }
-    ]
+    "memberName": "'"${member_name}"'",
+    "roleName": "'"${role_name}"'"
   }'
 
 EOF
 
-chmod +x create-service.sh
+chmod +x add-role-member.sh
 ```
 
-Execute the script to register your identity:
+The default service name for the root user is `user.athenz_admin`. We can add the admin user as a member of the `docs-getter` role in the `api` domain:
 
 ```sh
-./create-service.sh "human" "idjag-learner" "./keys/idjag-learner.public.key"
+./add-role-member.sh "api" "docs-getter" "user.athenz_admin"
+
+# Adding Member user.athenz_admin to Role: api:role.docs-getter...
 ```
 
-Then create a service `idjag-learner` under the domain `human` to represent you as a human user:
+You can see that `user.athenz_admin` is added to the `docs-getter` role in the `api` domain:
 
-http://localhost:3000/domain/human/service
+http://localhost:3000/domain/api/role/docs-getter/members
 
-![05_new_service](./assets/05_new_service.png)
+![05_add_role_member](./assets/05_add_role_member.png)
 
-## Enable Certificate Provisioning (Provider Setup)
+## Get Access Token as Root User
 
-In Athenz, when a service requests an X.509 certificate from ZTS, ZTS wants to verify the origin (or "Provider") of the request. This prevents a stolen private key from being used outside its designated environment. The origin could be:
-
-- Your local Mac / PC
-- A company's internal Kubernetes Cluster
-- An OpenStack platform
-
-In a production environment, you would need cryptographic proof from the platform (e.g., Kubernetes) that your workload is legitimate. However, for this tutorial, the exact origin is not important since we are testing locally.
-
-We will authorize our `human` domain to use the default built-in ZTS provider (`sys.auth.zts`) by attaching the `zts_instance_launch_provider` template to our domain.
-
-Let's create a script named `enable-cert-provider.sh` that takes the domain and service name as arguments and uses the `zms-cli` inside our cluster to attach the template:
+At this point, we have the necessary ingredients to get the access token as `user.athenz_admin`. Let's create a script named `fetch-access-token.sh`:
 
 ```sh
-cat > enable-cert-provider.sh <<'EOF'
+cat > fetch-access-token.sh <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [ $# -lt 2 ]; then
-  echo "Usage: $0 <domain> <service_name>"
+if [ $# -lt 3 ]; then
+  echo "Usage: $0 <cert_path> <key_path> <scope>"
   exit 1
 fi
 
-domain=$1
-service_name=$2
+cert_path=$1
+key_path=$2
+scope=$3
+zts_url="https://localhost:8443/zts/v1/oauth2/token"
 
-echo "Enabling ZTS Certificate Provider for ${domain}.${service_name}..."
+# Print logs to stderr so stdout only outputs the pure token string
+echo "Fetching Access Token for scope: ${scope}..." >&2
 
-kubectl -n athenz exec -i deploy/athenz-cli -- \
-  zms-cli \
-    -i user.athenz_admin \
-    -z https://athenz-zms-server.athenz:4443/zms/v1 \
-    -key /var/run/athenz/athenz_admin.private.pem \
-    -cert /var/run/athenz/athenz_admin.cert.pem \
-    -d "${domain}" \
-    set-domain-template zts_instance_launch_provider service="${service_name}"
+response=$(curl -s -k -X POST "${zts_url}" \
+  --cert "${cert_path}" \
+  --key "${key_path}" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=client_credentials&scope=${scope}&expires_in=3600")
 
+token=$(echo "${response}" | jq -r '.access_token // empty')
+
+if [ -z "${token}" ]; then
+  echo "🔥 [ERROR] Failed to issue an access token. ZTS Response:" >&2
+  echo "${response}" | jq . >&2
+  exit 1
+else
+  echo "✅ [SUCCESS] Issued the following access token:" >&2
+  echo "${token}" | jq -R 'split(".") | .[0] | @base64d | fromjson' >&2
+  echo "${token}" | jq -R 'split(".") | .[1] | @base64d | fromjson' >&2
+  echo "${token}"
+fi
 EOF
 
-chmod +x enable-cert-provider.sh
+chmod +x fetch-access-token.sh
 ```
 
-Execute the script to authorize the `idjag-learner` service to fetch certificates:
+Execute the script, using your newly generated certificate and key, and save the output directly into a variable named `_root_user_at`.
 
 ```sh
-./enable-cert-provider.sh "human" "idjag-learner"
+_scope="api:role.docs-getter"
+_root_user_at=$(./fetch-access-token.sh \
+  "./athenz_dist/certs/athenz_admin.cert.pem" \
+  "./athenz_dist/keys/athenz_admin.private.pem" \
+  "${_scope}")
 
-# Enabling ZTS Certificate Provider for human.idjag-learner...
-# [Template(s) successfully applied to domain]
+# Fetching Access Token for scope: api:role.docs-getter...
+# ✅ [SUCCESS] Issued the following access token:
+# {
+#   "kid": "athenz-zts-server-6966ff7f66-4j67d",
+#   "typ": "at+jwt",
+#   "alg": "RS256"
+# }
+# {
+#   "sub": "user.athenz_admin",
+#   "scp": [
+#     "docs-getter"
+#   ],
+#   "ver": 1,
+#   "iss": "athenz-zts-server-6966ff7f66-4j67d",
+#   "client_id": "user.athenz_admin",
+#   "aud": "api",
+#   "uid": "user.athenz_admin",
+#   "auth_time": 1778407550,
+#   "scope": "docs-getter",
+#   "cnf": {
+#     "x5t#S256": "ify-xpF2OH2YWreL9ollKhZZt6xM35BPhli-dNnt19Y"
+#   },
+#   "exp": 1778411150,
+#   "iat": 1778407550,
+#   "jti": "b5836abf-3033-439d-82cd-0c02a662862d"
+# }
 ```
 
+## Send request to the protected server
+
+Last time we tried to access the `docs` resource of the API server, but we got a 401 Unauthorized error. With the Access Token, let's see if we can access it now.
+
+```sh
+curl -H "Authorization: Bearer $_root_user_at" http://localhost:14443/api/docs
+
+# { "message": "Access token is valid, but the principal does not have permission to access the resource." }
+```
