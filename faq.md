@@ -1,5 +1,8 @@
 # FAQs for ID-JAG
 
+> [!TIP]
+> AJ, Keep asking yourself what kind of FAQs out there, with AI.
+
 <!-- TOC -->
 
 - [FAQs for ID-JAG](#faqs-for-id-jag)
