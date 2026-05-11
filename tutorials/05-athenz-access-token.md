@@ -234,6 +234,7 @@ fi
 cert_path=$1
 key_path=$2
 scope=$3
+output=$4
 zts_url="https://localhost:8443/zts/v1/oauth2/token"
 
 # Print logs to stderr so stdout only outputs the pure token string
@@ -255,6 +256,7 @@ else
   echo "✅ [SUCCESS] Issued the following access token:" >&2
   echo "${token}" | jq -R 'split(".") | .[0] | @base64d | fromjson' >&2
   echo "${token}" | jq -R 'split(".") | .[1] | @base64d | fromjson' >&2
+  echo "${token}" > "${output}"
   echo "${token}"
 fi
 EOF
@@ -269,7 +271,8 @@ _scope="api:role.docs-getter"
 _root_user_at=$(./fetch-access-token.sh \
   "./athenz_dist/certs/athenz_admin.cert.pem" \
   "./athenz_dist/keys/athenz_admin.private.pem" \
-  "${_scope}")
+  "${_scope}" \
+  "./keys/api_docs-getter.jwt")
 
 # Fetching Access Token for scope: api:role.docs-getter...
 # ✅ [SUCCESS] Issued the following access token:

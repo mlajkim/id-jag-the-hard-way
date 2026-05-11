@@ -119,3 +119,28 @@ But it is up to you.
 
 ![08_create_admin_account](./assets/08_create_admin_account.png)
 
+## Register MCP Server as a tool server in Open WebUI
+
+Get Access Token again:
+
+```sh
+_scope="api:role.docs-getter"
+_root_user_at=$(./fetch-access-token.sh \
+  "./athenz_dist/certs/athenz_admin.cert.pem" \
+  "./athenz_dist/keys/athenz_admin.private.pem" \
+  "${_scope}" \
+  "./keys/api_docs-getter.jwt")
+
+cat "./keys/api_docs-getter.jwt"
+
+```
+
+Go to `User Icon` > `Admin Panel` > `Settings` > `Integrations` > `+ Icon`, you will be able to register the MCP server as a tool server.
+
+- Name: `API MCP Server`
+- Description: `MCP server for API that holds documentation`
+- URL: `http://localhost:8101`
+- Auth type: `Bearer`
+- API Key: `<YOUR_ACCESS_TOKEN_THAT_YOU'VE_FETCHED`
+
+![08_api_mcp_server_in_open_webui](./assets/08_api_mcp_server_in_open_webui.png)
