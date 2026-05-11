@@ -4,11 +4,11 @@
 
 # AI Client Agent
 
-In this tutorial, we will install AI Client Agent for the first time, and talk to API server through it.
+In this tutorial, we will install the AI Client Agent for the first time and talk to the API server through it.
 
 ## Install Ollama
 
-Ollama is one of the easiest way to install open LLM locally and talk to it.
+Ollama is one of the easiest ways to install an open LLM locally and interact with it.
 
 Simply run the following command:
 
@@ -26,14 +26,14 @@ curl -fsSL https://ollama.com/install.sh | sh
 ```
 
 > [!NOTE]
-> SSOT install method: https://ollama.com/
+> For the SSOT install method, visit: https://ollama.com/
 
 ## Install Gemma 4 throuh ollama
 
 > [!NOTE]
-> Learn about the spec of the Gemma4's model [here](https://ai.google.dev/gemma/docs/core?_gl=1*57y72w*_up*MQ..*_ga*MTM5MjUyNzM5NC4xNzc4NDU1OTc0*_ga_P1DBVKWT6V*czE3Nzg0NTU5NzQkbzEkZzAkdDE3Nzg0NTU5NzQkajYwJGwwJGgxMjMzODIwOTA0#gemma-4-inference-memory-requirements) 
+> Learn about the specs for the Gemma 4 model [here](https://ai.google.dev/gemma/docs/core?_gl=1*57y72w*_up*MQ..*_ga*MTM5MjUyNzM5NC4xNzc4NDU1OTc0*_ga_P1DBVKWT6V*czE3Nzg0NTU5NzQkbzEkZzAkdDE3Nzg0NTU5NzQkajYwJGwwJGgxMjMzODIwOTA0#gemma-4-inference-memory-requirements) 
 
-In this tutorial we will use Gemma 4's `gemma4:26b` as our AI model:
+In this tutorial, we will use Gemma 4's `gemma4:26b` as our AI model:
 
 ```sh
 ollama pull gemma4:26b
@@ -41,14 +41,14 @@ ollama pull gemma4:26b
 
 ## Install Open WebUI
 
-Instead of using Ollama's its own native UI, we will use Open WebUI to provide more feature-rich UI. Open WebUI requires specific Python version and some system dependencies. At this point of writing, the official documentation states Open WebUI runs on Python 3.11 or lower.
+Instead of using Ollama's native UI, we will use Open WebUI for a more feature-rich experience. Open WebUI requires a specific Python version and some system dependencies. At the time of writing, the official documentation states that Open WebUI runs on Python 3.11 or lower.
 
 ### Install Python
 
 > [!NOTE]
 > Learn how to install pyenv here: [pyenv/pyenv - GitHub](https://github.com/pyenv/pyenv)
 
-Since managing python version could be a hassle, let's use the `pyenv` tool to manage python versions.
+Since managing Python versions can be a hassle, let's use the `pyenv` tool to manage them.
 
 ```sh
 pyenv install 3.11
@@ -110,16 +110,16 @@ _open_webui_without_keycloak_port=3200
 open http://localhost:$_open_webui_without_keycloak_port
 ```
 
-You will be prompted to create an admin account as the first user. You can simply do:
+You will be prompted to create an admin account as the first user. You can simply use:
 
 - `admin@admin.com`
 - `admin`
 
-But it is up to you.
+However, the credentials are up to you.
 
 ![08_create_admin_account](./assets/08_create_admin_account.png)
 
-## Register MCP Server as a tool server in Open WebUI
+## Register MCP Server as a Tool Server in Open WebUI
 
 Get Access Token again:
 
@@ -135,7 +135,7 @@ cat "./keys/api_docs-getter.jwt"
 
 ```
 
-Go to `User Icon` > `Admin Panel` > `Settings` > `Integrations` > `+ Icon`, you will be able to register the MCP server as a tool server.
+Go to `User Icon` > `Admin Panel` > `Settings` > `Integrations` > `+ Icon` to register the MCP server as a tool server.
 
 - Name: `API MCP Server`
 - Description: `MCP server for API that holds documentation`
@@ -145,7 +145,7 @@ Go to `User Icon` > `Admin Panel` > `Settings` > `Integrations` > `+ Icon`, you 
 
 ![08_api_mcp_server_in_open_webui](./assets/08_api_mcp_server_in_open_webui.png)
 
-And ask the following to AI Agent:
+Then, ask the AI Agent the following:
 
 ```sh
 get docs!
@@ -155,6 +155,6 @@ get docs!
 
 ## Fix Not Authorized for Token Impersonation Error
 
-Next time we will fix the error by setting token exchange permission to MCP server.
+In the next section, we will fix this error by granting token exchange permissions to the MCP server.
 
 Next: [Token Exchange](./09-token-exchange.md)
