@@ -153,10 +153,16 @@ get docs!
 
 ![08_deliberate_failure_no_permission_to_token_impersonation](./assets/08_deliberate_failure_no_permission_to_token_impersonation.png)
 
-## Fix Not Authorized for Token Impersonation Error
+## What's happened?
 
-The error above is a deliberate failure. Rather than simply passing your Access Token when calling the MCP, the MCP instead attempts an OAuth 2.0 Token Exchange (RFC 8693).
+![08_arc_failed_to_token_exchange](./assets/08_arc_failed_to_token_exchange.png)
 
-We will explain this in detail and fix the error in the next step.
+We were able to successfully install the AI Client Agent, using:
+
+- Open WebUI as an LLM Front-end (for human interaction)
+- Ollama as a Local LLM Provider
+- Gemma 4's `gemma4:26b` as an LLM model
+
+We manually passed the Access Token, which has permission to access the API server. However, it fails due to the default behavior of the MCP, which attempts to exchange the given Access Token into another token. This is an expected failure however. We will fix it in the next section.
 
 Next: [Token Exchange](./09-token-exchange.md)
