@@ -155,6 +155,8 @@ get docs!
 
 ## Fix Not Authorized for Token Impersonation Error
 
-In the next section, we will fix this error by granting token exchange permissions to the MCP server.
+The error above is a deliberate failure. Rather than simply passing your Access Token when calling the MCP, the MCP instead attempts an OAuth 2.0 Token Exchange (RFC 8693).
+
+We will explain this in detail and fix the error in the next step.
 
 Next: [Token Exchange](./09-token-exchange.md)
