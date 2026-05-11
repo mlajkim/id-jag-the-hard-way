@@ -1,6 +1,6 @@
-|                     Previous                     |       Current       | Next |
-|:------------------------------------------------:|:-------------------:|:----:|
-| [MCP Server for API](./07-mcp-server-for-api.md) | **AI Client Agent** | n/a  |
+|                     Previous                     |       Current       |                   Next                   |
+|:------------------------------------------------:|:-------------------:|:----------------------------------------:|
+| [MCP Server for API](./07-mcp-server-for-api.md) | **AI Client Agent** | [Token Exchange](./09-token-exchange.md) |
 
 # AI Client Agent
 
@@ -144,3 +144,17 @@ Go to `User Icon` > `Admin Panel` > `Settings` > `Integrations` > `+ Icon`, you 
 - API Key: `<YOUR_ACCESS_TOKEN_THAT_YOU'VE_FETCHED`
 
 ![08_api_mcp_server_in_open_webui](./assets/08_api_mcp_server_in_open_webui.png)
+
+And ask the following to AI Agent:
+
+```sh
+get docs!
+```
+
+![08_deliberate_failure_no_permission_to_token_impersonation](./assets/08_deliberate_failure_no_permission_to_token_impersonation.png)
+
+## Fix Not Authorized for Token Impersonation Error
+
+Next time we will fix the error by setting token exchange permission to MCP server.
+
+Next: [Token Exchange](./09-token-exchange.md)
