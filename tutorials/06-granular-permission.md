@@ -1,6 +1,6 @@
-|                      Previous                       |         Current         |                    Next                    |
-|:---------------------------------------------------:|:-----------------------:|:------------------------------------------:|
-| [Authorization Server](./05-athenz-access-token.md) | **Granular Permission** | [AI Client Agent](./07-ai-client-agent.md) |
+|                      Previous                       |         Current         |                       Next                       |
+|:---------------------------------------------------:|:-----------------------:|:------------------------------------------------:|
+| [Authorization Server](./05-athenz-access-token.md) | **Granular Permission** | [MCP Server for API](./07-mcp-server-for-api.md) |
 
 # Granular Permission
 
@@ -340,8 +340,4 @@ You successfully fetched an X.509 certificate for the non-admin service identity
 
 ![06_arc_fetch_at_with_non_admin_certificiate](./assets/06_arc_fetch_at_with_non_admin_certificiate.png)
 
-## What's Next?
-
-Next, we will install the AI Client Agent locally and interact with it. Ultimately, this agent will be configured to securely call the protected API server on our behalf.
-
-Next: [AI Client Agent](./07-ai-client-agent.md)
+Next: [MCP Server for API](./07-mcp-server-for-api.md)
