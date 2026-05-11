@@ -76,3 +76,8 @@ We create a new service identity `api.mcp-api` for the MCP Server that runs in p
 
 ![07_arch_mcp_server_for_api](./assets/07_arch_mcp_server_for_api.png)
 
+## What's next?
+
+In next tutorial, we will do actual chat with local AI Agent and see how it interacts with our protected API server through the MCP Server we just created.
+
+Next: [AI Client Agent](./08-ai-client-agent.md)
