@@ -4,30 +4,31 @@
 
 # Token Exchange
 
-🟡 TODO: Requires rephrasing with AI
+In this section, we will resolve the "Not Authorized for Token Impersonation" error from the previous step. This occurred because the MCP server attempted to exchange the Access Token it received from the AI client for a new one, but lacked the necessary permissions.
 
-In this tutorial, we will fix the "Not Authorized for Token Impersonation" error we encountered in the previous section. This error occurred because the MCP server attempted to exchange the Access Token it received from the AI client for a new token, but it lacked the necessary permissions to do so.
+By implementing the OAuth 2.0 Token Exchange ([RFC 8693](https://www.rfc-editor.org/rfc/rfc8693.html)) mechanism, we will authorize the MCP server to exchange the user's Access Token and act on their behalf to access the API server.
 
-We will use the **OAuth 2.0 Token Exchange** (RFC 8693) mechanism to resolve this. The MCP server will exchange the user's Access Token for a new token that grants it permission to access the API server on behalf of the user.
+## Allow MCP Server to Exchange the Given Access Token
 
-## Allow MCP Server to exchange given Access Token
+Even if the original requester has `get` access to the `api:docs` resource, it doesn't mean just anyone can exchange the Access Token on their behalf. We must create a dedicated role specifically to allow token impersonation (exchange).
 
-Even if the original requester's permission has access right to `get` on `api:docs` resource, it does not mean that anyone can exchange the access token for the requester. We need to have another separate role to specfically allow the impersonation or token exchange.
-
-So to do that, let's add a role `api:role.docs-token-exchanger`, where name implies that the members of this role can exchange the access token for the target scope `api:role.docs-getter`:
+Let's add the role `api:role.docs-token-exchanger`. As the name implies, members of this role are authorized to exchange Access Tokens for the target scope `api:role.docs-getter`:
 
 ```sh
 ./create-role.sh "api" "docs-token-exchanger"
 ```
 
-In Athenz, you not only has to explicit allow where to exchange into, but also where it is originally from. Since MCP server is within the domain `api`, we can add both policies here:
+In Athenz, you must explicitly define both the **source** and **target** of the token exchange. Since the MCP server operates within the `api` domain, we can apply both policies as follows:
 
 ```sh
 ./add-policy.sh "api" "docs-token-exchanger" "zts.token_source_exchange" "api"
 ./add-policy.sh "api" "docs-token-exchanger" "zts.token_target_exchange" "api:role.docs-getter"
 ```
 
-Finally add a member that you want to allow to exchange (despite the exchange could have no permission to it):
+> [!NOTE]
+> Note that the MCP server itself doesn't need direct access to the target resource; it only needs permission to perform the exchange.
+
+Finally, add the member you want to authorize for the token exchange (in this case, the `api.api-mcp` service principal):
 
 ```sh
 ./add-role-member.sh "api" "docs-token-exchanger" "api.api-mcp"
@@ -35,7 +36,7 @@ Finally add a member that you want to allow to exchange (despite the exchange co
 
 ## Verification
 
-Now get the Access Token once again (just in case it is expired):
+Fetch a fresh Athenz Access Token to ensure it hasn't expired:
 
 ```sh
 _scope="api:role.docs-getter"
@@ -48,13 +49,13 @@ _my_access_token=$(./fetch-access-token.sh \
 cat "./keys/api_docs-getter.jwt"
 ```
 
-Go to `User Icon` > `Admin Panel` > `Settings` > `Integrations` > `API MCP Server`'s Configure Icon
+Navigate to `User Icon` > `Admin Panel` > `Settings` > `Integrations`, and click the configure icon for the API MCP Server.
 
-Attached the access token as we did last time:
+Attach the access token exactly as we did previously:
 
 ![09_attach_access_token](./assets/09_attach_access_token.png)
 
-And ask the AI Agent the following that we asked last time but failed:
+Now, ask the AI Agent the exact same prompt that failed last time:
 
 ```
 get docs!
@@ -64,12 +65,14 @@ get docs!
 
 ## What's happened?
 
-With the new role to specficially allow its member to exchange an access token for a target scope, the MCP server can exchange the given access token into another token, as the following:
+By introducing a specific role `docs-token-exchanger` that authorizes its members to perform token exchanges for a target scope, the MCP server can successfully exchange (Step 7 below) the provided Access Token for a new one, as illustrated below:
 
 ![09_arc_success_to_token_exchange](./assets/09_arc_success_to_token_exchange.png)
 
 ## What's next?
 
-As the architecture above, we have been protected the API Server with the Athenz AT. However, at this point, the MCP server itself is never protected and anyone can access the MCP server. despite the core server is the API, you do not want to simply expose your MCP server without any protection, so next we will add an authentication layer for the MCP server so that only the authenticated users can access the MCP server.
+As shown in the architecture above, our API Server is now fully protected by Athenz Access Tokens. However, the MCP server itself remains unprotected, meaning anyone can access it. While the core API is secure, leaving the MCP server exposed is a bad security practice.
+
+In the next section, we will implement an authentication layer for the MCP server to ensure only authenticated users can interact with it.
 
 Next: [Protect MCP Server](./10-protect-mcp-server-with-keycloak.md)
