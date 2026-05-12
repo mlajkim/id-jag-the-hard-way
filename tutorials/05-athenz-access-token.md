@@ -124,8 +124,8 @@ fi
 
 domain=$1
 role_name=$2
-resource=$3
-action=$4
+action=$3
+resource=$4
 policy_name="${action}"
 
 echo "Creating Policy: ${domain}:policy.${policy_name}..."
@@ -158,7 +158,7 @@ The API server has its own logic to translate the client request to Athenz resou
 Therefore, we need to create a policy like this:
 
 ```sh
-./add-policy.sh "api" "docs-getter" "docs" "get"
+./add-policy.sh "api" "docs-getter" "get" "docs"
 ```
 
 The command above means, attach a policy `docs-get-policy` to the role `docs-getter` under the domain `api`. This policy grants the role `docs-getter` the permission to `get` the resource `docs` under the domain `api`, or `docs:api`. The `get` action on `docs:api` is equivalent to the `GET /docs` request to the API server.

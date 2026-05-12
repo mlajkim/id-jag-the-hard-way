@@ -144,9 +144,22 @@ Go to `User Icon` > `Admin Panel` > `Settings` > `Integrations` > `+ Icon` to re
 
 ![08_api_mcp_server_in_open_webui](./assets/08_api_mcp_server_in_open_webui.png)
 
-Then, ask the AI Agent the following:
+Before we ask the AI Agent, let's quickly add the tool as the default tool server, so that you do not have to manually add the tool every time.
 
-```sh
+Go to `User Icon` > `Admin Panel` > `Settings` > `Models`,
+
+Select the edit (Pencil) Icon.
+
+Then in `tools` section, select the tool that we just created as the following:
+
+![08_select_tool_as_default_for_the_model](./assets/08_select_tool_as_default_for_the_model.png)
+
+
+## Verification
+
+Finally, ask the AI Agent the following:
+
+```
 get docs!
 ```
 
