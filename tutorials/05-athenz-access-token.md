@@ -126,7 +126,7 @@ domain=$1
 role_name=$2
 resource=$3
 action=$4
-policy_name="${resource}-${action}-policy"
+policy_name="${action}"
 
 echo "Creating Policy: ${domain}:policy.${policy_name}..."
 

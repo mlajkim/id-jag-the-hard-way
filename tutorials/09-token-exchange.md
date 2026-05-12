@@ -12,3 +12,29 @@ We will use the **OAuth 2.0 Token Exchange** (RFC 8693) mechanism to resolve thi
 
 ## Allow MCP Server to exchange given Access Token
 
+To 
+
+
+```sh
+./create-role.sh "api" "mcp-impersonators"
+```
+
+```sh
+./add-policy.sh "api" "mcp-impersonators" "api" "zts.token_source_exchange"
+./add-policy.sh "api" "mcp-impersonators" "api:role.docs-getter" "zts.token_target_exchange"
+```
+
+```sh
+./add-role-member.sh "api" "mcp-impersonators" "api.api-mcp"
+```
+
+```sh
+_scope="api:role.docs-getter"
+_my_access_token=$(./fetch-access-token.sh \
+  "./keys/idjag-learner.crt" \
+  "./keys/idjag-learner.key" \
+  "${_scope}" \
+  "./keys/api_docs-getter.jwt")
+
+cat "./keys/api_docs-getter.jwt"
+```
