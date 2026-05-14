@@ -1,6 +1,6 @@
 |                 Previous                 |        Current         |                                  Next                                  |
 |:----------------------------------------:|:----------------------:|:----------------------------------------------------------------------:|
-| [Token Exchange](./09-token-exchange.md) | **Protect MCP Server** | [Keyclaok as Identity Provider](./11-keycloak-as-identity-provider.md) |
+| [Token Exchange](./09-token-exchange.md) | **Protect MCP Server** | [Keycloak as Identity Provider](./11-keycloak-as-identity-provider.md) |
 
 # Protect MCP Server
 
