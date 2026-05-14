@@ -1,6 +1,6 @@
-|                 Previous                 |        Current         |                                  Next                                  |
-|:----------------------------------------:|:----------------------:|:----------------------------------------------------------------------:|
-| [Token Exchange](./09-token-exchange.md) | **Protect MCP Server** | [Keycloak as Identity Provider](./11-keycloak-as-identity-provider.md) |
+|                 Previous                 |        Current         |                      Next                      |
+|:----------------------------------------:|:----------------------:|:----------------------------------------------:|
+| [Token Exchange](./09-token-exchange.md) | **Protect MCP Server** | [Identity Provider](./11-identity-provider.md) |
 
 # Protect MCP Server
 
@@ -113,4 +113,4 @@ We first deployed the Authorization Proxy Server in red dotted box which require
 
 So far we have logged in as admin account to the AI Client Agent. In enterprise, we obviosusly assign separate account for each employee of the enterprise. To manipulate this & able to control users of the AI Client agent, we do noot of course share the admin account. In next tutorial we will deploy Keycloak as Identity provider for our AI Client Agent & able to sign in as non-admin (normal) user.
 
-Next: [Keyclaok as Identity Provider](./11-keycloak-as-identity-provider.md)
+Next: [Identity Provider](./11-identity-provider.md)
