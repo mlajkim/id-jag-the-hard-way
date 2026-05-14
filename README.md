@@ -11,6 +11,12 @@ By the end of this tutorial, you will run a real local flow where a human user (
 
 ![ID-JAG The Hard Way Demo](./assets/id-jag-the-hard-way-readme-demo.gif)
 
+<details>
+  <summary>View the architecture diagram for the demo above</summary>
+
+  ![ID-JAG The Hard Way Current Full Architecture](./assets/id-jag-the-hard-way-current-full-architecture.png)
+</details>
+
 ## Special Thanks
 
 The name and concept of this tutorial series is inspired by [kelseyhightower/kubernetes-the-hard-way](https://github.com/kelseyhightower/kubernetes-the-hard-way).
