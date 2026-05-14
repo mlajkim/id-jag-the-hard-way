@@ -13,8 +13,9 @@ By the end of this tutorial, you will run a real local flow where a human user (
 
 <details>
   <summary>Click to expand the architecture diagram for the demo above</summary>
+  <br>
 
-  The following diagram illustrates the architecture, which includes:
+  &nbsp;&nbsp;The following diagram illustrates the architecture, which includes:
 
   - **A user** (on the left) interacting with an AI server via an AI client
   - **Keycloak** as the Identity Provider (IdP)
