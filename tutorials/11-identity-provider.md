@@ -198,4 +198,6 @@ Go to the idjag learner browser and do refresh. You will be able to login
 
 ## What's next?
 
-🟡 TODO
+You may have thought that manually inserting the Access Token is a big hassle. And the access token inserted for the MCP server only represents the `human.idjag-learner`. In enterprise there could be many users who uses his/her own Access Token for the shared tool. In conclusion we cannot attach an access token for a tool. 
+
+In the next tutorial we will be able to sign in as `idjag-leaner`, get id-token, and convert it into ID-JAG, and finally Access Token, and let the tool server uses the Access token to talk to the MCP Server.
