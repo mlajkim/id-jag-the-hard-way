@@ -48,7 +48,7 @@ Click `Next` then:
 
 Click `Next` then:
 
-- Valid redirect URLs: `http://localhost:3100`
+- Valid redirect URLs: `http://localhost:3100/oauth/oidc/callback`
 
 Click `Save`.
 
@@ -77,7 +77,7 @@ Then go to `credentials` > `Set passwords`, then:
 Then save.
 
 
-## Run Open WebUI Client with Keycloak Configured
+## Create Open WebUI Runner Script with Keycloak Setting
 
 We are going to create a quick script that runs the open webui client with keycloak configured.
 
@@ -134,13 +134,68 @@ chmod +x run-open-webui-keycloak.sh
 
 ### Run Open WebUI with Keycloak for testing
 
+The script we just created requires the keycloak client id and secret.
+
+Go to `Clients` > `ai.open-webui` > `credentials` > `Copy Client Secret` then store as `_kcs` or `_keycloak_client_secret`:
+
+```sh
+_kcs="<<THE_CLIENT_SECRET>>"
+```
+
+
 ```sh
 mkdir -p open_webui
 _keycloak_client_id="ai.open-webui"
-_keycloak_client_secret=""
 _open_webui_keycloak_port=3100
 (
   cd open_webui
-  ../run-open-webui-keycloak.sh "$_keycloak_client_id" "$_keycloak_client_secret" "$_open_webui_keycloak_port"
+  ../run-open-webui-keycloak.sh "$_keycloak_client_id" "$_kcs" "$_open_webui_keycloak_port"
 )
 ```
+
+## Sign in as idjag-learner
+
+You may be signed in as the `admin` user during the tutorial, and to mimic non-admin user `idjag-learner`, you can either:
+
+- log out as admin
+- open a different browser
+- open the current browser with incognito mode
+
+Whichever mode it is, you need to sign out from the keycloak and go to the website
+
+
+```sh
+_open_webui_keycloak_port=3100
+open http://localhost:${_open_webui_keycloak_port}
+```
+
+Then you will see the new panel with `Continue with Keycloak` button:
+
+![11_continue_with_keycloak_appeared](./assets/11_continue_with_keycloak_appeared.png)
+
+Then you will be prompted to add member
+
+- `Username`: `idjag-learner`
+- `Password`: `password`
+
+![11_login_successful_as_idjag_learner](./assets/11_login_successful_as_idjag_learner.png)
+
+## Accept the account
+
+Open up the browser that is signed as admin,
+
+Go to http://localhost:3100/admin/users/overview
+
+![11_pending_user_id_jag_learner_added](./assets/11_pending_user_id_jag_learner_added.png)
+
+Go to `Edit User` > `Pending` > `User` then click `Save`.
+
+## Go to the idjag leanrer browser
+
+Go to the idjag learner browser and do refresh. You will be able to login
+
+![11_hello_idjag_leanrer](./assets/11_hello_idjag_leanrer.png)
+
+## What's next?
+
+🟡 TODO

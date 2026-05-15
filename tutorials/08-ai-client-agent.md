@@ -141,6 +141,7 @@ Go to `User Icon` > `Admin Panel` > `Settings` > `Integrations` > `+ Icon` to re
 - URL: `http://localhost:8101`
 - Auth type: `Bearer`
 - API Key: `<YOUR_ACCESS_TOKEN_THAT_YOU'VE_FETCHED`
+- Access: Change to `Public`
 
 ![08_api_mcp_server_in_open_webui](./assets/08_api_mcp_server_in_open_webui.png)
 
@@ -149,6 +150,10 @@ Before we ask the AI Agent, let's quickly add the tool as the default tool serve
 Go to `User Icon` > `Admin Panel` > `Settings` > `Models`,
 
 Select the edit (Pencil) Icon.
+
+Select `Access` > `Private` then change to `Public` (auotmatic save):
+
+![08_model_now_public](./assets/08_model_now_public.png)
 
 Then in `tools` section, select the tool that we just created as the following:
 
