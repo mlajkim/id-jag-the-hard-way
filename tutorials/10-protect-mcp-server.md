@@ -4,13 +4,11 @@
 
 # Protect MCP Server
 
-🟡 TODO: AI Rephrase
-
-In this tutorial, we will protect the MCP server with Athenz Access Token, just like we did with the API Server.
+In this tutorial, we will secure the MCP server using an Authorization Server (Athenz), just as we did with the API Server.
 
 ## Run Authorization Proxy for API MCP
 
-The cloned API project does include the authorization proxy server for the API MCP. To run the server, you can execute the following command:
+The cloned API project includes an authorization proxy server for the API MCP. To start the server, execute the following command:
 
 ```bash
 export _authorization_proxy_port=8102
@@ -22,35 +20,34 @@ make -C oss_sample_java_api_server mcp-proxy-local \
   PROXY_AT_REQUIRED=true
 ```
 
-## Change the MCP Target Port to Proxy
+## Update the MCP Target Port to Proxy
 
-To get authorized to `access` the authrozation server, our identtiy service `human.idjag-learner` is required to have the following permission:
+To authorize access to the authorization server, our identity service (`human.idjag-learner`) must have the following permissions:
 
 - resource: `mcp` on domain `api`
 - action: `access`
 
-And since we do not have any roles or policies prepared, let's create an explicit role `mcp-accessor` and attach a policy `access` on `mcp` resource.
-
+Since we haven't prepared any roles or policies yet, let's create an explicit role named `mcp-accessor` and attach an access policy for the `mcp` resource.
 
 ```sh
 ./create-role.sh "api" "mcp-accessor"
 ```
 
-Attach a policy to the role:
+Next, attach the policy to the role:
 
 ```sh
 ./add-policy.sh "api" "mcp-accessor" "access" "mcp"
 ```
 
-Finally add the member:
+Finally, add you `human.idjag-learner` principal to the role:
 
 ```sh
 ./add-role-member.sh "api" "mcp-accessor" "human.idjag-learner"
 ```
 
-## Fetch New Access Token against the new Role
+## Fetch a New Access Token for the New Role
 
-Let's create a new Access Token with both scope (space separated values):
+Now, let's generate a new Access Token containing both scopes (space-separated values):
 
 - `api:role.mcp-accessor`: to access the MCP Authorization Server
 - `api:role.docs-getter`: to access `get /docs` endpoint
@@ -66,7 +63,12 @@ _my_access_token=$(./fetch-access-token.sh \
 cat "./keys/api_mcp-accessor_api_docs-getter.jwt"
 ```
 
-Note that the scope now includes both roles:
+Note that the scope now includes both roles. This is because we need an Access Token that passes both authorization layer:
+
+- Able to call `GET /api/docs` (Or `get` on `api:docs`)
+- Able to access MCP Server (Or `access` on `api:mcp`)
+
+Check your access token with `scp` including both scopes:
 
 ```json
 "scp": [
@@ -76,7 +78,7 @@ Note that the scope now includes both roles:
 // ...
 ```
 
-## Attach Acccess Token & Set new Authorization Server as Tool Server
+## Attach the Access Token & Configure the New Authorization Server
 
 Navigate to `User Icon` > `Admin Panel` > `Settings` > `Integrations`, and click the configure icon for the API MCP Server.
 
@@ -89,28 +91,30 @@ Make the following change:
 
 ## Verification
 
-Now, ask the AI Agent the exact same prompt that failed last time:
+Now, test the AI Agent with the exact same prompt that failed previously:
 
 ```
 get docs!
 ```
 
+And we successfully get the docs from the API MCP Server!
+
 ![10_successsfully_get_docs_from_api_mcp_server](./assets/10_successsfully_get_docs_from_api_mcp_server.png)
 
 ## What happens if no permission against the MCP?
 
-This is what happens when you do not have permission to access the MCP:
+If you attempt to access the MCP without the proper permissions, you will encounter the following error:
 
 ![10_failed_to_get_docs_with_no_permission_for_mcp](./assets/10_failed_to_get_docs_with_no_permission_for_mcp.png)
 
-## What's done?
+## Summary of Changes
 
-We first deployed the Authorization Proxy Server in red dotted box which requires `acccess` on `api:mcp`. To pass the access, we have created a new role `mcp-accessor` under the domain `api`. And attach a policy that matches the MCP Authrozation Server requirefnent, so that the MCP server can be accessed only by the authenticated user with the access token that contains the `mcp-accessor` scope, which is important in the Principal of Least Privilege.
+First, we deployed the Authorization Proxy Server (indicated by the red dotted box), which checks for `access` to the `api:mcp` resource. To grant this access, we created a new `mcp-accessor` role under the `api` domain and attached a policy matching the authorization server's requirements. As a result, the MCP server can only be accessed by an authenticated user holding an access token with the `mcp-accessor` scope—a key application of the Principle of Least Privilege.
 
 ![10_arch_architecture_of_mcp_server_with_authorization_proxy](./assets/10_arch_architecture_of_mcp_server_with_authorization_proxy.png)
 
 ## What's next?
 
-So far we have logged in as admin account to the AI Client Agent. In enterprise, we obviosusly assign separate account for each employee of the enterprise. To manipulate this & able to control users of the AI Client agent, we do noot of course share the admin account. In next tutorial we will deploy Keycloak as Identity provider for our AI Client Agent & able to sign in as non-admin (normal) user.
+Up until now, we have been logging into the AI Client Agent using an admin account. In an enterprise environment, individual employees are assigned separate accounts to maintain control and security over the AI Client Agent—sharing the admin account is out of the question. In the next tutorial, we will deploy [Keycloak](https://www.keycloak.org/) as an Identity Provider (IdP) for our AI Client Agent, enabling users to sign in with non-admin (standard) accounts.
 
 Next: [Identity Provider](./11-identity-provider.md)
