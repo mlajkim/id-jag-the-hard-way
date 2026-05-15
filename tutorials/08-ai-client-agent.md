@@ -93,10 +93,10 @@ chmod +x run-open-webui-without-keycloak.sh
 ### Run Open WebUI without Keycloak for testing
 
 ```sh
-mkdir -p open_webui_without_keycloak
+mkdir -p open_webui
 _open_webui_without_keycloak_port=3200
 (
-  cd open_webui_without_keycloak
+  cd open_webui
   ../run-open-webui-without-keycloak.sh "$_open_webui_without_keycloak_port"
 )
 ```
