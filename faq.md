@@ -6,6 +6,8 @@
 <!-- TOC -->
 
 - [FAQs for ID-JAG](#faqs-for-id-jag)
+- [Governance](#governance)
+  - [What should we do if Resource Server](#what-should-we-do-if-resource-server)
   - [Can I simply make MCP pass down the received AT to the API Server?](#can-i-simply-make-mcp-pass-down-the-received-at-to-the-api-server)
   - [ID-JAG](#id-jag)
     - [What's the point of id_token=>id_jag=>AT, when you can simply do id_token=>id_jag?](#whats-the-point-of-id_tokenid_jagat-when-you-can-simply-do-id_tokenid_jag)
@@ -29,6 +31,10 @@
     - [Prompt Injection](#prompt-injection)
 
 <!-- /TOC -->
+
+# Governance
+
+## What should we do if Resource Server
 
 
 ## Can I simply make MCP pass down the received AT to the API Server?
