@@ -75,7 +75,7 @@ Check your access token with `scp` including both scopes:
   "docs-getter",
   "mcp-accessor"
 ],
-// ...
+...
 ```
 
 ## Attach the Access Token & Configure the New Authorization Server
