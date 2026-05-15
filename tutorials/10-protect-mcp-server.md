@@ -101,11 +101,14 @@ And we successfully get the docs from the API MCP Server!
 
 ![10_successsfully_get_docs_from_api_mcp_server](./assets/10_successsfully_get_docs_from_api_mcp_server.png)
 
-## What happens if no permission against the MCP?
+<details>
+  <summary>Click to learn what happens if no permission against the MCP</summary>
+  <br>
 
-If you attempt to access the MCP without the proper permissions, you will encounter the following error:
+  &nbsp;&nbsp;If you attempt to access the MCP without the proper permissions, you will encounter the following error:
 
-![10_failed_to_get_docs_with_no_permission_for_mcp](./assets/10_failed_to_get_docs_with_no_permission_for_mcp.png)
+  ![10_failed_to_get_docs_with_no_permission_for_mcp](./assets/10_failed_to_get_docs_with_no_permission_for_mcp.png)
+</details>
 
 ## Summary of Changes
 
