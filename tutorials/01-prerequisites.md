@@ -43,4 +43,8 @@ Resource Server (API Server):
 - `14443`: Dummy API (Original API, not proxied by Athenz proxy)
 - `14442`: Dummy API without Athenz AT required
 
+## Note
+
+The results of this tutorial should not be considered production ready. The goal is to learn the architecture, not to ship a hardened production platform
+
 Next: [Working Directory](./02-working-directory.md)
