@@ -6,7 +6,7 @@ spec:
         emptyDir: {}
       initContainers:
       - name: fetch-keycloak-plugin
-        image: ghcr.io/athenz-community/keycloak-token-exchange-identity-provider-manifest:latest
+        image: ghcr.io/mlajkim/keycloak-token-exchange-provider:latest
         imagePullPolicy: Always
         volumeMounts:
         - name: temp-plugin-volume
