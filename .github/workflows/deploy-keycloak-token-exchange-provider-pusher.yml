@@ -1,5 +1,5 @@
-# For permission settings, everything is documented here
-# https://github.com/athenz-community/keycloak-token-exchange-identity-provider-manifest/pull/2
+# This workflow creates a docker image that pushes the jar file
+# For more details, check out the markdown file under the same directory of this yml.
 
 name: Build and Push JAR file
 
