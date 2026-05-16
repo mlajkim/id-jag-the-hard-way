@@ -45,7 +45,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.DEPLOY_GHCR_SECRET }}
+          password: ${{ secrets.GITHUB_TOKEN || secrets.DEPLOY_GHCR_SECRET }}
 
       # 4. Determine tags based on event type (PR number or latest)
       - name: Extract metadata (tags, labels) for Docker
