@@ -6,11 +6,11 @@ import java.util.List;
 import com.yahoo.athenz.auth.TokenExchangeIdentityProvider;
 import com.yahoo.athenz.auth.token.OAuth2Token;
 
-public class OpenWebuiKeycloakTokenProvider implements TokenExchangeIdentityProvider {
+public class KeycloakTokenExchangeProvider implements TokenExchangeIdentityProvider {
 
     @Override
     public String getTokenIdentity(OAuth2Token token) {
-        System.out.println(">>> [OpenWebuiKeycloakTokenProvider] Extracting identity from token...");
+        System.out.println(">>> [KeycloakTokenExchangeProvider] Extracting identity from token...");
         Object preferredUsername = token.getClaim("preferred_username");
         if (preferredUsername != null) {
             return "human." + preferredUsername.toString();

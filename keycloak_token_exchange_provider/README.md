@@ -33,7 +33,7 @@ data:
       {
         "issuerUri": "https://localhost:9089/realms/local-openwebui",
         "jwksUri": "http://host.docker.internal:9090/realms/local-openwebui/protocol/openid-connect/certs",
-        "providerClassName": "com.mlajkim.athenz.OpenWebuiKeycloakTokenProvider"
+        "providerClassName": "com.mlajkim.athenz.KeycloakTokenExchangeProvider"
       }
     ]
 EOF
@@ -56,7 +56,7 @@ kubectl -n athenz exec deployment/athenz-zts-server -c athenz-zts-server -- sh -
 #   {
 #     "issuerUri": "https://localhost:9089/realms/local-openwebui",
 #     "jwksUri": "http://host.docker.internal:9090/realms/local-openwebui/protocol/openid-connect/certs",
-#     "providerClassName": "com.mlajkim.athenz.OpenWebuiKeycloakTokenProvider"
+#     "providerClassName": "com.mlajkim.athenz.KeycloakTokenExchangeProvider"
 #   }
 # ]
 ```
