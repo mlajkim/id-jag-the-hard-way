@@ -1,0 +1,20 @@
+spec:
+  template:
+    spec:
+      volumes:
+      - name: temp-plugin-volume
+        emptyDir: {}
+      initContainers:
+      - name: fetch-keycloak-plugin
+        image: ghcr.io/athenz-community/keycloak-token-exchange-identity-provider-manifest:latest
+        imagePullPolicy: Always
+        volumeMounts:
+        - name: temp-plugin-volume
+          mountPath: /export
+
+      containers:
+      - name: athenz-zts-server
+        volumeMounts:
+        - name: temp-plugin-volume
+          mountPath: /opt/athenz/zts/lib/jars/keycloak-token-provider.jar
+          subPath: keycloak-token-provider.jar
