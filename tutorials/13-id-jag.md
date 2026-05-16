@@ -3,6 +3,7 @@
 | [Identity Provider](./11-identity-provider.md) | **ID-JAG** | n/a  |
 
 # ID-JAG
+🟡 todo; run ai rephrase
 
 In this tutorial, we will follow the ID-JAG, Identity Assertion JWT Authorization Grant.
 
