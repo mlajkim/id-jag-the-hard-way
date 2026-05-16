@@ -1,6 +1,6 @@
-|                     Previous                     |        Current        |           Next           |
-|:------------------------------------------------:|:---------------------:|:------------------------:|
-| [Protect MCP Server](./10-protect-mcp-server.md) | **Identity Provider** | [ID-JAG](./12-id-jag.md) |
+|                     Previous                     |        Current        |                              Next                              |
+|:------------------------------------------------:|:---------------------:|:--------------------------------------------------------------:|
+| [Protect MCP Server](./10-protect-mcp-server.md) | **Identity Provider** | [Trusted Identity Provider](./12-trusted-identity-provider.md) |
 
 # Identity Provider
 
@@ -200,10 +200,14 @@ Switch back to the browser window for `idjag-learner` and refresh the page. You 
 
 ![11_hello_idjag_leanrer](./assets/11_hello_idjag_leanrer.png)
 
+## What's done?
+
+We have installed Keycloak (Red dotted box) locally and configured it as an identity provider for our AI Client Agent. This way, non-admin user can sign in with his/her own account:
+
+![11_arc_signed_into_ui_with_keycloak](./assets/11_arc_signed_into_ui_with_keycloak.png)
+
 ## What's next?
 
-You may have noticed that manually inserting the Access Token into the UI is cumbersome. Furthermore, the access token we provided for the MCP server only represents a single user (`human.idjag-learner`). In an enterprise environment, many users will need to use their own Access Tokens for shared tools, making a static, hardcoded token impractical.
+We have let our AI Client agent to trust Keycloak as an IdP. But we have not yet configured Authorization Server to trust Keycloak as IdP. In the next tutorial, we will set up our Authorization Server to trust Keycloak.
 
-In the next tutorial, we will automate this flow: signing in as idjag-learner to retrieve an ID Token, exchanging it for an ID-JAG token, and ultimately obtaining an Access Token. The tool server will then use this dynamically generated Access Token to communicate securely with the MCP Server.
-
-Next: [ID-JAG](./12-id-jag.md)
+Next: [Trusted Identity Provider](./12-trusted-identity-provider.md)

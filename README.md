@@ -1,13 +1,16 @@
 # ID-JAG The Hard Way
 
-*Bootstrap ID-JAG Architecture the hard way. No scripts.*
+*Bootstrap ID-JAG Architecture the hard way in the AI Agent Era. No scripts.*
 
-This tutorial walks you through building an ID-JAG-based AI agent authorization architecture from scratch. It is not for someone looking for a fully automated demo or a one-command installer. ID-JAG The Hard Way is optimized for learning, which means taking the long route to understand the identities, tokens, policies, and trust boundaries required to let an AI agent access protected APIs on behalf of a signed-in human user.
+This tutorial **ID-JAG The Hard Way** walks you through building an ID-JAG-based AI agent authorization architecture from scratch. It is not for someone looking for a fully automated demo or a one-command installer. The **ID-JAG The Hard Way** is optimized for learning, which means taking the long route to understand the identities, tokens, policies, and trust boundaries required to let an AI agent access protected APIs on behalf of a signed-in human user in [ID-JAG specification](https://techblog.lycorp.co.jp/en/20260417a).
 
-> [!NOTE]
-> The results of this tutorial should not be considered production ready. The goal is to learn the architecture, not to ship a hardened production platform.
+## What You Will Get
 
-By the end of this tutorial, you will run a real local flow where a human user (*yourself*) sends a prompt to an AI agent, the agent calls a protected MCP server, and the request is authorized by a protected resource server using real tokens and policies with least privilege for each transaction.
+By the end of this tutorial, you will have a fully functional local flow (like the demo below) where:
+
+- **You** send a real prompt to an AI agent.
+- The **AI agent** calls a real protected MCP server on your behalf.
+- The **Resource Server** authorizes the request using real tokens and least-privilege policies for each transaction.
 
 ![ID-JAG The Hard Way Demo](./assets/id-jag-the-hard-way-readme-demo.gif)
 
