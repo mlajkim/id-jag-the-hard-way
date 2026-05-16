@@ -1,8 +1,4 @@
-apply-providers-config-patch:
-	@kubectl patch deployment athenz-zts-server -n athenz --patch-file hack/static/zts-providers-config-patch.yaml
-
-# Test Purpose Only Below:
-
+# builds jar file locally
 build:
 	@mvn clean package \
 		-Dmaven.resolver.transport=wagon \
