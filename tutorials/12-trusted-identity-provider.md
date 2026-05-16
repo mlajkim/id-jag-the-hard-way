@@ -6,7 +6,7 @@
 
 In this tutorial, we will configure the authorization server (Athenz) to trust Keycloak as an Identity Provider (IdP).
 
-## Learn What to Do
+## Learn what to do
 
 So far, we have been running Athenz and Keycloak locally. However, Athenz does not trust any IdP by default unless explicitly configured. To exchange a Keycloak-generated ID token for an ID-JAG token, the Athenz server must be able to trust and verify the Keycloak server. Additionally, Athenz needs to be instructed on how to handle the specific token formats of external IdPs.
 
