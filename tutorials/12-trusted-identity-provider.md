@@ -31,7 +31,9 @@ Verify that the JAR file has been successfully mounted inside the Athenz server 
 
 ```sh
 kubectl -n athenz exec deployment/athenz-zts-server -c athenz-zts-server -- sh -c "ls -al /opt/athenz/zts/lib/jars | grep keycloak"
+```
 
+```sh
 # -rw-r--r-- 1 root   root      3237 May  1 14:26 keycloak-token-provider.jar
 ```
 
@@ -62,7 +64,9 @@ data:
       }
     ]
 EOF
+```
 
+```sh
 # configmap/zts-providers-config created
 ```
 
@@ -71,7 +75,9 @@ EOF
 >
 > ```sh
 > kubectl -n athenz exec deployment/athenz-zts-server -c athenz-zts-server -- sh -c "curl -k http://host.docker.internal:9090/realms/master/protocol/openid-connect/certs | jq ."
+> ```
 >
+> ```sh
 > # {
 > #  "keys": [
 > #    {
@@ -83,7 +89,9 @@ Next, patch the Athenz ZTS deployment to mount this configuration map:
 
 ```sh
 kubectl patch deployment athenz-zts-server -n athenz --patch-file keycloak_token_exchange_provider/hack/static/zts-providers-config-patch.yaml
+```
 
+```sh
 # deployment.apps/athenz-zts-server patched
 ```
 
@@ -91,7 +99,9 @@ Wait a few seconds, then verify that the file is present in the container:
 
 ```sh
 kubectl -n athenz exec deployment/athenz-zts-server -c athenz-zts-server -- sh -c "cat /opt/athenz/zts/conf/providers.json"
+```
 
+```sh
 # [
 #   {
 #     "issuerUri": "https://localhost:9090/realms/master",
@@ -113,7 +123,9 @@ Finally, restart the ZTS server so it can load the new configuration:
 
 ```sh
 kubectl -n athenz rollout restart deployment athenz-zts-server
+```
 
+```sh
 # deployment.apps/athenz-zts-server restarted
 ```
 

@@ -48,7 +48,9 @@ Now, generate the key pair for your client identity. We will store these in the 
 ```sh
 mkdir -p ./keys
 ./my_tools/create-private-key.sh "./keys/idjag-learner"
+```
 
+```sh
 # Generating RSA key pair for: ./keys/idjag-learner...
 # Done! Keys generated: ./keys/idjag-learner.key, ./keys/idjag-learner.public.key
 ```
@@ -173,7 +175,9 @@ Execute the script to authorize the `idjag-learner` service to fetch certificate
 
 ```sh
 ./my_tools/enable-cert-provider.sh "human" "idjag-learner"
+```
 
+```sh
 # Enabling ZTS Certificate Provider for human.idjag-learner...
 # [Template(s) successfully applied to domain]
 ```
@@ -235,7 +239,9 @@ Execute the script using the parameters we configured earlier:
 
 ```sh
 ./my_tools/fetch-cert.sh "human" "idjag-learner" "./keys/idjag-learner.key" "v1"
+```
 
+```sh
 # Fetching X.509 Certificate for human.idjag-learner...
 # Done! Certificate saved to: ./keys/idjag-learner.crt
 ```

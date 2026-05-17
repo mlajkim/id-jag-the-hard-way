@@ -20,7 +20,9 @@ In Athenz, you must allow the `zts.jag_exchange` action on the target roles. Fir
 
 ```sh
 ./my_tools/add-policy.sh "api" "token-exchangable-ai-agents" "zts.jag_exchange" "role.docs-getter"
+```
 
+```sh
 # Creating Policy: api:policy.zts.jag_exchange...
 ```
 
@@ -34,7 +36,9 @@ Next, add the `ai.open-webui` as a member of this new token exchange role:
 
 ```sh
 ./my_tools/add-role-member.sh "api" "token-exchangable-ai-agents" "ai.open-webui"
+```
 
+```sh
 # Adding Member ai.open-webui to Role: api:role.token-exchangable-ai-agents...
 ```
 

@@ -55,6 +55,7 @@ pyenv install 3.11
 pyenv local 3.11
 python --version
 
+```sh
 # Python 3.11.15
 ```
 
