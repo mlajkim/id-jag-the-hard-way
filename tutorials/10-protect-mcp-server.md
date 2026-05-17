@@ -22,6 +22,30 @@ make -C api_server mcp-proxy-local \
 
 ## Update the MCP Target Port to Proxy
 
+Navigate to `User Icon` > `Admin Panel` > `Settings` > `Integrations`, and click the configuration icon for the API MCP Server.
+
+Change the MCP Server's target URL to `http://localhost:8102` so that traffic routes through the new Authorization Proxy.
+
+![10_change_mcp_target_port_to_authorzation_proxy](./assets/10_change_mcp_target_port_to_authorzation_proxy.png)
+
+## Verification
+
+Now, let's test if the new authorization proxy forwards our request to the original MCP Server. (Spoiler: This request is expected to fail)
+
+```
+get docs!
+```
+
+It will fail with an error similar to the following:
+
+![10_open_webui_says_no_permission_against_mcp_server](./assets/10_open_webui_says_no_permission_against_mcp_server.png)
+
+This happens because the Authorization Proxy server we just configured requires the `access` action on the `api:mcp` resource, which we haven't granted yet. This permission check is illustrated in the architecture diagram below:
+
+![10_failed_to_go_through_authorization_server](./assets/10_failed_to_go_through_authorization_server.png)
+
+## Fix Insufficient Permission
+
 To authorize access to the authorization server, our identity service (`human.idjag-learner`) must have the following permissions:
 
 - resource: `mcp` on domain `api`
@@ -87,7 +111,7 @@ Make the following change:
 1. Attach the access token exactly as we did previously.
 2. Set the MCP Authorization Server URL to `http://localhost:8102`.
 
-![10_attach_access_token_n_new_authorzation_server](./assets/10_attach_access_token_n_new_authorzation_server.png)
+![10_attach_access_token_with_new_scope](./assets/10_attach_access_token_with_new_scope.png)
 
 ## Verification
 
@@ -101,14 +125,9 @@ And we successfully get the docs from the API MCP Server!
 
 ![10_successsfully_get_docs_from_api_mcp_server](./assets/10_successsfully_get_docs_from_api_mcp_server.png)
 
-<details>
-  <summary>Click to learn what happens if no permission against the MCP</summary>
-  <br>
+The permission check is illustrated in the architecture diagram below:
 
-  &nbsp;&nbsp;If you attempt to access the MCP without the proper permissions, you will encounter the following error:
-
-  ![10_failed_to_get_docs_with_no_permission_for_mcp](./assets/10_failed_to_get_docs_with_no_permission_for_mcp.png)
-</details>
+![10_mcp_access_permission_required](./assets/10_mcp_access_permission_required.png)
 
 ## Summary of Changes
 
