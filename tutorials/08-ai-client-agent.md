@@ -137,7 +137,7 @@ _root_user_at=$(./my_tools/fetch-access-token.sh \
 cat "./keys/api_docs-getter.jwt"
 ```
 
-Go to `User Icon` > `Admin Panel` > `Settings` > `Integrations` > `Manage Tool SErvers` > `+ Icon` to register the MCP server as a tool server.
+Go to `User Icon` > `Admin Panel` > `Settings` > `Integrations` > `Manage Tool Servers` > `+ Icon` to register the MCP server as a tool server.
 
 - Name: `API MCP Server`
 - Description: `MCP server for API that holds documentation`
