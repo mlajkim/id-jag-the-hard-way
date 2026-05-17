@@ -17,7 +17,6 @@ env:
 
 jobs:
   build-and-push:
-    if: contains(fromJSON('["mlajkim/id-jag-the-hard-way", "athenz-community/id-jag-the-hard-way"]'), github.repository)
     runs-on: ubuntu-latest
     permissions:
       contents: read
