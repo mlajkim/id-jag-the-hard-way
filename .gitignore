@@ -23,4 +23,7 @@
 hs_err_pid*
 replay_pid*
 
+ai_client_gateway/certs/
+ai_client_gateway/node_modules/
+
 keycloak_token_exchange_provider/target/
