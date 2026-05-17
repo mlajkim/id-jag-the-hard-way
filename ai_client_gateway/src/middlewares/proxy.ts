@@ -5,7 +5,7 @@ import { getAccessToken } from "../utils/athenzAt.ts";
 import {
   ensureOpenApiSpecSynced,
   resolveRequiredScope,
-} from "../utils/openapi.js"; // 파일명에 맞게 수정
+} from "../utils/openapi.js";
 import {Request, Response } from "express";
 
 export async function proxyMiddleware(req: Request, res: Response) {
