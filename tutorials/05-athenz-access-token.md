@@ -195,6 +195,79 @@ open "http://localhost:${_athenz_ui_port}/domain/api/role/docs-getter/policy"
 
 ![05_add_policy_to_role](./assets/05_add_policy_to_role.png)
 
+## Sync Policies Locally
+
+To allow every service integrated with Athenz to perform localized authentication and authorization, Athenz offers a distributed feature where each service can run policy checks locally. In the Athenz ecosystem, this component is known as the ZTS Policy Updater (ZPU).
+
+Let's create our own simplified `zpu` script:
+
+```sh
+cat > ./my_tools/zpu.sh <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+DOMAIN="$1"
+CERT="$2"
+KEY="$3"
+POLICY_DIR="$4"
+
+ZTS_URL="${ZTS_URL:-https://localhost:8443/zts/v1}"
+INTERVAL=30
+
+FILE_DOMAIN="${DOMAIN//./_}"
+OUT_FILE="${POLICY_DIR}/${FILE_DOMAIN}.pol"
+TMP_FILE="${POLICY_DIR}/${FILE_DOMAIN}.pol.tmp.$$"
+
+log() {
+  local LEVEL="$1"
+  shift
+  local MSG="$@"
+  local NOW=$(TZ="Asia/Tokyo" date '+%Y-%m-%d %H:%M:%S JST')
+  echo "[${NOW}] [${LEVEL}] ${MSG}"
+}
+
+log "INFO" "Starting ZPU Service for domain [${DOMAIN}] (Interval: ${INTERVAL}s)..."
+
+while true; do
+  log "INFO" "Getting policy for domain [${DOMAIN}] ..."
+  mkdir -p "${POLICY_DIR}"
+
+  set +e
+  CURL_OUT=$(curl -fsS -k -X GET "${ZTS_URL%/}/domain/${DOMAIN}/signed_policy_data" \
+    -H "Accept: application/json" \
+    --cert "${CERT}" \
+    --key "${KEY}" 2>&1)
+  CURL_STATUS=$?
+  set -e
+
+  if [ $CURL_STATUS -eq 0 ]; then
+    echo "${CURL_OUT}" > "${TMP_FILE}"
+    mv "${TMP_FILE}" "${OUT_FILE}"
+    log "INFO" "Successfully synced the domain into \"${OUT_FILE}\""
+  else
+    rm -f "${TMP_FILE}"
+    ERR_MSG=$(echo "${CURL_OUT}" | head -n 1)
+    log "ERROR" "Failed to get policy for domain [${DOMAIN}] ... Error: ${ERR_MSG}"
+  fi
+
+  log "INFO" "Next sync starts after ${INTERVAL} seconds..."
+  sleep ${INTERVAL}
+done
+EOF
+
+chmod +x ./my_tools/zpu.sh
+```
+
+Now, run the ZPU service to start syncing policies for the `api` domain:
+
+```sh
+./my_tools/zpu.sh \
+  "api" \
+  "./athenz_dist/certs/athenz_admin.cert.pem" \
+  "./athenz_dist/keys/athenz_admin.private.pem" \
+  "./api_server/policies"
+```
+
 ## Add Root User as a member
 
 When we manifested Athenz server, it gives us the root user certificate by default. For now, we will use the root user to get the access token. To get the Access Token for the specific role (or scope), we first need to add the root user as a member of the role.
