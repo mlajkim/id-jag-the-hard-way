@@ -2,44 +2,43 @@
 |:----------------------------------------------:|:---------------------:|:------------------------:|
 | [Identity Provider](./11-identity-provider.md) | **AI Client Gateway** | [ID-JAG](./14-id-jag.md) |
 
-# ID-JAG
-🟡 todo; run ai rephrase
+# AI Client Gateway
 
-In this tutorial, we will deploy `AI Client Gateway` that sits between:
+In this tutorial, we will deploy the `AI Client Gateway`, which acts as an intermediary layer between:
 
 - Open WebUI (The AI Client Agent)
 - MCP Server (Authorization Proxy)
 
 ## What is ID-JAG?
 
-ID-JAG is a draft for a new authorization standard currently proposed primarily by companies like Okta, where it extends the trust model of single sign-on (SSO) into the realm of API access. In short, it aims to apply the trust established with an IdP through SSO to API access between applications, or between an agent and a service.
+ID-JAG (Identity Assertion JWT Authorization Grant) is a proposed authorization standard, primarily championed by companies like Okta. It extends the trust model of Single Sign-On (SSO) into the realm of API access. In short, it applies the trust established with an Identity Provider (IdP) during SSO to secure API access between applications, or between an AI agent and a backend service.
 
-You can learn more in details in the following section:
+You can learn more about the specifics here:
 
 - [Identity Assertion JWT Authorization Grant - IETF](https://datatracker.ietf.org/doc/draft-ietf-oauth-identity-assertion-authz-grant/)
 - [Why ID-JAG is the future of AI agent security - LY Corp. Tech Blog](https://techblog.lycorp.co.jp/en/20260417a)
 
-## How ID-JAG specficiation helps us
+## How the ID-JAG Specification Helps Us
 
-When you login through Keycloak, the Keycloak generates an id-token that represents you, just like your ID. Through the ID-JAG process, we can
+When you log in via `Keycloak`, it generates an ID Token that represents your identity. Through the ID-JAG process, we can dynamically handle permissions without manual token management. Specifically, we can:
 
-1. Exchange the id-token into ID-JAG token with new audience the `ai.open-webui` client
-1. Fetch Access token with audience `api` and its scope with the `ai.open-webui` aud ID-JAG
+1. Exchange the initial ID Token for an ID-JAG token scoped to a new audience, `ai.open-webui`.
+1. Fetch an Access Token with the audience `api` (and its required scopes) using the `ai.open-webui` ID-JAG token.
 
-This way we no longer have to manually insert access token for each tool. Also each  tool can be shared between every user in the ai client agent without any manual intervention.
+This means we no longer have to manually insert an Access Token for each tool in the UI. Furthermore, tools can be securely shared among all users in the AI Client Agent without any manual intervention.
 
-## Run AI Client Proxy
+## Run the AI Client Proxy
 
-ID-JAG is somewhat new and not all AI client agents support it yet. Also, if you want to have extra layers of security, such as not handing the Access Token to the AI Client Agent, we use the AI Client Proxy.
+Because ID-JAG is relatively new, not all AI client agents support it natively yet. Additionally, using an AI Client Proxy provides an extra layer of security by preventing the final Access Token from being handed directly to the AI Client Agent.
 
-The proxy is included in this project specifically. So try to do this:
+The proxy is included in this project. Let's try running it:
 
 ```sh
 _mcp_auth_proxy_port=8102
 make -C ai_client_gateway local PROXY_TARGET=http://localhost:$_mcp_auth_proxy_port
 ```
 
-And you will encounter an error following:
+You will likely encounter an error similar to this:
 
 ```sh
 # Error: ENOENT: no such file or directory, open '~/id_jag_the_hard_way_workspace/ai_client_gateway/certs/open-webui.crt'
@@ -48,7 +47,11 @@ And you will encounter an error following:
 #     at file:///Users/jekim/id_jag_the_hard_way_workspace/ai_client_gateway/src/utils/idtokenIntoIdjag.js:17:12
 ```
 
-This is because the AI Client Proxy requires the TLS certificate that represents itself.
+This happens because the AI Client Proxy requires a TLS certificate to identify itself securely.
+
+## Generate the Required Certificates
+
+Let's generate the necessary keys and certificates. First, create a directory and generate the RSA key pair:
 
 ```sh
 mkdir -p ./ai_client_gateway/certs
@@ -58,7 +61,7 @@ mkdir -p ./ai_client_gateway/certs
 # Done! Keys generated: ./ai_client_gateway/certs/open-webui.key, ./ai_client_gateway/certs/open-webui.public.key
 ```
 
-We will create a service `ai.open-webui`, and since we do not hace the TLD yet, we will do:
+Next, we will create a Top-Level Domain (TLD) named `ai` since we haven't created it yet:
 
 ```sh
 ./create-tld.sh "ai"
@@ -68,7 +71,7 @@ We will create a service `ai.open-webui`, and since we do not hace the TLD yet, 
 # Done!
 ```
 
-Then create a service with the key created above:
+Now, register the service open-webui under the `ai` domain using the public key we just generated:
 
 ```sh
 ./create-service.sh "ai" "open-webui" "./ai_client_gateway/certs/open-webui.public.key"
@@ -76,7 +79,7 @@ Then create a service with the key created above:
 # Registering Service: ai.open-webui...
 ```
 
-Enable cert provider for the service `api.api-mcp`:
+Enable the certificate provider for this service:
 
 ```sh
 ./enable-cert-provider.sh "ai" "open-webui"
@@ -84,7 +87,7 @@ Enable cert provider for the service `api.api-mcp`:
 # [Template(s) successfully applied to domain]
 ```
 
-And finally generate X.509 Certificate:
+Generate the X.509 Certificate:
 
 ```sh
 ./fetch-cert.sh "ai" "open-webui" "./ai_client_gateway/certs/open-webui.key" "v1"
@@ -93,13 +96,14 @@ And finally generate X.509 Certificate:
 # Done! Certificate saved to: ./ai_client_gateway/certs/open-webui.crt
 ```
 
-Finally, the `ai_client_gateway` expects Athenz CA certificate, which you can simply copy from `athenz_dist/certs`
+Finally, the `ai_client_gateway` requires the Athenz CA certificate. Copy it from the `athenz_dist/certs` directory:
 
 ```sh
 cp ./athenz_dist/certs/ca.cert.pem ./ai_client_gateway/certs/ca.crt
 ```
 
-Check certificate created:
+Verify that all necessary certificates have been created:
+
 ```sh
 ls -al ./ai_client_gateway/certs/
 
@@ -112,9 +116,9 @@ ls -al ./ai_client_gateway/certs/
 # -rw-r--r--   1 mlajkim  staff   451 May 2 16:43 open-webui.public.key
 ```
 
-## Run Server Again
+## Run the Server Again
 
-With certificate, we expect the `ai_client_gateway` to run successfully.
+With the certificates in place, the `ai_client_gateway` should now start successfully.
 
 ```sh
 _mcp_auth_proxy_port=8102
@@ -126,43 +130,43 @@ make -C ai_client_gateway local PROXY_TARGET=http://localhost:$_mcp_auth_proxy_p
 # 🌍 Public Base URL: http://localhost:3101
 ```
 
-## Modify Tool Target
+## Modify the Tool Target
 
-Instead of directly setting the target to the MCP, we will now set the target to the `ai_client_gateway`.
+Instead of pointing the Open WebUI directly to the MCP server, we will route it through our new `ai_client_gateway`.
 
-Login as admin that has the permission to change the tool on Open WebUI, then navigate to `User Icon` > `Admin Panel` > `Settings` > `Integrations`,
-
-Click the configure icon for the API MCP Server.
-
-Make the following change:
-
-1. Change the MCP Authorization Server URL to the proxy URL `http://localhost:3101`.
-1. Change the `Auth` as `Oauth`
+1. Log in to Open WebUI using an admin account (required to modify integrations).
+1. Navigate to `User Icon` > `Admin Panel` > `Settings` > `Integrations`.
+1. Click the configuration icon for the API MCP Server.
+1. Make the following changes:
+  - Change the MCP Authorization Server URL to the proxy URL: http://localhost:3101
+  - Change the `Auth` to `Oauth`
 
 ![13_edit_connection_of_tool](./assets/13_edit_connection_of_tool.png)
 
 ## Verification
 
-Now re-login as non-admin account, which will be `human.idjag-learner` on Open WebUI
+Log out of the admin account and log back in as the non-admin user (idjag-learner) via Keycloak.
 
 ![13_logged_in_as_idjag_learner](./assets/13_logged_in_as_idjag_learner.png)
 
-Now try asking "Can you get the weather for the following location?".
+Now, test the setup by asking the AI Agent:
 
 ```
 Get docs!
 ```
 
+The request will deliberately fail as following:
+
 ![13_deliberate_failure_to_get_without_permission](./assets/13_deliberate_failure_to_get_without_permission.png)
 
 ## What's happened?
 
-We created a certificate for `ai.open-webui`, and the service does not yet have permission to exchange the `id-token` you get when you sign in into `ID_JAG` token (Red Box)
+We created a certificate for `ai.open-webui`, but this service does not yet have the necessary permissions in Athenz to exchange your Keycloak ID Token into an ID-JAG token (indicated by the red box in your architecture diagram). Because the gateway cannot assert your identity, the request is denied.
 
 ![13_arc_not_enough_permission_into_idjag](./assets/13_arc_not_enough_permission_into_idjag.png)
 
 ## What's next?
 
-In the next tutorial, we will fix the permission error, and finally do actual full prompt
+In the next tutorial, we will fix this permission error by granting the proper token exchange policies, allowing us to successfully execute the end-to-end prompt.
 
 Next: [ID-JAG](./14-id-jag.md)
