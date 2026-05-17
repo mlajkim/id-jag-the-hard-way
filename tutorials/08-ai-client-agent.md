@@ -125,7 +125,7 @@ Get Access Token again:
 
 ```sh
 _scope="api:role.docs-getter"
-_root_user_at=$(./fetch-access-token.sh \
+_root_user_at=$(./my_tools/fetch-access-token.sh \
   "./athenz_dist/certs/athenz_admin.cert.pem" \
   "./athenz_dist/keys/athenz_admin.private.pem" \
   "${_scope}" \

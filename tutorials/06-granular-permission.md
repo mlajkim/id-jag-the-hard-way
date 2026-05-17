@@ -245,7 +245,7 @@ To enforce the principle of least privilege, we will specifically request a toke
 
 ```sh
 _scope="api:role.docs-getter"
-_my_access_token=$(./fetch-access-token.sh \
+_my_access_token=$(./my_tools/fetch-access-token.sh \
   "./keys/idjag-learner.crt" \
   "./keys/idjag-learner.key" \
   "${_scope}")
@@ -281,7 +281,7 @@ Now that your service identity is a recognized member of the role, fetch the acc
 
 ```sh
 _scope="api:role.docs-getter"
-_my_access_token=$(./fetch-access-token.sh \
+_my_access_token=$(./my_tools/fetch-access-token.sh \
   "./keys/idjag-learner.crt" \
   "./keys/idjag-learner.key" \
   "${_scope}")

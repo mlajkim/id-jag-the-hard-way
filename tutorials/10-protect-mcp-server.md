@@ -54,7 +54,7 @@ Now, let's generate a new Access Token containing both scopes (space-separated v
 
 ```sh
 _scope="api:role.mcp-accessor api:role.docs-getter"
-_my_access_token=$(./fetch-access-token.sh \
+_my_access_token=$(./my_tools/fetch-access-token.sh \
   "./keys/idjag-learner.crt" \
   "./keys/idjag-learner.key" \
   "${_scope}" \
