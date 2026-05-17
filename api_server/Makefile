@@ -8,12 +8,6 @@ local:
 		-Dmaven.wagon.http.ssl.insecure=true \
 		-Dmaven.wagon.http.ssl.allowall=true
 
-update-policy:
-	@curl -s -k -X GET "https://localhost:8443/zts/v1/domain/api/signed_policy_data" \
-  -H "Accept: application/json" \
-  --cert ./athenz_dist/certs/athenz_admin.cert.pem \
-  --key ./athenz_dist/keys/athenz_admin.private.pem > api.pol
-
 MCP_PORT ?= 8101
 
 mcp-local:
