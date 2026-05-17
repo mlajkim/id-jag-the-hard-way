@@ -4,6 +4,8 @@
 
 This tutorial **ID-JAG The Hard Way** walks you through building an ID-JAG-based AI agent authorization architecture from scratch. It is not for someone looking for a fully automated demo or a one-command installer. The **ID-JAG The Hard Way** is optimized for learning, which means taking the long route to understand the identities, tokens, policies, and trust boundaries required to let an AI agent access protected APIs on behalf of a signed-in human user in [ID-JAG specification](https://techblog.lycorp.co.jp/en/20260417a).
 
+[![Start Tutorial NOW](https://img.shields.io/badge/▶_START_THE_TUTORIAL_NOW-000000?style=for-the-badge&logoColor=white)](./tutorials/01-prerequisites.md)
+
 ## What You Will Get
 
 By the end of this tutorial, you will have a fully functional local flow (like the demo below) where:
@@ -36,4 +38,4 @@ The name and concept of this tutorial series is inspired by [kelseyhightower/kub
 
 ## 🚀 Ready to dive in?
 
-[![Start Tutorial](https://img.shields.io/badge/▶_START_THE_TUTORIAL-000000?style=for-the-badge&logoColor=white)](./tutorials/01-prerequisites.md)
+[![Start Tutorial](https://img.shields.io/badge/▶_START_THE_TUTORIAL_NOW-000000?style=for-the-badge&logoColor=white)](./tutorials/01-prerequisites.md)
