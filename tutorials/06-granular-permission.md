@@ -119,7 +119,10 @@ Execute the script to register your identity:
 
 This successfully creates the `idjag-learner` service under the `human` domain. You can verify the result in the Athenz UI:
 
-http://localhost:3000/domain/human/service
+```sh
+_athenz_ui_port=3000
+open "http://localhost:${_athenz_ui_port}/domain/human/service"
+```
 
 ![06_new_service](./assets/06_new_service.png)
 
@@ -249,7 +252,9 @@ _my_access_token=$(./my_tools/fetch-access-token.sh \
   "./keys/idjag-learner.crt" \
   "./keys/idjag-learner.key" \
   "${_scope}")
+```
 
+```sh
 # 🔥 [ERROR] Failed to issue an access token. ZTS Response:
 # {
 #   "code": 403,
@@ -261,7 +266,10 @@ _my_access_token=$(./my_tools/fetch-access-token.sh \
 
 Why did this request fail? Because the `human.idjag-learner` service identity is not explicitly authorized to assume the `api:role.docs-getter` role. Athenz defaults to deny. You can confirm this by checking the role members in the UI:
 
-http://localhost:3000/domain/api/role/docs-getter/members
+```sh
+_athenz_ui_port=3000
+open "http://localhost:${_athenz_ui_port}/domain/api/role/docs-getter/members"
+```
 
 ![06_id_jag_learner_not_in_role_yet](./assets/06_id_jag_learner_not_in_role_yet.png)
 
@@ -271,9 +279,12 @@ To fix this, simply run the member addition script we created earlier:
 ./my_tools/add-role-member.sh "api" "docs-getter" "human.idjag-learner"
 ```
 
-Refresh your Athenz UI to verify that `human.idjag-learner` has been successfully added to the role:
+Open once again your Athenz UI to verify that `human.idjag-learner` has been successfully added to the role:
 
-http://localhost:3000/domain/api/role/docs-getter/members
+```sh
+_athenz_ui_port=3000
+open "http://localhost:${_athenz_ui_port}/domain/api/role/docs-getter/members"
+```
 
 ![06_human_id_jag_learner_now_added_as_member](./assets/06_human_id_jag_learner_now_added_as_member.png)
 
@@ -284,8 +295,11 @@ _scope="api:role.docs-getter"
 _my_access_token=$(./my_tools/fetch-access-token.sh \
   "./keys/idjag-learner.crt" \
   "./keys/idjag-learner.key" \
-  "${_scope}")
+  "${_scope}" \
+  "./keys/idjag-learner.jwt")
+```
 
+```sh
 # ✅ [SUCCESS] Issued the following access token:
 # {
 #   "kid": "athenz-zts-server-6966ff7f66-4j67d",
@@ -317,7 +331,9 @@ Finally, send a request to the protected API server with the newly minted access
 
 ```sh
 curl -s -k -H "Authorization: Bearer $_my_access_token" http://localhost:14443/api/docs | jq .
+```
 
+```sh
 # {
 #   "docs": [
 #     {
