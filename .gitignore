@@ -34,5 +34,8 @@ api_server/mcp/certs
 athenz_dist/
 
 keycloak_token_exchange_provider/target/
+keycloak-data/
+
+open_webui/
 
 venv/
