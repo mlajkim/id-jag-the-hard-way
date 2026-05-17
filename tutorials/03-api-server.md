@@ -27,6 +27,7 @@ make -C api_server local PORT=$_api_server_port AT_REQUIRED=false
 Send a request to list the documents.
 
 ```sh
+_api_server_port=14442
 curl localhost:$_api_server_port/api/docs | jq .
 
 # {
