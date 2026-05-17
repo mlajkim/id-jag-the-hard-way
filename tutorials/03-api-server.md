@@ -14,13 +14,13 @@ Clone the sample API server repository.
 Using SSH:
 
 ```sh
-git clone git@github.com:athenz-community/java-provider-server-manifest.git api_sever
+git clone git@github.com:athenz-community/java-provider-server-manifest.git api_server
 ```
 
 Or using HTTPS:
 
 ```sh
-git clone https://github.com/athenz-community/java-provider-server-manifest.git api_sever
+git clone https://github.com/athenz-community/java-provider-server-manifest.git api_server
 ```
 
 ## Run the API Server Locally
@@ -32,7 +32,7 @@ Start the API server without Access Token enforcement:
 
 ```sh
 _api_server_port=14442
-make -C api_sever local PORT=$_api_server_port AT_REQUIRED=false
+make -C api_server local PORT=$_api_server_port AT_REQUIRED=false
 
 # ...
 # 🚀 Server started on port 14442 (Athenz Required: false)
@@ -82,7 +82,7 @@ Start another API server with Access Token enforcement enabled:
 
 ```sh
 _new_api_server_port=14443
-make -C api_sever local PORT=$_new_api_server_port AT_REQUIRED=true
+make -C api_server local PORT=$_new_api_server_port AT_REQUIRED=true
 
 # ...
 # 🚀 Server started on port 14443 (Athenz Required: true)
