@@ -75,6 +75,13 @@ Next, we will create a Top-Level Domain (TLD) named `ai` since we haven't create
 # Done!
 ```
 
+Let's quickly check if the TLD is created:
+
+```sh
+_athenz_ui_port=3000
+open "http://localhost:${_athenz_ui_port}/domain/ai/role"
+```
+
 Now, register the service open-webui under the `ai` domain using the public key we just generated:
 
 ```sh
@@ -154,6 +161,13 @@ We just installed `AI Client Agent` (Highlighted in Red) which Open WebUI can ta
 
 Instead of pointing the Open WebUI directly to the MCP server, we will route it through our new `ai_client_gateway`.
 
+Open the Open WebUI in your browser:
+
+```sh
+_open_webui_keycloak_port=3100
+open http://localhost:$_open_webui_keycloak_port
+```
+
 1. Log in to Open WebUI using an admin account (required to modify integrations).
 1. Navigate to `User Icon` > `Admin Panel` > `Settings` > `Integrations`.
 1. Click the configuration icon for the API MCP Server.
@@ -165,7 +179,12 @@ Instead of pointing the Open WebUI directly to the MCP server, we will route it 
 
 ## Verification
 
-Log out of the admin account and log back in as the non-admin user (idjag-learner) via Keycloak.
+Login as `idjag-learner`:
+
+```sh
+_open_webui_keycloak_port=3100
+open -na "Google Chrome" --args --incognito "http://localhost:${_open_webui_keycloak_port}"
+```
 
 ![13_logged_in_as_idjag_learner](./assets/13_logged_in_as_idjag_learner.png)
 

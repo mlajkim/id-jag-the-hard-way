@@ -154,28 +154,35 @@ _open_webui_keycloak_port=3100
 )
 ```
 
+> [!NOTE]
+> You may shut down the open-webui running without Keycloak on port 3200, but optional.
+
 ## Sign in as `idjag-learner`
 
-You might currently be signed in as the `admin` user. To test the non-admin `idjag-learner` account, you can do one of the following:
+In this tutorial, when you login to Open WebUI with the non-admin account (i.e. `idjag-learner`), you will open a different browser or incognito mode.
 
-- Log out of your admin account.
-- Open a different web browser.
-- Open an incognito/private window in your current browser.
-
-Ensure you are not logged in as the admin, then navigate to the Open WebUI application:
+If you are using Google Chrome:
 
 ```sh
 _open_webui_keycloak_port=3100
-open http://localhost:${_open_webui_keycloak_port}
+open -na "Google Chrome" --args --incognito "http://localhost:${_open_webui_keycloak_port}"
 ```
+
+Or Firefox:
+
+```sh
+_open_webui_keycloak_port=3100
+open -na "Firefox" --args --private-window "http://localhost:${_open_webui_keycloak_port}"
+```
+
+> [!NOTE]
+> The tutorial from now on will only present the Google Chrome
 
 You will see a new login panel with a **Continue with Keycloak** button:
 
 ![11_continue_with_keycloak_appeared](./assets/11_continue_with_keycloak_appeared.png)
 
-Click it, and you will be prompted to log in. Use the credentials we created:
-
-![11_continue_with_keycloak_appeared](./assets/11_continue_with_keycloak_appeared.png)
+Click it, and you will be prompted to log in. Use the credentials we created.
 
 Then you will be prompted to add member
 
@@ -188,6 +195,11 @@ Then you will be prompted to add member
 
 Return to the browser where you are logged in as the `admin` user.
 
+```sh
+_open_webui_keycloak_port=3100
+open http://localhost:${_open_webui_keycloak_port}
+```
+
 Navigate to `http://localhost:3100/admin/users/overview`
 
 ![11_pending_user_id_jag_learner_added](./assets/11_pending_user_id_jag_learner_added.png)
@@ -196,7 +208,14 @@ Click `Edit User` for the `idjag-learner`, then change `Pending` to `User`, and 
 
 ## Return to the `idjag-learner` Browser
 
-Switch back to the browser window for `idjag-learner` and refresh the page. You should now be successfully logged into the interface.
+Switch back to the browser window for `idjag-learner` and refresh the page.
+
+```sh
+_open_webui_keycloak_port=3100
+open -na "Google Chrome" --args --incognito "http://localhost:${_open_webui_keycloak_port}"
+```
+
+You should now be successfully logged into the interface.
 
 ![11_hello_idjag_leanrer](./assets/11_hello_idjag_leanrer.png)
 

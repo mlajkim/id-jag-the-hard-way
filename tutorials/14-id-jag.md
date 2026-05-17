@@ -45,12 +45,6 @@ Next, add the `ai.open-webui` as a member of this new token exchange role:
 > [!NOTE]
 > Notice that the `ai.open-webui` client agent does not require direct permissions to fetch an Access Token against `api:role.docs-getter` or `api:role.mcp-accessor`. It only needs the `zts.jag_exchange` permission to perform the token exchange on the user's behalf.
 
-Finally, because `ai.open-webui` connects to the MCP server directly as an intermediary proxy, it must be an explicit member of the `api:role.mcp-accessor` role. Add the agent as a member:
-
-```sh
-./my_tools/add-role-member.sh "api" "mcp-accessor" "ai.open-webui"
-```
-
 ## Verification
 
 Now, return to the AI Agent UI and test the exact same prompt that failed previously:
