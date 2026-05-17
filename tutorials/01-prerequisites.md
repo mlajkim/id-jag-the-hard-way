@@ -8,7 +8,7 @@ In this tutorial, we will review the machine requirements for following it.
 
 ## Virtual or Physical Machines
 
-This tutorial has been tested and confirmed to work seamlessly on the specifications below. While we expect it to run smoothly on lower-spec machines, those configurations haven't been officially verified. If you successfully run this tutorial on lower specifications, please open an Issue with your setup, and we will update this document!"
+This tutorial has been tested and confirmed to work seamlessly on the specifications below. While we expect it to run smoothly on lower-spec machines, those configurations haven't been officially verified. If you successfully run this tutorial on lower specifications, please open an Issue with your setup, and we will update this document!
 
 |  CPU   |  Memory   |      Status      |
 |:------:|:---------:|:----------------:|
