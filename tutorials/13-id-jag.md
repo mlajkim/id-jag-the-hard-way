@@ -125,7 +125,7 @@ make -C ai_client_gateway local PROXY_TARGET=http://localhost:$_mcp_auth_proxy_p
 
 ## Modify Tool Target
 
-Instead of directly setting the target to the MCP, we will now set the target to the `ai_client_gateway`. 
+Instead of directly setting the target to the MCP, we will now set the target to the `ai_client_gateway`.
 
 Login as admin that has the permission to change the tool on Open WebUI, then navigate to `User Icon` > `Admin Panel` > `Settings` > `Integrations`,
 
@@ -134,14 +134,14 @@ Click the configure icon for the API MCP Server.
 Make the following change:
 
 1. Change the MCP Authorization Server URL to the proxy URL `http://localhost:3101`.
-1. Change the 
+1. Change the `Auth` as `Oauth`
 
 ![13_edit_connection_of_tool](./assets/13_edit_connection_of_tool.png)
 
 ## Verification
 
-Now re-login as non-admin account, which will be `human.idjag-learner` on Open WebUI  
+Now re-login as non-admin account, which will be `human.idjag-learner` on Open WebUI
 
 ![13_logged_in_as_idjag_learner](./assets/13_logged_in_as_idjag_learner.png)
 
-Now try asking "Can you get the weather for the following location?".  
+Now try asking "Can you get the weather for the following location?".
