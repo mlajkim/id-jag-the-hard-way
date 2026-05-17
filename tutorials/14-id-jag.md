@@ -1,17 +1,14 @@
-|                    Previous                    |  Current   | Next |
-|:----------------------------------------------:|:----------:|:----:|
-| [AI Client Gateway](./13-ai-client-gateway.md) | **ID-JAG** | n/a  |
+|                    Previous                    |  Current   |                                  Next                                  |
+|:----------------------------------------------:|:----------:|:----------------------------------------------------------------------:|
+| [AI Client Gateway](./13-ai-client-gateway.md) | **ID-JAG** | [Challenge: Successfully post documents](./challenges/01-post-docs.md) |
 
 # ID-JAG
 
-🟡 todo; run ai rephrase
+In this tutorial, we will finally resolve the authorization issues encountered in the previous step. We will configure the proper token exchange policies in Athenz, allowing the AI Client Gateway to successfully exchange your Keycloak ID Token for an ID-JAG token. Once these permissions are in place, we will execute the end-to-end prompt to confirm the integration works seamlessly.
 
-In this tutorial, we will finally fix the issues we saw in the previous tutorial.
-We will grant the proper token exchange policies in Athenz, allowing the AI Client Gateway to successfully exchange the ID Token for an ID-JAG token. Once that is done, we will be able to successfully execute the end-to-end prompt.
+## Grant Permissions to `ai.open-webui`
 
-## Give permission to `ai.open-webui`
-
-Since  `ai.open-webui` will do the work on behalf of us `human.idjag-learner`, we need to give permission to `ai.open-webui` to exchange the `id-token` you get when you sign in into `ID_JAG` token. We also need to give permission to `ai.open-webui` to access the `api` domain.
+Because `ai.open-webui` acts on behalf of our user (`human.idjag-learner`), we need to explicitly authorize it to exchange the login ID Token for an ID-JAG token. We must also grant it the necessary access within the `api` domain.
 
 First, create a role under domain `api`:
 
@@ -19,7 +16,7 @@ First, create a role under domain `api`:
 ./create-role.sh "api" "token-exchangable-ai-agents"
 ```
 
-In Athenz, you need to allow `zts.jag_exchange` on the target role, which is the `role.docs-getter`, which can be done here:
+In Athenz, you must allow the `zts.jag_exchange` action on the target roles. First, attach this policy for `role.docs-getter`:
 
 ```sh
 ./add-policy.sh "api" "token-exchangable-ai-agents" "zts.jag_exchange" "role.docs-getter"
@@ -27,13 +24,13 @@ In Athenz, you need to allow `zts.jag_exchange` on the target role, which is the
 # Creating Policy: api:policy.zts.jag_exchange...
 ```
 
-Also, the ai agent has to token exchange into the `api:role.mcp-accessor` as well, so let's add that permission as well:
+The `ai.open-webui` (AI Agent) also needs permission to perform a token exchange into the `api:role.mcp-accessor` role. Add that policy as well:
 
 ```sh
 ./add-policy.sh "api" "token-exchangable-ai-agents" "zts.jag_exchange" "role.mcp-accessor"
 ```
 
-Finally add the ai agent `ai.open-webui` to the role `api.token-exchangable-ai-agents`:
+Next, add the `ai.open-webui` as a member of this new token exchange role:
 
 ```sh
 ./add-role-member.sh "api" "token-exchangable-ai-agents" "ai.open-webui"
@@ -41,7 +38,10 @@ Finally add the ai agent `ai.open-webui` to the role `api.token-exchangable-ai-a
 # Adding Member ai.open-webui to Role: api:role.token-exchangable-ai-agents...
 ```
 
-And finally, since `ai.open-webui` will connec to the MCP server on behalf, which requires to be a member of the role `api:role.mcp-accessor` that we created, we need to add the agent as a member as well:
+> [!NOTE]
+> Notice that the `ai.open-webui` client agent does not require direct permissions to fetch an Access Token against `api:role.docs-getter` or `api:role.mcp-accessor`. It only needs the `zts.jag_exchange` permission to perform the token exchange on the user's behalf.
+
+Finally, because `ai.open-webui` connects to the MCP server directly as an intermediary proxy, it must be an explicit member of the `api:role.mcp-accessor` role. Add the agent as a member:
 
 ```sh
 ./add-role-member.sh "api" "mcp-accessor" "ai.open-webui"
@@ -49,8 +49,24 @@ And finally, since `ai.open-webui` will connec to the MCP server on behalf, whic
 
 ## Verification
 
-Now, test the AI Agent with the exact same prompt that failed previously:
+Now, return to the AI Agent UI and test the exact same prompt that failed previously:
 
 ```
 get docs!
 ```
+
+![14_successful_attrival_from_server](./assets/14_successful_attrival_from_server.png)
+
+## What's happened?
+
+Here is a brief overview of the completed flow: The API server successfully returns its data because the proper trust chain was established. The ID-JAG token exchange allowed the Gateway to act on your behalf, all while maintaining the Principle of Least Privilege for every component involved in the architecture.
+
+![14_arc_get_docs_through_id_jag](./assets/14_arc_get_docs_through_id_jag.png)
+
+## What's next?
+
+Congratulations🎉. You have successfully configured your AI Agent to communicate and retrieve data protected by multiple layers of security, all while strictly adhering to the Principle of Least Privilege for each component.
+
+Ready to test your new **ID-JAG** skills? Take on the final challenge! In this next section, the step-by-step instructions are removed. You will need to apply everything you've learned so far to troubleshoot and solve the problem on your own.
+
+Next: [Challenge: Successfully post documents](./challenges/01-post-docs.md)

@@ -126,7 +126,26 @@ domain=$1
 role_name=$2
 action=$3
 resource=$4
-policy_name="${action}"
+
+sanitize_policy_name() {
+  local s="$1"
+
+  s="$(printf '%s' "$s" \
+    | sed -E 's/[^A-Za-z0-9_-]+/_/g; s/_+/_/g; s/^_+//; s/_+$//')"
+
+  if [ -z "$s" ]; then
+    s="policy"
+  fi
+
+  if [[ ! "$s" =~ ^[A-Za-z0-9_] ]]; then
+    s="_${s}"
+  fi
+
+  printf '%s' "$s"
+}
+
+raw_policy_name="${role_name}_${action}_${resource}"
+policy_name="$(sanitize_policy_name "$raw_policy_name")"
 
 echo "Creating Policy: ${domain}:policy.${policy_name}..."
 
@@ -144,7 +163,6 @@ curl -s -k -X PUT "https://localhost:4443/zms/v1/domain/${domain}/policy/${polic
       }
     ]
   }'
-
 EOF
 
 chmod +x add-policy.sh

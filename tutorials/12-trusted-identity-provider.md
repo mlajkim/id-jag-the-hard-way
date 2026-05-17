@@ -142,3 +142,4 @@ We have successfully established trust relationships between:
 In the next tutorial, we will put this all together. You will log in as a human user via Keycloak. The resulting ID token will be sent to the Authorization Server (Athenz), which will validate it against Keycloak and exchange it for an ID-JAG token. We will then exchange this ID-JAG token for an Access Token representing you, the user. Finally, we will use this Access Token to make an authenticated API call to the MCP server, proving our identity chain works end-to-end.
 
 Next: [AI Client Gateway](./13-ai-client-gateway.md)
+

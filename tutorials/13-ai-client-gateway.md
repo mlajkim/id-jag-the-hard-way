@@ -130,6 +130,12 @@ make -C ai_client_gateway local PROXY_TARGET=http://localhost:$_mcp_auth_proxy_p
 # 🌍 Public Base URL: http://localhost:3101
 ```
 
+## What we have done
+
+We just installed `AI Client Agent` (Highlighted in Red) which Open WebUI can talk to as a tool :
+
+![13_ai_client_agent_installed_and_used](./assets/13_ai_client_agent_installed_and_used.png)
+
 ## Modify the Tool Target
 
 Instead of pointing the Open WebUI directly to the MCP server, we will route it through our new `ai_client_gateway`.
