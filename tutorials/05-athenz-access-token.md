@@ -195,9 +195,11 @@ open "http://localhost:${_athenz_ui_port}/domain/api/role/docs-getter/policy"
 
 ![05_add_policy_to_role](./assets/05_add_policy_to_role.png)
 
-## Bring Policy Locally
+## Sync Policies Locally
 
-In Athenz, for every service using Athenz can do the authetncation/authorzaiton, Athenz offers distributed feature where each service can run policy checks. In Athenz we call this ZPU, and we will simply create our own `zpu` as the following:
+To allow every service integrated with Athenz to perform localized authentication and authorization, Athenz offers a distributed feature where each service can run policy checks locally. In the Athenz ecosystem, this component is known as the ZTS Policy Updater (ZPU).
+
+Let's create our own simplified `zpu` script:
 
 ```sh
 cat > ./my_tools/zpu.sh <<'EOF'
@@ -216,8 +218,6 @@ FILE_DOMAIN="${DOMAIN//./_}"
 OUT_FILE="${POLICY_DIR}/${FILE_DOMAIN}.pol"
 TMP_FILE="${POLICY_DIR}/${FILE_DOMAIN}.pol.tmp.$$"
 
-mkdir -p "${POLICY_DIR}"
-
 log() {
   local LEVEL="$1"
   shift
@@ -230,6 +230,7 @@ log "INFO" "Starting ZPU Service for domain [${DOMAIN}] (Interval: ${INTERVAL}s)
 
 while true; do
   log "INFO" "Getting policy for domain [${DOMAIN}] ..."
+  mkdir -p "${POLICY_DIR}"
 
   set +e
   CURL_OUT=$(curl -fsS -k -X GET "${ZTS_URL%/}/domain/${DOMAIN}/signed_policy_data" \
@@ -257,7 +258,7 @@ EOF
 chmod +x ./my_tools/zpu.sh
 ```
 
-Then run the zpu server:
+Now, run the ZPU service to start syncing policies for the `api` domain:
 
 ```sh
 ./my_tools/zpu.sh \
