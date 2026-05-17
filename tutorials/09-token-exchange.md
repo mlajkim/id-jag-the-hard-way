@@ -75,4 +75,4 @@ As shown in the architecture above, our API Server is now fully protected by Ath
 
 In the next section, we will implement an authentication layer for the MCP server to ensure only authenticated users can interact with it.
 
-Next: [Protect MCP Server](./10-protect-mcp-server-with-keycloak.md)
+Next: [Protect MCP Server](./10-protect-mcp-server.md)
