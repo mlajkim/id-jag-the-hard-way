@@ -32,16 +32,17 @@ ID-JAG is somewhat new and not all AI client agents support it yet. Also, if you
 The proxy is included in this project specifically. So try to do this:
 
 ```sh
-make -C ai_client_gateway local
+_mcp_auth_proxy_port=8102
+make -C ai_client_gateway local PROXY_TARGET=http://localhost:$_mcp_auth_proxy_port
 ```
 
 And you will encounter an error following:
 
 ```sh
-# Error: ENOENT: no such file or directory, open '~/id-jag-the-hard-way-workspace/ai_client_gateway/certs/open-webui.crt'
+# Error: ENOENT: no such file or directory, open '~/id_jag_the_hard_way_workspace/ai_client_gateway/certs/open-webui.crt'
 #     at Object.openSync (node:fs:563:18)
 #     at Object.readFileSync (node:fs:447:35)
-#     at file:///Users/jekim/id-jag-the-hard-way-workspace/ai_client_gateway/src/utils/idtokenIntoIdjag.js:17:12
+#     at file:///Users/jekim/id_jag_the_hard_way_workspace/ai_client_gateway/src/utils/idtokenIntoIdjag.js:17:12
 ```
 
 This is because the AI Client Proxy requires the TLS certificate that represents itself.
@@ -108,14 +109,13 @@ ls -al ./ai_client_gateway/certs/
 # -rw-r--r--   1 mlajkim  staff   451 May 2 16:43 open-webui.public.key
 ```
 
-
-
 ## Run Server Again
 
 With certificate, we expect the `ai_client_gateway` to run successfully.
 
 ```sh
-make -C ai_client_gateway local
+_mcp_auth_proxy_port=8102
+make -C ai_client_gateway local PROXY_TARGET=http://localhost:$_mcp_auth_proxy_port
 
 # ...
 # 🚀 OpenWebUI OpenAPI Gateway listening on 0.0.0.0:3101
