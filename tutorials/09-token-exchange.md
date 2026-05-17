@@ -18,12 +18,21 @@ Let's add the role `api:role.docs-token-exchanger`. As the name implies, members
 ./my_tools/create-role.sh "api" "docs-token-exchanger"
 ```
 
+Check if the role is created in Athenz UI:
+
+```sh
+_athenz_ui_port=3000
+open "http://localhost:${_athenz_ui_port}/domain/api/role/docs-token-exchanger/members"
+```
+
 In Athenz, you must explicitly define both the **source** and **target** of the token exchange. Since the MCP server operates within the `api` domain, we can apply both policies as follows:
 
 ```sh
 ./my_tools/add-policy.sh "api" "docs-token-exchanger" "zts.token_source_exchange" "api"
 ./my_tools/add-policy.sh "api" "docs-token-exchanger" "zts.token_target_exchange" "api:role.docs-getter"
 ```
+
+![09_source_and_target_exchange_policy](assets/09_source_and_target_exchange_policy.png)
 
 > [!NOTE]
 > Note that the MCP server itself doesn't need direct access to the target resource; it only needs permission to perform the exchange.

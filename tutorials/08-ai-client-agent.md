@@ -93,6 +93,8 @@ chmod +x ./my_tools/run-open-webui-without-keycloak.sh
 
 ### Run Open WebUI without Keycloak for testing
 
+Run the following command to start Open WebUI Server (Takes about 5 minutes):
+
 ```sh
 mkdir -p open_webui
 _open_webui_without_keycloak_port=3200
@@ -135,7 +137,7 @@ _root_user_at=$(./my_tools/fetch-access-token.sh \
 cat "./keys/api_docs-getter.jwt"
 ```
 
-Go to `User Icon` > `Admin Panel` > `Settings` > `Integrations` > `+ Icon` to register the MCP server as a tool server.
+Go to `User Icon` > `Admin Panel` > `Settings` > `Integrations` > `Manage Tool SErvers` > `+ Icon` to register the MCP server as a tool server.
 
 - Name: `API MCP Server`
 - Description: `MCP server for API that holds documentation`
@@ -163,7 +165,11 @@ Then in `tools` section, select the tool that we just created as the following:
 
 ## Verification
 
-Finally, ask the AI Agent the following:
+> [!NOTE]
+> Make sure that the tool we just created is selected
+> ![08_tool_selected](./assets/08_tool_selected.png)
+
+Finally, ask the AI Agent the following (It is expected to fail):
 
 ```
 get docs!
