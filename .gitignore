@@ -36,6 +36,8 @@ athenz_dist/
 keycloak_token_exchange_provider/target/
 keycloak_data/
 
+keys/
+
 my_tools/
 
 open_webui/
