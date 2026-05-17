@@ -1,24 +1,13 @@
+# AI Client Gateway
 
+`AI Client Gateway` is a component used by the **id-jag-the-hard-way** where it does:
 
-```sh
-git clone git@github.com:athenz-community/openai-athenz-client-gateway.git ai_client_gateway
-make -C ai_client_gateway local
-```
+- Handles the authentication of the AI client
+- Exchanges the ID-JAG with an access token
+- forwards requests to the Athenz API
 
-Please note that your openai setting has to select `Oauth` for `Auth`:
+This way the AI client agent itself does not hold any access token, which could expose it.
 
-![oauth_as_auth](./assets/oauth_as_auth.png)
+# Notice
 
-
-Or you can do:
-
-```sh
-make -C ai_client_gateway local PROXY_TARGET=http://localhost:8102
-
-```
-
-## Description
-
-- Name: `ai_client_gateway`
-- Description: `OpenAPI Gateway that allows AI agents to securely access Athenz-protected Kubernetes Documentation APIs. It transparently handles Keycloak authentication and Athenz token (ID-JAG, AT) exchanges internally. AI agents can use these tools directly without needing to manage complex authorization states or tokens.`
-- URL: `http://localhost:3101`
+This document itself is depending on the main repository **id-jag-the-hard-way**. If you want to learn about this project, please refer to the main [README.md](../README.md)
