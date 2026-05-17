@@ -26,4 +26,16 @@ replay_pid*
 ai_client_gateway/certs/
 ai_client_gateway/node_modules/
 
+api_server/authorization_proxy/target/
+api_server/target/
+api_server/mcp/node_modules/
+api_server/mcp/certs
+
+athenz_dist/
+
 keycloak_token_exchange_provider/target/
+keycloak_data/
+
+open_webui/
+
+venv/

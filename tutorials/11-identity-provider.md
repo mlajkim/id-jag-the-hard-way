@@ -16,7 +16,7 @@ _keycloak_running_port=9090
 docker run -p ${_keycloak_running_port}:8080 \
   -e KEYCLOAK_ADMIN=admin \
   -e KEYCLOAK_ADMIN_PASSWORD=admin \
-  -v ./keycloak-data:/opt/keycloak/data \
+  -v ./keycloak_data:/opt/keycloak/data \
   quay.io/keycloak/keycloak:latest start-dev
 ```
 
