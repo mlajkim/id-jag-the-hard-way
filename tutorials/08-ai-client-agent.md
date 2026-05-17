@@ -98,7 +98,7 @@ mkdir -p open_webui
 _open_webui_without_keycloak_port=3200
 (
   cd open_webui
-  ../run-open-webui-without-keycloak.sh "$_open_webui_without_keycloak_port"
+  ../my_tools/run-open-webui-without-keycloak.sh "$_open_webui_without_keycloak_port"
 )
 ```
 

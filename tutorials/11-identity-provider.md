@@ -150,7 +150,7 @@ _keycloak_client_id="ai.open-webui"
 _open_webui_keycloak_port=3100
 (
   cd open_webui
-  ../run-open-webui-keycloak.sh "$_keycloak_client_id" "$_kcs" "$_open_webui_keycloak_port"
+  ../my_tools/run-open-webui-keycloak.sh "$_keycloak_client_id" "$_kcs" "$_open_webui_keycloak_port"
 )
 ```
 
