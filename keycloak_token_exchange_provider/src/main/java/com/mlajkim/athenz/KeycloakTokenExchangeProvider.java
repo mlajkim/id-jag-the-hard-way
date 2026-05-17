@@ -11,7 +11,7 @@ public class KeycloakTokenExchangeProvider implements TokenExchangeIdentityProvi
     @Override
     public String getTokenIdentity(OAuth2Token token) {
         System.out.println(">>> [KeycloakTokenExchangeProvider] Extracting identity from token...");
-        Object preferredUsername = token.getClaim("preferred_username");
+        Object preferredUsername = token.getClaim("username");
         if (preferredUsername != null) {
             return "human." + preferredUsername.toString();
         }
