@@ -69,15 +69,21 @@ async function fetchATFromZTS(idJag: string, scope: string): Promise<string> {
 }
 
 // getAccessToken returns Access Token in raw string format
+// cache feature for Athenz AT is disabled so that users can test themselves adding/removing members
+const AT_CACHED = false;
 export async function getAccessToken(req: any, scope: string): Promise<string> {
-  const cached = atCache.get(scope);
+  if (AT_CACHED) {
+    const cached = atCache.get(scope);
 
-  // const now = Math.floor(Date.now() / 1000)
-  if (cached && cached.exp > Math.floor(Date.now() / 1000) + 60) {
-    console.error(`[Athenz AT] ⚡ Hit! Returning cached AT for scope: ${scope}`);
-    return cached.token;
+    // const now = Math.floor(Date.now() / 1000)
+    if (cached && cached.exp > Math.floor(Date.now() / 1000) + 60) {
+      console.error(`[Athenz AT] ⚡ Hit! Returning cached AT for scope: ${scope}`);
+      return cached.token;
+    } else {
+      console.error(`[Athenz AT] 🚀 No cache found for Athenz Access Token with scope [${scope}]`);
+    }
   } else {
-    console.error(`[Athenz AT] 🚀 No cache found for Athenz Access Token with scope [${scope}]`);
+    console.error(`[Athenz AT] Cache Feature for Athenz AT is now disabled`);
   }
 
   const idJag = await exchangeToIdjag(req, scope);

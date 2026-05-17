@@ -216,7 +216,7 @@ KEY="$3"
 POLICY_DIR="$4"
 
 ZTS_URL="${ZTS_URL:-https://localhost:8443/zts/v1}"
-INTERVAL=30
+INTERVAL=5
 
 FILE_DOMAIN="${DOMAIN//./_}"
 OUT_FILE="${POLICY_DIR}/${FILE_DOMAIN}.pol"
@@ -270,6 +270,24 @@ Now, run the ZPU service to start syncing policies for the `api` domain:
   "./athenz_dist/certs/athenz_admin.cert.pem" \
   "./athenz_dist/keys/athenz_admin.private.pem" \
   "./api_server/policies"
+```
+
+Let's see the `api.pol` file.
+
+```sh
+cat ./api_server/policies/api.pol | jq .
+```
+
+```sh
+# {
+#   "signedPolicyData": {
+#     "policyData": {
+#       "domain": "api",
+#       "policies": [
+#         {
+#           "name": "api:policy.docs-token-exchanger_zts_token_target_exchange_api_role_docs-getter",
+#           "modified": "2026-05-17T21:41:12.752Z",
+# ...
 ```
 
 ## Add Root User as a member
