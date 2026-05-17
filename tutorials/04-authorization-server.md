@@ -70,7 +70,9 @@ for component in "${_athenz_components[@]}"; do
     --selector=app.kubernetes.io/name=$component \
     --timeout=180s || echo "Timed out waiting for $component. Check logs manually."
 done
+```
 
+```sh
 # pod/athenz-db-0 condition met
 # pod/athenz-cli-574d747dff-mfdgz condition met
 # pod/athenz-zms-server-568d4cfd89-tqwwn condition met
@@ -82,7 +84,9 @@ Verify that the pods are running:
 
 ```sh
 kubectl get pods -n athenz
+```
 
+```sh
 # NAME                                 READY   STATUS    RESTARTS   AGE
 # athenz-cli-574d747dff-mfdgz          1/1     Running   0          87s
 # athenz-db-0                          1/1     Running   0          88s

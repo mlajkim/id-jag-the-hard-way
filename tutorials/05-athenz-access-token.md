@@ -381,7 +381,9 @@ _root_user_at=$(./my_tools/fetch-access-token.sh \
   "./athenz_dist/keys/athenz_admin.private.pem" \
   "${_scope}" \
   "./keys/api_docs-getter.jwt")
+```
 
+```sh
 # Fetching Access Token for scope: api:role.docs-getter...
 # ✅ [SUCCESS] Issued the following access token:
 # {
@@ -416,7 +418,9 @@ Last time we tried to access the `docs` resource of the API server, but we got a
 
 ```sh
 curl -s -k http://localhost:14443/api/docs | jq .
+```
 
+```sh
 # {
 #   "error": "Unauthorized",
 #   "message": "Authorization header is missing or invalid Bearer token.",
@@ -429,7 +433,9 @@ With the Access Token, let's see if we can access it now.
 
 ```sh
 curl -s -k -H "Authorization: Bearer $_root_user_at" http://localhost:14443/api/docs | jq .
+```
 
+```sh
 # {
 #   "docs": [
 #     {

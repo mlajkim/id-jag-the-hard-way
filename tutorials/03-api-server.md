@@ -17,7 +17,9 @@ Start the API server without Access Token enforcement:
 ```sh
 _api_server_port=14442
 make -C api_server local PORT=$_api_server_port AT_REQUIRED=false
+```
 
+```sh
 # ...
 # 🚀 Server started on port 14442 (Athenz Required: false)
 ```
@@ -29,7 +31,9 @@ Send a request to list the documents.
 ```sh
 _api_server_port=14442
 curl localhost:$_api_server_port/api/docs | jq .
+```
 
+```sh
 # {
 #   "docs": [
 #     {
@@ -68,7 +72,9 @@ Start another API server with Access Token enforcement enabled:
 ```sh
 _new_api_server_port=14443
 make -C api_server local PORT=$_new_api_server_port AT_REQUIRED=true
+```
 
+```sh
 # ...
 # 🚀 Server started on port 14443 (Athenz Required: true)
 ```
@@ -78,7 +84,9 @@ Now send the same request to the protected API server:
 ```sh
 _new_api_server_port=14443
 curl "localhost:${_new_api_server_port}/api/docs" | jq .
+```
 
+```sh
 # {
 #   "error": "Unauthorized",
 #   "message": "Authorization header is missing or invalid Bearer token.",
