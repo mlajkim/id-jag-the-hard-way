@@ -77,7 +77,7 @@ make -C api_server mcp-local PORT=8101
 
 ## What we have done
 
-We create a new service identity `api.mcp-api` for the MCP Server that runs in port 8101.
+We have created a running MCP Server for API with service identity `api.mcp-api` highlighted in red below.
 
 ![07_arch_mcp_server_for_api](./assets/07_arch_mcp_server_for_api.png)
 
