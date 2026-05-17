@@ -1,11 +1,14 @@
-|                    Previous                    |  Current   | Next |
-|:----------------------------------------------:|:----------:|:----:|
-| [Identity Provider](./11-identity-provider.md) | **ID-JAG** | n/a  |
+|                    Previous                    |        Current        |           Next           |
+|:----------------------------------------------:|:---------------------:|:------------------------:|
+| [Identity Provider](./11-identity-provider.md) | **AI Client Gateway** | [ID-JAG](./14-id-jag.md) |
 
 # ID-JAG
 🟡 todo; run ai rephrase
 
-In this tutorial, we will follow the ID-JAG, Identity Assertion JWT Authorization Grant.
+In this tutorial, we will deploy `AI Client Gateway` that sits between:
+
+- Open WebUI (The AI Client Agent)
+- MCP Server (Authorization Proxy)
 
 ## What is ID-JAG?
 
@@ -145,3 +148,21 @@ Now re-login as non-admin account, which will be `human.idjag-learner` on Open W
 ![13_logged_in_as_idjag_learner](./assets/13_logged_in_as_idjag_learner.png)
 
 Now try asking "Can you get the weather for the following location?".
+
+```
+Get docs!
+```
+
+![13_deliberate_failure_to_get_without_permission](./assets/13_deliberate_failure_to_get_without_permission.png)
+
+## What's happened?
+
+We created a certificate for `ai.open-webui`, and the service does not yet have permission to exchange the `id-token` you get when you sign in into `ID_JAG` token (Red Box)
+
+![13_arc_not_enough_permission_into_idjag](./assets/13_arc_not_enough_permission_into_idjag.png)
+
+## What's next?
+
+In the next tutorial, we will fix the permission error, and finally do actual full prompt
+
+Next: [ID-JAG](./14-id-jag.md)
