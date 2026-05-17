@@ -6,7 +6,7 @@ name: Build and Push JAR file
 on:
   push:
     branches: [ "main" ]
-  pull_request:
+  pull_request_target:
     branches: [ "main" ]
   workflow_dispatch:
 
@@ -45,7 +45,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN || secrets.DEPLOY_GHCR_SECRET }}
+          password: ${{ secrets.DEPLOY_GHCR_SECRET || secrets.GITHUB_TOKEN }}
 
       # 4. Determine tags based on event type (PR number or latest)
       - name: Extract metadata (tags, labels) for Docker
