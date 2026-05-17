@@ -30,19 +30,19 @@ To authorize access to the authorization server, our identity service (`human.id
 Since we haven't prepared any roles or policies yet, let's create an explicit role named `mcp-accessor` and attach an access policy for the `mcp` resource.
 
 ```sh
-./create-role.sh "api" "mcp-accessor"
+./my_tools/create-role.sh "api" "mcp-accessor"
 ```
 
 Next, attach the policy to the role:
 
 ```sh
-./add-policy.sh "api" "mcp-accessor" "access" "mcp"
+./my_tools/add-policy.sh "api" "mcp-accessor" "access" "mcp"
 ```
 
 Finally, add you `human.idjag-learner` principal to the role:
 
 ```sh
-./add-role-member.sh "api" "mcp-accessor" "human.idjag-learner"
+./my_tools/add-role-member.sh "api" "mcp-accessor" "human.idjag-learner"
 ```
 
 ## Fetch a New Access Token for the New Role

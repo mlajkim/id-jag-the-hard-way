@@ -13,7 +13,7 @@ In this tutorial, we will set up MCP Server for API so that our AI client agent 
 To run the MCP Server, just like we have given service identity for human user `human.idjag-learner` , we also need to give service identity for the MCP server. Because mcp server is part of the API server, we will simply create service `api-mcp` under the tld (domain) `api`.
 
 ```sh
-./create-private-key.sh "./keys/api-mcp"
+./my_tools/create-private-key.sh "./keys/api-mcp"
 
 # Done! Keys generated: ./keys/api-mcp.key, ./keys/api-mcp.public.key
 ```
@@ -21,7 +21,7 @@ To run the MCP Server, just like we have given service identity for human user `
 Then create a service with the key created above:
 
 ```sh
-./create-service.sh "api" "api-mcp" "./keys/api-mcp.public.key"
+./my_tools/create-service.sh "api" "api-mcp" "./keys/api-mcp.public.key"
 
 # Registering Service: api.api-mcp...
 ```
@@ -29,7 +29,7 @@ Then create a service with the key created above:
 Enable cert provider for the service `api.api-mcp`:
 
 ```sh
-./enable-cert-provider.sh "api" "api-mcp"
+./my_tools/enable-cert-provider.sh "api" "api-mcp"
 
 # [Template(s) successfully applied to domain]
 ```
@@ -37,7 +37,7 @@ Enable cert provider for the service `api.api-mcp`:
 And finally generate X.509 Certificate:
 
 ```sh
-./fetch-cert.sh "api" "api-mcp" "./keys/api-mcp.key" "v1"
+./my_tools/fetch-cert.sh "api" "api-mcp" "./keys/api-mcp.key" "v1"
 
 # Fetching X.509 Certificate for api.api-mcp...
 # Done! Certificate saved to: ./keys/api-mcp.crt

@@ -55,7 +55,7 @@ Let's generate the necessary keys and certificates. First, create a directory an
 
 ```sh
 mkdir -p ./ai_client_gateway/certs
-./create-private-key.sh "./ai_client_gateway/certs/open-webui"
+./my_tools/create-private-key.sh "./ai_client_gateway/certs/open-webui"
 
 # Generating RSA key pair for: ./ai_client_gateway/certs/open-webui...
 # Done! Keys generated: ./ai_client_gateway/certs/open-webui.key, ./ai_client_gateway/certs/open-webui.public.key
@@ -64,7 +64,7 @@ mkdir -p ./ai_client_gateway/certs
 Next, we will create a Top-Level Domain (TLD) named `ai` since we haven't created it yet:
 
 ```sh
-./create-tld.sh "ai"
+./my_tools/create-tld.sh "ai"
 
 # Creating TLD: ai...
 # {"description":"TLD for ai","org":"ajkimkim","auditEnabled":false,"ypmId":0,"autoDeleteTenantAssumeRoleAssertions":false,"name":"ai","modified":"2026-05-16T07:44:39.295Z","id":"17e2d0f0-50fb-11f1-8af4-88f84977247b"}
@@ -74,7 +74,7 @@ Next, we will create a Top-Level Domain (TLD) named `ai` since we haven't create
 Now, register the service open-webui under the `ai` domain using the public key we just generated:
 
 ```sh
-./create-service.sh "ai" "open-webui" "./ai_client_gateway/certs/open-webui.public.key"
+./my_tools/create-service.sh "ai" "open-webui" "./ai_client_gateway/certs/open-webui.public.key"
 
 # Registering Service: ai.open-webui...
 ```
@@ -82,7 +82,7 @@ Now, register the service open-webui under the `ai` domain using the public key 
 Enable the certificate provider for this service:
 
 ```sh
-./enable-cert-provider.sh "ai" "open-webui"
+./my_tools/enable-cert-provider.sh "ai" "open-webui"
 
 # [Template(s) successfully applied to domain]
 ```
@@ -90,7 +90,7 @@ Enable the certificate provider for this service:
 Generate the X.509 Certificate:
 
 ```sh
-./fetch-cert.sh "ai" "open-webui" "./ai_client_gateway/certs/open-webui.key" "v1"
+./my_tools/fetch-cert.sh "ai" "open-webui" "./ai_client_gateway/certs/open-webui.key" "v1"
 
 # Fetching X.509 Certificate for ai.open-webui...
 # Done! Certificate saved to: ./ai_client_gateway/certs/open-webui.crt

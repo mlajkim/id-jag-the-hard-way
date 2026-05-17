@@ -15,14 +15,14 @@ Even if the original requester has `get` access to the `api:docs` resource, it d
 Let's add the role `api:role.docs-token-exchanger`. As the name implies, members of this role are authorized to exchange Access Tokens for the target scope `api:role.docs-getter`:
 
 ```sh
-./create-role.sh "api" "docs-token-exchanger"
+./my_tools/create-role.sh "api" "docs-token-exchanger"
 ```
 
 In Athenz, you must explicitly define both the **source** and **target** of the token exchange. Since the MCP server operates within the `api` domain, we can apply both policies as follows:
 
 ```sh
-./add-policy.sh "api" "docs-token-exchanger" "zts.token_source_exchange" "api"
-./add-policy.sh "api" "docs-token-exchanger" "zts.token_target_exchange" "api:role.docs-getter"
+./my_tools/add-policy.sh "api" "docs-token-exchanger" "zts.token_source_exchange" "api"
+./my_tools/add-policy.sh "api" "docs-token-exchanger" "zts.token_target_exchange" "api:role.docs-getter"
 ```
 
 > [!NOTE]
@@ -31,7 +31,7 @@ In Athenz, you must explicitly define both the **source** and **target** of the 
 Finally, add the member you want to authorize for the token exchange (in this case, the `api.api-mcp` service principal):
 
 ```sh
-./add-role-member.sh "api" "docs-token-exchanger" "api.api-mcp"
+./my_tools/add-role-member.sh "api" "docs-token-exchanger" "api.api-mcp"
 ```
 
 ## Verification

@@ -82,7 +82,7 @@ Click **Save**.
 We will create a quick script to run the Open WebUI client with Keycloak configured.
 
 ```sh
-cat > run-open-webui-keycloak.sh <<'EOF'
+cat > ./my_tools/run-open-webui-keycloak.sh <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -129,7 +129,7 @@ fi
 exec open-webui serve --port "${PORT}"
 EOF
 
-chmod +x run-open-webui-keycloak.sh
+chmod +x ./my_tools/run-open-webui-keycloak.sh
 ```
 
 ### Run Open WebUI with Keycloak
