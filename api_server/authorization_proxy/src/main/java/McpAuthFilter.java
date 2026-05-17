@@ -47,6 +47,12 @@ public class McpAuthFilter implements Filter {
         if (System.getProperty("athenz.zpe.policy_dir") == null) {
             System.setProperty("athenz.zpe.policy_dir", "../policies");
         }
+        if (System.getProperty("athenz.zpe.monitor_timeout_secs") == null) {
+            System.setProperty("athenz.zpe.monitor_timeout_secs", "5");
+        }
+        if (System.getProperty("athenz.zpe.skip_policy_dir_check") == null) {
+            System.setProperty("athenz.zpe.skip_policy_dir_check", "false");
+        }
         if (System.getProperty("athenz.zpe.check_policy_zms_signature") == null) {
             System.setProperty("athenz.zpe.check_policy_zms_signature", "false");
         }
