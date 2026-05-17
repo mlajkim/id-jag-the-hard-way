@@ -69,6 +69,7 @@ async function fetchATFromZTS(idJag: string, scope: string): Promise<string> {
 }
 
 // getAccessToken returns Access Token in raw string format
+// cache feature for Athenz AT is disabled so that users can test themselves adding/removing members
 const AT_CACHED = false;
 export async function getAccessToken(req: any, scope: string): Promise<string> {
   if (AT_CACHED) {
