@@ -56,7 +56,9 @@ Let's generate the necessary keys and certificates. First, create a directory an
 ```sh
 mkdir -p ./ai_client_gateway/certs
 ./my_tools/create-private-key.sh "./ai_client_gateway/certs/open-webui"
+```
 
+```sh
 # Generating RSA key pair for: ./ai_client_gateway/certs/open-webui...
 # Done! Keys generated: ./ai_client_gateway/certs/open-webui.key, ./ai_client_gateway/certs/open-webui.public.key
 ```
@@ -65,7 +67,9 @@ Next, we will create a Top-Level Domain (TLD) named `ai` since we haven't create
 
 ```sh
 ./my_tools/create-tld.sh "ai"
+```
 
+```sh
 # Creating TLD: ai...
 # {"description":"TLD for ai","org":"ajkimkim","auditEnabled":false,"ypmId":0,"autoDeleteTenantAssumeRoleAssertions":false,"name":"ai","modified":"2026-05-16T07:44:39.295Z","id":"17e2d0f0-50fb-11f1-8af4-88f84977247b"}
 # Done!
@@ -75,7 +79,9 @@ Now, register the service open-webui under the `ai` domain using the public key 
 
 ```sh
 ./my_tools/create-service.sh "ai" "open-webui" "./ai_client_gateway/certs/open-webui.public.key"
+```
 
+```sh
 # Registering Service: ai.open-webui...
 ```
 
@@ -83,7 +89,9 @@ Enable the certificate provider for this service:
 
 ```sh
 ./my_tools/enable-cert-provider.sh "ai" "open-webui"
+```
 
+```sh
 # [Template(s) successfully applied to domain]
 ```
 
@@ -91,7 +99,9 @@ Generate the X.509 Certificate:
 
 ```sh
 ./my_tools/fetch-cert.sh "ai" "open-webui" "./ai_client_gateway/certs/open-webui.key" "v1"
+```
 
+```sh
 # Fetching X.509 Certificate for ai.open-webui...
 # Done! Certificate saved to: ./ai_client_gateway/certs/open-webui.crt
 ```
@@ -106,7 +116,9 @@ Verify that all necessary certificates have been created:
 
 ```sh
 ls -al ./ai_client_gateway/certs/
+```
 
+```sh
 # total 24
 # drwxr-xr-x   5 mlajkim  staff   160 May 2 16:47 .
 # drwxr-xr-x  13 mlajkim  staff   416 May 2 16:43 ..
@@ -123,7 +135,9 @@ With the certificates in place, the `ai_client_gateway` should now start success
 ```sh
 _mcp_auth_proxy_port=8102
 make -C ai_client_gateway local PROXY_TARGET=http://localhost:$_mcp_auth_proxy_port
+```
 
+```sh
 # ...
 # 🚀 OpenWebUI OpenAPI Gateway listening on 0.0.0.0:3101
 # 🔗 Upstream API: http://localhost:8102

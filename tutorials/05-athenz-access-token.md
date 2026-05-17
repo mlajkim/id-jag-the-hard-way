@@ -47,7 +47,9 @@ Create a domain `api` that represents the API server domain:
 
 ```sh
 ./my_tools/create-tld.sh "api"
+```
 
+```sh
 # {"description":"TLD for api","org":"ajkimkim","auditEnabled":false,"ypmId":0,"autoDeleteTenantAssumeRoleAssertions":false,"name":"api","modified":"2026-05-10T07:56:23.059Z","id":"bce22e30-4c45-11f1-8af4-88f84977247b"}
 ```
 
@@ -98,7 +100,9 @@ Now, execute the script to create the `docs-getter` role inside the `api` domain
 
 ```sh
 ./my_tools/create-role.sh "api" "docs-getter"
+```
 
+```sh
 # Creating Role: api:role.docs-getter...
 ```
 
@@ -306,8 +310,6 @@ The default service name for the root user is `user.athenz_admin`. We can add th
 
 ```sh
 ./my_tools/add-role-member.sh "api" "docs-getter" "user.athenz_admin"
-
-# Adding Member user.athenz_admin to Role: api:role.docs-getter...
 ```
 
 You can see that `user.athenz_admin` is added to the `docs-getter` role in the `api` domain:

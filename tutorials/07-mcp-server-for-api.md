@@ -42,6 +42,7 @@ Enable cert provider for the service `api.api-mcp`:
 ```sh
 ./my_tools/enable-cert-provider.sh "api" "api-mcp"
 
+```sh
 # [Template(s) successfully applied to domain]
 ```
 
