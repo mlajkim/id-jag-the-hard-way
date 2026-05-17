@@ -40,7 +40,7 @@ Fetch a fresh Athenz Access Token to ensure it hasn't expired:
 
 ```sh
 _scope="api:role.docs-getter"
-_my_access_token=$(./fetch-access-token.sh \
+_my_access_token=$(./my_tools/fetch-access-token.sh \
   "./keys/idjag-learner.crt" \
   "./keys/idjag-learner.key" \
   "${_scope}" \
