@@ -16,31 +16,36 @@ This tutorial has been tested and confirmed to work seamlessly on the specificat
 
 ## Port Usage
 
-This tutorial runs several servers that use your internal port. Some of the ports could already have been taken in your system. This document is designed to work on the port provided by default. You can customize certain ports but it may not work smooth as it has not been tested.
+If you are interested in knowing what kind of ports used by default for this tutorial, you may expand the following.
 
-AI Client Agent:
+<details>
+  <summary>Click to expand</summary>
+  <br>
 
-- `3100`: Open WebUI Port with Keycloak
-- `3101`: OpenAI Athenz Client Gateway
-- `3200`: Open WebUI Port without Keycloak
-- `11434`: Ollama
+  AI Client Agent:
 
-IdP:
+  - `3100`: Open WebUI Port with Keycloak
+  - `3101`: OpenAI Athenz Client Gateway
+  - `3200`: Open WebUI Port without Keycloak
+  - `11434`: Ollama
 
-- `9090`: Keycloak Server
+  IdP:
 
-Authorization Server (Athenz):
+  - `9090`: Keycloak Server
 
-- `3000`: Athenz UI
-- `4443`: Athenz ZMS
-- `8443`: Athenz ZTS
+  Authorization Server (Athenz):
 
-Resource Server (API Server):
+  - `3000`: Athenz UI
+  - `4443`: Athenz ZMS
+  - `8443`: Athenz ZTS
 
-- `8102`: Athenz Authorization Proxy for API MCP Server
-- `8101`: API MCP Server for API
-- `14443`: Dummy API (Original API, not proxied by Athenz proxy)
-- `14442`: Dummy API without Athenz AT required
+  Resource Server (API Server):
+
+  - `8102`: Athenz Authorization Proxy for API MCP Server
+  - `8101`: API MCP Server for API
+  - `14443`: Dummy API (Original API, not proxied by Athenz proxy)
+  - `14442`: Dummy API without Athenz AT required
+</details>
 
 ## Note
 
