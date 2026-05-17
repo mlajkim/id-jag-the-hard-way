@@ -1,7 +1,7 @@
 # This workflow creates a docker image that pushes the jar file
 # For more details, check out the markdown file under the same directory of this yml.
 
-name: Build and Push JAR file
+name: Build and Push KeycloakTokenExchangeProvider JAR file
 
 on:
   push:
@@ -17,6 +17,7 @@ env:
 
 jobs:
   build-and-push:
+    if: contains(fromJSON('["mlajkim/id-jag-the-hard-way", "athenz-community/id-jag-the-hard-way"]'), github.repository)
     runs-on: ubuntu-latest
     permissions:
       contents: read

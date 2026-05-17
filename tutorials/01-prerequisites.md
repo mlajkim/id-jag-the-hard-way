@@ -8,11 +8,11 @@ In this tutorial, we will review the machine requirements for following it.
 
 ## Virtual or Physical Machines
 
-🟡
+This tutorial has been tested and confirmed to work seamlessly on the specifications below. While we expect it to run smoothly on lower-spec machines, those configurations haven't been officially verified. If you successfully run this tutorial on lower specifications, please open an Issue with your setup, and we will update this document!"
 
-|       CPU        |       Memory        |
-|:----------------:|:-------------------:|
-| M3 Pro or higher | 36 GB RAM or higher |
+|  CPU   |  Memory   |      Status      |
+|:------:|:---------:|:----------------:|
+| M3 Pro | 36 GB RAM | Verified Working |
 
 ## Port Usage
 
@@ -20,14 +20,13 @@ This tutorial runs several servers that use your internal port. Some of the port
 
 AI Client Agent:
 
-- `3001`: Open WebUI Port with Keycloak
+- `3100`: Open WebUI Port with Keycloak
 - `3101`: OpenAI Athenz Client Gateway
 - `3200`: Open WebUI Port without Keycloak
 - `11434`: Ollama
 
 IdP:
 
-- `9089`: Caddy HTTPS Port for Keycloak
 - `9090`: Keycloak Server
 
 Authorization Server (Athenz):
