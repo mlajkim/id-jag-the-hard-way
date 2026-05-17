@@ -13,7 +13,7 @@ In a production environment, you should never use administrative credentials for
 Let's create a script named `create-private-key.sh` that generates an RSA private and public key pair using OpenSSL:
 
 ```sh
-cat > create-private-key.sh <<'EOF'
+cat > ./my_tools/create-private-key.sh <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -40,14 +40,14 @@ rm "${service_name}.old.key"
 echo "Done! Keys generated: ${service_name}.key, ${service_name}.public.key"
 EOF
 
-chmod +x create-private-key.sh
+chmod +x ./my_tools/create-private-key.sh
 ```
 
 Now, generate the key pair for your client identity. We will store these in the `./keys` directory to keep our workspace organized. Since you are working through this tutorial, we will name this client identity `idjag-learner` to represent you:
 
 ```sh
 mkdir -p ./keys
-./create-private-key.sh "./keys/idjag-learner"
+./my_tools/create-private-key.sh "./keys/idjag-learner"
 
 # Generating RSA key pair for: ./keys/idjag-learner...
 # Done! Keys generated: ./keys/idjag-learner.key, ./keys/idjag-learner.public.key
@@ -60,7 +60,7 @@ In Athenz, every service identity—even those representing human users—must r
 Run the following command to create the TLD:
 
 ```sh
-./create-tld.sh "human"
+./my_tools/create-tld.sh "human"
 ```
 
 This creates the `human` domain, represented by the purple section in the following diagram:
@@ -72,7 +72,7 @@ This creates the `human` domain, represented by the purple section in the follow
 Let's create a script named `create-service.sh` that reads your public key, strips out the PEM headers (as required by the Athenz API), and registers the service.
 
 ```sh
-cat > create-service.sh <<'EOF'
+cat > ./my_tools/create-service.sh <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -108,13 +108,13 @@ curl -s -k --fail-with-body -X PUT "https://localhost:4443/zms/v1/domain/${domai
 
 EOF
 
-chmod +x create-service.sh
+chmod +x ./my_tools/create-service.sh
 ```
 
 Execute the script to register your identity:
 
 ```sh
-./create-service.sh "human" "idjag-learner" "./keys/idjag-learner.public.key"
+./my_tools/create-service.sh "human" "idjag-learner" "./keys/idjag-learner.public.key"
 ```
 
 This successfully creates the `idjag-learner` service under the `human` domain. You can verify the result in the Athenz UI:
@@ -138,7 +138,7 @@ We will authorize our `human` domain to use the default built-in ZTS provider (`
 Let's create a script named `enable-cert-provider.sh`:
 
 ```sh
-cat > enable-cert-provider.sh <<'EOF'
+cat > ./my_tools/enable-cert-provider.sh <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -163,13 +163,13 @@ kubectl -n athenz exec -i deploy/athenz-cli -- \
 
 EOF
 
-chmod +x enable-cert-provider.sh
+chmod +x ./my_tools/enable-cert-provider.sh
 ```
 
 Execute the script to authorize the `idjag-learner` service to fetch certificates:
 
 ```sh
-./enable-cert-provider.sh "human" "idjag-learner"
+./my_tools/enable-cert-provider.sh "human" "idjag-learner"
 
 # Enabling ZTS Certificate Provider for human.idjag-learner...
 # [Template(s) successfully applied to domain]
@@ -182,7 +182,7 @@ Now that the provider is set up, we can request the X.509 certificate. We will u
 Let's create a script named `fetch-cert.sh` that securely injects our local private key into the pod, generates the certificate via ZTS, and extracts the resulting certificate back to our local machine.
 
 ```sh
-cat > fetch-cert.sh <<'EOF'
+cat > ./my_tools/fetch-cert.sh <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -224,14 +224,14 @@ kubectl exec -i deploy/athenz-cli -n athenz -- sh -c "
 echo "Done! Certificate saved to: ${out_cert_file}"
 EOF
 
-chmod +x fetch-cert.sh
+chmod +x ./my_tools/fetch-cert.sh
 
 ```
 
 Execute the script using the parameters we configured earlier:
 
 ```sh
-./fetch-cert.sh "human" "idjag-learner" "./keys/idjag-learner.key" "v1"
+./my_tools/fetch-cert.sh "human" "idjag-learner" "./keys/idjag-learner.key" "v1"
 
 # Fetching X.509 Certificate for human.idjag-learner...
 # Done! Certificate saved to: ./keys/idjag-learner.crt
@@ -268,7 +268,7 @@ http://localhost:3000/domain/api/role/docs-getter/members
 To fix this, simply run the member addition script we created earlier:
 
 ```sh
-./add-role-member.sh "api" "docs-getter" "human.idjag-learner"
+./my_tools/add-role-member.sh "api" "docs-getter" "human.idjag-learner"
 ```
 
 Refresh your Athenz UI to verify that `human.idjag-learner` has been successfully added to the role:

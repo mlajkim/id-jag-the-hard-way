@@ -61,7 +61,7 @@ python --version
 ### Create OpenWebUI Runner Script
 
 ```sh
-cat > run-open-webui-without-keycloak.sh <<'EOF'
+cat > ./my_tools/run-open-webui-without-keycloak.sh <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -87,7 +87,7 @@ fi
 exec open-webui serve --port "${PORT}"
 EOF
 
-chmod +x run-open-webui-without-keycloak.sh
+chmod +x ./my_tools/run-open-webui-without-keycloak.sh
 ```
 
 ### Run Open WebUI without Keycloak for testing

@@ -4,7 +4,7 @@
 
 # Authorization Server
 
-In this tutorial, you will deploy Athenz as the local authorization server and verify that it is running properly.
+In this tutorial, we will deploy Athenz as the local authorization server and verify that it is running properly.
 
 ## Create Local Kubernetes Cluster
 
@@ -39,7 +39,21 @@ make -C athenz_dist clean-kubernetes-athenz deploy-kubernetes-athenz
 > [!NOTE]
 > The SSOT guide for using the Athenz manifest is available [here](https://github.com/athenz-community/athenz-distribution/blob/main/README.md)
 
+Once you see the following output, you can proceed to the next step:
+
+```sh
+# ...
+# namespace/athenz unchanged
+# configmap/athenz-ui-config created
+# secret/athenz-admin-keys configured
+# secret/athenz-ui-keys created
+# service/athenz-ui created
+# deployment.apps/athenz-ui created
+```
+
 ## Check if the Athenz server is running
+
+Execute the following to see the status of the Athenz server:
 
 ```sh
 _athenz_components=(
@@ -79,10 +93,16 @@ kubectl get pods -n athenz
 
 ## Keep Athenz Endpoints Reachable
 
-The `kubectl port-forward` command may stop if a pod restarts. Therefore, we need a way to keep the port-forwarding active. Let's create a simple shell script `keep-athenz-port-forward.sh`:
+The `kubectl port-forward` command may stop if a pod restarts. Therefore, we need a way to keep the port-forwarding active. First of all, let's quickly create a directory `my_tools` to store the shell script:
 
 ```sh
-cat > keep-athenz-port-forward.sh <<'EOF'
+mkdir -p my_tools
+```
+
+Now, let's create a simple shell script `keep-athenz-port-forward.sh` inside `my_tools`:
+
+```sh
+cat > my_tools/keep-athenz-port-forward.sh <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -110,7 +130,7 @@ _pf athenz-ui "${_athenz_ui_port}" 3000 &
 wait
 EOF
 
-chmod +x keep-athenz-port-forward.sh
+chmod +x my_tools/keep-athenz-port-forward.sh
 ```
 
 You may customize the ports, but we recommend sticking with the defaults below:
@@ -120,7 +140,7 @@ _zms_port=4443
 _zts_port=8443
 _athenz_ui_port=3000
 
-./keep-athenz-port-forward.sh "$_zms_port" "$_zts_port" "$_athenz_ui_port"
+./my_tools/keep-athenz-port-forward.sh "$_zms_port" "$_zts_port" "$_athenz_ui_port"
 ```
 
 ## Open Athenz UI
