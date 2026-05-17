@@ -76,6 +76,7 @@ make -C api_server local PORT=$_new_api_server_port AT_REQUIRED=true
 Now send the same request to the protected API server:
 
 ```sh
+_new_api_server_port=14443
 curl "localhost:${_new_api_server_port}/api/docs" | jq .
 
 # {
@@ -89,7 +90,7 @@ curl "localhost:${_new_api_server_port}/api/docs" | jq .
 
 The API server is now protected, so requests without a valid Bearer Access Token are rejected.
 
-## What you have done
+## What's happened?
 
 You were able to fetch the data from the API Server, with `AT_REQUIRED=false` API Server:
 
@@ -99,9 +100,9 @@ But you also saw the Unauthorized error when you tried to fetch the data from th
 
 ![03_arc_get_docs_from_api_server_unauthorized](./assets/03_arc_get_docs_from_api_server_unauthorized.png)
 
-## How to Fix the Unauthorized Error
+## What's next?
 
-To fix the Unauthorized error, we need to attach a valid Access Token to the request.
+In the next tutorial, we will fix the Unauthorized error by setting up an authorization server and attaching a valid Access Token to the request.
 
 The API server expects an Access Token issued by an authorization server. In this tutorial, we will use [Athenz](https://github.com/AthenZ/athenz) as the authorization server. Athenz is a [CNCF Sandbox project](https://www.cncf.io/projects/athenz/) for authentication and authorization, used by [Yahoo Inc.](https://www.yahooinc.com/) in the United States, [LY Corporation](https://www.lycorp.co.jp/en/) in Japan, and [Vespa.ai](https://vespa.ai/) in Europe.
 

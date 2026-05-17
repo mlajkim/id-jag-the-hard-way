@@ -4,7 +4,7 @@
 
 # Authorization Server
 
-In this tutorial, you will deploy Athenz as the local authorization server and verify that it is running properly.
+In this tutorial, we will deploy Athenz as the local authorization server and verify that it is running properly.
 
 ## Create Local Kubernetes Cluster
 
