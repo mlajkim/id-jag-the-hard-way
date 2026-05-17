@@ -257,7 +257,8 @@ _scope="api:role.docs-getter"
 _my_access_token=$(./my_tools/fetch-access-token.sh \
   "./keys/idjag-learner.crt" \
   "./keys/idjag-learner.key" \
-  "${_scope}")
+  "${_scope}" \
+  "./keys/idjag-learner.jwt")
 ```
 
 ```sh
