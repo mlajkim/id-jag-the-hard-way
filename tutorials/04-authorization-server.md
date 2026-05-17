@@ -39,7 +39,21 @@ make -C athenz_dist clean-kubernetes-athenz deploy-kubernetes-athenz
 > [!NOTE]
 > The SSOT guide for using the Athenz manifest is available [here](https://github.com/athenz-community/athenz-distribution/blob/main/README.md)
 
+Once you see the following output, you can proceed to the next step:
+
+```sh
+# ...
+# namespace/athenz unchanged
+# configmap/athenz-ui-config created
+# secret/athenz-admin-keys configured
+# secret/athenz-ui-keys created
+# service/athenz-ui created
+# deployment.apps/athenz-ui created
+```
+
 ## Check if the Athenz server is running
+
+Execute the following to see the status of the Athenz server:
 
 ```sh
 _athenz_components=(
