@@ -46,7 +46,6 @@ chmod +x ./my_tools/create-private-key.sh
 Now, generate the key pair for your client identity. We will store these in the `./keys` directory to keep our workspace organized. Since you are working through this tutorial, we will name this client identity `idjag-learner` to represent you:
 
 ```sh
-mkdir -p ./keys
 ./my_tools/create-private-key.sh "./keys/idjag-learner"
 ```
 
