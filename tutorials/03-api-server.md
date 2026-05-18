@@ -7,6 +7,8 @@
 In this tutorial, we will set up a simple API server that exposes a small HTTP API for storing and managing documents.
 We will first run the API server without authorization so that we can understand its basic behavior. Then, we will enable Access Token enforcement and confirm that unauthorized requests are rejected.
 
+![03_arc_get_docs_from_api_server](./assets/03_arc_get_docs_from_api_server.png)
+
 ## Run the API Server Locally
 
 > [!NOTE]
@@ -100,11 +102,7 @@ The API server is now protected, so requests without a valid Bearer Access Token
 
 ## What's happened?
 
-You were able to fetch the data from the API Server, with `AT_REQUIRED=false` API Server:
-
-![03_arc_get_docs_from_api_server](./assets/03_arc_get_docs_from_api_server.png)
-
-But you also saw the Unauthorized error when you tried to fetch the data from the API Server, with `AT_REQUIRED=true` API Server:
+Unauthorized error is returned when you tried to fetch the data from the API Server, with `AT_REQUIRED=true` API Server:
 
 ![03_arc_get_docs_from_api_server_unauthorized](./assets/03_arc_get_docs_from_api_server_unauthorized.png)
 
