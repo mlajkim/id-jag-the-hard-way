@@ -21,16 +21,7 @@ kind create cluster
 
 ## Deploy Athenz Server
 
-> [!NOTE]
-> Upcoming tutorials will use the `athenz_dist` directory by default, so we do not recommend customizing this name.
-
-The Athenz Community provides a one-command manifest tool to deploy it to a Kubernetes cluster. Let's clone the repository:
-
-```sh
-git clone git@github.com:athenz-community/athenz-distribution.git athenz_dist
-```
-
-Once the repository is cloned, run the following command (this will take about 5 minutes):
+Run the following command (this will take about 5 minutes):
 
 ```sh
 make -C athenz_dist clean-kubernetes-athenz deploy-kubernetes-athenz
