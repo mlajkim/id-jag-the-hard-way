@@ -14,7 +14,9 @@ Simply run the following command:
 
 ```sh
 curl -fsSL https://ollama.com/install.sh | sh
+```
 
+```sh
 # Starting Ollama...
 # >>> Downloading Ollama for macOS...
 # ######################################################################## 100.0%

@@ -16,11 +16,9 @@ By the end of this tutorial, you will have a fully functional local flow (like t
 
 ![ID-JAG The Hard Way Demo](./assets/id-jag-the-hard-way-readme-demo.gif)
 
-<details>
-  <summary>Click to expand the architecture diagram for the demo above</summary>
-  <br>
+## Architecture
 
-  &nbsp;&nbsp;The following diagram illustrates the architecture, which includes:
+The following diagram illustrates the architecture, which includes:
 
   - **A user** (on the left) interacting with an AI server via an AI client
   - **Keycloak** as the Identity Provider (IdP)
@@ -30,7 +28,6 @@ By the end of this tutorial, you will have a fully functional local flow (like t
   - **Users or service accounts** (in the purple box) using the traditional method of obtaining an access token directly from the Authorization Server to communicate with the protected resource server
 
   ![ID-JAG The Hard Way Current Full Architecture](./assets/id-jag-the-hard-way-current-full-architecture.png)
-</details>
 
 ## Special Thanks
 
