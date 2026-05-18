@@ -27,7 +27,13 @@ The following diagram illustrates the architecture, which includes:
 - **A sample API server** acting as the Resource Server
 - **Users or service accounts** (in the purple box) using the traditional method of obtaining an access token directly from the Authorization Server to communicate with the protected resource server
 
-  ![ID-JAG The Hard Way Current Full Architecture](./assets/id-jag-the-hard-way-current-full-architecture.png)
+![ID-JAG The Hard Way Current Full Architecture](./assets/id-jag-the-hard-way-current-full-architecture.png)
+
+## Permission Architecture
+
+The following graph shows the required permissions:
+
+![Permission - ID-JAG The Hard Way](./assets/permission-id-jag-the-hard-way-permission-architecture.png)
 
 ## Special Thanks
 
