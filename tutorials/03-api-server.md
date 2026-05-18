@@ -110,10 +110,8 @@ But you also saw the Unauthorized error when you tried to fetch the data from th
 
 ## What's next?
 
-In the next tutorial, we will fix the Unauthorized error by setting up an authorization server and attaching a valid Access Token to the request.
+So, how do we get past this Unauthorized error? We need a trusted authorization server.
 
-The API server expects an Access Token issued by an authorization server. In this tutorial, we will use [Athenz](https://github.com/AthenZ/athenz) as the authorization server. Athenz is a [CNCF Sandbox project](https://www.cncf.io/projects/athenz/) for authentication and authorization, used by [Yahoo Inc.](https://www.yahooinc.com/) in the United States, [LY Corporation](https://www.lycorp.co.jp/en/) in Japan, and [Vespa.ai](https://vespa.ai/) in Europe.
-
-In the next tutorial, we will deploy Athenz locally and use it as the authorization server for this API server, and eventually pass the authorization requirement for the API & get a valid response from the API server.
+In the next tutorial, we will introduce [Athenz](https://github.com/AthenZ/athenz)—a [CNCF Sandbox project](https://www.cncf.io/projects/athenz/) battle-tested by tech giants like [Yahoo Inc.](https://www.yahooinc.com/) in the United States, [LY Corporation](https://www.lycorp.co.jp/en/) in Japan, and [Vespa.ai](https://vespa.ai/) in Europe. We’ll deploy it locally, mint our own valid Access Token, and finally unlock our protected API server.
 
 Next: [Authorization Server](./04-authorization-server.md)
