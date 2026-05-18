@@ -101,6 +101,9 @@ cat > my_tools/keep-athenz-port-forward.sh <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Clean up all background jobs when the script is terminated:
+trap 'kill $(jobs -p) 2>/dev/null || true' EXIT
+
 _zms_port="${1:-4443}"
 _zts_port="${2:-8443}"
 _athenz_ui_port="${3:-3000}"
