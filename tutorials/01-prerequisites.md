@@ -10,10 +10,10 @@ In this tutorial, we will review the machine requirements for following it.
 
 This tutorial has been tested and confirmed to work seamlessly on the specifications below. While we expect it to run smoothly on lower-spec machines, those configurations haven't been officially verified. If you successfully run this tutorial on lower specifications, please open an Issue with your setup, and we will update this document!
 
-|      OS       |          CPU          | Memory |      Status      |
-|:-------------:|:---------------------:|:------:|:----------------:|
-|  Tahoe 26.2   |        M3 Pro         |  36GB  | Verified Working |
-| Ubuntu 24 LTS | Intel Core i7-11700KF |  32GB  | Verified Working |
+|      OS       |          CPU          | Memory |    LLM     |      Status      |
+|:-------------:|:---------------------:|:------:|:----------:|:----------------:|
+|  Tahoe 26.2   |        M3 Pro         |  36GB  | gemma4:26b | Verified Working |
+| Ubuntu 24 LTS | Intel Core i7-11700KF |  32GB  | gemma4:e4b | Verified Working |
 
 ## Package Install
 
