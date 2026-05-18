@@ -1,4 +1,0 @@
-[submodule "athenz_dist"]
-    path = athenz_dist
-    url = git@github.com:athenz-community/athenz-distribution.git
-    branch = main

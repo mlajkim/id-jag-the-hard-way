@@ -1,0 +1,3 @@
+[submodule "athenz_dist"]
+	path = athenz_dist
+	url = https://github.com/athenz-community/athenz-distribution.git
