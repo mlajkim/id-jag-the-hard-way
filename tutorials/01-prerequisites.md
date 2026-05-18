@@ -15,6 +15,23 @@ This tutorial has been tested and confirmed to work seamlessly on the specificat
 |  Tahoe 26.2   |        M3 Pro         |  36GB  | Verified Working |
 | Ubuntu 24 LTS | Intel Core i7-11700KF |  32GB  | Verified Working |
 
+## Package Install
+
+> [!NOTE]
+> Homebrew: https://brew.sh/
+
+Install Homebrew:
+
+```sh
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+Then install the following package:
+
+```sh
+brew install jq pyenv
+```
+
 ## Port Usage
 
 If you are interested in knowing what kind of ports used by default for this tutorial, you may expand the following.

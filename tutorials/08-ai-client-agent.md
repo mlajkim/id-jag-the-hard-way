@@ -14,7 +14,9 @@ Simply run the following command:
 
 ```sh
 curl -fsSL https://ollama.com/install.sh | sh
+```
 
+```sh
 # Starting Ollama...
 # >>> Downloading Ollama for macOS...
 # ######################################################################## 100.0%
@@ -28,7 +30,7 @@ curl -fsSL https://ollama.com/install.sh | sh
 > [!NOTE]
 > For the SSOT install method, visit: https://ollama.com/
 
-## Install Gemma 4 throuh ollama
+## Install Gemma 4 with Ollama
 
 > [!NOTE]
 > Learn about the specs for the Gemma 4 model [here](https://ai.google.dev/gemma/docs/core?_gl=1*57y72w*_up*MQ..*_ga*MTM5MjUyNzM5NC4xNzc4NDU1OTc0*_ga_P1DBVKWT6V*czE3Nzg0NTU5NzQkbzEkZzAkdDE3Nzg0NTU5NzQkajYwJGwwJGgxMjMzODIwOTA0#gemma-4-inference-memory-requirements) 
