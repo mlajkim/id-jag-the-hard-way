@@ -181,7 +181,7 @@ We installed the `KeycloakTokenExchangeProvider` plugin, which takes the ID toke
 
 ![12_arc_plugin_mounted_and_used](./assets/12_arc_plugin_mounted_and_used.png)
 
-## What's next
+## What's next?
 
 We have successfully established trust relationships between:
 

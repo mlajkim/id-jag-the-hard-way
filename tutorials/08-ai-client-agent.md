@@ -167,6 +167,8 @@ Then in `tools` section, select the tool that we just created as the following:
 
 ## Verify
 
+Follow the steps below to verify the setup.
+
 > [!NOTE]
 > Make sure that the tool we just created is selected
 > ![08_tool_selected](./assets/08_tool_selected.png)
@@ -179,7 +181,7 @@ get docs!
 
 ![08_deliberate_failure_no_permission_to_token_impersonation](./assets/08_deliberate_failure_no_permission_to_token_impersonation.png)
 
-## What's happened
+## What's happened?
 
 ![08_arc_failed_to_token_exchange](./assets/08_arc_failed_to_token_exchange.png)
 

@@ -30,6 +30,8 @@ Change the MCP Server's target URL to `http://localhost:8102` so that traffic ro
 
 ## Verify
 
+Follow the steps below to verify the setup.
+
 Now, let's test if the new authorization proxy forwards our request to the original MCP Server. (Spoiler: This request is expected to fail)
 
 ```
@@ -115,6 +117,8 @@ Make the following change:
 
 ## Verify
 
+Follow the steps below to verify the setup.
+
 Now, test the AI Agent with the exact same prompt that failed previously:
 
 ```
@@ -135,7 +139,7 @@ First, we deployed the Authorization Proxy Server (indicated by the red dotted b
 
 ![10_arch_architecture_of_mcp_server_with_authorization_proxy](./assets/10_arch_architecture_of_mcp_server_with_authorization_proxy.png)
 
-## What's next
+## What's next?
 
 Up until now, we have been logging into the AI Client Agent using an admin account. In an enterprise environment, individual employees are assigned separate accounts to maintain control and security over the AI Client Agent—sharing the admin account is out of the question. In the next tutorial, we will deploy [Keycloak](https://www.keycloak.org/) as an Identity Provider (IdP) for our AI Client Agent, enabling users to sign in with non-admin (standard) accounts.
 
