@@ -45,7 +45,7 @@ Next, add the `ai.open-webui` as a member of this new token exchange role:
 > [!NOTE]
 > Notice that the `ai.open-webui` client agent does not require direct permissions to fetch an Access Token against `api:role.docs-getter` or `api:role.mcp-accessor`. It only needs the `zts.jag_exchange` permission to perform the token exchange on the user's behalf.
 
-## Verification
+## Verify
 
 Now, return to the AI Agent UI and test the exact same prompt that failed previously:
 
@@ -55,13 +55,13 @@ get docs!
 
 ![14_successful_attrival_from_server](./assets/14_successful_attrival_from_server.png)
 
-## What's happened?
+## What's happened
 
 Here is a brief overview of the completed flow: The API server successfully returns its data because the proper trust chain was established. The ID-JAG token exchange allowed the Gateway to act on your behalf, all while maintaining the Principle of Least Privilege for every component involved in the architecture.
 
 ![14_arc_get_docs_through_id_jag](./assets/14_arc_get_docs_through_id_jag.png)
 
-## What's next?
+## What's next
 
 Congratulations🎉. You have successfully configured your AI Agent to communicate and retrieve data protected by multiple layers of security, all while strictly adhering to the Principle of Least Privilege for each component.
 

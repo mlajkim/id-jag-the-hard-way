@@ -78,13 +78,13 @@ make -C api_server mcp-local PORT=8101
 # 📄 OpenAPI Spec available at: http://localhost:8101/openapi.json
 ```
 
-## What we have done
+## What's done
 
 We have created a running MCP Server for API with service identity `api.mcp-api` highlighted in red below.
 
 ![07_arch_mcp_server_for_api](./assets/07_arch_mcp_server_for_api.png)
 
-## What's next?
+## What's next
 
 In next tutorial, we will do actual chat with local AI Agent and see how it interacts with our protected API server through the MCP Server we just created.
 

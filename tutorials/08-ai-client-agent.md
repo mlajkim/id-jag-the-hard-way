@@ -165,7 +165,7 @@ Then in `tools` section, select the tool that we just created as the following:
 ![08_select_tool_as_default_for_the_model](./assets/08_select_tool_as_default_for_the_model.png)
 
 
-## Verification
+## Verify
 
 > [!NOTE]
 > Make sure that the tool we just created is selected
@@ -179,7 +179,7 @@ get docs!
 
 ![08_deliberate_failure_no_permission_to_token_impersonation](./assets/08_deliberate_failure_no_permission_to_token_impersonation.png)
 
-## What's happened?
+## What's happened
 
 ![08_arc_failed_to_token_exchange](./assets/08_arc_failed_to_token_exchange.png)
 

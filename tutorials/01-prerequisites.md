@@ -6,7 +6,7 @@
 
 In this tutorial, we will review the machine requirements for following it.
 
-## Virtual or Physical Machines
+## Review Virtual or Physical Machines
 
 This tutorial has been tested and confirmed to work seamlessly on the specifications below. While we expect it to run smoothly on lower-spec machines, those configurations haven't been officially verified. If you successfully run this tutorial on lower specifications, please open an Issue with your setup, and we will update this document!
 
@@ -15,7 +15,7 @@ This tutorial has been tested and confirmed to work seamlessly on the specificat
 |  Tahoe 26.2   |        M3 Pro         |  36GB  | gemma4:26b | Verified Working |
 | Ubuntu 24 LTS | Intel Core i7-11700KF |  32GB  | gemma4:e4b | Verified Working |
 
-## Package Install
+## Install Packages
 
 > [!NOTE]
 > Homebrew: https://brew.sh/
@@ -32,7 +32,7 @@ Then install the following package:
 brew install jq pyenv
 ```
 
-## Port Usage
+## Review Port Usage
 
 If you are interested in knowing what kind of ports used by default for this tutorial, you may expand the following.
 
@@ -65,7 +65,7 @@ If you are interested in knowing what kind of ports used by default for this tut
   - `14442`: Dummy API without Athenz AT required
 </details>
 
-## Note
+## Read Note
 
 The results of this tutorial should not be considered production ready. The goal is to learn the architecture, not to ship a hardened production platform
 

@@ -472,13 +472,13 @@ curl -s -k -H "Authorization: Bearer $_root_user_at" http://localhost:14443/api/
 # }
 ```
 
-## What we have done so far
+## What's done
 
 We have successfully retrieved an Athenz Access Token as `user.athenz_admin` and used it to access the protected API.
 
 ![05_arc_get_athenz_at_and_pass_api_req](./assets/05_arc_get_athenz_at_and_pass_api_req.png)
 
-## What's next?
+## What's next
 
 As you may have noticed, relying on the highly privileged `user.athenz_admin` for everyday operations is a bad security practice. While it was a valuable exercise for testing our protected API, we need to strictly enforce the principle of **least privilege**.
 

@@ -43,7 +43,7 @@ Finally, add the member you want to authorize for the token exchange (in this ca
 ./my_tools/add-role-member.sh "api" "docs-token-exchanger" "api.api-mcp"
 ```
 
-## Verification
+## Verify
 
 Fetch a fresh Athenz Access Token to ensure it hasn't expired:
 
@@ -72,13 +72,13 @@ get docs!
 
 ![09_succcesfully_get_docs_through_ai_for_the_first_time](./assets/09_succcesfully_get_docs_through_ai_for_the_first_time.png)
 
-## What's happened?
+## What's happened
 
 By introducing a specific role `docs-token-exchanger` that authorizes its members to perform token exchanges for a target scope, the MCP server can successfully exchange (Step 7 below) the provided Access Token for a new one, as illustrated below:
 
 ![09_arc_success_to_token_exchange](./assets/09_arc_success_to_token_exchange.png)
 
-## What's next?
+## What's next
 
 As shown in the architecture above, our API Server is now fully protected by Athenz Access Tokens. However, the MCP server itself remains unprotected, meaning anyone can access it. While the core API is secure, leaving the MCP server exposed is a bad security practice.
 

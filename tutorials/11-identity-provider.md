@@ -219,13 +219,13 @@ You should now be successfully logged into the interface.
 
 ![11_hello_idjag_leanrer](./assets/11_hello_idjag_leanrer.png)
 
-## What's done?
+## What's done
 
 We have installed Keycloak (Red dotted box) locally and configured it as an identity provider for our AI Client Agent. This way, non-admin user can sign in with his/her own account:
 
 ![11_arc_signed_into_ui_with_keycloak](./assets/11_arc_signed_into_ui_with_keycloak.png)
 
-## What's next?
+## What's next
 
 We have let our AI Client agent to trust Keycloak as an IdP. But we have not yet configured Authorization Server to trust Keycloak as IdP. In the next tutorial, we will set up our Authorization Server to trust Keycloak.
 

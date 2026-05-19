@@ -100,13 +100,13 @@ curl "localhost:${_new_api_server_port}/api/docs" | jq .
 
 The API server is now protected, so requests without a valid Bearer Access Token are rejected.
 
-## What's happened?
+## What's happened
 
 Unauthorized error is returned when you tried to fetch the data from the API Server, with `AT_REQUIRED=true` API Server:
 
 ![03_arc_get_docs_from_api_server_unauthorized](./assets/03_arc_get_docs_from_api_server_unauthorized.png)
 
-## What's next?
+## What's next
 
 So, how do we get past this Unauthorized error? We need a trusted authorization server.
 

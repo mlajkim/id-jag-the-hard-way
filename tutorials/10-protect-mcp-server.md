@@ -28,7 +28,7 @@ Change the MCP Server's target URL to `http://localhost:8102` so that traffic ro
 
 ![10_change_mcp_target_port_to_authorzation_proxy](./assets/10_change_mcp_target_port_to_authorzation_proxy.png)
 
-## Verification
+## Verify
 
 Now, let's test if the new authorization proxy forwards our request to the original MCP Server. (Spoiler: This request is expected to fail)
 
@@ -113,7 +113,7 @@ Make the following change:
 
 ![10_attach_access_token_with_new_scope](./assets/10_attach_access_token_with_new_scope.png)
 
-## Verification
+## Verify
 
 Now, test the AI Agent with the exact same prompt that failed previously:
 
@@ -129,13 +129,13 @@ The permission check is illustrated in the architecture diagram below:
 
 ![10_mcp_access_permission_required](./assets/10_mcp_access_permission_required.png)
 
-## Summary of Changes
+## Review Summary of Changes
 
 First, we deployed the Authorization Proxy Server (indicated by the red dotted box), which checks for `access` to the `api:mcp` resource. To grant this access, we created a new `mcp-accessor` role under the `api` domain and attached a policy matching the authorization server's requirements. As a result, the MCP server can only be accessed by an authenticated user holding an access token with the `mcp-accessor` scope—a key application of the Principle of Least Privilege.
 
 ![10_arch_architecture_of_mcp_server_with_authorization_proxy](./assets/10_arch_architecture_of_mcp_server_with_authorization_proxy.png)
 
-## What's next?
+## What's next
 
 Up until now, we have been logging into the AI Client Agent using an admin account. In an enterprise environment, individual employees are assigned separate accounts to maintain control and security over the AI Client Agent—sharing the admin account is out of the question. In the next tutorial, we will deploy [Keycloak](https://www.keycloak.org/) as an Identity Provider (IdP) for our AI Client Agent, enabling users to sign in with non-admin (standard) accounts.
 

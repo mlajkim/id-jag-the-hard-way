@@ -268,7 +268,7 @@ _my_access_token=$(./my_tools/fetch-access-token.sh \
 # }
 ```
 
-## Troubleshoot: Missing Role Membership
+## Troubleshoot Missing Role Membership
 
 Why did this request fail? Because the `human.idjag-learner` service identity is not explicitly authorized to assume the `api:role.docs-getter` role. Athenz defaults to deny. You can confirm this by checking the role members in the UI:
 
@@ -356,7 +356,7 @@ curl -s -k -H "Authorization: Bearer $_my_access_token" http://localhost:14443/a
 # }
 ```
 
-## Architecture Review
+## Review Architecture
 
 You successfully fetched an X.509 certificate for the non-admin service identity (`human.idjag-learner`) and exchanged it for an Athenz Access Token scoped specifically to `api:role.docs-getter`:
 
