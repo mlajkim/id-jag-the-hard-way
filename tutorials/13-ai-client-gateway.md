@@ -151,7 +151,7 @@ make -C ai_client_gateway local PROXY_TARGET=http://localhost:$_mcp_auth_proxy_p
 # 🌍 Public Base URL: http://localhost:3101
 ```
 
-## What's done?
+## What's happened?
 
 We just installed `AI Client Agent` (Highlighted in Red) which Open WebUI can talk to as a tool :
 

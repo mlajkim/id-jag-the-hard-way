@@ -219,7 +219,7 @@ You should now be successfully logged into the interface.
 
 ![11_hello_idjag_leanrer](./assets/11_hello_idjag_leanrer.png)
 
-## What's done?
+## What's happened?
 
 We have installed Keycloak (Red dotted box) locally and configured it as an identity provider for our AI Client Agent. This way, non-admin user can sign in with his/her own account:
 

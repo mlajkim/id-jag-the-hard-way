@@ -78,7 +78,7 @@ make -C api_server mcp-local PORT=8101
 # 📄 OpenAPI Spec available at: http://localhost:8101/openapi.json
 ```
 
-## What's done?
+## What's happened?
 
 We have created a running MCP Server for API with service identity `api.mcp-api` highlighted in red below.
 
