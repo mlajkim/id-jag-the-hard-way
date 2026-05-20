@@ -43,7 +43,9 @@ Finally, add the member you want to authorize for the token exchange (in this ca
 ./my_tools/add-role-member.sh "api" "docs-token-exchanger" "api.api-mcp"
 ```
 
-## Verification
+## Verify
+
+Follow the steps below to verify the setup.
 
 Fetch a fresh Athenz Access Token to ensure it hasn't expired:
 

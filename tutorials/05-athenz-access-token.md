@@ -472,7 +472,7 @@ curl -s -k -H "Authorization: Bearer $_root_user_at" http://localhost:14443/api/
 # }
 ```
 
-## What we have done so far
+## What's done?
 
 We have successfully retrieved an Athenz Access Token as `user.athenz_admin` and used it to access the protected API.
 

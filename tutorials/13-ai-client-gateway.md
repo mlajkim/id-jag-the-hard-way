@@ -9,7 +9,7 @@ In this tutorial, we will deploy the `AI Client Gateway`, which acts as an inter
 - Open WebUI (The AI Client Agent)
 - MCP Server (Authorization Proxy)
 
-## What is ID-JAG?
+## What's ID-JAG?
 
 ID-JAG (Identity Assertion JWT Authorization Grant) is a proposed authorization standard, primarily championed by companies like Okta. It extends the trust model of Single Sign-On (SSO) into the realm of API access. In short, it applies the trust established with an Identity Provider (IdP) during SSO to secure API access between applications, or between an AI agent and a backend service.
 
@@ -18,7 +18,7 @@ You can learn more about the specifics here:
 - [Identity Assertion JWT Authorization Grant - IETF](https://datatracker.ietf.org/doc/draft-ietf-oauth-identity-assertion-authz-grant/)
 - [Why ID-JAG is the future of AI agent security - LY Corp. Tech Blog](https://techblog.lycorp.co.jp/en/20260417a)
 
-## How the ID-JAG Specification Helps Us
+## Understand How the ID-JAG Specification Helps Us
 
 When you log in via `Keycloak`, it generates an ID Token that represents your identity. Through the ID-JAG process, we can dynamically handle permissions without manual token management. Specifically, we can:
 
@@ -151,7 +151,7 @@ make -C ai_client_gateway local PROXY_TARGET=http://localhost:$_mcp_auth_proxy_p
 # 🌍 Public Base URL: http://localhost:3101
 ```
 
-## What we have done
+## What's done?
 
 We just installed `AI Client Agent` (Highlighted in Red) which Open WebUI can talk to as a tool :
 
@@ -177,7 +177,9 @@ open http://localhost:$_open_webui_keycloak_port
 
 ![13_edit_connection_of_tool](./assets/13_edit_connection_of_tool.png)
 
-## Verification
+## Verify
+
+Follow the steps below to verify the setup.
 
 Login as `idjag-learner`:
 
