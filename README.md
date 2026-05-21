@@ -14,7 +14,7 @@ By the end of this tutorial, you will have a fully functional local flow (like t
 1. The **AI agent** calls a real protected MCP server on your behalf.
 1. The **Resource Server** authorizes the request using real tokens and least-privilege policies for each transaction.
 
-![ID-JAG The Hard Way Demo](./assets/id-jag-the-hard-way-readme-demo.gif)
+![ID-JAG The Hard Way Demo](./assets/id-jag-demo.gif)
 
 ## Architecture
 
