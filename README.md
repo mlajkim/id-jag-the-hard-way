@@ -22,17 +22,16 @@ The following diagram shows the full local architecture:
 
 ![ID-JAG The Hard Way Current Full Architecture](./assets/id-jag-the-hard-way-current-full-architecture.png)
 
-This lab includes the following components:
+Where:
 
-| Component                                | Technology                                     | Role                                                                                |
-|------------------------------------------|------------------------------------------------|-------------------------------------------------------------------------------------|
-| User                                     | Browser                                        | The signed-in human user who delegates work to the AI agent.                        |
-| AI Client / Agent                        | Open WebUI, Ollama, Gemma 4, AI Client Gateway | The local AI agent environment that invokes tools on behalf of the user.            |
-| External IdP                             | Keycloak                                       | Authenticates the user and issues the original identity assertion.                  |
-| IdP Authorization Server / ID-JAG Issuer | Athenz `KeycloakTokenExchangePlugin`           | Validates the Keycloak-issued assertion and issues the ID-JAG assertion.            |
-| Resource Authorization Server / PDP      | Athenz                                         | Evaluates enterprise authorization policy and issues least-privilege access tokens. |
-| MCP Server                               | Protected MCP server                           | Receives the agent request and enforces token-based access.                         |
-| Resource Server                          | Sample API server                              | The final protected API called through the delegated authorization flow.            |
+1. The user logs into the system via the Keycloak IdP.
+2. The user inputs a prompt, initiating a task with the AI agent.
+3. The AI agent requests an ID_JAG token from the Athenz IdP Authorization Server.
+4. Athenz evaluates and validates the enterprise policies to ensure the requested delegation is permitted.
+5. The AI agent requests an access token from the Athenz Authorization Server.
+6. The AI agent sends a request, equipped with the token, to the Model Context Protocol (MCP) server.
+7. The MCP server performs a token exchange with the Authorization Server.
+8. The MCP server sends a request with the exchanged token to the final Resource Server.
 
 ## Permission Architecture
 
