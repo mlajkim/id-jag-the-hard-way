@@ -10,6 +10,12 @@ In this tutorial, we will set up a working directory for the tutorial.
 
 We will create a directory `~/id_jag_the_hard_way_workspace` by cloning the project:
 
+If you are using `gh` for GitHub:
+
+```sh
+gh repo fork mlajkim/id-jag-the-hard-way --clone -- --destination ~/id_jag_the_hard_way_workspace
+```
+
 If you are using SSH for git:
 
 ```sh
