@@ -29,7 +29,7 @@ Install Homebrew:
 Then install the following package:
 
 ```sh
-brew install jq pyenv
+brew install jq pyenv gh
 ```
 
 ## Review Port Usage
