@@ -18,20 +18,24 @@ By the end of this tutorial, you will have a fully functional local flow (like t
 
 ## Architecture
 
-The following diagram illustrates the architecture, which includes:
-
-- **A user** (on the left) interacting with an AI server via an AI client
-- **Keycloak** as the Identity Provider (IdP)
-- **Athenz** as the Authorization Server
-- **Open WebUI, Ollama, and Gemma 4** as the local AI client agent
-- **A sample API server** acting as the Resource Server
-- **Users or service accounts** (in the purple box) using the traditional method of obtaining an access token directly from the Authorization Server to communicate with the protected resource server
+The following diagram shows the full local architecture:
 
 ![ID-JAG The Hard Way Current Full Architecture](./assets/id-jag-the-hard-way-current-full-architecture.png)
 
+Where:
+
+1. The user logs into the system via the Keycloak IdP.
+2. The user inputs a prompt, initiating a task with the AI agent.
+3. The AI agent requests an ID_JAG token from the Athenz IdP Authorization Server.
+4. Athenz evaluates and validates the enterprise policies to ensure the requested delegation is permitted.
+5. The AI agent requests an access token from the Athenz Authorization Server.
+6. The AI agent sends a request, equipped with the token, to the Model Context Protocol (MCP) server.
+7. The MCP server performs a token exchange with the Authorization Server.
+8. The MCP server sends a request with the exchanged token to the final Resource Server.
+
 ## Permission Architecture
 
-The following graph shows the required permissions:
+The following graph shows the required least permissions for each component:
 
 ![Permission - ID-JAG The Hard Way](./assets/permission-id-jag-the-hard-way-permission-architecture.png)
 
