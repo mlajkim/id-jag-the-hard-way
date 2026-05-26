@@ -58,6 +58,7 @@
   - [Is Token Exchange the only way to get Access Token for Each Step?](#is-token-exchange-the-only-way-to-get-access-token-for-each-step)
   - [What should we do when we run a vendor-locked-in MCP server and its vendor service, with its own unique vendor Authrization Server that genereates its own Access Token, that you cannot replace the one Authroziation Server](#what-should-we-do-when-we-run-a-vendor-locked-in-mcp-server-and-its-vendor-service-with-its-own-unique-vendor-authrization-server-that-genereates-its-own-access-token-that-you-cannot-replace-the-one-authroziation-server)
   - [Are there benefits of Vendor-locked in Access Token?](#are-there-benefits-of-vendor-locked-in-access-token)
+  - [How does the AI Client Agent know what kind of scope it should ask for? Any standards to get the scope from the registered tools? like maybe the tools with openai.json has this scope returned?](#how-does-the-ai-client-agent-know-what-kind-of-scope-it-should-ask-for-any-standards-to-get-the-scope-from-the-registered-tools-like-maybe-the-tools-with-openaijson-has-this-scope-returned)
 
 <!-- /TOC -->
 
@@ -259,3 +260,4 @@ While ultimately possible, there is an important prerequisite. SSO login itself 
 
 ## Are there benefits of Vendor-locked in Access Token?
 
+## How does the AI Client Agent know what kind of scope it should ask for? Any standards to get the scope from the registered tools? like maybe the tools with openai.json has this scope returned?
