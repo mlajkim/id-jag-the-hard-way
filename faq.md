@@ -29,6 +29,35 @@
       - [Why zts.token_source_exchange, zts.token_target_exchange both exists?](#why-ztstoken_source_exchange-ztstoken_target_exchange-both-exists)
   - [Attacks](#attacks)
     - [Prompt Injection](#prompt-injection)
+- [Presentation: Putting the Single Back in Single Sign-On: Cross-App Access for MCP - Paul Carleton & Max Gerber](#presentation-putting-the-single-back-in-single-sign-on-cross-app-access-for-mcp---paul-carleton--max-gerber)
+  - [Refresh token / offline access](#refresh-token--offline-access)
+    - [Fact Check](#fact-check)
+  - [MCP client / IdP config setup](#mcp-client--idp-config-setup)
+    - [Fact Check](#fact-check-1)
+  - [Automatic Refresh and 403 Reauthorize handling](#automatic-refresh-and-403-reauthorize-handling)
+    - [Fact Check](#fact-check-2)
+  - [Is this pattern MCP-specific?](#is-this-pattern-mcp-specific)
+    - [Fact Check](#fact-check-3)
+  - [Do all servers need to be changed?](#do-all-servers-need-to-be-changed)
+    - [Fact Check](#fact-check-4)
+  - [Is session-level audit/attribution possible in case of an incident?](#is-session-level-auditattribution-possible-in-case-of-an-incident)
+    - [Fact Check](#fact-check-5)
+  - [Can't we just view Consent history on existing dashboards?](#cant-we-just-view-consent-history-on-existing-dashboards)
+    - [Fact Check](#fact-check-6)
+  - [Isn't an Allowlist restricting to approved third-parties enough?](#isnt-an-allowlist-restricting-to-approved-third-parties-enough)
+    - [Fact Check](#fact-check-7)
+  - [Can it prevent malfunctions when multiple accounts or organizations are mixed?](#can-it-prevent-malfunctions-when-multiple-accounts-or-organizations-are-mixed)
+    - [Fact Check](#fact-check-8)
+  - [Is there Metadata/Discovery to indicate support?](#is-there-metadatadiscovery-to-indicate-support)
+    - [Fact Check](#fact-check-9)
+  - [Does SSO login immediately grant API access to other services?](#does-sso-login-immediately-grant-api-access-to-other-services)
+    - [Fact Check](#fact-check-10)
+- [temp](#temp)
+  - [Can I passdown the ID_JAG until it reaches the final resource server that requires Access Token?](#can-i-passdown-the-id_jag-until-it-reaches-the-final-resource-server-that-requires-access-token)
+  - [During the token](#during-the-token)
+  - [Is Token Exchange the only way to get Access Token for Each Step?](#is-token-exchange-the-only-way-to-get-access-token-for-each-step)
+  - [What should we do when we run a vendor-locked-in MCP server and its vendor service, with its own unique vendor Authrization Server that genereates its own Access Token, that you cannot replace the one Authroziation Server](#what-should-we-do-when-we-run-a-vendor-locked-in-mcp-server-and-its-vendor-service-with-its-own-unique-vendor-authrization-server-that-genereates-its-own-access-token-that-you-cannot-replace-the-one-authroziation-server)
+  - [Are there benefits of Vendor-locked in Access Token?](#are-there-benefits-of-vendor-locked-in-access-token)
 
 <!-- /TOC -->
 
@@ -213,3 +242,20 @@ It is possible if the system is properly configured in the right places.
 ### Fact Check
 
 While ultimately possible, there is an important prerequisite. SSO login itself does not guarantee unconditional API access. A solid Trust Relationship between the systems must exist, and ultimately, the Resource Authorization Server's Local Policy must explicitly allow the specific user, client, and scope before access is granted.
+
+
+
+
+# temp
+
+## Can I passdown the ID_JAG until it reaches the final resource server that requires Access Token?
+
+## During the token
+
+## Is Token Exchange the only way to get Access Token for Each Step?
+
+
+## What should we do when we run a vendor-locked-in MCP server and its vendor service, with its own unique vendor Authrization Server that genereates its own Access Token, that you cannot replace the one Authroziation Server
+
+## Are there benefits of Vendor-locked in Access Token?
+
