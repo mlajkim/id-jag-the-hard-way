@@ -43,7 +43,6 @@ The following graph shows the required least permissions for each component:
 
 The philosophy behind this repository is explained in detail here: [ID-JAG The Hard Way: Learning AI agent authorization through failure - LY Tech Blog](https://techblog.lycorp.co.jp/en/20260526a)
 
-
 ## Special Thanks
 
 The name and concept of this tutorial series is inspired by [kelseyhightower/kubernetes-the-hard-way](https://github.com/kelseyhightower/kubernetes-the-hard-way).
