@@ -35,10 +35,10 @@ curl -fsSL https://ollama.com/install.sh | sh
 > [!NOTE]
 > Learn about the specs for the Gemma 4 model [here](https://ai.google.dev/gemma/docs/core?_gl=1*57y72w*_up*MQ..*_ga*MTM5MjUyNzM5NC4xNzc4NDU1OTc0*_ga_P1DBVKWT6V*czE3Nzg0NTU5NzQkbzEkZzAkdDE3Nzg0NTU5NzQkajYwJGwwJGgxMjMzODIwOTA0#gemma-4-inference-memory-requirements) 
 
-In this tutorial, we will use Gemma 4's `gemma4:26b` as our AI model:
+In this tutorial, we will use Gemma 4's `gemma4:e4b` as our AI model:
 
 ```sh
-ollama pull gemma4:26b
+ollama pull gemma4:e4b
 ```
 
 ## Install Open WebUI
