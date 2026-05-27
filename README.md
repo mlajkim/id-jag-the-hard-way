@@ -20,7 +20,7 @@ By the end of this tutorial, you will have a fully functional local flow (like t
 
 The following diagram shows the full local architecture:
 
-![ID-JAG The Hard Way Current Full Architecture](./assets/id-jag-the-hard-way-current-full-architecture.png)
+![full_architecture](./assets/full_architecture.png)
 
 Where:
 
@@ -38,6 +38,10 @@ Where:
 The following graph shows the required least permissions for each component:
 
 ![Permission - ID-JAG The Hard Way](./assets/permission-id-jag-the-hard-way-permission-architecture.png)
+
+## Philosophy
+
+The philosophy behind this repository is explained in detail here: [ID-JAG The Hard Way: Learning AI agent authorization through failure - LY Tech Blog](https://techblog.lycorp.co.jp/en/20260526a)
 
 ## Special Thanks
 
