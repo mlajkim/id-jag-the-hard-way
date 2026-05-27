@@ -122,8 +122,7 @@ source venv/bin/activate
 if ! python -m pip show open-webui >/dev/null 2>&1; then
   python -m pip install open-webui \
     --trusted-host pypi.org \
-    --trusted-host files.pythonhosted.org \
-    --trusted-host edge.artifactory.corp.yahoo.co.jp
+    --trusted-host files.pythonhosted.org
 fi
 
 exec open-webui serve --port "${PORT}"
