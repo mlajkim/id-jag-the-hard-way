@@ -59,6 +59,7 @@
   - [What should we do when we run a vendor-locked-in MCP server and its vendor service, with its own unique vendor Authrization Server that genereates its own Access Token, that you cannot replace the one Authroziation Server](#what-should-we-do-when-we-run-a-vendor-locked-in-mcp-server-and-its-vendor-service-with-its-own-unique-vendor-authrization-server-that-genereates-its-own-access-token-that-you-cannot-replace-the-one-authroziation-server)
   - [Are there benefits of Vendor-locked in Access Token?](#are-there-benefits-of-vendor-locked-in-access-token)
   - [How does the AI Client Agent know what kind of scope it should ask for? Any standards to get the scope from the registered tools? like maybe the tools with openai.json has this scope returned?](#how-does-the-ai-client-agent-know-what-kind-of-scope-it-should-ask-for-any-standards-to-get-the-scope-from-the-registered-tools-like-maybe-the-tools-with-openaijson-has-this-scope-returned)
+  - [Are we supposed to enforce ID-JAG enforced Access Token, if IdP's policy is "important"?](#are-we-supposed-to-enforce-id-jag-enforced-access-token-if-idps-policy-is-important)
 
 <!-- /TOC -->
 
@@ -261,3 +262,9 @@ While ultimately possible, there is an important prerequisite. SSO login itself 
 ## Are there benefits of Vendor-locked in Access Token?
 
 ## How does the AI Client Agent know what kind of scope it should ask for? Any standards to get the scope from the registered tools? like maybe the tools with openai.json has this scope returned?
+
+## Are we supposed to enforce ID-JAG enforced Access Token, if IdP's policy is "important"?
+
+By default the Access Token does not include if the Access Token is generated with ID_JAG. However, we know that the client_id is issued for AI Client Agent. If you want to make sure that only specific client_id can do it, your MCP must check if certain accepted client_id is doing the work. That also means even if one has a permission direct to the MCP and API, the MCP may reject your request, because the human user does not have any ways to generate an Access Token that client_id is the ai agent, where the ai agent's private key is of course. protected.
+
+And of course the AI Agent does not have the direct permission to the resource servers, so we are all good.
