@@ -272,4 +272,14 @@ And of course the AI Agent does not have the direct permission to the resource s
 
 ## Token Introspection vs JWT validation using JWKS
 
-🟡 todo
+Token Introspection requires sending a token directly to the Authorization Server's endpoint to verify its real-time status, such as:
+
+- currently active
+- has been revoked
+
+In contrast, JWT validation using JWKS involves fetching the issuer's public keys from a `jwks_uri` to locally verify the token's:
+
+- signature
+- claims
+
+While both methods rely on a trusted issuer, introspection provides an authoritative, server-side check of the token's current state, whereas JWKS allows the Resource Server to perform offline, decentralized validation.
