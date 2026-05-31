@@ -47,6 +47,10 @@ The philosophy behind this repository is explained in detail here: [ID-JAG The H
 
 The name and concept of this tutorial series is inspired by [kelseyhightower/kubernetes-the-hard-way](https://github.com/kelseyhightower/kubernetes-the-hard-way).
 
+## Recognitions
+
+ID-JAG The Hard Way is listed on the [OAuth.net Cross-App Access (XAA) page](https://oauth.net/cross-app-access/) as a test tool for learning ID-JAG
+
 ## 🚀 Ready to dive in?
 
 [![Start Tutorial](./assets/start-tutorial-glow.svg)](./tutorials/01-prerequisites.md)
