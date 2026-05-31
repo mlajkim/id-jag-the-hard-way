@@ -60,6 +60,7 @@
   - [Are there benefits of Vendor-locked in Access Token?](#are-there-benefits-of-vendor-locked-in-access-token)
   - [How does the AI Client Agent know what kind of scope it should ask for? Any standards to get the scope from the registered tools? like maybe the tools with openai.json has this scope returned?](#how-does-the-ai-client-agent-know-what-kind-of-scope-it-should-ask-for-any-standards-to-get-the-scope-from-the-registered-tools-like-maybe-the-tools-with-openaijson-has-this-scope-returned)
   - [Are we supposed to enforce ID-JAG enforced Access Token, if IdP's policy is "important"?](#are-we-supposed-to-enforce-id-jag-enforced-access-token-if-idps-policy-is-important)
+  - [Token Introspection vs JWT validation using JWKS](#token-introspection-vs-jwt-validation-using-jwks)
 
 <!-- /TOC -->
 
@@ -268,3 +269,17 @@ While ultimately possible, there is an important prerequisite. SSO login itself 
 By default the Access Token does not include if the Access Token is generated with ID_JAG. However, we know that the client_id is issued for AI Client Agent. If you want to make sure that only specific client_id can do it, your MCP must check if certain accepted client_id is doing the work. That also means even if one has a permission direct to the MCP and API, the MCP may reject your request, because the human user does not have any ways to generate an Access Token that client_id is the ai agent, where the ai agent's private key is of course. protected.
 
 And of course the AI Agent does not have the direct permission to the resource servers, so we are all good.
+
+## Token Introspection vs JWT validation using JWKS
+
+Token Introspection requires sending a token directly to the Authorization Server's endpoint to verify its real-time status, such as:
+
+- currently active
+- has been revoked
+
+In contrast, JWT validation using JWKS involves fetching the issuer's public keys from a `jwks_uri` to locally verify the token's:
+
+- signature
+- claims
+
+While both methods rely on a trusted issuer, introspection provides an authoritative, server-side check of the token's current state, whereas JWKS allows the Resource Server to perform offline, decentralized validation.
