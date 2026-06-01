@@ -10,6 +10,7 @@ In security, it is more important to learn how to get different error types avai
 
 - [{"code":400,"message":"Invalid subject token: Unable to parse token: Expired JWT"}](#code400messageinvalid-subject-token-unable-to-parse-token-expired-jwt)
 - [{"code":400,"message":"Invalid subject token audience"}](#code400messageinvalid-subject-token-audience)
+- [Next Challenge](#next-challenge)
 
 <!-- /TOC -->
 
@@ -192,3 +193,7 @@ curl -sS -X POST "$_zts_url" \
 **✅ We have confirmed that fixing the `_cert_path` and `_key_path` only will fix the error.**
 
 </details>
+
+## Next Challenge
+
+More coming soon!
