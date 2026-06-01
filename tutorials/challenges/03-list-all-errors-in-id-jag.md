@@ -59,6 +59,9 @@ curl -sS -X POST "$_zts_url" \
 ```sh
 # {"code":400,"message":"Invalid subject token: Unable to parse token: Expired JWT"}
 ```
+
+**👍 We have successfully output the `{"code":400,"message":"Invalid subject token: Unable to parse token: Expired JWT"}` by using expired id_token (JWT)**
+
 </details>
 
 
@@ -151,6 +154,8 @@ curl -sS -X POST "$_zts_url" \
 # {"code":400,"message":"Invalid subject token audience"
 ```
 
+**👍 We have successfully output the `{"code":400,"message":"Invalid subject token audience"}` by using the wrong X.509 Certificate.**
+
 Quickly check the `CN` that correctly represents `ai.open-webui`:
 
 ```sh
@@ -183,5 +188,7 @@ curl -sS -X POST "$_zts_url" \
 ```sh
 # {"access_token":"eyJraWQiOiJhdGhlb ...","token_type":"N_A","expires_in":7200,"scope":"api:role.docs-getter api:role.mcp-accessor","issued_token_type":"urn:ietf:params:oauth:token-type:id-jag"}
 ```
+
+**✅ We have confirmed that fixing the `_cert_path` and `_key_path` only will fix the error.**
 
 </details>

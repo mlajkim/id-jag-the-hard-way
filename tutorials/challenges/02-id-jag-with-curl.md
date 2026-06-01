@@ -122,6 +122,8 @@ echo $_id_jag | jq -R 'split(".") | .[1] | @base64d | fromjson'
 # }
 ```
 
+**✅ We have successfully fetched `ID_TOKEN` with `curl` only.**
+
 </details>
 
 ## Next Challenge
