@@ -4,9 +4,6 @@
 
 # Challenge: Successfully Post Docs
 
-> [!NOTE]
-> The challenge has been tested and proven solvable.
-
 You might have noticed that the API server also has the capability to create documentation. However, if you try to use it right now, your request will be denied when you use a prompt like this:
 
 ```
@@ -21,6 +18,9 @@ Can you apply what you've learned so far to fix the permission issue and success
 > You must solve WITHOUT modifying the source code of each component. Configuration changes are enough.
 
 ## Solution
+
+> [!NOTE]
+> The challenge has been tested and proven solvable.
 
 > [!NOTE]
 > The solution will be revealed soon.
