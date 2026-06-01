@@ -1,6 +1,6 @@
-|                          Previous                           |         Current          | Next |
-|:-----------------------------------------------------------:|:------------------------:|:----:|
-| [Challenge: Successfully post documents](./01-post-docs.md) | **Challenge: Post docs** | n/a  |
+|                          Previous                           |             Current             |                                  Next                                   |
+|:-----------------------------------------------------------:|:-------------------------------:|:-----------------------------------------------------------------------:|
+| [Challenge: Successfully post documents](./01-post-docs.md) | **Challenge: ID-JAG with Curl** | [List all errors in ID_JAG exchange](./03-list-all-errors-in-id-jag.md) |
 
 # Challenge: ID-JAG with Curl
 
@@ -126,4 +126,4 @@ echo $_id_jag | jq -R 'split(".") | .[1] | @base64d | fromjson'
 
 ## Next Challenge
 
-More content is on the way! Stay tuned for the following advanced topics and solutions.
+Next: [List all errors in ID_JAG exchange](./03-list-all-errors-in-id-jag.md)

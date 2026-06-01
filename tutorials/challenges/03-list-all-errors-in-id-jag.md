@@ -1,6 +1,6 @@
-|                          Previous                           |         Current          | Next |
-|:-----------------------------------------------------------:|:------------------------:|:----:|
-| [Challenge: Successfully post documents](./01-post-docs.md) | **Challenge: Post docs** | n/a  |
+|                   Previous                   |                Current                 | Next |
+|:--------------------------------------------:|:--------------------------------------:|:----:|
+| [ID-JAG with Curl](./02-id-jag-with-curl.md) | **List all errors in ID_JAG Exchange** | n/a  |
 
 # Challenge: Get all errors in ID_JAG exchange
 
