@@ -151,12 +151,22 @@ curl -sS -X POST "$_zts_url" \
 # {"code":400,"message":"Invalid subject token audience"
 ```
 
-Make sure that I get ID_JAG no problem with correct certificate by changing `_cert_path` and `_key_path` only:
+Quickly check the `CN` that correctly represents `ai.open-webui`:
 
 ```sh
 local _cert_path="./ai_client_gateway/certs/open-webui.crt"
 local _key_path="./ai_client_gateway/certs/open-webui.key"
 
+openssl x509 -in $_cert_path -noout -subject
+```
+
+```sh
+# subject=C=US, O=Oath Inc., OU=Athenz, CN=ai.open-webui
+```
+
+Make sure that I get ID_JAG no problem with modified `_cert_path` and `_key_path`:
+
+```sh
 curl -sS -X POST "$_zts_url" \
   --cert "$_cert_path" \
   --key "$_key_path" \
@@ -173,4 +183,5 @@ curl -sS -X POST "$_zts_url" \
 ```sh
 # {"access_token":"eyJraWQiOiJhdGhlb ...","token_type":"N_A","expires_in":7200,"scope":"api:role.docs-getter api:role.mcp-accessor","issued_token_type":"urn:ietf:params:oauth:token-type:id-jag"}
 ```
+
 </details>
