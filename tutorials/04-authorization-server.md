@@ -4,19 +4,7 @@
 
 # Authorization Server
 
-In this tutorial, we will deploy Athenz as the local authorization server and verify that it is running properly.
-
-## Create Local Kubernetes Cluster
-
-You can use almost any Kubernetes cluster, but to simplify the process, we will use Kind (Kubernetes in Docker).
-
-```sh
-go install sigs.k8s.io/kind@latest
-kind create cluster
-```
-
-> [!NOTE]
-> The Single Source of Truth (SSOT) guide for downloading and installing Kind can be found [here](https://kind.sigs.k8s.io/)
+In this tutorial, we will deploy Athenz as the local authorization server and verify that it is running properly in Kubernetes cluster.
 
 
 ## Deploy Athenz Server
