@@ -1,6 +1,6 @@
-|                                Previous                                |         Current          | Next |
-|:----------------------------------------------------------------------:|:------------------------:|:----:|
-| [Challenge: Successfully post documents](./challenges/01-post-docs.md) | **Challenge: Post docs** | n/a  |
+|                          Previous                           |         Current          | Next |
+|:-----------------------------------------------------------:|:------------------------:|:----:|
+| [Challenge: Successfully post documents](./01-post-docs.md) | **Challenge: Post docs** | n/a  |
 
 # Challenge: ID-JAG with Curl
 
