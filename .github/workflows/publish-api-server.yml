@@ -66,6 +66,6 @@ jobs:
         with:
           context: ${{ env.BUILD_DIR }}
           file: ${{ env.BUILD_DIR }}/Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
+          push: true  # Pushes for both PR and main
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
