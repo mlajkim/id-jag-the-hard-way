@@ -4,13 +4,40 @@
 
 # Challenge: Get all errors in ID_JAG exchange
 
-In security, it is more important to learn how to get different error types available. Can you get all of the below errors?
+Assume that you have the `id_token` fetched with the following command:
+
+```sh
+_id_token=$(curl -s -X POST "http://localhost:9090/realms/master/protocol/openid-connect/token" \
+  -d "client_id=ai.open-webui" \
+  -d "client_secret=wdoKE9MBkgjLayZLg9Q6xU2oP2IOZKXv" \
+  -d "username=idjag-learner" \
+  -d "password=password" \
+  -d "scope=openid email profile" \
+  -d "grant_type=password" | jq -r '.id_token')
+
+echo $_id_token | jq -R 'split(".") | .[1] | @base64d | fromjson'
+```
+
+```sh
+# {
+#   "iss": "http://localhost:9090/realms/master",
+#   "aud": "ai.open-webui",
+#   "sub": "aaa9c26b-9609-47b1-a298-2ded44f28f21",
+#   "typ": "ID",
+#   "preferred_username": "idjag-learner",
+#   ...
+# }
+```
+
+Can you get errors below from authrozation server (Athenz) while exchaging the `id_token` into `ID_JAG`?
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
 - [{"code":400,"message":"Invalid subject token: Unable to parse token: Expired JWT"}](#code400messageinvalid-subject-token-unable-to-parse-token-expired-jwt)
 - [{"code":400,"message":"Invalid subject token audience"}](#code400messageinvalid-subject-token-audience)
-- [Next Challenge](#next-challenge)
+- [{"code":400,"message":"Invalid subject token: Unable to parse token: Invalid JWT serialization: Missing dot delimiter(s)"}](#code400messageinvalid-subject-token-unable-to-parse-token-invalid-jwt-serialization-missing-dot-delimiters)
+- [{"code":400,"message":"Invalid subject token: Unable to parse token: Invalid unsecured/JWS/JWE header: Invalid JSON object"}](#code400messageinvalid-subject-token-unable-to-parse-token-invalid-unsecuredjwsjwe-header-invalid-json-object)
+- [{"code":400,"message":"Invalid request: no subject token provided"}](#code400messageinvalid-request-no-subject-token-provided)
 
 <!-- /TOC -->
 
@@ -21,18 +48,6 @@ In security, it is more important to learn how to get different error types avai
 <details>
 <summary>Click to expand the solution</summary>
 <br>
-
-Get `id_token`:
-
-```sh
-_id_token=$(curl -s -X POST "http://localhost:9090/realms/master/protocol/openid-connect/token" \
-  -d "client_id=ai.open-webui" \
-  -d "client_secret=wdoKE9MBkgjLayZLg9Q6xU2oP2IOZKXv" \
-  -d "username=idjag-learner" \
-  -d "password=password" \
-  -d "scope=openid email profile" \
-  -d "grant_type=password" | jq -r '.id_token')
-```
 
 Wait for a minute and do:
 
@@ -75,31 +90,6 @@ curl -sS -X POST "$_zts_url" \
 <summary>Click to expand the solution</summary>
 <br>
 
-Get `id_token` with `sub` =`id-jag-learner` and `client_id`=`ai.open-webui`:
-
-```sh
-_id_token=$(curl -s -X POST "http://localhost:9090/realms/master/protocol/openid-connect/token" \
-  -d "client_id=ai.open-webui" \
-  -d "client_secret=wdoKE9MBkgjLayZLg9Q6xU2oP2IOZKXv" \
-  -d "username=idjag-learner" \
-  -d "password=password" \
-  -d "scope=openid email profile" \
-  -d "grant_type=password" | jq -r '.id_token')
-
-echo $_id_token | jq -R 'split(".") | .[1] | @base64d | fromjson'
-```
-
-```sh
-# {
-#   "iss": "http://localhost:9090/realms/master",
-#   "aud": "ai.open-webui",
-#   "sub": "aaa9c26b-9609-47b1-a298-2ded44f28f21",
-#   "typ": "ID",
-#   "preferred_username": "idjag-learner",
-#   ...
-# }
-```
-
 Assume that you have finished the tutorial and have all keys:
 
 ```sh
@@ -133,6 +123,7 @@ Use the X.509 Certificate under `keys` that does NOT represent the client_id `ai
 ```sh
 local _cert_path="./keys/idjag-learner.crt"
 local _key_path="./keys/idjag-learner.key"
+
 local _ca_cert="./athenz_dist/certs/ca.cert.pem"
 local _zts_url="https://localhost:8443/zts/v1/oauth2/token"
 local _role_scope="api:role.mcp-accessor api:role.docs-getter"
@@ -194,6 +185,107 @@ curl -sS -X POST "$_zts_url" \
 
 </details>
 
-## Next Challenge
+## {"code":400,"message":"Invalid subject token: Unable to parse token: Invalid JWT serialization: Missing dot delimiter(s)"}
+
+<details>
+<summary>Click to expand the solution</summary>
+<br>
+
+```sh
+local _id_token="malformed"
+
+local _cert_path="./ai_client_gateway/certs/open-webui.crt"
+local _key_path="./ai_client_gateway/certs/open-webui.key"
+local _ca_cert="./athenz_dist/certs/ca.cert.pem"
+local _zts_url="https://localhost:8443/zts/v1/oauth2/token"
+local _role_scope="api:role.mcp-accessor api:role.docs-getter"
+local _id_jag_aud="https://athenz-zts-server.athenz:4443/zts/v1"
+
+curl -sS -X POST "$_zts_url" \
+  --cert "$_cert_path" \
+  --key "$_key_path" \
+  --cacert "$_ca_cert" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "grant_type=urn:ietf:params:oauth:grant-type:token-exchange" \
+  --data-urlencode "requested_token_type=urn:ietf:params:oauth:token-type:id-jag" \
+  --data-urlencode "subject_token_type=urn:ietf:params:oauth:token-type:id_token" \
+  --data-urlencode "subject_token=$_id_token" \
+  --data-urlencode "scope=$_role_scope" \
+  --data-urlencode "audience=$_id_jag_aud"
+```
+
+**👍 We have successfully output the `{"code":400,"message":"Invalid subject token: Unable to parse token: Invalid JWT serialization: Missing dot delimiter(s)"}` by using non-empty string `malformed` as `_id_token`.**
+
+</details>
+
+## {"code":400,"message":"Invalid subject token: Unable to parse token: Invalid unsecured/JWS/JWE header: Invalid JSON object"}
+
+<details>
+<summary>Click to expand the solution</summary>
+<br>
+
+```sh
+local _id_token="malformed.malformed"
+
+local _cert_path="./ai_client_gateway/certs/open-webui.crt"
+local _key_path="./ai_client_gateway/certs/open-webui.key"
+local _ca_cert="./athenz_dist/certs/ca.cert.pem"
+local _zts_url="https://localhost:8443/zts/v1/oauth2/token"
+local _role_scope="api:role.mcp-accessor api:role.docs-getter"
+local _id_jag_aud="https://athenz-zts-server.athenz:4443/zts/v1"
+
+curl -sS -X POST "$_zts_url" \
+  --cert "$_cert_path" \
+  --key "$_key_path" \
+  --cacert "$_ca_cert" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "grant_type=urn:ietf:params:oauth:grant-type:token-exchange" \
+  --data-urlencode "requested_token_type=urn:ietf:params:oauth:token-type:id-jag" \
+  --data-urlencode "subject_token_type=urn:ietf:params:oauth:token-type:id_token" \
+  --data-urlencode "subject_token=$_id_token" \
+  --data-urlencode "scope=$_role_scope" \
+  --data-urlencode "audience=$_id_jag_aud"
+```
+
+**👍 We have successfully output the `{"code":400,"message":"Invalid subject token: Unable to parse token: Invalid unsecured/JWS/JWE header: Invalid JSON object"}` by including dot and use non-JSON string `malformed` as `_id_token`.**
+
+</details>
+
+## {"code":400,"message":"Invalid request: no subject token provided"}
+
+<details>
+<summary>Click to expand the solution</summary>
+<br>
+
+```sh
+local _id_token=""
+
+local _cert_path="./ai_client_gateway/certs/open-webui.crt"
+local _key_path="./ai_client_gateway/certs/open-webui.key"
+local _ca_cert="./athenz_dist/certs/ca.cert.pem"
+local _zts_url="https://localhost:8443/zts/v1/oauth2/token"
+local _role_scope="api:role.mcp-accessor api:role.docs-getter"
+local _id_jag_aud="https://athenz-zts-server.athenz:4443/zts/v1"
+
+curl -sS -X POST "$_zts_url" \
+  --cert "$_cert_path" \
+  --key "$_key_path" \
+  --cacert "$_ca_cert" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "grant_type=urn:ietf:params:oauth:grant-type:token-exchange" \
+  --data-urlencode "requested_token_type=urn:ietf:params:oauth:token-type:id-jag" \
+  --data-urlencode "subject_token_type=urn:ietf:params:oauth:token-type:id_token" \
+  --data-urlencode "subject_token=$_id_token" \
+  --data-urlencode "scope=$_role_scope" \
+  --data-urlencode "audience=$_id_jag_aud"
+```
+
+**👍 We have successfully output the `{"code":400,"message":"Invalid subject token audience"}` by using the wrong X.509 Certificate.**
+
+</details>
+
+
+
+# Next Challenge
 
 More coming soon!
