@@ -6,7 +6,8 @@ on:
     paths:
       - "zpu/**"
       - ".github/workflows/publish-zpu.yml"
-  pull_request_target:
+  pull_request:
+  # pull_request_target:
     branches: [ "main" ]
     paths:
       - "zpu/**"
