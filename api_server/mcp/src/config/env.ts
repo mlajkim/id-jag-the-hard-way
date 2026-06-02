@@ -7,7 +7,7 @@ export const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || `http://localhost:
 export const AUTHORIZATION_SERVER_URL = process.env.AUTHORIZATION_SERVER_URL || "https://athenz-zts-server.athenz:4443/zts/v1"
 
 export const corsOptions = {
-  origin: "*", // 필요에 따라 OpenWebUI 도메인으로 제한
+  origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "x-athenz-api-token"],
 };
