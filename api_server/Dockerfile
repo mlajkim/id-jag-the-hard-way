@@ -19,6 +19,7 @@ COPY --from=build /src/target/dependency ./dependency
 
 ENV PORT=8080
 ENV AT_REQUIRED=false
+ENV JAVA_TOOL_OPTIONS="-Dathenz.zpe.policy_dir=/app/policies"
 
 EXPOSE 8080
 
