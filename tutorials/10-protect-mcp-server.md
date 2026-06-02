@@ -22,18 +22,11 @@ In this tutorial, we will secure the MCP server using an Authorization Server (A
 
 ## Run Authorization Proxy for API MCP
 
-Run the following command:
-
-```sh
-kubectl create deploy mcp-authorization-proxy -n api \
-  --image=ghcr.io/mlajkim/mcp-authorization-proxy:latest
-```
-
 The cloned API project includes an authorization proxy server for the API MCP. To start the server, execute the following command:
 
 ```bash
 export _authorization_proxy_port=8102
-export _authorization_proxy_target_port=8101
+export _authorization_proxy_target_port=24443
 
 make -C api_server mcp-proxy-local \
   PROXY_PORT=$_authorization_proxy_port \

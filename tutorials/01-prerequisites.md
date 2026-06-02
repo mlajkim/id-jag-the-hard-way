@@ -68,10 +68,9 @@ If you are interested in knowing what kind of ports used by default for this tut
 
   Resource Server (API Server):
 
-  - `8102`: Athenz Authorization Proxy for API MCP Server
-  - `8101`: API MCP Server for API
-  - `14443`: Dummy API (Original API, not proxied by Athenz proxy)
-  - `14442`: Dummy API without Athenz AT required
+  - `8102`: Athenz Authorization Proxy for API MCP Server (🟡 TODO: Will be removed, replaced by `24443`)
+  - `14443`: API Server
+  - `24443`: MCP Server
 </details>
 
 ## Reminder
