@@ -1,4 +1,4 @@
-name: Build and Push MCP Server
+name: Build and Push Authorization Proxy for MCP Server
 
 on:
   push:
