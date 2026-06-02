@@ -12,6 +12,7 @@ In this tutorial, we will deploy Athenz as the local authorization server and ve
 Run the following command (this will take about 5 minutes):
 
 ```sh
+git submodule update --init --recursive
 make -C athenz_dist clean-kubernetes-athenz deploy-kubernetes-athenz
 ```
 
