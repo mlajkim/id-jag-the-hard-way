@@ -26,6 +26,17 @@ kubectl create deploy api-server -n api \
   --image=ghcr.io/mlajkim/api-server:latest
 ```
 
+
+Create a simple service for the deploy above:
+
+```sh
+kubectl expose deploy api-server -n api --port 8080 --name api-server
+```
+
+```sh
+# service/api-server exposed
+```
+
 ## Send a Request to the API Server
 
 Send a request to list the documents.
