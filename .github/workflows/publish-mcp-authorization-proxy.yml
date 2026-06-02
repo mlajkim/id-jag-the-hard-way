@@ -51,7 +51,7 @@ jobs:
             type=raw,value=latest,enable=${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
 
       # 3. Docker image build and push
-      - name: Build and push ZPU image
+      - name: Build and push the image
         uses: docker/build-push-action@v5
         with:
           context: ${{ env.BUILD_DIR }}
