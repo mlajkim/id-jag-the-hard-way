@@ -21,58 +21,26 @@ In this tutorial, we will set up MCP Server for API so that our AI client agent 
 
 To run the MCP Server, just like we have given service identity for human user `human.idjag-learner` , we also need to give service identity for the MCP server. Because mcp server is part of the API server, we will simply create service `api-mcp` under the tld (domain) `api`.
 
-Create a directory:
+Run the following:
 
 ```sh
-mkdir -p api_server/mcp/certs
-```
-
-```sh
-./my_tools/create-private-key.sh "./api_server/mcp/certs/api-mcp"
-```
-
-```sh
-# Generating RSA key pair for: ./api_server/mcp/certs/api-mcp...
-# Done! Keys generated: ./api_server/mcp/certs/api-mcp.key, ./api_server/mcp/certs/api-mcp.public.key
-```
-
-Then create a service with the key created above:
-
-```sh
-./my_tools/create-service.sh "api" "api-mcp" "./api_server/mcp/certs/api-mcp.public.key"
-```
-
-```sh
-# Registering Service: api.api-mcp...
-```
-
-Enable cert provider for the service `api.api-mcp`:
-
-```sh
+./my_tools/create-private-key.sh "./keys/api-mcp"
+./my_tools/create-service.sh "api" "api-mcp" "./keys/api-mcp.public.key"
 ./my_tools/enable-cert-provider.sh "api" "api-mcp"
+sleep 2
+./my_tools/fetch-cert.sh "api" "api-mcp" "./keys/api-mcp.key" "v1"
 ```
 
-```sh
-# [Template(s) successfully applied to domain]
-```
-
-And finally generate X.509 Certificate:
-
-```sh
-./my_tools/fetch-cert.sh "api" "api-mcp" "./api_server/mcp/certs/api-mcp.key" "v1"
-```
-
-```sh
-# Fetching X.509 Certificate for api.api-mcp...
-# Done! Certificate saved to: ./api_server/mcp/certs/api-mcp.crt
-```
+*Detailed explanation is skipped as thoroughly explained in the previous tutorials. Also, sleep has been included for Athenz to sync.*
 
 ## Create K8s Secret
 
+Create a secret based on the generated certificates: 
+
 ```sh
 kubectl -n api create secret generic api-mcp-cert \
-  --from-file=cert=./api_server/mcp/certs/api-mcp.crt \
-  --from-file=key=./api_server/mcp/certs/api-mcp.key \
+  --from-file=cert=./keys/api-mcp.crt \
+  --from-file=key=./keys/api-mcp.key \
   --from-file=ca=./athenz_dist/certs/ca.cert.pem
 ```
 
