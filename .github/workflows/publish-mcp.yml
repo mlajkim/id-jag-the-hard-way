@@ -4,13 +4,13 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - "mcp_server_for_api/**"
+      - "api_server/mcp/**"
       - ".github/workflows/publish-mcp.yml"
   pull_request:
   # pull_request_target:
     branches: [ "main" ]
     paths:
-      - "mcp_server_for_api/**"
+      - "api_server/mcp/**"
       - ".github/workflows/publish-mcp.yml"
   workflow_dispatch:
 
