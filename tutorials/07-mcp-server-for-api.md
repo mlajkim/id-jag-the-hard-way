@@ -50,12 +50,6 @@ kubectl -n api create secret generic api-mcp-cert \
 
 ### Run the MCP Server
 
-Before we run the MCP server for the API, we need to copy Athenz CA file as well to the api server so that it can trust the Athenz generated X.509 certificate. 
-
-```sh
-cp ./athenz_dist/certs/ca.cert.pem ./api_server/mcp/certs/ca.crt
-```
-
 Run the server:
 
 ```sh
