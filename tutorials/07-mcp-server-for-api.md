@@ -58,6 +58,19 @@ And finally generate X.509 Certificate:
 # Done! Certificate saved to: ./api_server/mcp/certs/api-mcp.crt
 ```
 
+## Create K8s Secret
+
+```sh
+kubectl -n api create secret generic api-mcp-cert \
+  --from-file=cert=./api_server/mcp/certs/api-mcp.crt \
+  --from-file=key=./api_server/mcp/certs/api-mcp.key \
+  --from-file=ca=./athenz_dist/certs/ca.cert.pem
+```
+
+```sh
+# secret/api-mcp-cert created
+```
+
 ### Run the MCP Server
 
 Before we run the MCP server for the API, we need to copy Athenz CA file as well to the api server so that it can trust the Athenz generated X.509 certificate. 

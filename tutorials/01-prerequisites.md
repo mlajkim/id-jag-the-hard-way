@@ -4,7 +4,16 @@
 
 # Prerequisites
 
-In this tutorial, we will review the machine requirements for following it.
+In this tutorial, we will review the machine requirements for this tutorial with the following steps:
+
+<!-- TOC depthFrom:2 depthTo:2 -->
+
+- [Review Virtual or Physical Machines](#review-virtual-or-physical-machines)
+- [Install Packages](#install-packages)
+- [Review Port Usage](#review-port-usage)
+- [Reminder](#reminder)
+
+<!-- /TOC -->
 
 ## Review Virtual or Physical Machines
 
@@ -65,7 +74,7 @@ If you are interested in knowing what kind of ports used by default for this tut
   - `14442`: Dummy API without Athenz AT required
 </details>
 
-## Read Note
+## Reminder
 
 The results of this tutorial should not be considered production ready. The goal is to learn the architecture, not to ship a hardened production platform
 
