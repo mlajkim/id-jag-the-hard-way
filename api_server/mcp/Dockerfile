@@ -1,12 +1,19 @@
-FROM node:22-bookworm-slim
+FROM node:22-bookworm AS builder
 
 WORKDIR /app
 
 COPY package*.json ./
-
 RUN npm ci
 
 COPY src ./src
+
+FROM node:22-bookworm-slim
+
+WORKDIR /app
+
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/src ./src
+COPY package*.json ./
 
 RUN mkdir -p /app/certs
 
