@@ -6,60 +6,17 @@
 
 In this tutorial, you will get Access Token that the API server requests.
 
-## Create Athenz Top-Level Domain (TLD) for API Service
+<!-- TOC depthFrom:2 depthTo:2 -->
 
-Now that the Athenz server is running and accessible, let's create a Top-Level Domain (TLD). We can achieve this by making a `POST` request to the Athenz ZMS API, authenticating with the admin certificates generated during the deployment.
+- [Create Athenz Role under the API domain](#create-athenz-role-under-the-api-domain)
+- [Create Policies](#create-policies)
+- [Add Root User as a member](#add-root-user-as-a-member)
+- [Get Access Token as Root User](#get-access-token-as-root-user)
+- [Send request to the protected server](#send-request-to-the-protected-server)
+- [What's done?](#whats-done)
+- [What's next?](#whats-next)
 
-Let's create a reusable script named `create-tld.sh` that takes the domain name as an argument:
-
-```sh
-cat > ./my_tools/create-tld.sh <<'EOF'
-#!/usr/bin/env bash
-set -euo pipefail
-
-if [ -z "${1:-}" ]; then
-  echo "Usage: $0 <tld_name>"
-  exit 1
-fi
-
-tld_name=$1
-echo "Creating TLD: ${tld_name}..."
-
-curl -s -k -X POST "https://localhost:4443/zms/v1/domain" \
-  --cert ./athenz_dist/certs/athenz_admin.cert.pem \
-  --key ./athenz_dist/keys/athenz_admin.private.pem \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "'"${tld_name}"'",
-    "description": "TLD for '"${tld_name}"'",
-    "org": "ajkimkim",
-    "enabled": true,
-    "adminUsers": ["user.athenz_admin"]
-  }'
-
-EOF
-
-chmod +x ./my_tools/create-tld.sh
-
-```
-
-Create a domain `api` that represents the API server domain:
-
-```sh
-./my_tools/create-tld.sh "api"
-```
-
-```sh
-# {"description":"TLD for api","org":"ajkimkim","auditEnabled":false,"ypmId":0,"autoDeleteTenantAssumeRoleAssertions":false,"name":"api","modified":"2026-05-10T07:56:23.059Z","id":"bce22e30-4c45-11f1-8af4-88f84977247b"}
-```
-
-You can verify that this domain is created successfully by refreshing the **Athenz UI** (`http://localhost:3000`):
-
-![05_create_api_tld](./assets/05_create_api_tld.png)
-
-The new domain (or Top Level Domain, or TLD) `api` you just created represents the following blue dotted line:
-
-![05_create_api_domain](./assets/05_create_api_domain.png)
+<!-- /TOC -->
 
 ## Create Athenz Role under the API domain
 

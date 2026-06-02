@@ -6,6 +6,20 @@
 
 In this tutorial, we will secure the MCP server using an Authorization Server (Athenz), just as we did with the API Server.
 
+<!-- TOC depthFrom:2 depthTo:2 -->
+
+- [Run Authorization Proxy for API MCP](#run-authorization-proxy-for-api-mcp)
+- [Update the MCP Target Port to Proxy](#update-the-mcp-target-port-to-proxy)
+- [Verify](#verify)
+- [Fix Insufficient Permission](#fix-insufficient-permission)
+- [Fetch a New Access Token for the New Role](#fetch-a-new-access-token-for-the-new-role)
+- [Attach the Access Token & Configure the New Authorization Server](#attach-the-access-token--configure-the-new-authorization-server)
+- [Verify](#verify-1)
+- [Review Summary of Changes](#review-summary-of-changes)
+- [What's next?](#whats-next)
+
+<!-- /TOC -->
+
 ## Run Authorization Proxy for API MCP
 
 The cloned API project includes an authorization proxy server for the API MCP. To start the server, execute the following command:

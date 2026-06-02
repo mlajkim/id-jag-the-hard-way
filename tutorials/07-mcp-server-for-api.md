@@ -6,6 +6,15 @@
 
 In this tutorial, we will set up MCP Server for API so that our AI client agent that we will install in the next tutorial can interact with our protected API server for you.
 
+<!-- TOC depthFrom:2 depthTo:2 -->
+
+- [Run MCP Server for API](#run-mcp-server-for-api)
+- [Create K8s Secret](#create-k8s-secret)
+- [What's done?](#whats-done)
+- [What's next?](#whats-next)
+
+<!-- /TOC -->
+
 ## Run MCP Server for API
 
 ### Service Cert for MCP Server
