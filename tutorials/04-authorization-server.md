@@ -1,11 +1,10 @@
-|             Previous             |         Current          |                        Next                        |
-|:--------------------------------:|:------------------------:|:--------------------------------------------------:|
-| [API Server](./03-api-server.md) | **Authorization Server** | [Athenz Access Token](./05-athenz-access-token.md) |
+|             Previous             |         Current          |                Next                |
+|:--------------------------------:|:------------------------:|:----------------------------------:|
+| [API Server](./03-api-server.md) | **Authorization Server** | [ZPU Server](./04.1-zpu-server.md) |
 
 # Authorization Server
 
 In this tutorial, we will deploy Athenz as the local authorization server and verify that it is running properly in Kubernetes cluster.
-
 
 ## Deploy Athenz Server
 
@@ -143,6 +142,6 @@ open "http://localhost:${_athenz_ui_port}"
 
 ![athenz_ui](assets/04_athenz_ui.png)
 
-In the next tutorial, we will create an Athenz domain and roles, and then fetch an access token.
+In the next tutorial, we will create a ZPU (details later explained):
 
-Next: [Athenz Access Token](./05-athenz-access-token.md)
+Next: [ZPU Server](./04.1-zpu-server.md)
