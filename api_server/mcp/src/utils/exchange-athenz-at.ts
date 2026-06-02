@@ -4,7 +4,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { Request } from "express";
 import { getAtFromReq } from "./readAtFromReq";
-import { AUTHORIZATION_SERVER_URL } from "./config/env";
+import { AUTHORIZATION_SERVER_URL } from "../config/env";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
