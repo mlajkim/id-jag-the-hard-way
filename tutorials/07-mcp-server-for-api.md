@@ -10,8 +10,7 @@ In this tutorial, we will set up MCP Server for API so that our AI client agent 
 
 - [Run MCP Server for API](#run-mcp-server-for-api)
 - [Create K8s Secret](#create-k8s-secret)
-- [What's done?](#whats-done)
-- [What's next?](#whats-next)
+- [Mount Secret](#mount-secret)
 
 <!-- /TOC -->
 
@@ -35,13 +34,14 @@ sleep 2
 
 ## Create K8s Secret
 
-Create a secret based on the generated certificates: 
+Create a secret based on the generated certificates:
 
 ```sh
+kubectl -n api delete secret api-mcp-cert --ignore-not-found
 kubectl -n api create secret generic api-mcp-cert \
-  --from-file=cert=./keys/api-mcp.crt \
-  --from-file=key=./keys/api-mcp.key \
-  --from-file=ca=./athenz_dist/certs/ca.cert.pem
+  --from-file=api-mcp.crt=./keys/api-mcp.crt \
+  --from-file=api-mcp.key=./keys/api-mcp.key \
+  --from-file=ca.crt=./athenz_dist/certs/ca.cert.pem
 ```
 
 ```sh
@@ -49,6 +49,67 @@ kubectl -n api create secret generic api-mcp-cert \
 ```
 
 ### Run the MCP Server
+
+```sh
+kubectl create deploy mcp -n api \
+  --image=ghcr.io/mlajkim/mcp:latest
+```
+
+Expose the deployment above:
+
+```sh
+kubectl expose deploy mcp -n api --port 8081 --name mcp
+```
+
+
+See the log:
+
+```sh
+kubectl logs deploy/mcp -n api
+```
+
+```sh
+# ◇ injected env (0) from .env // tip: ⌘ enable debugging { debug: true }
+# node:fs:560
+#   return binding.open(
+#                  ^
+
+# Error: ENOENT: no such file or directory, open '/app/certs/api-mcp.crt'
+# ...
+```
+
+## Mount Secret
+
+```yaml
+kubectl patch deploy mcp -n api --patch "$(cat <<'EOF'
+spec:
+  template:
+    spec:
+      containers:
+        - name: mcp
+          volumeMounts:
+            - name: mcp-certs
+              mountPath: /app/certs
+              readOnly: true
+      volumes:
+        - name: mcp-certs
+          secret:
+            secretName: api-mcp-cert
+EOF
+)"
+```
+
+Verify:
+
+```sh
+kubectl logs deploy/mcp -n api
+
+```sh
+# ◇ injected env (0) from .env // tip: ⌘ enable debugging { debug: true }
+# 🚀 OpenAPI MCP Server for API listening on: http://mcp-server.api.svc.cluster.local
+# 🔗 Upstream API: http://api-server.api.svc.cluster.local
+# 📄 OpenAPI Spec available at: http://mcp-server.api.svc.cluster.local/openapi.json
+```
 
 Run the server:
 

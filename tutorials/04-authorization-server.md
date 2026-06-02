@@ -105,6 +105,7 @@ _zms_port="${1:-4443}"
 _zts_port="${2:-8443}"
 _athenz_ui_port="${3:-3000}"
 _api_port="${4:-14443}"
+_mcp_port="${5:-24443}"
 
 _pf() {
   local ns=$1
@@ -124,6 +125,7 @@ _pf athenz athenz-zms-server "${_zms_port}" 4443 &
 _pf athenz athenz-zts-server "${_zts_port}" 4443 &
 _pf athenz athenz-ui "${_athenz_ui_port}" 3000 &
 _pf api api-server "${_api_port}" 8080 &
+_pf api mcp "${_mcp_port}" 8081 &
 
 wait
 EOF
@@ -138,8 +140,9 @@ _zms_port=4443
 _zts_port=8443
 _athenz_ui_port=3000
 _api_port=14443
+_mcp_port=24443
 
-./my_tools/keep-k8s-port-forward.sh "$_zms_port" "$_zts_port" "$_athenz_ui_port" "$_api_port"
+./my_tools/keep-k8s-port-forward.sh "$_zms_port" "$_zts_port" "$_athenz_ui_port" "$_api_port" "$_mcp_port"
 ```
 
 ## Open Athenz UI

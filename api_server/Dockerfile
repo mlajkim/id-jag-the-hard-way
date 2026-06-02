@@ -20,7 +20,8 @@ RUN mkdir -p /app/certs
 
 ENV PORT=8081
 ENV UPSTREAM_BASE_URL=http://api-server.api.svc.cluster.local
-ENV PUBLIC_BASE_URL=http://mcp-server.api.svc.cluster.local
+ENV PUBLIC_BASE_URL=http://mcp.api.svc.cluster.local
+ENV AUTHORIZATION_SERVER_URL="https://athenz-zts-server.athenz:4443/zts/v1"
 ENV MCP_CERT_DIR=/app/certs
 
 EXPOSE 8081
