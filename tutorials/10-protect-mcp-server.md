@@ -86,7 +86,7 @@ We are going to change the service `mcp` to watch `mcp-authorization-proxy` inst
 
 ```sh
 kubectl delete svc mcp -n api
-kubectl expose deploy mcp-authorization-proxy -n api --port 8101 --target-port 8102 --name mcp
+kubectl expose deploy mcp-authorization-proxy -n api --port 8081 --target-port 8102 --name mcp
 ```
 
 ## Verify
