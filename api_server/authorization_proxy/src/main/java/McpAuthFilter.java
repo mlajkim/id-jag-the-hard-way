@@ -22,7 +22,7 @@ public class McpAuthFilter implements Filter {
     @Value("${api:mcp}")
     private String mcpResource;
 
-    @Value("${athenz.at.required:false}")
+    @Value("${athenz.at.required:true}")
     private boolean isRequired;
 
     private static final String DEFAULT_JWK_URI = "https://localhost:8443/zts/v1/oauth2/keys?rfc=true";
