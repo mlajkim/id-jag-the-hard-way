@@ -24,21 +24,37 @@ In this tutorial, we will secure the MCP server using an Authorization Server (A
 
 We will deploy an authorization proxy for the API MCP server, that will check the access token to access to MCP:
 
-```sh
-kubectl create deploy mcp-authorization-proxy -n api \
-  --image=ghcr.io/mlajkim/mcp-authorization-proxy:latest
+```yaml
+kubectl patch deploy mcp -n api --patch "$(cat <<'EOF'
+spec:
+  template:
+    spec:
+      containers:
+        # 1. Add a new container auth-proxy
+        - name: auth-proxy
+          image: ghcr.io/mlajkim/mcp-authorization-proxy:latest
+          imagePullPolicy: Always
+          env:
+            - name: SERVER_PORT
+              value: "8082"
+            - name: MCP_TARGET_URL
+              value: "http://localhost:8081"
+          ports:
+            - containerPort: 8082
+EOF
+)"
 ```
 
 We are then going to attach the ZPU, that we have done:
 
 ```yaml
-kubectl patch deploy mcp-authorization-proxy -n api --patch "$(cat <<'EOF'
+kubectl patch deploy mcp -n api --patch "$(cat <<'EOF'
 spec:
   template:
     spec:
       containers:
         # 1. Update existing api-server container to read policies
-        - name: mcp-authorization-proxy
+        - name: auth-proxy
           volumeMounts:
             - name: api-server-policies
               mountPath: /app/policies
@@ -86,7 +102,7 @@ We are going to change the service `mcp` to watch `mcp-authorization-proxy` inst
 
 ```sh
 kubectl delete svc mcp -n api
-kubectl expose deploy mcp-authorization-proxy -n api --port 8081 --target-port 8102 --name mcp
+kubectl expose deploy mcp -n api --port 8081 --target-port 8082
 ```
 
 ## Verify
@@ -169,10 +185,7 @@ Check your access token with `scp` including both scopes:
 
 Navigate to `User Icon` > `Admin Panel` > `Settings` > `Integrations`, and click the configure icon for the API MCP Server.
 
-Make the following change:
-
-1. Attach the access token exactly as we did previously.
-2. Set the MCP Authorization Server URL to `http://localhost:8102`.
+Then, attach the access token exactly as we did previously.
 
 ![10_attach_access_token_with_new_scope](./assets/10_attach_access_token_with_new_scope.png)
 
