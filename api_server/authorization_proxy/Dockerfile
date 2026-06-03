@@ -17,11 +17,11 @@ WORKDIR /app
 COPY --from=build /src/target/classes ./classes
 COPY --from=build /src/target/dependency ./dependency
 
-ENV SERVER_PORT=4180
+ENV SERVER_PORT=8082
 ENV MCP_TARGET_URL=http://mcp-server.api
 ENV JAVA_TOOL_OPTIONS="-Dathenz.zpe.policy_dir=/app/policies \
 -Dathenz.zpe.jwk_uri=https://athenz-zts-server.athenz:4443/zts/v1/oauth2/keys?rfc=true"
 
-EXPOSE 4180
+EXPOSE 8082
 
 CMD ["java", "-cp", "classes:dependency/*", "com.example.mcpproxy.McpProxyApplication"]
