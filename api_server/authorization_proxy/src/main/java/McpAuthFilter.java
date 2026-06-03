@@ -45,7 +45,7 @@ public class McpAuthFilter implements Filter {
             System.setProperty("athenz.zpe.jwk_uri", DEFAULT_JWK_URI);
         }
         if (System.getProperty("athenz.zpe.policy_dir") == null) {
-            System.setProperty("athenz.zpe.policy_dir", "../policies");
+            System.setProperty("athenz.zpe.policy_dir", "/app/policies");
         }
         if (System.getProperty("athenz.zpe.monitor_timeout_secs") == null) {
             System.setProperty("athenz.zpe.monitor_timeout_secs", "5");
