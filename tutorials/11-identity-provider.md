@@ -8,6 +8,7 @@ In this tutorial, we will configure [Keycloak](https://www.keycloak.org/) as an 
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
+- [Deploy Keycloak in K8s](#deploy-keycloak-in-k8s)
 - [Run Keycloak locally](#run-keycloak-locally)
 - [Setup Client](#setup-client)
 - [Setup User](#setup-user)
@@ -20,6 +21,95 @@ In this tutorial, we will configure [Keycloak](https://www.keycloak.org/) as an 
 - [What's next?](#whats-next)
 
 <!-- /TOC -->
+
+## Deploy Keycloak in K8s
+
+> [!NOTE]
+> If you are using `kind` and facing `ImagePullBackOff` error, you can do:
+>
+> ```sh
+> docker pull quay.io/keycloak/keycloak:latest
+> kind load docker-image quay.io/keycloak/keycloak:latest
+> ```
+>
+
+First of all, Create a namespace for Keycloak:
+
+```sh
+kubectl create ns idp
+```
+
+Then deploy the keycloak:
+
+```sh
+kubectl create deployment keycloak --image=quay.io/keycloak/keycloak:latest -n idp
+```
+
+Then, make sure that the keycloak has the correct ENV so that you can login as `admin` with password `admin`:
+
+```sh
+kubectl patch deploy keycloak -n idp --patch "$(cat <<'EOF'
+spec:
+  template:
+    spec:
+      containers:
+        - name: keycloak
+          imagePullPolicy: IfNotPresent
+          args:
+            - start-dev
+          env:
+            - name: KEYCLOAK_ADMIN
+              value: "admin"
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              value: "admin"
+EOF
+)"
+```
+
+In kubernetes, the data may be ephemeral so we need some kind of data storage to contain the IdP so that even if you restart your PC, and once you rerun the server your data is preserved.
+
+First, create a very simple `pvc`:
+
+```sh
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: keycloak-data-pvc
+  namespace: idp
+spec:
+  accessModes: [ "ReadWriteOnce" ]
+  resources:
+    requests:
+      storage: 1Gi
+EOF
+```
+
+Mount the volume we just created:
+
+```sh
+kubectl patch deploy keycloak -n idp --patch "$(cat <<'EOF'
+spec:
+  template:
+    spec:
+      containers:
+        - name: keycloak
+          volumeMounts:
+            - name: keycloak-data
+              mountPath: /opt/keycloak/data
+      volumes:
+        - name: keycloak-data
+          persistentVolumeClaim:
+            claimName: keycloak-data-pvc
+EOF
+)"
+```
+
+And finally expose the deployment:
+
+```sh
+kubectl expose deployment keycloak --port=8080 -n idp
+```
 
 ## Run Keycloak locally
 
