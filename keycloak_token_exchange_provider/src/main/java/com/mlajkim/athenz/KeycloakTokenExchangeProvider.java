@@ -23,6 +23,7 @@ public class KeycloakTokenExchangeProvider implements TokenExchangeIdentityProvi
     // getTokenAudience returns audience of given id_token, but in Athenz Native Way!
     @Override
     public String getTokenAudience(OAuth2Token token) {
+        System.out.println(">>> [KeycloakTokenExchangeProvider] Getting audience from token...");
         Object aud = token.getClaim("aud");
         if (aud instanceof List && !((List<?>) aud).isEmpty()) {
             return ((List<?>) aud).get(0).toString();
