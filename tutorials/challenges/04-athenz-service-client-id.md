@@ -209,6 +209,62 @@ curl -sS -X POST "$_zts_url" \
   --data-urlencode "audience=$_id_jag_aud"
 ```
 
+You will get this error:
+
+```sh
+# {"code":403,"message":"Principal not authorized for token exchange for the requested role"}
+```
+
+This is because you are no longer doing with `ai.open-webui`:
+
+
+```sh
+local _cert_path="./keys/idjag-learner.crt"
+local _key_path="./keys/idjag-learner.key"
+local _ca_cert="./athenz_dist/certs/ca.cert.pem"
+local _zts_url="https://localhost:8443/zts/v1/oauth2/token"
+local _role_scope="api:role.mcp-accessor api:role.docs-getter"
+local _id_jag_aud="https://athenz-zts-server.athenz:4443/zts/v1"
+
+_id_jag=$(curl -sS -X POST "$_zts_url" \
+  --cert "$_cert_path" \
+  --key "$_key_path" \
+  --cacert "$_ca_cert" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data-urlencode "grant_type=urn:ietf:params:oauth:grant-type:token-exchange" \
+  --data-urlencode "requested_token_type=urn:ietf:params:oauth:token-type:id-jag" \
+  --data-urlencode "subject_token_type=urn:ietf:params:oauth:token-type:id_token" \
+  --data-urlencode "subject_token=$_id_token" \
+  --data-urlencode "scope=$_role_scope" \
+  --data-urlencode "audience=$_id_jag_aud" | jq -r .access_token)
+
+echo $_id_jag | jq -R 'split(".") | .[0] | @base64d | fromjson'
+echo $_id_jag | jq -R 'split(".") | .[1] | @base64d | fromjson'
+```
+
+```sh
+# {
+#   "kid": "athenz-zts-server-b485bd456-lxjkl",
+#   "typ": "oauth-id-jag+jwt",
+#   "alg": "RS256"
+# }
+# {
+#   "sub": "human.idjag-learner",
+#   "aud": "https://athenz-zts-server.athenz:4443/zts/v1",
+#   "scp": [
+#     "api:role.docs-getter",
+#     "api:role.mcp-accessor"
+#   ],
+#   "ver": 1,
+#   "auth_time": 1780979886,
+#   "scope": "api:role.docs-getter api:role.mcp-accessor",
+#   "iss": "https://athenz-zts-server.athenz:4443/zts/v1",
+#   "exp": 1780987086,
+#   "iat": 1780979886,
+#   "jti": "dfd10e95-0980-4e71-929d-d2f877ed57cf",
+#   "client_id": "human.idjag-learner"
+# }
+```
 
 </details>
 
