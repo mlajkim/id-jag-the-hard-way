@@ -102,7 +102,7 @@ curl -s -k -X GET "https://localhost:4443/zms/v1/domain/${_domain}/service/${_se
 # }
 ```
 
-## Set Permission
+## Set Alias
 
 > [!NOTE]
 > You need `authorize ("update", "sys.auth:meta.service.{attribute}.{domain}")`, but if you use `athenz_admin.cert.pem`, you can bypass permission setting
