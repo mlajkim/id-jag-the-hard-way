@@ -10,8 +10,8 @@ on:
       - "keycloak_token_exchange_provider/**"
       - ".github/workflows/publish-keycloak-token-exchange-provider.yml"
 
-  pull_request:
-  # pull_request_target:
+  # pull_request:
+  pull_request_target:
     branches: [ "main" ]
     paths:
       - "keycloak_token_exchange_provider/**"
