@@ -4,13 +4,14 @@
 
 # Challenge: ID_JAG with Human User Certificate
 
-Create a new client in Keyclaok with:
+Create a new client in Keycloak with:
+
 - name `ai.open-webui-another-name`
 - password: `password`
-  - CLient authencation: `On`
+  - Client authencation: `On`
   - Direct access grants: `On`
 
-And can you do this:
+Save the following function `_get_id_jag_for_open_webui_another_name`:
 
 ```sh
 _get_id_jag_for_open_webui_another_name() {
@@ -58,24 +59,22 @@ _get_id_jag_for_open_webui_another_name
 # }
 ```
 
-Can you fix this, only with Athenz Setting? (No code change)
+> [!TIP]
+> Athenz offers to have a customized Oauth2 `client_id` for a specific service name ([Code](https://github.com/AthenZ/athenz/blob/master/core/zms/src/main/rdl/ServiceIdentity.tdl#L61))
 
-
-Tip:
-
-Athenz offers to have a customized Oauth2 client_id for a specific service name ([Code](https://github.com/AthenZ/athenz/blob/master/core/zms/src/main/rdl/ServiceIdentity.tdl#L61))
+Can you fix this using only Athenz settings? (No code changes)
 
 <details>
 <summary>Click to expand the solution</summary>
 <br>
 
-ZTS Server will output this kind of error:
+The ZTS Server will output this kind of error:
 
 ```sh
 # ERROR com.yahoo.athenz.zts.ZTSImpl - The subject token does not have expected audience: human.idjag-learner/ai.client-gateway
 ```
 
-Get service account metadata:
+Get the service account metadata:
 
 ```sh
 _domain="ai"
@@ -92,7 +91,7 @@ curl -s -k -X GET "https://localhost:4443/zms/v1/domain/${_domain}/service/${_se
 
 ```sh
 # {
-#   "name": "human.idjag-learner-alias",
+#   "name": "ai.open-webui",
 #   "publicKeys": [
 #     {
 #       "key": "....Redacted...",
@@ -154,7 +153,7 @@ New field `"clientId": "ai.open-webui-another-name"`
 
 ```sh
 # {
-#   "name": "human.idjag-learner",
+#   "name": "ai.open-webui",
 #   "publicKeys": [
 #     {
 #       "key": "...Redacted...",
@@ -162,7 +161,7 @@ New field `"clientId": "ai.open-webui-another-name"`
 #     }
 #   ],
 #   "modified": "2026-06-09T02:39:49.001Z",
-#   "clientId": "ai.open-webui"
+#   "clientId": "ai.open-webui-another-name"
 # }
 ```
 
@@ -170,11 +169,13 @@ New field `"clientId": "ai.open-webui-another-name"`
 > [Source Code](https://github.com/AthenZ/athenz/blob/master/core/zms/src/main/rdl/ServiceIdentity.rdli#L148-L164)
 
 
-Then try to get `ID_JAG` Once again:
+Then try to get the `ID_JAG` once again:
 
 ```sh
 _get_id_jag_for_open_webui_another_name
 ```
+
+**✅ We have confirmed that we can set an alias for Athenz Service.**
 
 </details>
 
