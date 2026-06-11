@@ -2,18 +2,20 @@
 |:-----------------------------------------------------------------------:|:---------------------------------------:|:-------------------------------------------------------------------------------------:|
 | [List all errors in ID_JAG exchange](./03-list-all-errors-in-id-jag.md) | **Access Token with ID-JAG using curl** | [List all errors in Access Token Exchange](./05-list-all-errors-in-token-exchange.md) |
 
-# Challenge: Get Access Token with curl
-
+# Challenge: Obtaining an Access Token via cURL
+This section covers hands-on challenges related to acquiring Access Tokens (RFC 7521) and performing Token Exchanges (RFC 8693):
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
 - [Challenge: Get Access Token with ID_JAG](#challenge-get-access-token-with-id_jag)
-- [Challenge: Impersonation Token Exchange](#challenge-impersonation-token-exchange)
 - [Challenge: Delegation Token Exchange](#challenge-delegation-token-exchange)
+- [Challenge: Delegation Token Exchange](#challenge-delegation-token-exchange-1)
 
 <!-- /TOC -->
 
-You can get `$ID_JAG` with the following commmand:
+# Prerequistes
+
+You can retrieve the `ID_JAG` token using the following command:
 
 ```sh
 _id_token=$(curl -s -X POST "http://localhost:9090/realms/master/protocol/openid-connect/token" \
@@ -49,8 +51,7 @@ echo $_id_jag | jq -R 'split(".") | .[1] | @base64d | fromjson'
 
 ## Challenge: Get Access Token with ID_JAG
 
-Fetch Access Token with scope `_role_scope="api:role.docs-getter api:role.mcp-accessor"`,
-with certficiate:
+Fetch the Access Token with the scope `_role_scope="api:role.docs-getter api:role.mcp-accessor"`, using the following certificates:
 
 ```sh
 # --cert "./ai_client_gateway/certs/open-webui.crt"
@@ -103,20 +104,18 @@ echo $_at | jq -R 'split(".") | .[1] | @base64d | fromjson'
 # }
 ```
 
-**✅ We have successfully fetched Access Token with ID_JAG**
+**✅ Successfully retrieved the Access Token using ID-JAG.**
 
 </details>
 
-## Challenge: Impersonation Token Exchange
+## Challenge: Delegation Token Exchange
 
-Exchange token as a mcp server:
+Perform a token exchange with narrowed scope: `_exchange_scope="api:role.docs-getter"`, acting as an MCP server:
 
 ```sh
 # --cert "./keys/api-mcp.crt"
 # --key "./keys/api-mcp.key"
 ```
-
-With new scope `_exchange_scope="api:role.docs-getter"`
 
 <details>
 <summary>Click to expand the solution</summary>
@@ -163,12 +162,19 @@ echo $_exchanged_at | jq -R 'split(".") | .[1] | @base64d | fromjson'
 # }
 ```
 
-**✅ We have successfully exchanged scoped-down Access Token with Access Token using impersonation**
+**✅ Successfully exchanged and scoped down the Access Token via impersonation.**
 
 </details>
 
 ## Challenge: Delegation Token Exchange
 
+> [!NOTE]
+> Currently, the Athenz server does not support delegation token exchange. We will update this section once the feature becomes available.
+
+
+<details>
+<summary>Click to expand the solution</summary>
+<br>
 
 ```sh
 _role_scope="api:role.docs-getter api:role.mcp-accessor"
@@ -193,15 +199,17 @@ echo $_at_with_actor | jq -R 'split(".") | .[1] | @base64d | fromjson'
 ./my_tools/add-policy.sh "api" "docs-getter" "get" "docs"
 ```
 
-Delegation requires the client to be part of the member, so you have to:
+Delegation requires the client to be a recognized member. You must add them by running:
 
 ```sh
 ./my_tools/add-role-member.sh "api" "docs-getter" "api.api-mcp"
 ```
 
-Otherwise you will see `{"code":403,"message":"postaccesstokenrequest: principal api.api-mcp is not included in the requested role(s) in domain api"}`.
+Otherwise, you will encounter the following error:
 
-Then:
+`{"code":403,"message":"postaccesstokenrequest: principal api.api-mcp is not included in the requested role(s) in domain api"}`.
+
+Next, generate the actor token:
 
 ```sh
 _role_scope="api:role.docs-getter"
@@ -240,7 +248,7 @@ echo $_actor_at | jq -R 'split(".") | .[1] | @base64d | fromjson'
 # }
 ```
 
-Then: 
+Finally, execute the delegation exchange:
 
 ```sh
 _exchange_scope="api:role.docs-getter"
@@ -283,6 +291,8 @@ _delegated_at=$(curl -sS -X POST "$_zts_url" \
 
 echo $_delegated_at | jq -R 'split(".") | .[1] | @base64d | fromjson'
 ```
+
+</details>
 
 # Next Challenge
 
