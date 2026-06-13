@@ -8,8 +8,8 @@ This section covers hands-on challenges related to acquiring Access Tokens (RFC 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
 - [Challenge: Get Access Token with ID_JAG](#challenge-get-access-token-with-id_jag)
+- [Challenge: Impersonation Token Exchange](#challenge-impersonation-token-exchange)
 - [Challenge: Delegation Token Exchange](#challenge-delegation-token-exchange)
-- [Challenge: Delegation Token Exchange](#challenge-delegation-token-exchange-1)
 
 <!-- /TOC -->
 
@@ -108,7 +108,7 @@ echo $_at | jq -R 'split(".") | .[1] | @base64d | fromjson'
 
 </details>
 
-## Challenge: Delegation Token Exchange
+## Challenge: Impersonation Token Exchange
 
 Perform a token exchange with narrowed scope: `_exchange_scope="api:role.docs-getter"`, acting as an MCP server:
 
@@ -262,7 +262,7 @@ _delegated_at=$(curl -sS -X POST "$_zts_url" \
   --data-urlencode "grant_type=urn:ietf:params:oauth:grant-type:token-exchange" \
   --data-urlencode "requested_token_type=urn:ietf:params:oauth:token-type:access_token" \
   --data-urlencode "subject_token_type=urn:ietf:params:oauth:token-type:access_token" \
-  --data-urlencode "subject_token=$_at" \
+  --data-urlencode "subject_token=$_at_with_actor" \
   --data-urlencode "actor_token_type=urn:ietf:params:oauth:token-type:access_token" \
   --data-urlencode "actor_token=$_actor_at" \
   --data-urlencode "audience=$_exchange_aud" \
