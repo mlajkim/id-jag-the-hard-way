@@ -1,4 +1,5 @@
-import { Router, Request } from "express";
+import { Router, Request, Response } from "express";
+import { randomUUID } from "crypto";
 import { UPSTREAM_BASE_URL } from "../config/env";
 import { toolsRegistry, type ToolDefinition } from "../config/registry";
 
@@ -175,18 +176,35 @@ async function forwardToUpstream(req: Request, tool: ToolDefinition, args: any) 
   };
 }
 
-router.get("/", (_req, res) => {
-  res.setHeader("Allow", "POST");
-  res.sendStatus(405);
+const sseClients = new Map<string, Response>();
+
+router.get("/", (req, res) => {
+  const sessionId = randomUUID();
+
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    "Connection": "keep-alive",
+  });
+
+  const mountPath = req.baseUrl || "/";
+  res.write(`event: endpoint\ndata: ${mountPath}?sessionId=${sessionId}\n\n`);
+
+  sseClients.set(sessionId, res);
+
+  req.on("close", () => {
+    sseClients.delete(sessionId);
+  });
 });
 
 router.delete("/", (_req, res) => {
-  res.setHeader("Allow", "POST");
+  res.setHeader("Allow", "GET, POST");
   res.sendStatus(405);
 });
 
 router.post("/", async (req, res) => {
   const message = req.body as JsonRpcRequest;
+  const sessionId = req.query.sessionId as string;
 
   if (
     !message ||
@@ -196,6 +214,18 @@ router.post("/", async (req, res) => {
     res.status(400).json(error(null, -32600, "Invalid JSON-RPC request"));
     return;
   }
+
+  const isSse = sessionId && sseClients.has(sessionId);
+  const sseRes = isSse ? sseClients.get(sessionId)! : null;
+
+  const sendResponse = (responseData: any) => {
+    if (isSse) {
+      sseRes!.write(`event: message\ndata: ${JSON.stringify(responseData)}\n\n`);
+      if (!res.headersSent) res.sendStatus(202);
+    } else {
+      if (!res.headersSent) res.json(responseData);
+    }
+  };
 
   if (!hasId(message)) {
     res.sendStatus(202);
@@ -207,7 +237,7 @@ router.post("/", async (req, res) => {
   try {
     switch (message.method) {
       case "initialize": {
-        res.json(
+        sendResponse(
           result(id, {
             protocolVersion: message.params?.protocolVersion ?? "2025-03-26",
             capabilities: {
@@ -220,21 +250,21 @@ router.post("/", async (req, res) => {
               title: "ID-JAG The Hard Way MCP",
               version: "0.1.0",
             },
-          }),
+          })
         );
         return;
       }
 
       case "ping": {
-        res.json(result(id, {}));
+        sendResponse(result(id, {}));
         return;
       }
 
       case "tools/list": {
-        res.json(
+        sendResponse(
           result(id, {
             tools: toolsRegistry.map(toMcpTool),
-          }),
+          })
         );
         return;
       }
@@ -244,21 +274,21 @@ router.post("/", async (req, res) => {
         const args = message.params?.arguments ?? {};
 
         if (typeof name !== "string") {
-          res.json(error(id, -32602, "tools/call params.name must be string"));
+          sendResponse(error(id, -32602, "tools/call params.name must be string"));
           return;
         }
 
         const tool = toolsRegistry.find((t) => t.operationId === name);
 
         if (!tool) {
-          res.json(error(id, -32602, `Unknown tool: ${name}`));
+          sendResponse(error(id, -32602, `Unknown tool: ${name}`));
           return;
         }
 
         const upstreamResult = await forwardToUpstream(req, tool, args);
         const pretty = JSON.stringify(upstreamResult, null, 2);
 
-        res.json(
+        sendResponse(
           result(id, {
             content: [
               {
@@ -268,18 +298,18 @@ router.post("/", async (req, res) => {
             ],
             structuredContent: upstreamResult,
             isError: !upstreamResult.ok,
-          }),
+          })
         );
         return;
       }
 
       default: {
-        res.json(error(id, -32601, `Method not found: ${message.method}`));
+        sendResponse(error(id, -32601, `Method not found: ${message.method}`));
         return;
       }
     }
   } catch (e: any) {
-    res.json(error(id, -32603, e?.message ?? String(e)));
+    sendResponse(error(id, -32603, e?.message ?? String(e)));
   }
 });
 
