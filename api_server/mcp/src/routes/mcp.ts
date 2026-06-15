@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { randomUUID } from "crypto";
 import { UPSTREAM_BASE_URL } from "../config/env";
 import { toolsRegistry, type ToolDefinition } from "../config/registry";
+import { exchangeAthenzAT } from "../utils/exchange-athenz-at";
 
 const router = Router();
 
@@ -141,10 +142,9 @@ async function forwardToUpstream(req: Request, tool: ToolDefinition, args: any) 
     Accept: "application/json, text/plain, */*",
   };
 
-  const incomingAuth = req.header("Authorization");
-  if (incomingAuth) {
-    headers.Authorization = incomingAuth;
-  }
+  // Token exchange is a must:
+  const exchangedToken = await exchangeAthenzAT(req, tool.scope);
+  headers.Authorization = `Bearer ${exchangedToken}`;
 
   let body: string | undefined;
 
