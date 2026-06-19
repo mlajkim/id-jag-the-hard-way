@@ -25,15 +25,6 @@ In this tutorial, we will configure [Keycloak](https://www.keycloak.org/) as an 
 
 ## Deploy Keycloak in K8s
 
-> [!NOTE]
-> If you are using `kind` and facing `ImagePullBackOff` error, you can do:
->
-> ```sh
-> docker pull quay.io/keycloak/keycloak:latest
-> kind load docker-image quay.io/keycloak/keycloak:latest
-> ```
->
-
 First of all, Create a namespace for Keycloak:
 
 ```sh
@@ -114,6 +105,23 @@ kubectl expose deployment keycloak --port=8080 -n idp
 
 ## Open Keycloak on Browser
 
+> [!NOTE]
+> If you are using `kind` and facing `ImagePullBackOff` error, you can do:
+>
+> ```sh
+> docker pull quay.io/keycloak/keycloak:latest
+> kind load docker-image quay.io/keycloak/keycloak:latest
+> ```
+
+Make sure the Keycloak pod is running before opening the browser:
+
+```sh
+kubectl wait -n idp \
+  --for=condition=ready pod \
+  --selector=app=keycloak \
+  --timeout=180s
+```
+
 Open your browser and log in using admin for both the username `admin` and password `admin`:
 
 ```sh
@@ -130,7 +138,7 @@ In Keycloak, a `Client` represents an application that requests authentication o
 > [!NOTE]
 > We use the default `master` realm for this tutorial.
 
-Go to `http://localhost:9090/admin/master/console/#/master/clients/add-client` and configure the following:
+Go to `http://localhost:34443/admin/master/console/#/master/clients/add-client` and configure the following:
 
 - Client type: `OpenID Connect`
 - Client ID: `ai.open-webui`
@@ -155,7 +163,7 @@ You should see a confirmation screen similar to this:
 
 Let's create a human user account to represent you.
 
-Go to `http://localhost:9090/admin/master/console/#/master/users/add-user` and fill in the following:
+Go to `http://localhost:34443/admin/master/console/#/master/users/add-user` and fill in the following:
 
 - Username: `idjag-learner`
 - Email: `idjag-learner@athenz.io`
