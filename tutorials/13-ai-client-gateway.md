@@ -17,7 +17,7 @@ with the following steps:
 - [Understand How the ID-JAG Specification Helps Us](#understand-how-the-id-jag-specification-helps-us)
 - [Run the AI Client Proxy](#run-the-ai-client-proxy)
 - [Generate the Required Certificates](#generate-the-required-certificates)
-- [Run the Server Again](#run-the-server-again)
+- [Deploy AI Client Gateway in K8s](#deploy-ai-client-gateway-in-k8s)
 - [What's done?](#whats-done)
 - [Modify the Tool Target](#modify-the-tool-target)
 - [Verify](#verify)
@@ -152,20 +152,79 @@ ls -al ./ai_client_gateway/certs/
 # -rw-r--r--   1 mlajkim  staff   451 May 2 16:43 open-webui.public.key
 ```
 
-## Run the Server Again
+## Deploy AI Client Gateway in K8s
 
-With the certificates in place, the `ai_client_gateway` should now start successfully.
+With the certificates in place, we can now deploy the `ai_client_gateway` into Kubernetes under the `human` namespace.
+
+First, create the `human` namespace:
 
 ```sh
-_mcp_auth_proxy_port=8102
-make -C ai_client_gateway local PROXY_TARGET=http://localhost:$_mcp_auth_proxy_port
+kubectl create ns human
+```
+
+Deploy the AI Client Gateway:
+
+```sh
+kubectl create deploy ai-client-gateway -n human \
+  --image=ghcr.io/mlajkim/ai-client-gateway:latest
+```
+
+Configure the `ai-client-gateway` to watch the MCP server:
+
+```yaml
+kubectl patch deploy ai-client-gateway -n human --patch "$(cat <<'EOF'
+spec:
+  template:
+    spec:
+      containers:
+        - name: ai-client-gateway
+          imagePullPolicy: Always
+          env:
+            - name: UPSTREAM_BASE_URL
+              value: "http://mcp.api:8081"
+EOF
+)"
+```
+
+Next, create a Kubernetes secret using the generated certificates:
+
+```sh
+kubectl -n human delete secret ai-client-gateway-cert --ignore-not-found
+kubectl -n human create secret generic ai-client-gateway-cert \
+  --from-file=open-webui.crt=./ai_client_gateway/certs/open-webui.crt \
+  --from-file=open-webui.key=./ai_client_gateway/certs/open-webui.key \
+  --from-file=ca.crt=./ai_client_gateway/certs/ca.crt
 ```
 
 ```sh
-# ...
-# 🚀 OpenWebUI OpenAPI Gateway listening on 0.0.0.0:3101
-# 🔗 Upstream API: http://localhost:8102
-# 🌍 Public Base URL: http://localhost:3101
+# secret/ai-client-gateway-cert created
+```
+
+Mount the Secret to the Deployment:
+
+```yaml
+kubectl patch deploy ai-client-gateway -n human --patch "$(cat <<'EOF'
+spec:
+  template:
+    spec:
+      containers:
+        - name: ai-client-gateway
+          volumeMounts:
+            - name: certs
+              mountPath: /app/certs
+              readOnly: true
+      volumes:
+        - name: certs
+          secret:
+            secretName: ai-client-gateway-cert
+EOF
+)"
+```
+
+Expose the deployment so it can be accessed:
+
+```sh
+kubectl expose deploy ai-client-gateway -n human --port 3101 --name ai-client-gateway
 ```
 
 ## What's done?
