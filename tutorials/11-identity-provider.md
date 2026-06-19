@@ -203,18 +203,15 @@ http://localhost:34443
 
 The Open WebUI deployed in K8s does not yet have Keycloak configured. We need to patch the deployment with the required environment variables.
 
-In Keycloak, navigate to `Clients` > `ai.open-webui` > `credentials` > `Copy Client Secret` then store as `_kcs`:
+In Keycloak, navigate to `Clients` > `ai.open-webui` > `credentials` > `Copy Client Secret`, then create the secret:
 
 ```sh
-_open_webui_client_id="ai.open-webui"
 _open_webui_secret="🟡TODO: Please put your secret here"
 ```
 
-Create secret:
-
 ```sh
 kubectl create secret generic keycloak-client-secret -n ai \
-  --from-literal=OAUTH_CLIENT_ID="${_open_webui_client_id}" \
+  --from-literal=OAUTH_CLIENT_ID="ai.open-webui" \
   --from-literal=OAUTH_CLIENT_SECRET="${_open_webui_secret}"
 ```
 
