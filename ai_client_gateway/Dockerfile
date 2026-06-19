@@ -3,7 +3,7 @@ FROM node:22-bookworm AS builder
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --maxsockets 1 --no-audit --no-fund
+RUN npm install --no-audit --no-fund
 
 COPY src ./src
 
