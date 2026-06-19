@@ -129,7 +129,7 @@ EOF
 ## Open Open WebUI
 
 > [!NOTE]
-> It takes some time to open up Open WebUI with its size
+> It may take 3–5 minutes for Open WebUI to be fully available due to its size (1~2 gbs)
 
 Open up the url (make sure you are running `keep-k8s-port-forward.sh`):
 

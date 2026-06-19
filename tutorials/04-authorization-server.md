@@ -41,6 +41,9 @@ Once you see the following output, you can proceed to the next step:
 
 ## Check Athenz Server Running
 
+> [!NOTE]
+> It may take about 5–10 minutes for all Athenz servers to be fully available.
+
 Execute the following to see the status of the Athenz server:
 
 ```sh
@@ -51,6 +54,8 @@ _athenz_components=(
   "athenz-zts-server"
   "athenz-ui"
 )
+
+echo "Waiting for athenz servers to be ready ..."
 
 for component in "${_athenz_components[@]}"; do
   kubectl wait -n athenz \
