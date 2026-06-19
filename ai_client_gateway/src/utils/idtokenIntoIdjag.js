@@ -42,8 +42,9 @@ async function exchangeIdTokenToIdJag(idToken, scope) {
       audience: ID_JAG_AUD,
     }).toString();
 
-    const url = new URL(ZTS_URL);
-    console.error(`[Athenz ID-JAG] 🎯 Target ZTS for ID-JAG: ${ZTS_URL}`);
+    const targetUrl = ZTS_URL.replace(/\/$/, "") + "/oauth2/token";
+    const url = new URL(targetUrl);
+    console.error(`[Athenz ID-JAG] 🎯 Target ZTS for ID-JAG: ${targetUrl}`);
     const options = {
       hostname: url.hostname,
       port: url.port,

@@ -2,7 +2,7 @@ export const PORT = Number(process.env.PORT ?? 3101);
 export const UPSTREAM_BASE_URL = process.env.UPSTREAM_BASE_URL ?? "http://localhost:8101";
 export const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL ?? `http://localhost:${PORT}`;
 export const DEBUG_HEADERS = process.env.DEBUG_HEADERS === "true";
-export const ZTS_URL = process.env.ZTS_URL ?? "https://athenz-zts-server.athenz:4443/zts/v1/oauth2/token";
+export const ZTS_URL = process.env.ZTS_URL ?? "https://athenz-zts-server.athenz:4443/zts/v1";
 
 const CORS_ORIGINS = (
   process.env.CORS_ORIGINS ??

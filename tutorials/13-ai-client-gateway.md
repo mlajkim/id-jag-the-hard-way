@@ -162,7 +162,7 @@ spec:
             - name: UPSTREAM_BASE_URL
               value: "http://mcp.api:8081"
             - name: ZTS_URL
-              value: "https://athenz-zts-server.athenz:4443/zts/v1/oauth2/token"
+              value: "https://athenz-zts-server.athenz:4443/zts/v1"
 EOF
 )"
 ```
