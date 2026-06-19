@@ -76,6 +76,14 @@ kubectl create ns ai
 
 Deploy Open WebUI:
 
+> [!NOTE]
+> If you are using kind, pre-loading the image can speed things up significantly:
+>
+> ```sh
+> docker pull ghcr.io/open-webui/open-webui:main
+> kind load docker-image ghcr.io/open-webui/open-webui:main
+> ```
+
 ```sh
 kubectl create deploy open-webui -n ai \
   --image=ghcr.io/open-webui/open-webui:main
