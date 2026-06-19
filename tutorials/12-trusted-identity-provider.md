@@ -40,6 +40,10 @@ kubectl patch deployment athenz-zts-server \
   --patch-file keycloak_token_exchange_provider/hack/static/zts-plugin-jar-mount-patch.yaml
 ```
 
+```sh
+kubectl rollout status deployment/athenz-zts-server -n athenz
+```
+
 > [!NOTE]
 > This command applies the following patch YAML: [zts-providers-config-patch.yaml](../keycloak_token_exchange_provider/hack/static/zts-plugin-jar-mount-patch.yaml)
 

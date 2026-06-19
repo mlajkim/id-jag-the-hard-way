@@ -13,7 +13,6 @@ In this tutorial, we will configure [Keycloak](https://www.keycloak.org/) as an 
 - [Setup Client](#setup-client)
 - [Setup User](#setup-user)
 - [Setup id_token expiration date](#setup-id_token-expiration-date)
-- [Setup Frontend URL](#setup-frontend-url)
 - [Add Keycloak Settings to Open WebUI](#add-keycloak-settings-to-open-webui)
 - [Sign in as `idjag-learner`](#sign-in-as-idjag-learner)
 - [Accept the account](#accept-the-account)
@@ -189,16 +188,6 @@ Go to `Keycloak` > `Realm settings` > `Tokens` > `Access Token Lifespan` and set
 ![11_idp_id_token_expiration](./assets/11_idp_id_token_expiration.png)
 
 
-## Setup Frontend URL
-
-Go to `Keycloak` > `Realm settings` > `Frontend URL`, then put:
-
-```sh
-http://localhost:34443
-```
-
-![11_keycloak_frontend_url](./assets/11_keycloak_frontend_url.png)
-
 ## Add Keycloak Settings to Open WebUI
 
 The Open WebUI deployed in K8s does not yet have Keycloak configured. We need to patch the deployment with the required environment variables.
@@ -263,6 +252,12 @@ EOF
 
 ## Sign in as `idjag-learner`
 
+Wait for the Open WebUI pod to be ready after the patch:
+
+```sh
+kubectl rollout status deploy/open-webui -n ai
+```
+
 In this tutorial, when you login to Open WebUI with the non-admin account (i.e. `idjag-learner`), you will open a different browser or incognito mode.
 
 If you are using Google Chrome:
@@ -309,6 +304,8 @@ Navigate to `http://localhost:54443/admin/users/overview`
 ![11_pending_user_id_jag_learner_added](./assets/11_pending_user_id_jag_learner_added.png)
 
 Click `Edit User` for the `idjag-learner`, then change `Pending` to `User`, and click **Save**.
+
+![11_change_pending_to_user](./assets/11_change_pending_to_user.png)
 
 ## Return to the `idjag-learner` Browser
 
