@@ -145,7 +145,7 @@ To do this, carefully follow the steps below to edit the ConfigMap using `vim` (
 1. Run the following command in your terminal:
 
 ```sh
-kubectl edit configmap athenz-zts-conf -n athenz`
+kubectl edit configmap athenz-zts-conf -n athenz
 ```
 
 2. Type `/zts.prop` and hit **Enter** to search for the properties section.
