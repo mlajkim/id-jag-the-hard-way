@@ -4,6 +4,9 @@ export const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL ?? `http://localhost:
 export const DEBUG_HEADERS = process.env.DEBUG_HEADERS === "true";
 export const ZTS_URL = process.env.ZTS_URL ?? "https://athenz-zts-server.athenz:4443/zts/v1";
 
+// DANGEROUSLY_SHOW_RAW_ACCESS_TOKEN=true will output the access token fetched as a log.
+export const DANGEROUSLY_SHOW_RAW_ACCESS_TOKEN = process.env.DANGEROUSLY_SHOW_RAW_ACCESS_TOKEN === "true";
+
 const CORS_ORIGINS = (
   process.env.CORS_ORIGINS ??
   "http://localhost:3000,http://localhost:3001,http://localhost:8080"
