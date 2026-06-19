@@ -15,7 +15,6 @@ with the following steps:
 
 - [Learn about ID-JAG?](#learn-about-id-jag)
 - [Understand How the ID-JAG Specification Helps Us](#understand-how-the-id-jag-specification-helps-us)
-- [Run the AI Client Proxy](#run-the-ai-client-proxy)
 - [Generate the Required Certificates](#generate-the-required-certificates)
 - [Deploy AI Client Gateway in K8s](#deploy-ai-client-gateway-in-k8s)
 - [What's done?](#whats-done)
@@ -44,31 +43,11 @@ When you log in via `Keycloak`, it generates an ID Token that represents your id
 
 This means we no longer have to manually insert an Access Token for each tool in the UI. Furthermore, tools can be securely shared among all users in the AI Client Agent without any manual intervention.
 
-## Run the AI Client Proxy
-
-Because ID-JAG is relatively new, not all AI client agents support it natively yet. Additionally, using an AI Client Proxy provides an extra layer of security by preventing the final Access Token from being handed directly to the AI Client Agent.
-
-The proxy is included in this project. Let's try running it:
-
-```sh
-_mcp_auth_proxy_port=8102
-make -C ai_client_gateway local PROXY_TARGET=http://localhost:$_mcp_auth_proxy_port
-```
-
-You will likely encounter an error similar to this:
-
-```sh
-# Error: ENOENT: no such file or directory, open '~/id_jag_the_hard_way_workspace/ai_client_gateway/certs/open-webui.crt'
-#     at Object.openSync (node:fs:563:18)
-#     at Object.readFileSync (node:fs:447:35)
-#     at file:///Users/jekim/id_jag_the_hard_way_workspace/ai_client_gateway/src/utils/idtokenIntoIdjag.js:17:12
-```
-
-This happens because the AI Client Proxy requires a TLS certificate to identify itself securely.
-
 ## Generate the Required Certificates
 
-Let's generate the necessary keys and certificates. First, create a directory and generate the RSA key pair:
+Let's generate the necessary keys and certificate that represents `ai_client_gateway` service.
+
+First, create a directory and generate the RSA key pair:
 
 ```sh
 mkdir -p ./ai_client_gateway/certs
@@ -182,6 +161,8 @@ spec:
           env:
             - name: UPSTREAM_BASE_URL
               value: "http://mcp.api:8081"
+            - name: ZTS_URL
+              value: "https://athenz-zts-server.athenz:4443/zts/v1/oauth2/token"
 EOF
 )"
 ```
