@@ -41,7 +41,7 @@ kubectl patch deployment athenz-zts-server \
 ```
 
 > [!NOTE]
-> This command applies the following patch YAML: [zts-providers-config-patch.yaml](https://github.com/athenz-community/keycloak-token-exchange-identity-provider-manifest/blob/main/hack/static/zts-providers-config-patch.yaml)
+> This command applies the following patch YAML: [zts-providers-config-patch.yaml](../keycloak_token_exchange_provider/hack/static/zts-plugin-jar-mount-patch.yaml)
 
 Verify that the JAR file has been successfully mounted inside the Athenz server container:
 
