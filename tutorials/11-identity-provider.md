@@ -13,7 +13,8 @@ In this tutorial, we will configure [Keycloak](https://www.keycloak.org/) as an 
 - [Setup Client](#setup-client)
 - [Setup User](#setup-user)
 - [Setup id_token expiration date](#setup-id_token-expiration-date)
-- [Create Open WebUI Runner Script with Keycloak Settings](#create-open-webui-runner-script-with-keycloak-settings)
+- [Setup Frontend URL](#setup-frontend-url)
+- [Add Keycloak Settings to Open WebUI](#add-keycloak-settings-to-open-webui)
 - [Sign in as `idjag-learner`](#sign-in-as-idjag-learner)
 - [Accept the account](#accept-the-account)
 - [Return to the `idjag-learner` Browser](#return-to-the-idjag-learner-browser)
@@ -142,7 +143,7 @@ Click **Next**, then set:
 
 Click **Next**, then set:
 
-- Valid redirect URIs: `http://localhost:3100/oauth/oidc/callback`
+- Valid redirect URIs: `http://localhost:54443/oauth/oidc/callback`
 
 Click **Save**.
 
@@ -179,86 +180,75 @@ Go to `Keycloak` > `Realm settings` > `Tokens` > `Access Token Lifespan` and set
 
 ![11_idp_id_token_expiration](./assets/11_idp_id_token_expiration.png)
 
-## Create Open WebUI Runner Script with Keycloak Settings
 
-We will create a quick script to run the Open WebUI client with Keycloak configured.
+## Setup Frontend URL
+
+Go to `Keycloak` > `Realm settings` > `Frontend URL`, then put:
 
 ```sh
-cat > ./my_tools/run-open-webui-keycloak.sh <<'EOF'
-#!/usr/bin/env bash
-set -euo pipefail
+http://localhost:34443
+```
 
-CLIENT_ID="${1:-}"
-CLIENT_SECRET="${2:-}"
-PORT="${3:-3100}"
-KEYCLOAK_PORT="${4:-34443}"
+![11_keycloak_frontend_url](./assets/11_keycloak_frontend_url.png)
 
-if [[ -z "${CLIENT_ID}" ]]; then
-  echo "Error: Keyclaok CLIENT_ID is not set."
-  exit 1
-fi
+## Add Keycloak Settings to Open WebUI
 
-if [[ -z "${CLIENT_SECRET}" ]]; then
-  echo "Error: Keyclaok CLIENT_SECRET is not set."
-  exit 1
-fi
+The Open WebUI deployed in K8s does not yet have Keycloak configured. We need to patch the deployment with the required environment variables.
 
-mkdir -p data
-export DATA_DIR="$(pwd)/data"
-export OLLAMA_BASE_URL="${OLLAMA_BASE_URL:-http://localhost:11434}"
+In Keycloak, navigate to `Clients` > `ai.open-webui` > `credentials` > `Copy Client Secret` then store as `_kcs`:
 
-# keycloak settings:
-export ENABLE_OAUTH_SIGNUP="true"
-export OAUTH_CLIENT_ID="${CLIENT_ID}"
-export OAUTH_CLIENT_SECRET="${CLIENT_SECRET}"
-export OPENID_PROVIDER_URL="http://localhost:${KEYCLOAK_PORT}/realms/master/.well-known/openid-configuration"
-export OAUTH_PROVIDER_NAME="Keycloak"
-export OAUTH_SCOPES="openid email profile"
-export OPENID_REDIRECT_URI="http://localhost:${PORT}/oauth/oidc/callback"
+```sh
+_open_webui_client_id="ai.open-webui"
+_open_webui_secret="🟡TODO: Please put your secret here"
+```
 
-if [[ ! -x venv/bin/python ]]; then
-  python3 -m venv venv
-fi
+Create secret:
 
-source venv/bin/activate
+```sh
+kubectl create secret generic keycloak-client-secret -n ai \
+  --from-literal=OAUTH_CLIENT_ID="${_open_webui_client_id}" \
+  --from-literal=OAUTH_CLIENT_SECRET="${_open_webui_secret}"
+```
 
-if ! python -m pip show open-webui >/dev/null 2>&1; then
-  python -m pip install open-webui \
-    --trusted-host pypi.org \
-    --trusted-host files.pythonhosted.org
-fi
+Patch the Open WebUI deployment with Keycloak settings:
 
-exec open-webui serve --port "${PORT}"
+```sh
+_open_webui_port=54443
+
+kubectl patch deploy open-webui -n ai --patch "$(cat <<EOF
+spec:
+  template:
+    spec:
+      containers:
+        - name: open-webui
+          env:
+            - name: ENABLE_OAUTH_SIGNUP
+              value: "true"
+            - name: OAUTH_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-client-secret
+                  key: OAUTH_CLIENT_ID
+            - name: OAUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-client-secret
+                  key: OAUTH_CLIENT_SECRET
+            - name: OPENID_PROVIDER_URL
+              value: "http://keycloak.idp:8080/realms/master/.well-known/openid-configuration"
+            - name: OAUTH_PROVIDER_NAME
+              value: "Keycloak"
+            - name: OAUTH_SCOPES
+              value: "openid email profile"
+            - name: OPENID_REDIRECT_URI
+              value: "http://localhost:${_open_webui_port}/oauth/oidc/callback"
 EOF
-
-chmod +x ./my_tools/run-open-webui-keycloak.sh
-```
-
-### Run Open WebUI with Keycloak
-
-The script we just created requires the Keycloak Client ID and Client Secret.
-
-In Keycloak, navigate to `Clients` > `ai.open-webui` > `credentials` > `Copy Client Secret` then store as `_kcs` or `_keycloak_client_secret`:
-
-```sh
-_kcs="<<THE_CLIENT_SECRET>>"
-```
-
-Now, run the application:
-
-```sh
-mkdir -p open_webui
-_keycloak_client_id="ai.open-webui"
-_open_webui_keycloak_port=3100
-_keycloak_port=34443
-(
-  cd open_webui
-  ../my_tools/run-open-webui-keycloak.sh "$_keycloak_client_id" "$_kcs" "$_open_webui_keycloak_port" "$_keycloak_port"
-)
+)"
 ```
 
 > [!NOTE]
-> You may shut down the open-webui running without Keycloak on port 3200, but optional.
+> `OPENID_PROVIDER_URL` uses the in-cluster Keycloak service address (`keycloak.idp:8080`) instead of `localhost`, so Open WebUI can reach Keycloak from inside the cluster.
+
 
 ## Sign in as `idjag-learner`
 
@@ -267,15 +257,15 @@ In this tutorial, when you login to Open WebUI with the non-admin account (i.e. 
 If you are using Google Chrome:
 
 ```sh
-_open_webui_keycloak_port=3100
-open -na "Google Chrome" --args --incognito "http://localhost:${_open_webui_keycloak_port}"
+_open_webui_port=54443
+open -na "Google Chrome" --args --incognito "http://localhost:${_open_webui_port}"
 ```
 
 Or Firefox:
 
 ```sh
-_open_webui_keycloak_port=3100
-open -na "Firefox" --args --private-window "http://localhost:${_open_webui_keycloak_port}"
+_open_webui_port=54443
+open -na "Firefox" --args --private-window "http://localhost:${_open_webui_port}"
 ```
 
 > [!NOTE]
@@ -299,11 +289,11 @@ Then you will be prompted to add member
 Return to the browser where you are logged in as the `admin` user.
 
 ```sh
-_open_webui_keycloak_port=3100
-open http://localhost:${_open_webui_keycloak_port}
+_open_webui_port=54443
+open http://localhost:${_open_webui_port}
 ```
 
-Navigate to `http://localhost:3100/admin/users/overview`
+Navigate to `http://localhost:54443/admin/users/overview`
 
 ![11_pending_user_id_jag_learner_added](./assets/11_pending_user_id_jag_learner_added.png)
 
@@ -314,8 +304,8 @@ Click `Edit User` for the `idjag-learner`, then change `Pending` to `User`, and 
 Switch back to the browser window for `idjag-learner` and refresh the page.
 
 ```sh
-_open_webui_keycloak_port=3100
-open -na "Google Chrome" --args --incognito "http://localhost:${_open_webui_keycloak_port}"
+_open_webui_port=54443
+open -na "Google Chrome" --args --incognito "http://localhost:${_open_webui_port}"
 ```
 
 You should now be successfully logged into the interface.

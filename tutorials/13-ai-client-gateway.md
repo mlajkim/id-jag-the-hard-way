@@ -255,7 +255,7 @@ Instead of pointing the Open WebUI directly to the MCP server, we will route it 
 Open the Open WebUI in your browser:
 
 ```sh
-_open_webui_keycloak_port=3100
+_open_webui_keycloak_port=54443
 open http://localhost:$_open_webui_keycloak_port
 ```
 
@@ -275,7 +275,7 @@ Follow the steps below to verify the setup.
 Login as `idjag-learner`:
 
 ```sh
-_open_webui_keycloak_port=3100
+_open_webui_keycloak_port=54443
 open -na "Google Chrome" --args --incognito "http://localhost:${_open_webui_keycloak_port}"
 ```
 
