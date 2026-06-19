@@ -191,6 +191,7 @@ set -euo pipefail
 CLIENT_ID="${1:-}"
 CLIENT_SECRET="${2:-}"
 PORT="${3:-3100}"
+KEYCLOAK_PORT="${4:-34443}"
 
 if [[ -z "${CLIENT_ID}" ]]; then
   echo "Error: Keyclaok CLIENT_ID is not set."
@@ -210,7 +211,7 @@ export OLLAMA_BASE_URL="${OLLAMA_BASE_URL:-http://localhost:11434}"
 export ENABLE_OAUTH_SIGNUP="true"
 export OAUTH_CLIENT_ID="${CLIENT_ID}"
 export OAUTH_CLIENT_SECRET="${CLIENT_SECRET}"
-export OPENID_PROVIDER_URL="http://localhost:9090/realms/master/.well-known/openid-configuration"
+export OPENID_PROVIDER_URL="http://localhost:${KEYCLOAK_PORT}/realms/master/.well-known/openid-configuration"
 export OAUTH_PROVIDER_NAME="Keycloak"
 export OAUTH_SCOPES="openid email profile"
 export OPENID_REDIRECT_URI="http://localhost:${PORT}/oauth/oidc/callback"
@@ -249,9 +250,10 @@ Now, run the application:
 mkdir -p open_webui
 _keycloak_client_id="ai.open-webui"
 _open_webui_keycloak_port=3100
+_keycloak_port=34443
 (
   cd open_webui
-  ../my_tools/run-open-webui-keycloak.sh "$_keycloak_client_id" "$_kcs" "$_open_webui_keycloak_port"
+  ../my_tools/run-open-webui-keycloak.sh "$_keycloak_client_id" "$_kcs" "$_open_webui_keycloak_port" "$_keycloak_port"
 )
 ```
 

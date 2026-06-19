@@ -76,7 +76,7 @@ data:
   providers.json: |
     [
       {
-        "issuerUri": "http://keycloak.idp:8080/realms/master",
+        "issuerUri": "http://localhost:34443/realms/master",
         "jwksUri": "http://keycloak.idp:8080/realms/master/protocol/openid-connect/certs",
         "providerClassName": "com.mlajkim.athenz.KeycloakTokenExchangeProvider"
       }
@@ -127,8 +127,8 @@ kubectl -n athenz \
 ```sh
 # [
 #   {
-#     "issuerUri": "https://localhost:9090/realms/master",
-#     "jwksUri": "http://host.docker.internal:9090/realms/master/protocol/openid-connect/certs",
+#     "issuerUri": "http://localhost:34443/realms/master",
+#     "jwksUri": "http://keycloak.idp:8080/realms/master/protocol/openid-connect/certs",
 #     "providerClassName": "com.mlajkim.athenz.KeycloakTokenExchangeProvider"
 #   }
 # ]
