@@ -9,7 +9,7 @@ In this tutorial, we will configure [Keycloak](https://www.keycloak.org/) as an 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
 - [Deploy Keycloak in K8s](#deploy-keycloak-in-k8s)
-- [Run Keycloak locally](#run-keycloak-locally)
+- [Open Keycloak on Browser](#open-keycloak-on-browser)
 - [Setup Client](#setup-client)
 - [Setup User](#setup-user)
 - [Setup id_token expiration date](#setup-id_token-expiration-date)
@@ -111,24 +111,12 @@ And finally expose the deployment:
 kubectl expose deployment keycloak --port=8080 -n idp
 ```
 
-## Run Keycloak locally
+## Open Keycloak on Browser
 
-We will run the Keycloak server using a local directory as its data store:
-
-```sh
-_keycloak_running_port=9090
-
-docker run -p ${_keycloak_running_port}:8080 \
-  -e KEYCLOAK_ADMIN=admin \
-  -e KEYCLOAK_ADMIN_PASSWORD=admin \
-  -v ./keycloak_data:/opt/keycloak/data \
-  quay.io/keycloak/keycloak:latest start-dev
-```
-
-Next, open your browser and log in using admin for both the username `admin` and password `admin`:
+Open your browser and log in using admin for both the username `admin` and password `admin`:
 
 ```sh
-_keycloak_running_port=9090
+_keycloak_running_port=34443
 open http://localhost:${_keycloak_running_port}
 ```
 
