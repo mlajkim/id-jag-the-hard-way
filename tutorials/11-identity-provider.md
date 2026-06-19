@@ -214,6 +214,7 @@ Patch the Open WebUI deployment with Keycloak settings:
 
 ```sh
 _open_webui_port=54443
+_keycloak_port=34443
 
 kubectl patch deploy open-webui -n ai --patch "$(cat <<EOF
 spec:
@@ -235,13 +236,18 @@ spec:
                   name: keycloak-client-secret
                   key: OAUTH_CLIENT_SECRET
             - name: OPENID_PROVIDER_URL
-              value: "http://keycloak.idp:8080/realms/master/.well-known/openid-configuration"
+              value: "http://localhost:${_keycloak_port}/realms/master/.well-known/openid-configuration"
             - name: OAUTH_PROVIDER_NAME
               value: "Keycloak"
             - name: OAUTH_SCOPES
               value: "openid email profile"
             - name: OPENID_REDIRECT_URI
               value: "http://localhost:${_open_webui_port}/oauth/oidc/callback"
+        
+        - name: keycloak-proxy
+          image: alpine/socat
+          command: ["socat"]
+          args: ["tcp-listen:${_keycloak_port},fork,reuseaddr", "tcp-connect:keycloak.idp:8080"]
 EOF
 )"
 ```

@@ -263,7 +263,7 @@ open http://localhost:$_open_webui_keycloak_port
 1. Navigate to `User Icon` > `Admin Panel` > `Settings` > `Integrations`.
 1. Click the configuration icon for the API MCP Server.
 1. Make the following changes:
-  - Change the MCP Authorization Server URL to the proxy URL: http://localhost:3101
+  - Change the MCP Authorization Server URL to the proxy URL: http://ai-client-gateway.human:3101
   - Change the `Auth` to `Oauth`
 
 ![13_edit_connection_of_tool](./assets/13_edit_connection_of_tool.png)
