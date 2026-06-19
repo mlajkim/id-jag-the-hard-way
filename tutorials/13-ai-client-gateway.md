@@ -15,8 +15,10 @@ with the following steps:
 
 - [Learn about ID-JAG?](#learn-about-id-jag)
 - [Understand How the ID-JAG Specification Helps Us](#understand-how-the-id-jag-specification-helps-us)
-- [Generate the Required Certificates](#generate-the-required-certificates)
 - [Deploy AI Client Gateway in K8s](#deploy-ai-client-gateway-in-k8s)
+- [Check the Logs](#check-the-logs)
+- [Generate the Required Certificates](#generate-the-required-certificates)
+- [Mount the Secret](#mount-the-secret)
 - [What's done?](#whats-done)
 - [Modify the Tool Target](#modify-the-tool-target)
 - [Verify](#verify)
@@ -42,6 +44,66 @@ When you log in via `Keycloak`, it generates an ID Token that represents your id
 1. Fetch an Access Token with the audience `api` (and its required scopes) using the `ai.open-webui` ID-JAG token.
 
 This means we no longer have to manually insert an Access Token for each tool in the UI. Furthermore, tools can be securely shared among all users in the AI Client Agent without any manual intervention.
+
+## Deploy AI Client Gateway in K8s
+
+Let's deploy the `ai_client_gateway` into Kubernetes under the `human` namespace.
+
+First, create the `human` namespace:
+
+```sh
+kubectl create ns human
+```
+
+Deploy the AI Client Gateway:
+
+```sh
+kubectl create deploy ai-client-gateway -n human \
+  --image=ghcr.io/mlajkim/ai-client-gateway:latest
+```
+
+Configure the `ai-client-gateway` to watch the MCP server:
+
+```yaml
+kubectl patch deploy ai-client-gateway -n human --patch "$(cat <<'EOF'
+spec:
+  template:
+    spec:
+      containers:
+        - name: ai-client-gateway
+          imagePullPolicy: Always
+          env:
+            - name: UPSTREAM_BASE_URL
+              value: "http://mcp.api:8081"
+            - name: ZTS_URL
+              value: "https://athenz-zts-server.athenz:4443/zts/v1"
+EOF
+)"
+```
+
+Expose the deployment so it can be accessed:
+
+```sh
+kubectl expose deploy ai-client-gateway -n human --port 3101 --name ai-client-gateway
+```
+
+## Check the Logs
+
+Let's check if the AI Client Gateway started successfully:
+
+```sh
+kubectl logs deploy/ai-client-gateway -n human
+```
+
+You will likely encounter an error similar to this:
+
+```sh
+# Error: ENOENT: no such file or directory, open '/app/certs/open-webui.crt'
+#     at Object.openSync (node:fs:563:18)
+#     at Object.readFileSync (node:fs:447:35)
+```
+
+This happens because the AI Client Gateway requires a TLS certificate to connect to Athenz Server securely.
 
 ## Generate the Required Certificates
 
@@ -131,43 +193,9 @@ ls -al ./ai_client_gateway/certs/
 # -rw-r--r--   1 mlajkim  staff   451 May 2 16:43 open-webui.public.key
 ```
 
-## Deploy AI Client Gateway in K8s
+## Mount the Secret
 
-With the certificates in place, we can now deploy the `ai_client_gateway` into Kubernetes under the `human` namespace.
-
-First, create the `human` namespace:
-
-```sh
-kubectl create ns human
-```
-
-Deploy the AI Client Gateway:
-
-```sh
-kubectl create deploy ai-client-gateway -n human \
-  --image=ghcr.io/mlajkim/ai-client-gateway:latest
-```
-
-Configure the `ai-client-gateway` to watch the MCP server:
-
-```yaml
-kubectl patch deploy ai-client-gateway -n human --patch "$(cat <<'EOF'
-spec:
-  template:
-    spec:
-      containers:
-        - name: ai-client-gateway
-          imagePullPolicy: Always
-          env:
-            - name: UPSTREAM_BASE_URL
-              value: "http://mcp.api:8081"
-            - name: ZTS_URL
-              value: "https://athenz-zts-server.athenz:4443/zts/v1"
-EOF
-)"
-```
-
-Next, create a Kubernetes secret using the generated certificates:
+Now, create a Kubernetes secret using the generated certificates:
 
 ```sh
 kubectl -n human delete secret ai-client-gateway-cert --ignore-not-found
@@ -202,10 +230,16 @@ EOF
 )"
 ```
 
-Expose the deployment so it can be accessed:
+Check the logs again to ensure it started successfully:
 
 ```sh
-kubectl expose deploy ai-client-gateway -n human --port 3101 --name ai-client-gateway
+kubectl logs deploy/ai-client-gateway -n human
+```
+
+```sh
+# 🚀 OpenWebUI OpenAPI Gateway listening on 0.0.0.0:3101
+# 🔗 Upstream API: http://mcp.api:8081
+# 🌍 Public Base URL: http://ai-client-gateway.api:3101
 ```
 
 ## What's done?
