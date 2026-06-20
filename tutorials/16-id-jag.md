@@ -1,6 +1,6 @@
-|                    Previous                    |  Current   |  Next  |
-|:----------------------------------------------:|:----------:|:------:|
-| [AI Client Gateway](./15-ai-client-gateway.md) | **ID-JAG** | *None* |
+|                    Previous                    |  Current   |                  Next                   |
+|:----------------------------------------------:|:----------:|:---------------------------------------:|
+| [AI Client Gateway](./15-ai-client-gateway.md) | **ID-JAG** | [Claude Code](./17-claude-code.md) |
 
 # ID-JAG
 
@@ -92,3 +92,7 @@ If you found this tutorial helpful, please consider giving the repository a ⭐ 
 [![GitHub Stars](https://img.shields.io/github/stars/mlajkim/id-jag-the-hard-way?style=social)](https://github.com/mlajkim/id-jag-the-hard-way)
 
 If you run into any issues or have questions, feel free to [open an issue](https://github.com/mlajkim/id-jag-the-hard-way/issues).
+
+Want to go further? The next tutorial shows how to connect **Claude Code** (this CLI) directly to the same MCP server using the same ID-JAG chain — no Open WebUI needed.
+
+Next: [Claude Code](./17-claude-code.md)

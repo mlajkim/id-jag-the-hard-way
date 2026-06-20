@@ -4,6 +4,11 @@ export const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL ?? `http://localhost:
 export const DEBUG_HEADERS = process.env.DEBUG_HEADERS === "true";
 export const ZTS_URL = process.env.ZTS_URL ?? "https://athenz-zts-server.athenz:4443/zts/v1";
 
+// OAuth2 / Keycloak settings (used by the gateway's built-in authorization server)
+export const KEYCLOAK_URL = process.env.KEYCLOAK_URL ?? "http://localhost:34443";
+export const KEYCLOAK_REALM = process.env.KEYCLOAK_REALM ?? "master";
+export const KEYCLOAK_CLIENT_ID = process.env.KEYCLOAK_CLIENT_ID ?? "claude-code";
+
 // DANGEROUSLY_SHOW_RAW_ACCESS_TOKEN=true will output the access token fetched as a log.
 export const DANGEROUSLY_SHOW_RAW_ACCESS_TOKEN = process.env.DANGEROUSLY_SHOW_RAW_ACCESS_TOKEN === "true";
 
