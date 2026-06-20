@@ -174,10 +174,34 @@ kubectl create deploy ai-client-gateway -n human \
   --image=ghcr.io/mlajkim/ai-client-gateway:latest
 ```
 
-Configure it:
+Mount the certificates:
 
 ```sh
 kubectl patch deploy ai-client-gateway -n human --patch "$(cat <<'EOF'
+spec:
+  template:
+    spec:
+      containers:
+        - name: ai-client-gateway
+          volumeMounts:
+            - name: certs
+              mountPath: /app/certs
+              readOnly: true
+      volumes:
+        - name: certs
+          secret:
+            secretName: human-claude-cli-cert
+EOF
+)"
+```
+
+Configure environment variables:
+
+```sh
+_gateway_port=$(./tools/port.sh ai-client-gateway)
+_keycloak_port=$(./tools/port.sh keycloak)
+
+kubectl patch deploy ai-client-gateway -n human --patch "$(cat <<EOF
 spec:
   template:
     spec:
@@ -196,21 +220,15 @@ spec:
             - name: KEYCLOAK_CLIENT_ID
               value: "claude-cli"
             - name: PUBLIC_BASE_URL
-              value: "http://localhost:44443"
-          volumeMounts:
-            - name: certs
-              mountPath: /app/certs
-              readOnly: true
-      volumes:
-        - name: certs
-          secret:
-            secretName: human-claude-cli-cert
+              value: "http://localhost:${_gateway_port}"
+            - name: KEYCLOAK_PUBLIC_URL
+              value: "http://localhost:${_keycloak_port}"
 EOF
 )"
 ```
 
 > [!NOTE]
-> `KEYCLOAK_URL` uses the in-cluster address `keycloak.idp:8080` because the OAuth callback token exchange runs server-side inside the cluster. The browser-facing redirect uses the port-forwarded `PUBLIC_BASE_URL` — your local port-forward at `44443` handles that transparently.
+> `KEYCLOAK_URL` uses the in-cluster address `keycloak.idp:8080` because the server-side token exchange in the OAuth callback runs inside the cluster. `KEYCLOAK_PUBLIC_URL` uses the port-forwarded address because the browser's login redirect must be reachable from your local machine. If you're following port-forward defaults, `34443` is the Keycloak port.
 
 Expose and verify:
 
