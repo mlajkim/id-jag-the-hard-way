@@ -24,6 +24,7 @@ import { createSession, getSession } from "../utils/sessionStore.js";
 const router = Router();
 
 const KEYCLOAK_URL = process.env.KEYCLOAK_URL ?? "http://localhost:34443";
+const KEYCLOAK_PUBLIC_URL = process.env.KEYCLOAK_PUBLIC_URL ?? KEYCLOAK_URL;
 const KEYCLOAK_REALM = process.env.KEYCLOAK_REALM ?? "master";
 const CLIENT_ID = process.env.KEYCLOAK_CLIENT_ID ?? "claude-code";
 
@@ -31,8 +32,14 @@ const CLIENT_ID = process.env.KEYCLOAK_CLIENT_ID ?? "claude-code";
 // Keycloak uses its own PKCE challenge sent from here.
 const pendingStates = new Map<string, { codeVerifier: string; redirectUri: string }>();
 
+// Server-side token exchange uses the in-cluster address.
 function keycloakBase(): string {
   return `${KEYCLOAK_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect`;
+}
+
+// Browser-facing redirects must use the publicly reachable address.
+function keycloakPublicBase(): string {
+  return `${KEYCLOAK_PUBLIC_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect`;
 }
 
 // RFC 7636 helpers
@@ -103,7 +110,7 @@ router.get("/oauth/authorize", (req: Request, res: Response) => {
     code_challenge_method: "S256",
   });
 
-  res.redirect(`${keycloakBase()}/auth?${params}`);
+  res.redirect(`${keycloakPublicBase()}/auth?${params}`);
 });
 
 // ── callback ──────────────────────────────────────────────────────────────────
