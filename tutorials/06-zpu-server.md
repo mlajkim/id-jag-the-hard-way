@@ -78,11 +78,11 @@ Create a domain `api` that represents the API server domain:
 
 You can verify that this domain is created successfully by refreshing the **Athenz UI** (`http://localhost:3000`):
 
-![07_create_api_tld](./assets/07_create_api_tld.png)
+![07_create_api_tld](./assets/06_create_api_tld.png)
 
 The new domain (or Top Level Domain, or TLD) `api` you just created represents the following blue dotted line:
 
-![07_create_api_domain](./assets/07_create_api_domain.png)
+![07_create_api_domain](./assets/06_create_api_domain.png)
 
 ## Create Certificate for ZPU
 
