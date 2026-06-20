@@ -41,6 +41,8 @@ keys/
 
 my_tools/
 
+tools/config.local.yaml
+
 open_webui/
 
 venv/

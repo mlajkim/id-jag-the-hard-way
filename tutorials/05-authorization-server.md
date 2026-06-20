@@ -1,5 +1,5 @@
-|             Previous             |         Current          |                Next                |
-|:--------------------------------:|:------------------------:|:----------------------------------:|
+|             Previous             |         Current          |               Next               |
+|:--------------------------------:|:------------------------:|:--------------------------------:|
 | [API Server](./04-api-server.md) | **Authorization Server** | [ZPU Server](./06-zpu-server.md) |
 
 # Authorization Server
@@ -90,79 +90,46 @@ kubectl get pods -n athenz
 
 ## Keep Core Endpoints Locally Reachable
 
-The `kubectl port-forward` command may stop if a pod restarts. Therefore, we need a way to keep the port-forwarding active. First of all, let's quickly create a directory `my_tools` to store the shell script:
+The `kubectl port-forward` command may stop if a pod restarts. Therefore, we need a way to keep the port-forwarding active.
+
+To customize any port, run the setup first (press Enter to keep the defaults):
 
 ```sh
-mkdir -p my_tools
+./tools/setup.sh port
 ```
 
-Now, let's create a simple shell script `keep-k8s-port-forward.sh` inside `my_tools`:
-
 ```sh
-cat > my_tools/keep-k8s-port-forward.sh <<'EOF'
-#!/usr/bin/env bash
-set -euo pipefail
-
-# Clean up all background jobs when the script is terminated:
-trap 'kill $(jobs -p) 2>/dev/null || true' EXIT
-
-_zms_port="${1:-4443}"
-_zts_port="${2:-8443}"
-_athenz_ui_port="${3:-3000}"
-_api_port="${4:-14443}"
-_mcp_port="${5:-24443}"
-_idp_port="${6:-34443}"
-_ai_client_gateway_port="${7:-44443}"
-_open_webui_port="${8:-54443}"
-
-_pf() {
-  local ns=$1
-  local resource=$2
-  local local_port=$3
-  local remote_port=$4
-
-  while true; do
-    err=$(kubectl -n "${ns}" port-forward "${resource}" "${local_port}:${remote_port}" 2>&1 1>/dev/tty) || true
-    echo "$err" | grep -q "address already in use" && { echo "Error: port ${local_port} is already in use" >&2; exit 1; } || true
-    sleep 3
-  done
-}
-
-_pf athenz deployment/athenz-zms-server "${_zms_port}" 4443 &
-_pf athenz deployment/athenz-zts-server "${_zts_port}" 4443 &
-_pf athenz deployment/athenz-ui "${_athenz_ui_port}" 3000 &
-_pf api deployment/api-server "${_api_port}" 8080 &
-_pf api service/mcp "${_mcp_port}" 8081 &
-_pf idp deployment/keycloak "${_idp_port}" 8080 &
-_pf human service/ai-client-gateway "${_ai_client_gateway_port}" 3101 &
-_pf ai service/open-webui "${_open_webui_port}" 8080 &
-
-wait
-EOF
-
-chmod +x my_tools/keep-k8s-port-forward.sh
+# Which port would you like to use for zms? [Hit Enter for default: 4443]:
+# Using default port 4443 for zms.
+# Which port would you like to use for zts? [Hit Enter for default: 8443]:
+# Using default port 8443 for zts.
+# Which port would you like to use for athenz-ui? [Hit Enter for default: 3000]:
+# Using default port 3000 for athenz-ui.
+# Which port would you like to use for api-server? [Hit Enter for default: 14443]:
+# Using default port 14443 for api-server.
+# Which port would you like to use for mcp? [Hit Enter for default: 24443]:
+# Using default port 24443 for mcp.
+# Which port would you like to use for keycloak? [Hit Enter for default: 34443]:
+# Using default port 34443 for keycloak.
+# Which port would you like to use for ai-client-gateway? [Hit Enter for default: 44443]:
+# Using default port 44443 for ai-client-gateway.
+# Which port would you like to use for open-webui? [Hit Enter for default: 54443]:
+# Using default port 54443 for open-webui.
 ```
 
-You may customize the ports, but we recommend sticking with the defaults below:
+Then start the port-forwarder:
 
 ```sh
-_zms_port=4443
-_zts_port=8443
-_athenz_ui_port=3000
-_api_port=14443
-_mcp_port=24443
-_idp_port=34443
-_ai_client_gateway=44443
-_open_webui_port=54443
-
-./my_tools/keep-k8s-port-forward.sh "$_zms_port" "$_zts_port" "$_athenz_ui_port" "$_api_port" "$_mcp_port" "$_idp_port" "$_ai_client_gateway" "$_open_webui_port"
+./tools/keep-k8s-port-forward.sh
 ```
 
 ## Open Athenz UI
 
+Open Athenz UI:
+
 ```sh
-_athenz_ui_port=3000
-open "http://localhost:${_athenz_ui_port}"
+_athenz_ui_port=$(./tools/port.sh athenz-ui)
+./tools/open.sh "http://localhost:${_athenz_ui_port}"
 ```
 
 ![athenz_ui](assets/05_athenz_ui.png)
