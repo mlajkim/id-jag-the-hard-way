@@ -68,7 +68,7 @@ _keycloak_port=$(./tools/port.sh keycloak)
 Create a new client:
 
 - **Client ID**: `claude-cli`
-- **Client authentication**: Off (public client)
+- **Client authentication**: On (confidential client)
 - **Standard flow**: Enabled
 - **Valid redirect URIs**: `http://localhost:44443/oauth/callback`
 - **Web origins**: `http://localhost:44443`
@@ -76,67 +76,34 @@ Create a new client:
 > [!NOTE]
 > The redirect URI must exactly match `PUBLIC_BASE_URL/oauth/callback` of the human gateway. Port `44443` is the default from `tools/config.yaml`. If you changed it via `config.local.yaml`, update the URI accordingly.
 
-## Create the `human.claude-cli` Service Identity
+After saving, open the **Credentials** tab and copy the **Client secret** — you will need it in the deployment step below.
 
-First, create the `human` TLD in Athenz:
+## Create the `human.claude-cli` Service Identity
 
 ```sh
 ./tools/athenz/create-tld.sh "human"
-```
-
-Create a directory and generate the RSA key pair:
-
-```sh
-mkdir -p ./human_gateway/certs
-./tools/athenz/create-private-key.sh "./human_gateway/certs/open-webui"
-```
-
-```sh
-# Generating RSA key pair for: ./human_gateway/certs/open-webui...
-# Done! Keys generated: ./human_gateway/certs/open-webui.key, ./human_gateway/certs/open-webui.public.key
-```
-
-Register the service under the `human` domain:
-
-```sh
-./tools/athenz/create-service.sh "human" "claude-cli" "./human_gateway/certs/open-webui.public.key"
-```
-
-```sh
-# Registering Service: human.claude-cli...
-```
-
-Enable the certificate provider for this service:
-
-```sh
+./tools/athenz/create-private-key.sh "./keys/open-webui"
+./tools/athenz/create-service.sh "human" "claude-cli" "./keys/open-webui.public.key"
 ./tools/athenz/enable-cert-provider.sh "human" "claude-cli"
+sleep 2
+./tools/athenz/fetch-cert.sh "human" "claude-cli" "./keys/open-webui.key" "v1"
 ```
 
 ```sh
+# Generating RSA key pair for: ./keys/open-webui...
+# Done! Keys generated: ./keys/open-webui.key, ./keys/open-webui.public.key
+# Registering Service: human.claude-cli...
 # [Template(s) successfully applied to domain]
-```
-
-Generate the X.509 Certificate:
-
-```sh
-./tools/athenz/fetch-cert.sh "human" "claude-cli" "./human_gateway/certs/open-webui.key" "v1"
-```
-
-```sh
 # Fetching X.509 Certificate for human.claude-cli...
-# Done! Certificate saved to: ./human_gateway/certs/open-webui.crt
+# Done! Certificate saved to: ./keys/open-webui.crt
 ```
 
-Copy the Athenz CA certificate:
-
-```sh
-cp ./athenz_dist/certs/ca.cert.pem ./human_gateway/certs/ca.crt
-```
+*sleep has been included for Athenz to sync.*
 
 Verify that all necessary certificates have been created:
 
 ```sh
-ls -al ./human_gateway/certs/
+ls -al ./keys/
 ```
 
 ```sh
@@ -195,11 +162,12 @@ EOF
 )"
 ```
 
-Configure environment variables:
+Configure environment variables (replace `<your-client-secret>` with the secret from the Keycloak **Credentials** tab):
 
 ```sh
 _gateway_port=$(./tools/port.sh ai-client-gateway)
 _keycloak_port=$(./tools/port.sh keycloak)
+_client_secret=<your-client-secret>
 
 kubectl patch deploy ai-client-gateway -n human --patch "$(cat <<EOF
 spec:
@@ -219,6 +187,8 @@ spec:
               value: "master"
             - name: KEYCLOAK_CLIENT_ID
               value: "claude-cli"
+            - name: KEYCLOAK_CLIENT_SECRET
+              value: "${_client_secret}"
             - name: PUBLIC_BASE_URL
               value: "http://localhost:${_gateway_port}"
             - name: KEYCLOAK_PUBLIC_URL
