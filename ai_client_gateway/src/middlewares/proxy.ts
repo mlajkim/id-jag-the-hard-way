@@ -6,6 +6,7 @@ import {
   ensureOpenApiSpecSynced,
   resolveRequiredScope,
   getAllScopesUnion,
+  operationScopeMap,
 } from "../utils/openapi.js";
 import { getSession } from "../utils/sessionStore.js";
 import {Request, Response } from "express";
@@ -42,7 +43,34 @@ export async function proxyMiddleware(req: Request, res: Response) {
     let requiredScope: string | null;
 
     if (req.path === "/mcp") {
-      requiredScope = getAllScopesUnion();
+      // For MCP tool calls, resolve scope from the tool name (= operationId).
+      // For all other MCP messages (initialize, tools/list, ping, etc.) fall back
+      // to the common intersection scope so the session token is always valid.
+      const mcpMethod = (() => {
+        try {
+          const body = req.body && Buffer.isBuffer(req.body)
+            ? JSON.parse(req.body.toString("utf8"))
+            : req.body;
+          return body?.method as string | undefined;
+        } catch { return undefined; }
+      })();
+
+      const toolName = (() => {
+        if (mcpMethod !== "tools/call") return undefined;
+        try {
+          const body = req.body && Buffer.isBuffer(req.body)
+            ? JSON.parse(req.body.toString("utf8"))
+            : req.body;
+          return body?.params?.name as string | undefined;
+        } catch { return undefined; }
+      })();
+
+      if (toolName) {
+        requiredScope = operationScopeMap.get(toolName) ?? getAllScopesUnion();
+        console.log(`[Scope Resolve] MCP tools/call "${toolName}" -> ${requiredScope}`);
+      } else {
+        requiredScope = getAllScopesUnion();
+      }
     } else {
       requiredScope = resolveRequiredScope(req.method, req.path);
     }

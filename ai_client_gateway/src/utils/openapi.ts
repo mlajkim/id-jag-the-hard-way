@@ -152,11 +152,21 @@ function rebuildScopeIndexes(spec: OpenApiSpec) {
     return routeSpecificity(b.openapiPath) - routeSpecificity(a.openapiPath);
   });
 
-  const uniqueScopes = new Set<string>();
+  // MCP path uses the intersection of scopes across all operations — scopes that every
+  // operation requires. This avoids requesting jag_exchange for roles that not all
+  // operations need (e.g. docs-deleter), while still covering the common gateway role.
+  let intersection: Set<string> | null = null;
   for (const entry of scopeRouteTable) {
-    entry.scope.split(/\s+/).filter(Boolean).forEach(s => uniqueScopes.add(s));
+    const entryScopes = new Set(entry.scope.split(/\s+/).filter(Boolean));
+    if (intersection === null) {
+      intersection = entryScopes;
+    } else {
+      for (const s of intersection) {
+        if (!entryScopes.has(s)) intersection.delete(s);
+      }
+    }
   }
-  allScopesUnion = Array.from(uniqueScopes).sort().join(" ");
+  allScopesUnion = intersection ? Array.from(intersection).sort().join(" ") : null;
   console.log(`[OpenAPI Sync] MCP union scope: [${allScopesUnion}]`);
 }
 
