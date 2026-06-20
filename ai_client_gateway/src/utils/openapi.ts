@@ -47,6 +47,13 @@ const scopeRouteTable: ScopeRouteEntry[] = [];
 
 let lastSyncedSpec: OpenApiSpec | null = null;
 let syncInFlight: Promise<OpenApiSpec> | null = null;
+let allScopesUnion: string | null = null;
+
+// getAllScopesUnion returns the union of every unique scope found in the OpenAPI spec.
+// Used by the MCP path which cannot resolve scope per-operation.
+export function getAllScopesUnion(): string | null {
+  return allScopesUnion;
+}
 
 function makeOperationId(method: string, path: string): string {
   return `${method}_${path.replace(/[^a-zA-Z0-9]/g, "_")}`
@@ -144,6 +151,13 @@ function rebuildScopeIndexes(spec: OpenApiSpec) {
   scopeRouteTable.sort((a, b) => {
     return routeSpecificity(b.openapiPath) - routeSpecificity(a.openapiPath);
   });
+
+  const uniqueScopes = new Set<string>();
+  for (const entry of scopeRouteTable) {
+    entry.scope.split(/\s+/).filter(Boolean).forEach(s => uniqueScopes.add(s));
+  }
+  allScopesUnion = Array.from(uniqueScopes).sort().join(" ");
+  console.log(`[OpenAPI Sync] MCP union scope: [${allScopesUnion}]`);
 }
 
 function cloneAndRewriteOpenApiSpec(spec: OpenApiSpec): OpenApiSpec {

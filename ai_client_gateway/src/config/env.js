@@ -9,10 +9,6 @@ export const KEYCLOAK_URL = process.env.KEYCLOAK_URL ?? "http://localhost:34443"
 export const KEYCLOAK_REALM = process.env.KEYCLOAK_REALM ?? "master";
 export const KEYCLOAK_CLIENT_ID = process.env.KEYCLOAK_CLIENT_ID ?? "claude-code";
 
-// Fixed scope used for all MCP protocol requests (POST /mcp). MCP has no per-operation
-// OpenAPI spec, so the scope cannot be resolved dynamically.
-export const MCP_SCOPE = process.env.MCP_SCOPE ?? "api:role.mcp-accessor";
-
 // DANGEROUSLY_SHOW_RAW_ACCESS_TOKEN=true will output the access token fetched as a log.
 export const DANGEROUSLY_SHOW_RAW_ACCESS_TOKEN = process.env.DANGEROUSLY_SHOW_RAW_ACCESS_TOKEN === "true";
 

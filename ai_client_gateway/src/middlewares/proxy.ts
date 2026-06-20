@@ -1,10 +1,11 @@
-import { UPSTREAM_BASE_URL, DANGEROUSLY_SHOW_RAW_ACCESS_TOKEN, PUBLIC_BASE_URL, MCP_SCOPE } from "../config/env.js";
+import { UPSTREAM_BASE_URL, DANGEROUSLY_SHOW_RAW_ACCESS_TOKEN, PUBLIC_BASE_URL } from "../config/env.js";
 import { collectForwardHeaders } from "../utils/httpHelpers.js";
 import { logIncomingRequest } from "./logger.js";
 import { getAccessToken } from "../utils/athenzAt.ts";
 import {
   ensureOpenApiSpecSynced,
   resolveRequiredScope,
+  getAllScopesUnion,
 } from "../utils/openapi.js";
 import { getSession } from "../utils/sessionStore.js";
 import {Request, Response } from "express";
@@ -36,12 +37,13 @@ export async function proxyMiddleware(req: Request, res: Response) {
   }
 
   try {
+    await ensureOpenApiSpecSynced();
+
     let requiredScope: string | null;
 
     if (req.path === "/mcp") {
-      requiredScope = MCP_SCOPE;
+      requiredScope = getAllScopesUnion();
     } else {
-      await ensureOpenApiSpecSynced();
       requiredScope = resolveRequiredScope(req.method, req.path);
     }
 
