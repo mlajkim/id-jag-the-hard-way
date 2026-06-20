@@ -1,18 +1,21 @@
-|             Previous              |   Current    | Next |
-|:---------------------------------:|:------------:|:----:|
+|         Previous         |     Current     |  Next  |
+|:------------------------:|:---------------:|:------:|
 | [ID-JAG](./16-id-jag.md) | **Claude Code** | *None* |
 
 # Claude Code
 
-In this tutorial, you will connect **Claude Code** directly to the MCP server through the AI Client Gateway — the same identity-delegating chain you just validated with Open WebUI — but now triggered from your terminal.
+In this tutorial, you will connect **Claude Code** directly to the MCP server — the same ID-JAG chain you just validated with Open WebUI, but driven from your local terminal instead of a browser-based AI client.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
 - [How It Works](#how-it-works)
-- [Register a Keycloak Client for Claude Code](#register-a-keycloak-client-for-claude-code)
-- [Update the AI Client Gateway Configuration](#update-the-ai-client-gateway-configuration)
-- [Grant Athenz Permissions to `ai.claude-code`](#grant-athenz-permissions-to-aiclaudeCode)
+- [Why a Separate Gateway in `human`?](#why-a-separate-gateway-in-human)
+- [Register a Keycloak Client](#register-a-keycloak-client)
+- [Create the `human.claude-cli` Service Identity](#create-the-humanclaude-cli-service-identity)
+- [Deploy the Human Gateway](#deploy-the-human-gateway)
+- [Grant Athenz Permissions](#grant-athenz-permissions)
 - [Add the MCP Server to Claude Code](#add-the-mcp-server-to-claude-code)
+- [Open Claude](#open-claude)
 - [Authenticate](#authenticate)
 - [Verify](#verify)
 - [What's happened?](#whats-happened)
@@ -26,20 +29,34 @@ Claude Code supports OAuth2-protected MCP servers out of the box. When it first 
 The gateway acts as a thin OAuth2 Authorization Server that delegates the actual login to your existing Keycloak deployment. Once you log in, the gateway stores your Keycloak ID token in a server-side session. Every subsequent MCP request carries that session token as a `Bearer` header, and the gateway performs the exact same ID-JAG token exchange chain as before.
 
 ```
-Claude Code  →  AI Client Gateway (OAuth2 AS + proxy)
-                  ↓ Bearer session token
-                  resolves ID token (from session)
-                  ↓ ID token
-                  Athenz ZTS  →  ID-JAG token
-                  ↓ ID-JAG
-                  Athenz ZTS  →  Access Token (scoped)
-                  ↓ AT
-                MCP Auth Proxy  →  MCP Server  →  API Server
+[human ns]                       [ai ns]          [api ns]
+Claude Code
+    │ Bearer (session token)
+    ▼
+human ai-client-gateway          ai ai-client-gateway (Open WebUI)
+    │ resolves ID token
+    │ → ID-JAG exchange (as human.claude-cli)
+    │ → Athenz AT
+    ▼
+                              MCP Auth Proxy → MCP Server → API Server
 ```
 
-## Register a Keycloak Client for Claude Code
+## Why a Separate Gateway in `human`?
 
-The gateway needs a dedicated Keycloak client so it can redirect Claude Code's login to Keycloak and receive a callback.
+The gateway deployed in Tutorial 15 lives in the `ai` namespace alongside Open WebUI. It is part of the AI-side infrastructure and authenticates to Athenz as `ai.open-webui`.
+
+Claude Code is a **local, human-controlled tool**. Its gateway instance belongs in the `human` namespace and authenticates to Athenz as `human.claude-cli`. This is the correct boundary:
+
+| Namespace | Gateway serves                 | Athenz identity    |
+|-----------|--------------------------------|--------------------|
+| `ai`      | Open WebUI (remote AI client)  | `ai.open-webui`    |
+| `human`   | Claude Code (local human tool) | `human.claude-cli` |
+
+Both gateways talk to the same MCP server and the same Athenz ZTS. They differ only in which Athenz identity signs the ID-JAG exchange.
+
+## Register a Keycloak Client
+
+The gateway needs a Keycloak client to redirect the login and receive the callback.
 
 Open Keycloak admin UI:
 
@@ -50,92 +67,183 @@ _keycloak_port=$(./tools/port.sh keycloak)
 
 Create a new client:
 
-- **Client ID**: `claude-code`
+- **Client ID**: `claude-cli`
 - **Client authentication**: Off (public client)
 - **Standard flow**: Enabled
 - **Valid redirect URIs**: `http://localhost:44443/oauth/callback`
 - **Web origins**: `http://localhost:44443`
 
 > [!NOTE]
-> The redirect URI must exactly match `PUBLIC_BASE_URL/oauth/callback` of the gateway. If you changed the default AI Client Gateway port (`44443`) via `config.local.yaml`, update the URI accordingly.
+> The redirect URI must exactly match `PUBLIC_BASE_URL/oauth/callback` of the human gateway. Port `44443` is the default from `tools/config.yaml`. If you changed it via `config.local.yaml`, update the URI accordingly.
 
-## Update the AI Client Gateway Configuration
+## Create the `human.claude-cli` Service Identity
 
-The gateway reads three environment variables for the OAuth2 / Keycloak integration:
-
-| Variable | Default | Meaning |
-|---|---|---|
-| `KEYCLOAK_URL` | `http://localhost:34443` | Base URL of your Keycloak instance |
-| `KEYCLOAK_REALM` | `master` | Realm that holds the `claude-code` client |
-| `KEYCLOAK_CLIENT_ID` | `claude-code` | Client ID registered above |
-
-Patch the running gateway deployment so it knows where Keycloak lives:
+First, create the `human` TLD in Athenz:
 
 ```sh
-_keycloak_port=$(./tools/port.sh keycloak)
+./tools/athenz/create-tld.sh "human"
+```
 
-kubectl patch deploy ai-client-gateway -n human --patch "$(cat <<EOF
+Create a directory and generate the RSA key pair:
+
+```sh
+mkdir -p ./human_gateway/certs
+./tools/athenz/create-private-key.sh "./human_gateway/certs/open-webui"
+```
+
+```sh
+# Generating RSA key pair for: ./human_gateway/certs/open-webui...
+# Done! Keys generated: ./human_gateway/certs/open-webui.key, ./human_gateway/certs/open-webui.public.key
+```
+
+Register the service under the `human` domain:
+
+```sh
+./tools/athenz/create-service.sh "human" "claude-cli" "./human_gateway/certs/open-webui.public.key"
+```
+
+```sh
+# Registering Service: human.claude-cli...
+```
+
+Enable the certificate provider for this service:
+
+```sh
+./tools/athenz/enable-cert-provider.sh "human" "claude-cli"
+```
+
+```sh
+# [Template(s) successfully applied to domain]
+```
+
+Generate the X.509 Certificate:
+
+```sh
+./tools/athenz/fetch-cert.sh "human" "claude-cli" "./human_gateway/certs/open-webui.key" "v1"
+```
+
+```sh
+# Fetching X.509 Certificate for human.claude-cli...
+# Done! Certificate saved to: ./human_gateway/certs/open-webui.crt
+```
+
+Copy the Athenz CA certificate:
+
+```sh
+cp ./athenz_dist/certs/ca.cert.pem ./human_gateway/certs/ca.crt
+```
+
+Verify that all necessary certificates have been created:
+
+```sh
+ls -al ./human_gateway/certs/
+```
+
+```sh
+# total 24
+# -rw-r--r--   1 ...  ca.crt
+# -rw-r--r--   1 ...  open-webui.crt
+# -rw-------   1 ...  open-webui.key
+# -rw-r--r--   1 ...  open-webui.public.key
+```
+
+## Deploy the Human Gateway
+
+Create the `human` namespace:
+
+```sh
+kubectl create ns human
+```
+
+Store the certificates as a Kubernetes secret:
+
+```sh
+kubectl -n human create secret generic human-claude-cli-cert \
+  --from-file=open-webui.crt=./keys/human-claude-cli.crt \
+  --from-file=open-webui.key=./keys/human-claude-cli.key \
+  --from-file=ca.crt=./athenz_dist/certs/ca.cert.pem
+```
+
+> [!NOTE]
+> The gateway reads cert files at the paths `certs/open-webui.crt`, `certs/open-webui.key`, and `certs/ca.crt` — the filenames are fixed in the source. The secret keys use those names so the mount matches.
+
+Deploy the gateway:
+
+```sh
+kubectl create deploy ai-client-gateway -n human \
+  --image=ghcr.io/mlajkim/ai-client-gateway:latest
+```
+
+Configure it:
+
+```sh
+kubectl patch deploy ai-client-gateway -n human --patch "$(cat <<'EOF'
 spec:
   template:
     spec:
       containers:
         - name: ai-client-gateway
+          imagePullPolicy: Always
           env:
+            - name: UPSTREAM_BASE_URL
+              value: "http://mcp.api:8081"
+            - name: ZTS_URL
+              value: "https://athenz-zts-server.athenz:4443/zts/v1"
             - name: KEYCLOAK_URL
               value: "http://keycloak.idp:8080"
             - name: KEYCLOAK_REALM
               value: "master"
             - name: KEYCLOAK_CLIENT_ID
-              value: "claude-code"
+              value: "claude-cli"
+            - name: PUBLIC_BASE_URL
+              value: "http://localhost:44443"
+          volumeMounts:
+            - name: certs
+              mountPath: /app/certs
+              readOnly: true
+      volumes:
+        - name: certs
+          secret:
+            secretName: human-claude-cli-cert
 EOF
 )"
 ```
 
 > [!NOTE]
-> The gateway uses `keycloak.idp:8080` (in-cluster address) because the token exchange in the callback happens server-side. The browser redirect to Keycloak uses `PUBLIC_BASE_URL`, which the gateway passes through from its own env — your local port-forward handles the rest.
+> `KEYCLOAK_URL` uses the in-cluster address `keycloak.idp:8080` because the OAuth callback token exchange runs server-side inside the cluster. The browser-facing redirect uses the port-forwarded `PUBLIC_BASE_URL` — your local port-forward at `44443` handles that transparently.
 
-Verify the gateway restarted cleanly:
+Expose and verify:
 
 ```sh
+kubectl expose deploy ai-client-gateway -n human --port 3101 --name ai-client-gateway
 kubectl logs deploy/ai-client-gateway -n human --tail=5
 ```
 
-## Grant Athenz Permissions to `ai.claude-code`
+```sh
+# 🚀 OpenWebUI OpenAPI Gateway listening on 0.0.0.0:3101
+# 🔗 Upstream API: http://mcp.api:8081
+# 🌍 Public Base URL: http://localhost:44443
+# 🔑 Athenz ZTS Endpoint: https://athenz-zts-server.athenz:4443/zts/v1
+```
 
-Just like `ai.open-webui` needed `zts.jag_exchange` rights in Tutorial 16, the Claude Code gateway service identity needs the same permissions.
+## Grant Athenz Permissions
 
-Generate a key pair and register a service identity for `ai.claude-code`:
+`human.claude-cli` needs `zts.jag_exchange` rights on the same roles as `ai.open-webui`. Add it to the `token-exchangable-ai-agents` role created in Tutorial 16:
 
 ```sh
-mkdir -p ./claude_code_gateway/certs
-./tools/athenz/create-private-key.sh "./claude_code_gateway/certs/claude-code"
-./tools/athenz/create-service.sh "ai" "claude-code" "./claude_code_gateway/certs/claude-code.public.key"
-./tools/athenz/enable-cert-provider.sh "ai" "claude-code"
-./tools/athenz/fetch-cert.sh "ai" "claude-code" "./claude_code_gateway/certs/claude-code.key" "v1"
+./tools/athenz/add-role-member.sh "api" "token-exchangable-ai-agents" "human.claude-cli"
+```
+
+```sh
+# Adding Member human.claude-cli to Role: api:role.token-exchangable-ai-agents...
 ```
 
 > [!NOTE]
-> This reuses the `ai` TLD created in Tutorial 15. If it doesn't exist yet, run `./tools/athenz/create-tld.sh "ai"` first.
-
-Add `ai.claude-code` to the existing `token-exchangable-ai-agents` role created in Tutorial 16:
-
-```sh
-./tools/athenz/add-role-member.sh "api" "token-exchangable-ai-agents" "ai.claude-code"
-```
-
-> [!NOTE]
-> The `token-exchangable-ai-agents` role already carries the `zts.jag_exchange` policies for `role.docs-getter` and `role.mcp-accessor` from Tutorial 16. Adding `ai.claude-code` as a member grants it those same permissions immediately.
-
-### Mount the certificate into the gateway
-
-Create a Kubernetes secret for the new certificate and mount it alongside the existing `open-webui` cert. The gateway reads `certs/open-webui.crt` at startup — that file still represents the service identity used for Athenz token exchanges. The `claude-code` cert is only needed to have its public key registered in Athenz; the gateway itself continues to authenticate to ZTS as `ai.open-webui`.
-
-> [!NOTE]
-> If you prefer a cleaner separation and want the gateway to authenticate as `ai.claude-code` instead of `ai.open-webui`, update `CERT_PATH` / `KEY_PATH` in `ai_client_gateway/src/utils/idtokenIntoIdjag.js` and `athenzAt.ts` to point to the new cert, rebuild the image, and update the K8s secret accordingly. For this tutorial we keep the existing cert.
+> That role already carries `zts.jag_exchange` policies for `role.docs-getter` and `role.mcp-accessor` from Tutorial 16. Adding `human.claude-cli` as a member grants it those same rights immediately.
 
 ## Add the MCP Server to Claude Code
 
-Create a project-level MCP configuration file at the root of any project where you want access to the MCP tools:
+Create a `.mcp.json` at the root of this project:
 
 ```sh
 _gateway_port=$(./tools/port.sh ai-client-gateway)
@@ -143,7 +251,7 @@ _gateway_port=$(./tools/port.sh ai-client-gateway)
 cat > .mcp.json <<EOF
 {
   "mcpServers": {
-    "id-jag-mcp": {
+    "id-jag-the-hard-way-mcp": {
       "type": "http",
       "url": "http://localhost:${_gateway_port}/mcp"
     }
@@ -152,36 +260,31 @@ cat > .mcp.json <<EOF
 EOF
 ```
 
-Or add it to your global Claude Code settings if you want it always available:
+## Open Claude
 
 ```sh
-_gateway_port=$(./tools/port.sh ai-client-gateway)
-echo "Add this to your ~/.claude.json under \"mcpServers\":"
-echo "  \"id-jag-mcp\": { \"type\": \"http\", \"url\": \"http://localhost:${_gateway_port}/mcp\" }"
+claude
 ```
+
+![17_open_claude](./assets/17_open_claude.png)
 
 ## Authenticate
 
-Start (or restart) Claude Code in the project directory. Claude Code will attempt to list MCP tools, receive a `401`, discover the OAuth2 metadata endpoint, and automatically open your browser.
+Start (or restart) Claude Code in this directory. It will attempt to connect to the MCP server, receive a `401`, discover the OAuth2 metadata endpoint, and automatically open your browser to Keycloak.
 
-You will be redirected to Keycloak's login page. Sign in as `idjag-learner` (the user created in Tutorial 13):
+Sign in as `idjag-learner` (the user created in Tutorial 13). After login, Keycloak redirects to the gateway's `/oauth/callback`, which stores your ID token in a server-side session and sends an authorization code back to Claude Code. Claude Code exchanges it for a bearer token and is ready.
 
-- **Username**: `idjag-learner`
-- **Password**: whatever you set in Tutorial 13
-
-After successful login, Keycloak redirects to the gateway's `/oauth/callback`, which stores your ID token in a server-side session and redirects your browser back to Claude Code with an authorization code. Claude Code exchanges it for a bearer token and is now fully authenticated.
-
-You only need to do this once per session. The session remains valid as long as your Keycloak ID token has not expired.
+You only need to do this once per session. The session stays valid until your Keycloak ID token expires.
 
 ## Verify
 
-In Claude Code, ask it to use the MCP tool:
+Ask Claude Code:
 
 ```
 get docs!
 ```
 
-You should see it call the `get_api_docs` tool and return the list of documents. In the gateway logs, you will see the full ID-JAG exchange chain:
+It should call the `get_api_docs` tool and return the document list. Check the gateway logs to see the ID-JAG chain:
 
 ```sh
 kubectl logs deploy/ai-client-gateway -n human -f
@@ -197,6 +300,6 @@ kubectl logs deploy/ai-client-gateway -n human -f
 
 ## What's happened?
 
-Claude Code used the exact same authorization chain as Open WebUI — the only difference is how the ID token arrived at the gateway. Open WebUI injects it as a cookie; Claude Code obtains it via the OAuth2 authorization_code flow and sends it as a `Bearer` token. The gateway translates both into an Athenz Access Token before the request ever reaches the MCP server.
+Claude Code drove the exact same authorization chain as Open WebUI. The only differences are where the identity token comes from (OAuth2 bearer session vs. cookie) and which Athenz service identity signs the exchange (`human.claude-cli` vs. `ai.open-webui`).
 
-The human identity of `idjag-learner` is preserved through every hop, and every component operated with least-privilege permissions scoped to exactly what it needed.
+The human identity of `idjag-learner` is preserved at every hop. Each component held only the minimum permissions it needed — least privilege all the way through.
