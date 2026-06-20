@@ -1,6 +1,6 @@
-|                    Previous                    |  Current   |                                  Next                                  |
-|:----------------------------------------------:|:----------:|:----------------------------------------------------------------------:|
-| [AI Client Gateway](./13-ai-client-gateway.md) | **ID-JAG** | [Challenge: Successfully post documents](./challenges/01-post-docs.md) |
+|                    Previous                    |  Current   |  Next  |
+|:----------------------------------------------:|:----------:|:------:|
+| [AI Client Gateway](./13-ai-client-gateway.md) | **ID-JAG** | *None* |
 
 # ID-JAG
 
@@ -11,7 +11,7 @@ In this tutorial, we will finally resolve the authorization issues encountered i
 - [Grant Permissions to `ai.open-webui`](#grant-permissions-to-aiopen-webui)
 - [Verify](#verify)
 - [What's happened?](#whats-happened)
-- [What's next?](#whats-next)
+- [Finally](#finally)
 
 <!-- /TOC -->
 
@@ -83,8 +83,12 @@ At every hop, the Principle of Least Privilege was enforced — each component o
 
 ![14_arc_get_docs_through_id_jag](./assets/14_arc_get_docs_through_id_jag.png)
 
-## What's next?
+## Finally
 
-Ready to test your **ID-JAG** skills? Take on the final challenge! In this next section, the step-by-step instructions are removed. You will need to apply everything you've learned so far to troubleshoot and solve the problem on your own.
+Thank you for following along. Hope it was helpful.
 
-Next: [Challenge: Successfully post documents](./challenges/01-post-docs.md)
+If you found this tutorial helpful, please consider giving the repository a ⭐ on GitHub!
+
+[![GitHub Stars](https://img.shields.io/github/stars/mlajkim/id-jag-the-hard-way?style=social)](https://github.com/mlajkim/id-jag-the-hard-way)
+
+If you run into any issues or have questions, feel free to [open an issue](https://github.com/mlajkim/id-jag-the-hard-way/issues).
