@@ -8,11 +8,14 @@ In this tutorial, we connect an AI client to the MCP server for the first time.
 
 This tutorial follows the **Claude Code** path. If you're interested in a different client, see the alternatives below — otherwise, stick with Claude Code and continue to the next page.
 
-| # | Client            | Tutorial                                                 |
-|---|-------------------|----------------------------------------------------------|
-| 1 | **Claude Code** ✅ | [10-ai-client-agent.md](./10-ai-client-agent.md)         |
-| 2 | Codex             | *(coming soon)*                                          |
-| 3 | Gemini CLI        | *(coming soon)*                                          |
-| 4 | **Open WebUI**    | [open_webui/10-ai-agent.md](./open_webui/10-ai-agent.md) |
+<details>
+<summary>Other AI Clients</summary>
+
+- Codex *Coming soon*
+- Gemini CLI *Coming soon*
+- [Open WebUI](./open_webui/10-ai-agent.md)
+
+</details>
+
 
 Next: [Claude Code](./10-ai-client-agent.md)
