@@ -68,14 +68,23 @@ get docs!
 
 ## What's happened?
 
-Here is a brief overview of the completed flow: The API server successfully returns its data because the proper trust chain was established. The ID-JAG token exchange allowed the Gateway to act on your behalf, all while maintaining the Principle of Least Privilege for every component involved in the architecture.
+Congratulations! 🎉 You have completed the full ID-JAG tutorial.
+
+Here is a brief overview of how it all worked:
+
+1. You signed in to Open WebUI as `idjag-learner` via Keycloak, which issued an **ID Token**.
+2. The **AI Client Gateway** intercepted the request and exchanged the ID Token for an **ID-JAG token** via Athenz ZTS.
+3. Athenz ZTS validated the token against the `token-exchangable-ai-agents` role and issued a scoped **Access Token**.
+4. The gateway forwarded the request to the **MCP Server** with the Access Token attached.
+5. The **MCP Authorization Proxy** validated the token and forwarded it to the MCP Server.
+6. The MCP Server performed its own token exchange to call the **API Server**, which returned the data.
+
+At every hop, the Principle of Least Privilege was enforced — each component only held the minimum permissions it needed.
 
 ![14_arc_get_docs_through_id_jag](./assets/14_arc_get_docs_through_id_jag.png)
 
 ## What's next?
 
-Congratulations🎉. You have successfully configured your AI Agent to communicate and retrieve data protected by multiple layers of security, all while strictly adhering to the Principle of Least Privilege for each component.
-
-Ready to test your new **ID-JAG** skills? Take on the final challenge! In this next section, the step-by-step instructions are removed. You will need to apply everything you've learned so far to troubleshoot and solve the problem on your own.
+Ready to test your **ID-JAG** skills? Take on the final challenge! In this next section, the step-by-step instructions are removed. You will need to apply everything you've learned so far to troubleshoot and solve the problem on your own.
 
 Next: [Challenge: Successfully post documents](./challenges/01-post-docs.md)
