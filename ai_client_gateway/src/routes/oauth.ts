@@ -53,9 +53,28 @@ router.get("/.well-known/oauth-authorization-server", (_req: Request, res: Respo
     issuer: PUBLIC_BASE_URL,
     authorization_endpoint: `${PUBLIC_BASE_URL}/oauth/authorize`,
     token_endpoint: `${PUBLIC_BASE_URL}/oauth/token`,
+    registration_endpoint: `${PUBLIC_BASE_URL}/oauth/register`,
     response_types_supported: ["code"],
     grant_types_supported: ["authorization_code"],
     code_challenge_methods_supported: ["S256"],
+  });
+});
+
+// ── dynamic client registration (RFC 7591) ────────────────────────────────────
+// Claude Code requires this endpoint to exist. We accept any registration and
+// return a stable client_id — the actual Keycloak client is always CLIENT_ID.
+
+router.post("/oauth/register", (req: Request, res: Response) => {
+  const body = req.body as Record<string, any> ?? {};
+  const issuedClientId = body.client_id ?? `mcp-client-${crypto.randomUUID()}`;
+
+  res.status(201).json({
+    client_id: issuedClientId,
+    client_id_issued_at: Math.floor(Date.now() / 1000),
+    redirect_uris: body.redirect_uris ?? [],
+    grant_types: ["authorization_code"],
+    response_types: ["code"],
+    token_endpoint_auth_method: "none",
   });
 });
 
