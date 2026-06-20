@@ -27,6 +27,7 @@ const KEYCLOAK_URL = process.env.KEYCLOAK_URL ?? "http://localhost:34443";
 const KEYCLOAK_PUBLIC_URL = process.env.KEYCLOAK_PUBLIC_URL ?? KEYCLOAK_URL;
 const KEYCLOAK_REALM = process.env.KEYCLOAK_REALM ?? "master";
 const CLIENT_ID = process.env.KEYCLOAK_CLIENT_ID ?? "claude-code";
+const CLIENT_SECRET = process.env.KEYCLOAK_CLIENT_SECRET;
 
 // code_verifier is only needed on the gateway side for state validation;
 // Keycloak uses its own PKCE challenge sent from here.
@@ -96,7 +97,7 @@ router.get("/oauth/authorize", (req: Request, res: Response) => {
   }
 
   const codeVerifier = generateVerifier();
-  const challenge = code_challenge ?? deriveChallenge(codeVerifier);
+  const challenge = deriveChallenge(codeVerifier);
 
   pendingStates.set(state, { codeVerifier, redirectUri: redirect_uri });
 
@@ -135,6 +136,7 @@ router.get("/oauth/callback", async (req: Request, res: Response) => {
     const body = new URLSearchParams({
       grant_type: "authorization_code",
       client_id: CLIENT_ID,
+      ...(CLIENT_SECRET ? { client_secret: CLIENT_SECRET } : {}),
       code,
       redirect_uri: `${PUBLIC_BASE_URL}/oauth/callback`,
       code_verifier: pending.codeVerifier,
