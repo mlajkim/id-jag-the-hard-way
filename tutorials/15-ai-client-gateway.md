@@ -47,25 +47,19 @@ This means we no longer have to manually insert an Access Token for each tool in
 
 ## Deploy AI Client Gateway in K8s
 
-Let's deploy the `ai_client_gateway` into Kubernetes under the `human` namespace.
-
-First, create the `human` namespace:
-
-```sh
-kubectl create ns human
-```
+The AI Client Gateway belongs in the `ai` namespace alongside Open WebUI — it is part of the AI-side infrastructure, not the human-side client.
 
 Deploy the AI Client Gateway:
 
 ```sh
-kubectl create deploy ai-client-gateway -n human \
+kubectl create deploy ai-client-gateway -n ai \
   --image=ghcr.io/mlajkim/ai-client-gateway:latest
 ```
 
 Configure the `ai-client-gateway` to watch the MCP server:
 
 ```yaml
-kubectl patch deploy ai-client-gateway -n human --patch "$(cat <<'EOF'
+kubectl patch deploy ai-client-gateway -n ai --patch "$(cat <<'EOF'
 spec:
   template:
     spec:
@@ -84,7 +78,7 @@ EOF
 Expose the deployment so it can be accessed:
 
 ```sh
-kubectl expose deploy ai-client-gateway -n human --port 3101 --name ai-client-gateway
+kubectl expose deploy ai-client-gateway -n ai --port 3101 --name ai-client-gateway
 ```
 
 ## Check the Logs
@@ -92,7 +86,7 @@ kubectl expose deploy ai-client-gateway -n human --port 3101 --name ai-client-ga
 Let's check if the AI Client Gateway started successfully:
 
 ```sh
-kubectl logs deploy/ai-client-gateway -n human
+kubectl logs deploy/ai-client-gateway -n ai
 ```
 
 You will likely encounter an error similar to this:
@@ -191,8 +185,8 @@ ls -al ./ai_client_gateway/certs/
 Now, create a Kubernetes secret using the generated certificates:
 
 ```sh
-kubectl -n human delete secret ai-client-gateway-cert --ignore-not-found
-kubectl -n human create secret generic ai-client-gateway-cert \
+kubectl -n ai delete secret ai-client-gateway-cert --ignore-not-found
+kubectl -n ai create secret generic ai-client-gateway-cert \
   --from-file=open-webui.crt=./ai_client_gateway/certs/open-webui.crt \
   --from-file=open-webui.key=./ai_client_gateway/certs/open-webui.key \
   --from-file=ca.crt=./ai_client_gateway/certs/ca.crt
@@ -205,7 +199,7 @@ kubectl -n human create secret generic ai-client-gateway-cert \
 Mount the Secret to the Deployment:
 
 ```yaml
-kubectl patch deploy ai-client-gateway -n human --patch "$(cat <<'EOF'
+kubectl patch deploy ai-client-gateway -n ai --patch "$(cat <<'EOF'
 spec:
   template:
     spec:
@@ -226,13 +220,13 @@ EOF
 Check the logs again to ensure it started successfully:
 
 ```sh
-kubectl logs deploy/ai-client-gateway -n human
+kubectl logs deploy/ai-client-gateway -n ai
 ```
 
 ```sh
 # 🚀 OpenWebUI OpenAPI Gateway listening on 0.0.0.0:3101
 # 🔗 Upstream API: http://mcp.api:8081
-# 🌍 Public Base URL: http://ai-client-gateway.api:3101
+# 🌍 Public Base URL: http://ai-client-gateway.ai:3101
 # 🔑 Athenz ZTS Endpoint: https://athenz-zts-server.athenz:4443/zts/v1
 ```
 
@@ -257,7 +251,7 @@ open http://localhost:$_open_webui_keycloak_port
 1. Navigate to `User Icon` > `Admin Panel` > `Settings` > `Integrations`.
 1. Click the configuration icon for the API MCP Server.
 1. Make the following changes:
-  - Change the MCP Authorization Server URL to the proxy URL: http://ai-client-gateway.human:3101
+  - Change the MCP Authorization Server URL to the proxy URL: http://ai-client-gateway.ai:3101
   - Change the `Auth` to `Oauth`
 
 ![15_edit_connection_of_tool](./assets/15_edit_connection_of_tool.png)
