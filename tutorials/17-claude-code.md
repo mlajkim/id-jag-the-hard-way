@@ -100,20 +100,6 @@ sleep 2
 
 *sleep has been included for Athenz to sync.*
 
-Verify that all necessary certificates have been created:
-
-```sh
-ls -al ./keys/
-```
-
-```sh
-# total 24
-# -rw-r--r--   1 ...  ca.crt
-# -rw-r--r--   1 ...  open-webui.crt
-# -rw-------   1 ...  open-webui.key
-# -rw-r--r--   1 ...  open-webui.public.key
-```
-
 ## Deploy the Human Gateway
 
 Create the `human` namespace:
@@ -126,13 +112,23 @@ Store the certificates as a Kubernetes secret:
 
 ```sh
 kubectl -n human create secret generic human-claude-cli-cert \
-  --from-file=open-webui.crt=./keys/human-claude-cli.crt \
-  --from-file=open-webui.key=./keys/human-claude-cli.key \
+  --from-file=open-webui.crt=./keys/open-webui.crt \
+  --from-file=open-webui.key=./keys/open-webui.key \
   --from-file=ca.crt=./athenz_dist/certs/ca.cert.pem
 ```
 
 > [!NOTE]
 > The gateway reads cert files at the paths `certs/open-webui.crt`, `certs/open-webui.key`, and `certs/ca.crt` — the filenames are fixed in the source. The secret keys use those names so the mount matches.
+
+Store the Keycloak client credentials (from the **Credentials** tab of the `claude-cli` client):
+
+```sh
+_client_secret="🟡TODO: Put your client secret here"
+
+kubectl -n human create secret generic human-claude-cli-keycloak \
+  --from-literal=client-id="claude-cli" \
+  --from-literal=client-secret="${_client_secret}"
+```
 
 Deploy the gateway:
 
@@ -162,12 +158,11 @@ EOF
 )"
 ```
 
-Configure environment variables (replace `<your-client-secret>` with the secret from the Keycloak **Credentials** tab):
+Configure environment variables:
 
 ```sh
 _gateway_port=$(./tools/port.sh ai-client-gateway)
 _keycloak_port=$(./tools/port.sh keycloak)
-_client_secret=<your-client-secret>
 
 kubectl patch deploy ai-client-gateway -n human --patch "$(cat <<EOF
 spec:
@@ -186,9 +181,15 @@ spec:
             - name: KEYCLOAK_REALM
               value: "master"
             - name: KEYCLOAK_CLIENT_ID
-              value: "claude-cli"
+              valueFrom:
+                secretKeyRef:
+                  name: human-claude-cli-keycloak
+                  key: client-id
             - name: KEYCLOAK_CLIENT_SECRET
-              value: "${_client_secret}"
+              valueFrom:
+                secretKeyRef:
+                  name: human-claude-cli-keycloak
+                  key: client-secret
             - name: PUBLIC_BASE_URL
               value: "http://localhost:${_gateway_port}"
             - name: KEYCLOAK_PUBLIC_URL
