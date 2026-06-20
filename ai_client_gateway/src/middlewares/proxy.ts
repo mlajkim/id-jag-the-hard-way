@@ -98,15 +98,15 @@ export async function proxyMiddleware(req: Request, res: Response) {
       headers: forwardHeaders,
     };
 
-    const hasBody =
-      req.body &&
-      Buffer.isBuffer(req.body) &&
-      req.body.length > 0 &&
-      req.method !== "GET" &&
-      req.method !== "HEAD";
+    const hasBody = req.body && req.method !== "GET" && req.method !== "HEAD";
 
     if (hasBody) {
-      fetchOptions.body = req.body;
+      if (Buffer.isBuffer(req.body)) {
+        fetchOptions.body = req.body;
+      } else {
+        fetchOptions.body = JSON.stringify(req.body);
+        forwardHeaders["content-type"] = "application/json";
+      }
     }
 
     const timestamp = new Date().toISOString();
@@ -115,6 +115,8 @@ export async function proxyMiddleware(req: Request, res: Response) {
     console.error(`[Method]                    : ${fetchOptions.method}`);
     console.error(`[URL]                       : ${upstreamUrl.toString()}`);
     console.error(`[Athenz Required Scope]     : ${requiredScope}`);
+    console.error(`[Request Headers]           : ${JSON.stringify(forwardHeaders)}`);
+    console.error(`[Request Body]              : ${fetchOptions.body ? fetchOptions.body.toString().slice(0, 500) : "(none)"}`);
     DANGEROUSLY_SHOW_RAW_ACCESS_TOKEN && console.error(`⚠️ [DANGEROUSLY_SHOW_RAW_ACCESS_TOKEN] : ${DANGEROUSLY_SHOW_RAW_ACCESS_TOKEN}`);
     console.error(`[Athenz AT (Authorization)] : Bearer ${DANGEROUSLY_SHOW_RAW_ACCESS_TOKEN ? accessToken : `<redacted>`}`);
     console.error("==================================================================\n");
