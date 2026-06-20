@@ -8,6 +8,7 @@ In this tutorial, we connect an AI client to the MCP server for the first time, 
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
+- [Install Calude](#install-calude)
 - [Add the MCP Server to Claude Code](#add-the-mcp-server-to-claude-code)
 - [Open Claude](#open-claude)
 - [Authenticate](#authenticate)
@@ -22,6 +23,38 @@ In this tutorial, we connect an AI client to the MCP server for the first time, 
 > - Codex *Coming soon*
 > - Gemini CLI *Coming soon*
 > - [Open WebUI](./open_webui/10-ai-agent.md)
+
+## Install Calude
+
+![10_install_calude_app](./assets/10_install_calude_app.png)
+
+Run the following command to see if Claude is installed:
+
+```sh
+claude --version
+```
+
+If you do not see a version output (i.e `2.1.177 (Claude Code)`), install the following:
+
+macOS, Linux, WSL:
+
+```sh
+curl -fsSL https://claude.ai/install.sh | bash
+```
+
+Windows PowerShell:
+
+```sh
+irm https://claude.ai/install.ps1 | iex
+```
+
+Windows CMD:
+
+```sh
+curl -fsSL https://claude.ai/install.cmd -o install.cmd && install.cmd && del install.cmd
+```
+
+
 
 ## Add the MCP Server to Claude Code
 
