@@ -92,32 +92,7 @@ kubectl get pods -n athenz
 
 The `kubectl port-forward` command may stop if a pod restarts. Therefore, we need a way to keep the port-forwarding active.
 
-To customize any port, run the setup first (press Enter to keep the defaults):
-
-```sh
-./tools/setup.sh port
-```
-
-```sh
-# Which port would you like to use for zms? [Hit Enter for default: 4443]:
-# Using default port 4443 for zms.
-# Which port would you like to use for zts? [Hit Enter for default: 8443]:
-# Using default port 8443 for zts.
-# Which port would you like to use for athenz-ui? [Hit Enter for default: 3000]:
-# Using default port 3000 for athenz-ui.
-# Which port would you like to use for api-server? [Hit Enter for default: 14443]:
-# Using default port 14443 for api-server.
-# Which port would you like to use for mcp? [Hit Enter for default: 24443]:
-# Using default port 24443 for mcp.
-# Which port would you like to use for keycloak? [Hit Enter for default: 34443]:
-# Using default port 34443 for keycloak.
-# Which port would you like to use for ai-client-gateway? [Hit Enter for default: 44443]:
-# Using default port 44443 for ai-client-gateway.
-# Which port would you like to use for open-webui? [Hit Enter for default: 54443]:
-# Using default port 54443 for open-webui.
-```
-
-Then start the port-forwarder:
+Start the port-forwarder. If a default port is already in use, it will ask you to pick a different one:
 
 ```sh
 ./tools/keep-k8s-port-forward.sh

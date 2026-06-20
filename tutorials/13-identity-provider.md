@@ -123,12 +123,6 @@ kubectl wait -n idp \
 
 Open your browser and log in using admin for both the username `admin` and password `admin`:
 
-If this is your first time, set up the port (press Enter to keep the default):
-
-```sh
-./tools/setup.sh port
-```
-
 ```sh
 _keycloak_running_port=$(./tools/port.sh keycloak)
 ./tools/open.sh "http://localhost:${_keycloak_running_port}"
