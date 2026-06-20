@@ -1,6 +1,6 @@
-|                      Previous                      |        Current         |                    Next                    |
-|:--------------------------------------------------:|:----------------------:|:------------------------------------------:|
-| [Granular Permission](./08-granular-permission.md) | **MCP Server for API** | [AI Client Agent](./10-ai-client-agent.md) |
+|                      Previous                      |        Current         |             Next             |
+|:--------------------------------------------------:|:----------------------:|:----------------------------:|
+| [Granular Permission](./08-granular-permission.md) | **MCP Server for API** | [AI Agent](./10-ai-agent.md) |
 
 # MCP Server for API
 
@@ -132,4 +132,4 @@ We have created a running MCP Server for API with service identity `api.mcp-api`
 
 In next tutorial, we will do actual chat with local AI Agent and see how it interacts with our protected API server through the MCP Server we just created.
 
-Next: [AI Client Agent](./10-ai-client-agent.md)
+Next: [AI Agent](./10-ai-agent.md)

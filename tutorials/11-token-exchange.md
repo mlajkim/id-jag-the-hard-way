@@ -1,6 +1,6 @@
-|                  Previous                  |      Current       |                       Next                       |
-|:------------------------------------------:|:------------------:|:------------------------------------------------:|
-| [AI Client Agent](./10-ai-client-agent.md) | **Token Exchange** | [Protect MCP Server](./12-protect-mcp-server.md) |
+|              Previous               |      Current       |                       Next                       |
+|:-----------------------------------:|:------------------:|:------------------------------------------------:|
+| [AI Client Agent](./10-ai-agent.md) | **Token Exchange** | [Protect MCP Server](./12-protect-mcp-server.md) |
 
 # Token Exchange
 
