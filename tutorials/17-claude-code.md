@@ -43,14 +43,14 @@ human ai-client-gateway          ai ai-client-gateway (Open WebUI)
 
 ## Why a Separate Gateway in `human`?
 
-The gateway deployed in Tutorial 15 lives in the `ai` namespace alongside Open WebUI. It is part of the AI-side infrastructure and authenticates to Athenz as `ai.open-webui`.
+The gateway deployed in Tutorial 15 lives in the `ai` namespace alongside Open WebUI. It is part of the AI-side infrastructure and authenticates to Athenz as `ai.human-claude-cli`.
 
 Claude Code is a **local, human-controlled tool**. Its gateway instance belongs in the `human` namespace and authenticates to Athenz as `human.claude-cli`. This is the correct boundary:
 
-| Namespace | Gateway serves                 | Athenz identity    |
-|-----------|--------------------------------|--------------------|
-| `ai`      | Open WebUI (remote AI client)  | `ai.open-webui`    |
-| `human`   | Claude Code (local human tool) | `human.claude-cli` |
+| Namespace | Gateway serves                 | Athenz identity       |
+|-----------|--------------------------------|-----------------------|
+| `ai`      | Open WebUI (remote AI client)  | `ai.human-claude-cli` |
+| `human`   | Claude Code (local human tool) | `human.claude-cli`    |
 
 Both gateways talk to the same MCP server and the same Athenz ZTS. They differ only in which Athenz identity signs the ID-JAG exchange.
 
@@ -82,20 +82,20 @@ After saving, open the **Credentials** tab and copy the **Client secret** — yo
 
 ```sh
 ./tools/athenz/create-tld.sh "human"
-./tools/athenz/create-private-key.sh "./keys/open-webui"
-./tools/athenz/create-service.sh "human" "claude-cli" "./keys/open-webui.public.key"
+./tools/athenz/create-private-key.sh "./keys/human-claude-cli"
+./tools/athenz/create-service.sh "human" "claude-cli" "./keys/human-claude-cli.public.key"
 ./tools/athenz/enable-cert-provider.sh "human" "claude-cli"
 sleep 2
-./tools/athenz/fetch-cert.sh "human" "claude-cli" "./keys/open-webui.key" "v1"
+./tools/athenz/fetch-cert.sh "human" "claude-cli" "./keys/human-claude-cli.key" "v1"
 ```
 
 ```sh
-# Generating RSA key pair for: ./keys/open-webui...
-# Done! Keys generated: ./keys/open-webui.key, ./keys/open-webui.public.key
+# Generating RSA key pair for: ./keys/human-claude-cli...
+# Done! Keys generated: ./keys/human-claude-cli.key, ./keys/human-claude-cli.public.key
 # Registering Service: human.claude-cli...
 # [Template(s) successfully applied to domain]
 # Fetching X.509 Certificate for human.claude-cli...
-# Done! Certificate saved to: ./keys/open-webui.crt
+# Done! Certificate saved to: ./keys/human-claude-cli.crt
 ```
 
 *sleep has been included for Athenz to sync.*
@@ -112,13 +112,13 @@ Store the certificates as a Kubernetes secret:
 
 ```sh
 kubectl -n human create secret generic human-claude-cli-cert \
-  --from-file=open-webui.crt=./keys/open-webui.crt \
-  --from-file=open-webui.key=./keys/open-webui.key \
+  --from-file=open-webui.crt=./keys/human-claude-cli.crt \
+  --from-file=open-webui.key=./keys/human-claude-cli.key \
   --from-file=ca.crt=./athenz_dist/certs/ca.cert.pem
 ```
 
 > [!NOTE]
-> The gateway reads cert files at the paths `certs/open-webui.crt`, `certs/open-webui.key`, and `certs/ca.crt` — the filenames are fixed in the source. The secret keys use those names so the mount matches.
+> The gateway reads cert files at the paths `certs/human-claude-cli.crt`, `certs/human-claude-cli.key`, and `certs/ca.crt` — the filenames are fixed in the source. The secret keys use those names so the mount matches.
 
 Store the Keycloak client credentials (from the **Credentials** tab of the `claude-cli` client):
 
@@ -217,7 +217,7 @@ kubectl logs deploy/ai-client-gateway -n human --tail=5
 
 ## Grant Athenz Permissions
 
-`human.claude-cli` needs `zts.jag_exchange` rights on the same roles as `ai.open-webui`. Add it to the `token-exchangable-ai-agents` role created in Tutorial 16:
+`human.claude-cli` needs `zts.jag_exchange` rights on the same roles as `ai.human-claude-cli`. Add it to the `token-exchangable-ai-agents` role created in Tutorial 16:
 
 ```sh
 ./tools/athenz/add-role-member.sh "api" "token-exchangable-ai-agents" "human.claude-cli"
@@ -289,6 +289,6 @@ kubectl logs deploy/ai-client-gateway -n human -f
 
 ## What's happened?
 
-Claude Code drove the exact same authorization chain as Open WebUI. The only differences are where the identity token comes from (OAuth2 bearer session vs. cookie) and which Athenz service identity signs the exchange (`human.claude-cli` vs. `ai.open-webui`).
+Claude Code drove the exact same authorization chain as Open WebUI. The only differences are where the identity token comes from (OAuth2 bearer session vs. cookie) and which Athenz service identity signs the exchange (`human.claude-cli` vs. `ai.human-claude-cli`).
 
 The human identity of `idjag-learner` is preserved at every hop. Each component held only the minimum permissions it needed — least privilege all the way through.
