@@ -1,6 +1,6 @@
 |                    Previous                    |        Current        |           Next           |
 |:----------------------------------------------:|:---------------------:|:------------------------:|
-| [Identity Provider](./13-identity-provider.md) | **AI Client Gateway** | [ID-JAG](./16-id-jag.md) |
+| [Trusted Identity Provider](./14-trusted-identity-provider.md) | **AI Client Gateway** | [ID-JAG](./16-id-jag.md) |
 
 # AI Client Gateway
 
