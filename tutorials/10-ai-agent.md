@@ -9,7 +9,9 @@ In this tutorial, we connect an AI client to the MCP server for the first time, 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
 - [Install Calude](#install-calude)
+- [Login into Claude](#login-into-claude)
 - [Add the MCP Server to Claude Code](#add-the-mcp-server-to-claude-code)
+- [Get Access Token & Attach](#get-access-token--attach)
 - [Open Claude](#open-claude)
 - [Authenticate](#authenticate)
 - [Verify](#verify)
@@ -25,6 +27,9 @@ In this tutorial, we connect an AI client to the MCP server for the first time, 
 > - [Open WebUI](./open_webui/10-ai-agent.md)
 
 ## Install Calude
+
+> [!NOTE]
+> Official claude installation guide is available at [Claude Code](https://code.claude.com/docs/en/quickstart#native-install-recommended).
 
 ![10_install_calude_app](./assets/10_install_calude_app.png)
 
@@ -54,6 +59,11 @@ Windows CMD:
 curl -fsSL https://claude.ai/install.cmd -o install.cmd && install.cmd && del install.cmd
 ```
 
+## Login into Claude
+
+You can do whatever option but if it is your first time, Choose the `2. Anthropic Console account`
+
+You can create an account, or simply use `Continue with Google` for quicker sign up.
 
 
 ## Add the MCP Server to Claude Code
@@ -61,19 +71,67 @@ curl -fsSL https://claude.ai/install.cmd -o install.cmd && install.cmd && del in
 Create a `.mcp.json` at the root of this project:
 
 ```sh
-_gateway_port=$(./tools/port.sh ai-client-gateway)
+_mcp_port=$(./tools/port.sh mcp)
 
 cat > .mcp.json <<EOF
 {
   "mcpServers": {
     "id-jag-the-hard-way-mcp": {
       "type": "http",
-      "url": "http://localhost:${_gateway_port}/mcp"
+      "url": "http://localhost:${_mcp_port}/mcp"
     }
   }
 }
 EOF
 ```
+
+Search `/mcp`
+
+![10_search_mcp](./assets/10_search_mcp.png)
+
+You will see no permission found:
+
+![10_mcp_no_permission_found](./assets/10_mcp_no_permission_found.png)
+
+## Get Access Token & Attach
+
+Get Access Token again:
+
+```sh
+_scope="api:role.docs-getter"
+_root_user_at=$(./tools/athenz/fetch-access-token.sh \
+  "./athenz_dist/certs/athenz_admin.cert.pem" \
+  "./athenz_dist/keys/athenz_admin.private.pem" \
+  "${_scope}" \
+  "./keys/api_docs-getter.jwt")
+
+cat "./keys/api_docs-getter.jwt"
+```
+
+Then register with the access token:
+
+```sh
+_mcp_port=$(./tools/port.sh mcp)
+
+cat > .mcp.json <<EOF
+{
+  "mcpServers": {
+    "id-jag-the-hard-way-mcp": {
+      "type": "http",
+      "url": "http://localhost:${_mcp_port}/mcp",
+      "headers": {
+        "Authorization": "Bearer $(cat ./keys/api_docs-getter.jwt)"
+      }
+    }
+  }
+}
+EOF
+```
+
+Run the `/...` to reload the setting with headers:
+
+
+
 
 ## Open Claude
 
