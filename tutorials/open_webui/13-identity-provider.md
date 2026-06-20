@@ -1,9 +1,8 @@
 |                     Previous                     |        Current        |                              Next                              |
 |:------------------------------------------------:|:---------------------:|:--------------------------------------------------------------:|
-| [Protect MCP Server](./12-protect-mcp-server.md) | **Identity Provider** | [Trusted Identity Provider](./14-trusted-identity-provider.md) |
+| [Protect MCP Server](./12-protect-mcp-server.md) | **Identity Provider — Open WebUI** | [Trusted Identity Provider](./14-trusted-identity-provider.md) |
 
-# Identity Provider
-
+# Identity Provider — Open WebUI
 
 In this tutorial, we will configure [Keycloak](https://www.keycloak.org/) as an Identity Provider (IdP) for our AI Client Agent, enabling users to sign in with non-admin (standard) accounts.
 

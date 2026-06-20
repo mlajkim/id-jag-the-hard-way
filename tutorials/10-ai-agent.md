@@ -1,17 +1,18 @@
-|                     Previous                     |   Current    |                   Next                   |
-|:------------------------------------------------:|:------------:|:----------------------------------------:|
-| [MCP Server for API](./09-mcp-server-for-api.md) | **AI Agent** | [Token Exchange](./11-token-exchange.md) |
+|                     Previous                     |   Current    |                  Next                  |
+|:------------------------------------------------:|:------------:|:--------------------------------------:|
+| [MCP Server for API](./09-mcp-server-for-api.md) | **AI Agent** | [Claude Code](./10-ai-client-agent.md) |
 
 # AI Agent
 
-In this tutorial, we will install an AI client and connect it to the MCP server. Choose whichever fits your setup — you can always come back and set up others later.
+In this tutorial, we connect an AI client to the MCP server for the first time.
 
-> [!TIP]
-> Highly recommend the `Claude CLI`!
+This tutorial follows the **Claude Code** path. If you're interested in a different client, see the alternatives below — otherwise, stick with Claude Code and continue to the next page.
 
-| # | Client         | Pros                                 | Cons                          | Tutorial                                     |
-|---|----------------|--------------------------------------|-------------------------------|----------------------------------------------|
-| 1 | **Claude CLI** | Local, scriptable, no browser needed | OAuth2 gateway setup required | [10.1-claude-code.md](./10.1-claude-code.md) |
-| 2 | Codex          | —                                    | —                             | *(coming soon)*                              |
-| 3 | Gemini CLI     | —                                    | —                             | *(coming soon)*                              |
-| 4 | **Open WebUI** | Full chat UI, multi-user             | 48GB+ Required                | [10.2-open-webui.md](./10.2-open-webui.md)   |
+| # | Client            | Tutorial                                                 |
+|---|-------------------|----------------------------------------------------------|
+| 1 | **Claude Code** ✅ | [10-ai-client-agent.md](./10-ai-client-agent.md)         |
+| 2 | Codex             | *(coming soon)*                                          |
+| 3 | Gemini CLI        | *(coming soon)*                                          |
+| 4 | **Open WebUI**    | [open_webui/10-ai-agent.md](./open_webui/10-ai-agent.md) |
+
+Next: [Claude Code](./10-ai-client-agent.md)

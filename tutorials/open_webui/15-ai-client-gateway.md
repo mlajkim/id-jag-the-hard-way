@@ -1,9 +1,8 @@
 |                            Previous                            |        Current        |           Next           |
 |:--------------------------------------------------------------:|:---------------------:|:------------------------:|
-| [Trusted Identity Provider](./14-trusted-identity-provider.md) | **AI Client Gateway** | [ID-JAG](./16-id-jag.md) |
+| [Trusted Identity Provider](./14-trusted-identity-provider.md) | **AI Client Gateway — Open WebUI** | [ID-JAG](./16-id-jag.md) |
 
-# AI Client Gateway
-
+# AI Client Gateway — Open WebUI
 
 In this tutorial, we will deploy the `AI Client Gateway`, which acts as an intermediary layer between:
 

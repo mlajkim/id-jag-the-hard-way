@@ -1,9 +1,8 @@
 |              Previous               |      Current       |                       Next                       |
 |:-----------------------------------:|:------------------:|:------------------------------------------------:|
-| [AI Client Agent](./10-ai-agent.md) | **Token Exchange** | [Protect MCP Server](./12-protect-mcp-server.md) |
+| [AI Client Agent](./10-ai-agent.md) | **Token Exchange — Open WebUI** | [Protect MCP Server](./12-protect-mcp-server.md) |
 
-# Token Exchange
-
+# Token Exchange — Open WebUI
 
 In this section, we will resolve the "Not Authorized for Token Impersonation" error from the previous step. This occurred because the MCP server attempted to exchange the Access Token it received from the AI client for a new one, but lacked the necessary permissions.
 

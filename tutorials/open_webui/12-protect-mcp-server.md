@@ -1,9 +1,8 @@
 |                 Previous                 |        Current         |                      Next                      |
 |:----------------------------------------:|:----------------------:|:----------------------------------------------:|
-| [Token Exchange](./11-token-exchange.md) | **Protect MCP Server** | [Identity Provider](./13-identity-provider.md) |
+| [Token Exchange](./11-token-exchange.md) | **Protect MCP Server — Open WebUI** | [Identity Provider](./13-identity-provider.md) |
 
-# Protect MCP Server
-
+# Protect MCP Server — Open WebUI
 
 In this tutorial, we will secure the MCP server using an Authorization Server (Athenz), just as we did with the API Server.
 

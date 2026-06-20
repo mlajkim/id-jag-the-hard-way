@@ -1,9 +1,8 @@
 |                    Previous                    |            Current            |                      Next                      |
 |:----------------------------------------------:|:-----------------------------:|:----------------------------------------------:|
-| [Identity Provider](./13-identity-provider.md) | **Trusted Identity Provider** | [AI Client Gateway](./15-ai-client-gateway.md) |
+| [Identity Provider](./13-identity-provider.md) | **Trusted Identity Provider — Open WebUI** | [AI Client Gateway](./15-ai-client-gateway.md) |
 
-# Trusted Identity Provider
-
+# Trusted Identity Provider — Open WebUI
 
 In this tutorial, we will configure the authorization server (Athenz) to trust Keycloak as an Identity Provider (IdP).
 
