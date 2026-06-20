@@ -92,6 +92,12 @@ export async function proxyMiddleware(req: Request, res: Response) {
 
     res.send(responseBuffer);
   } catch (error: any) {
+    if (error.code === "ID_TOKEN_EXPIRED") {
+      return res.status(401).json({
+        error: "id_token_expired",
+        message: "Your session has expired. Please re-login to continue.",
+      });
+    }
     console.error(`[${new Date().toISOString()}] Proxy request failed:`, error);
     res.status(502).json({
       error: "upstream_request_failed",
