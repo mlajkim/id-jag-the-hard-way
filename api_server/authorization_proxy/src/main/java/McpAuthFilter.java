@@ -13,6 +13,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.security.cert.X509Certificate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -56,7 +57,17 @@ public class McpAuthFilter implements Filter {
         if (System.getProperty("athenz.zpe.check_policy_zms_signature") == null) {
             System.setProperty("athenz.zpe.check_policy_zms_signature", "false");
         }
-        
+        if (System.getProperty("athenz.jwk_athenz_conf") == null) {
+            try {
+                java.nio.file.Path tmp = Files.createTempFile("athenz-jwk-empty", ".conf");
+                Files.writeString(tmp, "{\"zts\":{\"keys\":[]},\"zms\":{\"keys\":[]}}");
+                tmp.toFile().deleteOnExit();
+                System.setProperty("athenz.jwk_athenz_conf", tmp.toString());
+            } catch (Exception e) {
+                // non-fatal; ZPE will log a WARN but still function via jwk_uri
+            }
+        }
+
         AuthZpeClient.init();
         System.out.println(String.format("[%s] [INFO] [MCP-Auth-Proxy] 🛡️ Athenz ZPE Initialized! Securing API Server's MCP endpoints.", getTimestamp()));
     }
