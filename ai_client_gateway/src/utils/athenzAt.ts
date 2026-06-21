@@ -22,6 +22,7 @@ function getExp(token: string): number {
   }
 }
 
+// fetchATFromZTS actually calls to ZTS
 async function fetchATFromZTS(idJag: string, scope: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const body = new URLSearchParams({
