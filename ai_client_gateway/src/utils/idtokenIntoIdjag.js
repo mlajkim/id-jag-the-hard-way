@@ -89,6 +89,19 @@ function resolveIdToken(req) {
   return extractCookieValue(cookieHeader, "oauth_id_token");
 }
 
+function normalizeScope(scope) {
+  return scope.trim().split(/\s+/).sort().join(" ");
+}
+
+function getGrantedScope(idJag) {
+  try {
+    const payload = JSON.parse(Buffer.from(idJag.split(".")[1], "base64").toString("utf8"));
+    return payload.scp || payload.scope || null;
+  } catch {
+    return null;
+  }
+}
+
 // exchangeToIdjag returns jag token through ID-JAG process,
 // but if it holds the cache, it simply returns the cache ones
 export async function exchangeToIdjag(req, scope) {
@@ -103,29 +116,32 @@ export async function exchangeToIdjag(req, scope) {
     throw err;
   }
 
-  const cacheKey = scope; // for now it is simply use the scope as the key
+  const lookupKey = normalizeScope(scope);
 
-  if (tokenCache.has(cacheKey)) {
-    const cached = tokenCache.get(cacheKey);
-    
+  if (tokenCache.has(lookupKey)) {
+    const cached = tokenCache.get(lookupKey);
+
     if (cached.exp > now + 60) {
-      console.error(`[Athenz ID-JAG] ⚡ Successfully returned the cached id-jag for scope [${scope}] (Remaining: ${cached.exp - now} secs)`);
+      console.error(`[Athenz ID-JAG] ⚡ Successfully returned the cached id-jag for granted scope [${lookupKey}] (Remaining: ${cached.exp - now} secs)`);
       return cached.idJag;
     } else {
-      console.error(`[Athenz ID-JAG] 🗑️ Destroyed the stored cache with expired caching for scope [${scope}]`);
-      tokenCache.delete(cacheKey);
+      console.error(`[Athenz ID-JAG] 🗑️ Destroyed the stored cache with expired caching for scope [${lookupKey}]`);
+      tokenCache.delete(lookupKey);
     }
   } else {
-    console.error(`[Athenz ID-JAG] No cache found for id-jag (Scope: ${scope})`);
+    console.error(`[Athenz ID-JAG] No cache found for id-jag (Scope: ${lookupKey})`);
   }
 
   console.error(`[Athenz ID-JAG] 🔄 Attempting to exchange new ID-JAG with id-token for scope [${scope}] ...`);
   const idJag = await exchangeIdTokenToIdJag(idToken, scope);
-  
+
+  const grantedScope = getGrantedScope(idJag);
+  const cacheKey = grantedScope ? normalizeScope(grantedScope) : lookupKey;
+
   const exp = getJwtExpiration(idJag) || (now + 3600);
-  
+
   tokenCache.set(cacheKey, { idJag, exp });
-  console.error(`[Athenz ID-JAG] 💾 Successfully exchanged and cached ID-JAG for scope [${scope}]`);
+  console.error(`[Athenz ID-JAG] 💾 Successfully exchanged and cached ID-JAG for granted scope [${cacheKey}]`);
 
   return idJag;
 }
