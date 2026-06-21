@@ -90,6 +90,7 @@ function resolveIdToken(req) {
 }
 
 function normalizeScope(scope) {
+  if (!scope || typeof scope !== "string") return "";
   return scope.trim().split(/\s+/).sort().join(" ");
 }
 
