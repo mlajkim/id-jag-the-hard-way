@@ -1,6 +1,6 @@
-|                    Previous                    |         Current         |  Next  |
-|:----------------------------------------------:|:-----------------------:|:------:|
-| [AI Client Gateway](./15-ai-client-gateway.md) | **ID-JAG — Open WebUI** | *None* |
+|                    Previous                    |         Current         |                      Next                      |
+|:----------------------------------------------:|:-----------------------:|:----------------------------------------------:|
+| [AI Client Gateway](./15-ai-client-gateway.md) | **ID-JAG — Open WebUI** | *None: You are at the end of the tutorial! 🎉* |
 
 # ID-JAG — Open WebUI
 
