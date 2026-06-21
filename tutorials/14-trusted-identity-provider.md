@@ -43,6 +43,11 @@ Wait for the rollout:
 kubectl rollout status deployment/athenz-zts-server -n athenz
 ```
 
+```sh
+# Waiting for deployment "athenz-zts-server" rollout to finish: 0 of 1 updated replicas are available...
+# deployment "athenz-zts-server" successfully rolled out
+```
+
 > [!NOTE]
 > This applies: [zts-plugin-jar-mount-patch.yaml](../keycloak_token_exchange_provider/hack/static/zts-plugin-jar-mount-patch.yaml)
 
@@ -75,7 +80,7 @@ data:
   providers.json: |
     [
       {
-        "issuerUri": "http://localhost:34443/realms/master",
+        "issuerUri": "http://localhost:$(./tools/port.sh keycloak)/realms/master",
         "jwksUri": "http://keycloak.idp:8080/realms/master/protocol/openid-connect/certs",
         "providerClassName": "com.mlajkim.athenz.KeycloakTokenExchangeProvider"
       }
@@ -156,6 +161,17 @@ Restart the ZTS server to load the new configuration:
 
 ```sh
 kubectl -n athenz rollout restart deployment athenz-zts-server
+```
+
+Wait for the rollout:
+
+```sh
+kubectl rollout status deployment/athenz-zts-server -n athenz
+```
+
+```sh
+# Waiting for deployment "athenz-zts-server" rollout to finish: 0 of 1 updated replicas are available...
+# deployment "athenz-zts-server" successfully rolled out
 ```
 
 Verify the configuration was picked up:
