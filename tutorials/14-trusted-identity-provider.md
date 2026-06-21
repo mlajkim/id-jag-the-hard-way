@@ -13,6 +13,7 @@ In this tutorial, we will configure the Authorization Server (Athenz) to trust K
 - [Connect Keycloak with the Plugin](#connect-keycloak-with-the-plugin)
 - [Configure ZTS to Load the Plugin](#configure-zts-to-load-the-plugin)
 - [Review Summary of Changes](#review-summary-of-changes)
+- [Restart MCP](#restart-mcp)
 - [What's next?](#whats-next)
 
 <!-- /TOC -->
@@ -192,6 +193,15 @@ kubectl logs -n athenz deployment/athenz-zts-server -c athenz-zts-server | grep 
 We installed the `KeycloakTokenExchangeProvider` plugin. It takes a Keycloak ID token, validates the claims against Keycloak's public keys, and returns the authenticated Athenz principal:
 
 ![Full architecture with plugin connected](./assets/14_arc_plugin_mounted_and_used.png)
+
+## Restart MCP
+
+There is apparent bug where it does not update the jwks_uri, so please run the following command to proceed:
+
+```sh
+kubectl -n api rollout restart deployment api-server
+kubectl -n api rollout restart deployment mcp
+```
 
 ## What's next?
 
