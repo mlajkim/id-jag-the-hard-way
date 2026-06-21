@@ -41,7 +41,7 @@ Install Homebrew:
 Then install the following packages:
 
 ```sh
-brew install jq gh
+brew install jq gh kubectl
 ```
 
 ## Reminder
