@@ -28,17 +28,14 @@ Run the following:
 ./tools/athenz/create-private-key.sh "./keys/api-mcp"
 ./tools/athenz/create-service.sh "api" "api-mcp" "./keys/api-mcp.public.key"
 ./tools/athenz/enable-cert-provider.sh "api" "api-mcp"
-sleep 2
-./tools/athenz/fetch-cert.sh "api" "api-mcp" "./keys/api-mcp.key" "v1"
 ```
-
-*Detailed explanation is skipped as thoroughly explained in the previous tutorials. Also, sleep has been included for Athenz to sync.*
 
 ## Create K8s Secret
 
 Create a secret based on the generated certificates:
 
 ```sh
+./tools/athenz/fetch-cert.sh "api" "api-mcp" "./keys/api-mcp.key" "v1"
 kubectl -n api delete secret api-mcp-cert --ignore-not-found
 kubectl -n api create secret generic api-mcp-cert \
   --from-file=api-mcp.crt=./keys/api-mcp.crt \
