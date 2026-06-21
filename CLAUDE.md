@@ -95,7 +95,7 @@ The `tutorials/` directory contains the canonical learning path (01–14, with s
 
 ## Environment Cleanup
 
-To fully tear down the tutorial environment, run these commands in order. But for the cluster, it is only when you use it for the kind cluster.
+To fully tear down the tutorial environment, run these commands in order. But the cluster part is only when you used kind cluster for the tutorial.
 
 ```sh
 kind delete cluster
