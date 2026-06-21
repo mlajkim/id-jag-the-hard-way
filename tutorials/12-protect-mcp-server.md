@@ -189,7 +189,7 @@ Reload with `/reload-plugins` in Claude Code, then ask:
 get docs from k8s doc server!
 ```
 
-🟡 TODO: put image about Claude Code successfully getting docs after the proxy is configured (similar to 12_successsfully_get_docs_from_api_mcp_server.png)
+![12_claude_token_exchange_successful](./assets/12_claude_token_exchange_successful.png)
 
 Check the MCP server logs to confirm the proxy authorized the request:
 
@@ -204,9 +204,7 @@ kubectl logs deploy/mcp -n api -c auth-proxy
 
 ## Review Summary of Changes
 
-We deployed the Authorization Proxy (red dotted box below) in front of the MCP server. Only callers whose Access Token carries the `mcp-accessor` scope can reach the MCP server. Everything else is rejected at the proxy — the MCP server itself never sees an unauthorized request:
-
-🟡 TODO: put image about the full architecture with the authorization proxy in place (similar to 12_arch_architecture_of_mcp_server_with_authorization_proxy.png)
+We deployed the Authorization Proxy in front of the MCP server. Only callers whose Access Token carries the `api:role.mcp-accessor` scope can reach the MCP server. Everything else is rejected at the proxy — the MCP server itself never sees an unauthorized request.
 
 ## What's next?
 

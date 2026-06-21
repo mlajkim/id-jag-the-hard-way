@@ -122,7 +122,7 @@ _keycloak_port=$(./tools/port.sh keycloak)
 ./tools/open.sh "http://localhost:${_keycloak_port}"
 ```
 
-🟡 TODO: put image about the Keycloak admin login page running (similar to 13_keycloak_running.png)
+![Keycloak running](./assets/13_keycloak_running.png)
 
 ## Setup Client
 
@@ -137,10 +137,10 @@ _keycloak_port=$(./tools/port.sh keycloak)
 
 Configure the following:
 
-- **Client type**: `OpenID Connect`
-- **Client ID**: `ai.open-webui`
-- **Name**: `AI Open WebUI`
-- **Description**: `AI Client Agent`
+- **Client type**: *No Change*: `OpenID Connect`
+- **Client ID**: `human.idjag-learner.claude`
+- **Name**: `human.idjag-learner.claude`
+- **Description**: `Local Claude Code for human.idjag-learner`
 
 Click **Next**, then:
 
@@ -148,11 +148,14 @@ Click **Next**, then:
 
 Click **Next**, then:
 
-- **Valid redirect URIs**: `http://localhost:54443/oauth/oidc/callback`
+```sh
+_ai_client_gateway_port=$(./tools/port.sh ai-client-gateway)
+echo "Put Valid redirect URIs: http://localhost:${_ai_client_gateway_port}/oauth/oidc/callback"
+```
 
 Click **Save**.
 
-🟡 TODO: put image about the newly created client confirmation screen in Keycloak (similar to 13_keycloak_client_added.png)
+![Keycloak client added](./assets/13_keycloak_client_added.png)
 
 ## Setup User
 
@@ -188,7 +191,7 @@ Click **Save**.
 
 Navigate to `Realm settings` > `Tokens` > **Access Token Lifespan** and set it to `4 hours`.
 
-🟡 TODO: put image about the Keycloak token lifespan setting (similar to 13_idp_id_token_expiration.png)
+![id_token expiration setting](./assets/13_idp_id_token_expiration.png)
 
 ## What's done?
 

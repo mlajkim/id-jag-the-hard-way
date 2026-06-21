@@ -25,7 +25,7 @@ Athenz does not trust any IdP by default. To exchange a Keycloak-issued ID token
 2. Provide the plugin with Keycloak's `jwks_uri` so it can verify token signatures.
 3. Tell the ZTS server where to find the plugin configuration.
 
-🟡 TODO: put image about the architecture diagram showing Athenz not yet trusting Keycloak (similar to 14_athenz_not_trusting_keycloak_yet.png)
+![Athenz not yet trusting Keycloak](./assets/14_athenz_not_trusting_keycloak_yet.png)
 
 ## Install Plugin into the ZTS Server
 
@@ -58,7 +58,7 @@ kubectl -n athenz exec deployment/athenz-zts-server \
 # -rw-r--r-- 1 root root 3237 May 1 14:26 keycloak-token-provider.jar
 ```
 
-🟡 TODO: put image about the architecture diagram showing the plugin now mounted in the ZTS server (similar to 14_place_plugin.png)
+![Plugin mounted in ZTS server](./assets/14_place_plugin.png)
 
 ## Connect Keycloak with the Plugin
 
@@ -150,7 +150,7 @@ You should see:
 # configmap/athenz-zts-conf edited
 ```
 
-🟡 TODO: put image about the zts.properties content with the new line visible (similar to 14_zts_properties_setting.png)
+![ZTS properties with new config line](./assets/14_zts_properties_setting.png)
 
 Restart the ZTS server to load the new configuration:
 
@@ -175,7 +175,7 @@ kubectl logs -n athenz deployment/athenz-zts-server -c athenz-zts-server | grep 
 
 We installed the `KeycloakTokenExchangeProvider` plugin. It takes a Keycloak ID token, validates the claims against Keycloak's public keys, and returns the authenticated Athenz principal:
 
-🟡 TODO: put image about the full architecture showing the plugin connected to Keycloak and Athenz (similar to 14_arc_plugin_mounted_and_used.png)
+![Full architecture with plugin connected](./assets/14_arc_plugin_mounted_and_used.png)
 
 ## What's next?
 
