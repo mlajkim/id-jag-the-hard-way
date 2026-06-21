@@ -10,6 +10,7 @@ In this tutorial, we will resolve the authorization failure from the previous st
 
 - [Grant Permissions to `human.idjag-learner.claude`](#grant-permissions-to-humanidjag-learnerclaude)
 - [Verify](#verify)
+- [What's happened?](#whats-happened)
 - [Finally](#finally)
 
 <!-- /TOC -->
@@ -64,6 +65,21 @@ get docs from k8s doc server!
 ```
 
 ![16_successful_retrieval_from_server](./assets/16_successful_retrieval_from_server.png)
+
+## What's happened?
+
+Congratulations! 🎉 You have completed the full ID-JAG tutorial.
+
+Here is a brief overview of how it all worked:
+
+1. You signed in to Open WebUI as `idjag-learner` via Keycloak, which issued an **ID Token**.
+2. The **AI Client Gateway** intercepted the request and exchanged the ID Token for an **ID-JAG token** via Athenz ZTS.
+3. Athenz ZTS validated the token against the `token-exchangable-ai-agents` role and issued a scoped **Access Token**.
+4. The gateway forwarded the request to the **MCP Server** with the Access Token attached.
+5. The **MCP Authorization Proxy** validated the token and forwarded it to the MCP Server.
+6. The MCP Server performed its own token exchange to call the **API Server**, which returned the data.
+
+At every hop, the Principle of Least Privilege was enforced — each component only held the minimum permissions it needed.
 
 ## Finally
 
