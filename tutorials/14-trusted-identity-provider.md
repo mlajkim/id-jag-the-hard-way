@@ -196,6 +196,9 @@ We installed the `KeycloakTokenExchangeProvider` plugin. It takes a Keycloak ID 
 
 ## Restart MCP
 
+> [!NOTE]
+> Will be fixed in the issue: https://github.com/mlajkim/id-jag-the-hard-way/issues/103
+
 There is apparent bug where it does not update the jwks_uri, so please run the following command to proceed:
 
 ```sh
