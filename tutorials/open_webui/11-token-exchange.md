@@ -1,5 +1,5 @@
-|              Previous               |      Current       |                       Next                       |
-|:-----------------------------------:|:------------------:|:------------------------------------------------:|
+|              Previous               |             Current             |                       Next                       |
+|:-----------------------------------:|:-------------------------------:|:------------------------------------------------:|
 | [AI Client Agent](./10-ai-agent.md) | **Token Exchange — Open WebUI** | [Protect MCP Server](./12-protect-mcp-server.md) |
 
 # Token Exchange — Open WebUI

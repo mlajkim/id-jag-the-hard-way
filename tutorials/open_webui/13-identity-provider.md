@@ -1,5 +1,5 @@
-|                     Previous                     |        Current        |                              Next                              |
-|:------------------------------------------------:|:---------------------:|:--------------------------------------------------------------:|
+|                     Previous                     |              Current               |                              Next                              |
+|:------------------------------------------------:|:----------------------------------:|:--------------------------------------------------------------:|
 | [Protect MCP Server](./12-protect-mcp-server.md) | **Identity Provider — Open WebUI** | [Trusted Identity Provider](./14-trusted-identity-provider.md) |
 
 # Identity Provider — Open WebUI

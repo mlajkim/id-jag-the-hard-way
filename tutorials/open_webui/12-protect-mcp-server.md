@@ -1,5 +1,5 @@
-|                 Previous                 |        Current         |                      Next                      |
-|:----------------------------------------:|:----------------------:|:----------------------------------------------:|
+|                 Previous                 |               Current               |                      Next                      |
+|:----------------------------------------:|:-----------------------------------:|:----------------------------------------------:|
 | [Token Exchange](./11-token-exchange.md) | **Protect MCP Server — Open WebUI** | [Identity Provider](./13-identity-provider.md) |
 
 # Protect MCP Server — Open WebUI

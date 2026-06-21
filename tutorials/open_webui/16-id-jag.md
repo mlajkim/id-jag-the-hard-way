@@ -1,5 +1,5 @@
-|                    Previous                    |  Current   |  Next  |
-|:----------------------------------------------:|:----------:|:------:|
+|                    Previous                    |         Current         |  Next  |
+|:----------------------------------------------:|:-----------------------:|:------:|
 | [AI Client Gateway](./15-ai-client-gateway.md) | **ID-JAG — Open WebUI** | *None* |
 
 # ID-JAG — Open WebUI

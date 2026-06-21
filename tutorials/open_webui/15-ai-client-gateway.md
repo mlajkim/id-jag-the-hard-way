@@ -1,5 +1,5 @@
-|                            Previous                            |        Current        |           Next           |
-|:--------------------------------------------------------------:|:---------------------:|:------------------------:|
+|                            Previous                            |              Current               |           Next           |
+|:--------------------------------------------------------------:|:----------------------------------:|:------------------------:|
 | [Trusted Identity Provider](./14-trusted-identity-provider.md) | **AI Client Gateway — Open WebUI** | [ID-JAG](./16-id-jag.md) |
 
 # AI Client Gateway — Open WebUI
