@@ -11,6 +11,7 @@ In this tutorial, we will deploy [Keycloak](https://www.keycloak.org/) as an Ide
 - [Deploy Keycloak in K8s](#deploy-keycloak-in-k8s)
 - [Open Keycloak on Browser](#open-keycloak-on-browser)
 - [Setup Client](#setup-client)
+- [Copy Client Secret](#copy-client-secret)
 - [Setup User](#setup-user)
 - [Setup id_token Expiration](#setup-id_token-expiration)
 - [What's done?](#whats-done)
@@ -150,12 +151,27 @@ Click **Next**, then:
 
 ```sh
 _ai_client_gateway_port=$(./tools/port.sh ai-client-gateway)
-echo "Put Valid redirect URIs: http://localhost:${_ai_client_gateway_port}/oauth/oidc/callback"
+echo "Put Valid redirect URIs: http://localhost:${_ai_client_gateway_port}/oauth/callback"
+echo "Put Web orgins: http://localhost:${_ai_client_gateway_port}"
+```
+
+*Sample following:*
+
+```sh
+# Put Valid redirect URIs: http://localhost:44443/oauth/callback
+# Put Web orgins: http://localhost:44443
 ```
 
 Click **Save**.
 
+> [!NOTE]
+> The redirect URI must exactly match `PUBLIC_BASE_URL/oauth/callback` of the human gateway. Port `44443` is the default from `tools/config.yaml`. If you changed it via `config.local.yaml`, update the URI accordingly.
+
 ![Keycloak client added](./assets/13_keycloak_client_added.png)
+
+## Copy Client Secret
+
+After saving, open the **Credentials** tab and copy the **Client secret** — you will need it when deploying the AI Client Gateway.
 
 ## Setup User
 
@@ -197,7 +213,7 @@ Navigate to `Realm settings` > `Tokens` > **Access Token Lifespan** and set it t
 
 We have deployed Keycloak and created:
 
-- A client `ai.open-webui` that will represent our AI client
+- A client `human.idjag-learner.claude` that will represent our AI client (Claude Code)
 - A user `idjag-learner` who represents a real human employee
 
 At this point, Keycloak is running and configured, but our Authorization Server (Athenz) does not yet trust it. The next tutorial establishes that trust.

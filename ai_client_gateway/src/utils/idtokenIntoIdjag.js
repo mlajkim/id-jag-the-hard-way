@@ -2,16 +2,8 @@ import https from "https";
 import fs from "fs";
 import { URLSearchParams } from "url";
 import { extractCookieValue } from "../utils/httpHelpers.js";
-import path from "path";
-import { fileURLToPath } from "url";
-import { ZTS_URL } from "../config/env.js";
+import { ZTS_URL, CERT_PATH, KEY_PATH, CA_PATH } from "../config/env.js";
 import { getSession } from "./sessionStore.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const CERT_PATH = path.join(__dirname, "../../certs/open-webui.crt");
-const KEY_PATH = path.join(__dirname, "../../certs/open-webui.key");
-const CA_PATH = path.join(__dirname, "../../certs/ca.crt");
 const ID_JAG_AUD = "https://athenz-zts-server.athenz:4443/zts/v1";
 
 const httpsAgent = new https.Agent({

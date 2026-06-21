@@ -12,11 +12,9 @@ In this tutorial, we will deploy the `AI Client Gateway`. This component sits be
 - [Deploy AI Client Gateway in K8s](#deploy-ai-client-gateway-in-k8s)
 - [Generate the Required Certificates](#generate-the-required-certificates)
 - [Mount the Certificates](#mount-the-certificates)
-- [Register a Keycloak Client](#register-a-keycloak-client)
 - [Deploy the Human Gateway](#deploy-the-human-gateway)
 - [Verification Prerequisite](#verification-prerequisite)
 - [Verify](#verify)
-- [What's happened?](#whats-happened)
 - [What's next?](#whats-next)
 
 <!-- /TOC -->
@@ -34,7 +32,7 @@ Claude Code
     ▼
 human ai-client-gateway
     │ resolves ID token
-    │ → ID-JAG exchange (as human.claude-cli)
+    │ → ID-JAG exchange (as human.idjag-learner.claude)
     │ → Athenz AT
     ▼
                               MCP Auth Proxy → MCP Server → API Server
@@ -71,7 +69,7 @@ This is expected — we need to generate and mount the certificates next.
 
 ## Generate the Required Certificates
 
-The gateway authenticates to Athenz ZTS using an X.509 certificate for the `human.claude-cli` service identity.
+The gateway authenticates to Athenz ZTS using an X.509 certificate for the `human.idjag-learner.claude` service identity.
 
 Create the `human` top-level domain:
 
@@ -133,7 +131,7 @@ spec:
       volumes:
         - name: certs
           secret:
-            secretName: human-claude-cli-cert
+            secretName: human-idjag-learner-claude-cert
 EOF
 )"
 ```
@@ -153,42 +151,16 @@ kubectl logs deploy/ai-client-gateway -n human
 
 ![AI Client Gateway deployed](./assets/15_ai_client_agent_installed_and_used.png)
 
-## Register a Keycloak Client
-
-The gateway needs a Keycloak client to redirect the login and receive the callback.
-
-Open the Keycloak admin UI:
-
-```sh
-_keycloak_port=$(./tools/port.sh keycloak)
-./tools/open.sh "http://localhost:${_keycloak_port}/admin/master/console/#/master/clients/add-client"
-```
-
-Configure the following:
-
-- **Client type**: `OpenID Connect`
-- **Client ID**: `human.claude-cli`
-- **Client authentication**: `ON`
-- **Valid redirect URIs**: `http://localhost:44443/oauth/callback`
-- **Web origins**: `http://localhost:44443`
-
-Click **Save**.
-
-> [!NOTE]
-> The redirect URI must exactly match `PUBLIC_BASE_URL/oauth/callback` of the human gateway. Port `44443` is the default from `tools/config.yaml`. If you changed it via `config.local.yaml`, update the URI accordingly.
-
-After saving, open the **Credentials** tab and copy the **Client secret** — you will need it in the next step.
-
 ## Deploy the Human Gateway
 
-Store the Keycloak client credentials:
+Store the Keycloak client credentials (use the client secret you copied in [tutorial 13](./13-identity-provider.md#copy-client-secret)):
 
 ```sh
 _client_secret="🟡TODO: Put your client secret here"
 
 kubectl delete -n human secret human-idjag-learner-claude-keycloak --ignore-not-found=true
 kubectl -n human create secret generic human-idjag-learner-claude-keycloak \
-  --from-literal=client-id="human.claude-cli" \
+  --from-literal=client-id="human.idjag-learner.claude" \
   --from-literal=client-secret="${_client_secret}"
 ```
 
@@ -290,30 +262,18 @@ You will be asked to login, because the `AI Client Gateway` we just created requ
 
 ![15_ask_to_login](./assets/15_ask_to_login.png)
 
-Then your claude will show:
-
-![15_authentication_successful](./assets/15_authentication_successful.png)
-
 If you open the link (or automatically opened by the Claude), you will be prompted to sign in. Simply put `idjag-learner` and password `password`:
 
 ![15_password_requested](./assets/15_password_requested.png)
 
-Once you are logged in, finally request for docs:
+Then you will see this:
 
-```sh
-get docs from k8s doc server!
-```
+![15_got_new_credential_but_reconnection_failed](./assets/15_got_new_credential_but_reconnection_failed.png)
 
-The request will fail. This is expected and intentional.
-
-## What's happened?
-
-We created a certificate for `human.claude-cli`, but this service does not yet have the necessary permissions in Athenz to exchange the Keycloak ID Token for an ID-JAG token. Because the gateway cannot assert your identity, the request is denied.
-
-![Gateway blocked at ID-JAG exchange](./assets/15_arc_not_enough_permission_into_idjag.png)
+This is because Calude requires the `access on api:mcp` permission, and it tries to get Access Token through the given id-token that we just got from the signing in. However, we do not have enough permission (or more like enterprise policy, if we think of that ai agent's permissiin is managed by organzation) does not allow the AI Agent to access to MCP.
 
 ## What's next?
 
-In the next tutorial, we will grant `human.claude-cli` the necessary Athenz permissions to perform the full ID-JAG exchange and complete the end-to-end authorization chain.
+In the next tutorial, we will grant `human.idjag-learner.claude` the necessary Athenz permissions to perform the full ID-JAG exchange and complete the end-to-end authorization chain, just as if Enterpise would allow AI users to connect to MCP through AI Agent, despite you know you `human.idjag-learner` already have the permission
 
 Next: [ID-JAG](./16-id-jag.md)

@@ -1,3 +1,11 @@
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+export const CERT_PATH = path.join(__dirname, "../../certs/ai-client-gateway.crt");
+export const KEY_PATH = path.join(__dirname, "../../certs/ai-client-gateway.key");
+export const CA_PATH = path.join(__dirname, "../../certs/ca.crt");
+
 export const PORT = Number(process.env.PORT ?? 3101);
 export const UPSTREAM_BASE_URL = process.env.UPSTREAM_BASE_URL ?? "http://localhost:8101";
 export const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL ?? `http://localhost:${PORT}`;
