@@ -1,6 +1,7 @@
 import https from "https";
 import fs from "fs";
 import { URLSearchParams } from "url";
+import jwt from "jsonwebtoken";
 import { exchangeToIdjag } from "./idtokenIntoIdjag.js";
 import { ZTS_URL, CERT_PATH, KEY_PATH, CA_PATH } from "../config/env.js";
 
@@ -83,8 +84,10 @@ export async function getAccessToken(req: any, scope: string): Promise<string> {
   console.error(`[Athenz AT] Fetching Athenz Access Token using ID-JAG ...`);
   const accessToken = await fetchATFromZTS(idJag, scope);
   
-  console.error(`[Athenz AT] 🔑 Successfully fetched Athenz Access Token.`);
+  const decoded = jwt.decode(accessToken) as any;
+  const grantedScope = decoded?.scp ?? decoded?.scope ?? "(none)";
+  console.error(`[Athenz AT] 🔑 Successfully fetched Athenz Access Token. Granted scope: ${JSON.stringify(grantedScope)}`);
   atCache.set(scope, { token: accessToken, exp: getExp(accessToken) });
-  
+
   return accessToken;
 }
