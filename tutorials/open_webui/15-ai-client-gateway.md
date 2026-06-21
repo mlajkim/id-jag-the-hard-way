@@ -92,7 +92,7 @@ kubectl logs deploy/ai-client-gateway -n ai
 You will likely encounter an error similar to this:
 
 ```sh
-# Error: ENOENT: no such file or directory, open '/app/certs/open-webui.crt'
+# Error: ENOENT: no such file or directory, open '...certs/ai-client-gateway.crt'
 #     at Object.openSync (node:fs:563:18)
 #     at Object.readFileSync (node:fs:447:35)
 ```
@@ -107,12 +107,12 @@ First, create a directory and generate the RSA key pair:
 
 ```sh
 mkdir -p ./ai_client_gateway/certs
-./tools/athenz/create-private-key.sh "./ai_client_gateway/certs/open-webui"
+./tools/athenz/create-private-key.sh "./ai_client_gateway/certs/ai-client-gateway"
 ```
 
 ```sh
-# Generating RSA key pair for: ./ai_client_gateway/certs/open-webui...
-# Done! Keys generated: ./ai_client_gateway/certs/open-webui.key, ./ai_client_gateway/certs/open-webui.public.key
+# Generating RSA key pair for: ./ai_client_gateway/certs/ai-client-gateway...
+# Done! Keys generated: ./ai_client_gateway/certs/ai-client-gateway.key, ./ai_client_gateway/certs/ai-client-gateway.public.key
 ```
 
 Next, we will create a Top-Level Domain (TLD) named `ai` since we haven't created it yet:
@@ -130,7 +130,7 @@ Next, we will create a Top-Level Domain (TLD) named `ai` since we haven't create
 Now, register the service open-webui under the `ai` domain using the public key we just generated:
 
 ```sh
-./tools/athenz/create-service.sh "ai" "open-webui" "./ai_client_gateway/certs/open-webui.public.key"
+./tools/athenz/create-service.sh "ai" "open-webui" "./ai_client_gateway/certs/ai-client-gateway.public.key"
 ```
 
 ```sh
@@ -150,12 +150,12 @@ Enable the certificate provider for this service:
 Generate the X.509 Certificate:
 
 ```sh
-./tools/athenz/fetch-cert.sh "ai" "open-webui" "./ai_client_gateway/certs/open-webui.key" "v1"
+./tools/athenz/fetch-cert.sh "ai" "open-webui" "./ai_client_gateway/certs/ai-client-gateway.key" "v1"
 ```
 
 ```sh
 # Fetching X.509 Certificate for ai.open-webui...
-# Done! Certificate saved to: ./ai_client_gateway/certs/open-webui.crt
+# Done! Certificate saved to: ./ai_client_gateway/certs/ai-client-gateway.crt
 ```
 
 Finally, the `ai_client_gateway` requires the Athenz CA certificate. Copy it from the `athenz_dist/certs` directory:
@@ -175,9 +175,9 @@ ls -al ./ai_client_gateway/certs/
 # drwxr-xr-x   5 mlajkim  staff   160 May 2 16:47 .
 # drwxr-xr-x  13 mlajkim  staff   416 May 2 16:43 ..
 # -rw-r--r--   1 mlajkim  staff  1834 May 2 16:49 ca.crt
-# -rw-r--r--   1 mlajkim  staff  1716 May 2 16:47 open-webui.crt
-# -rw-------   1 mlajkim  staff  1675 May 2 16:43 open-webui.key
-# -rw-r--r--   1 mlajkim  staff   451 May 2 16:43 open-webui.public.key
+# -rw-r--r--   1 mlajkim  staff  1716 May 2 16:47 ai-client-gateway.crt
+# -rw-------   1 mlajkim  staff  1675 May 2 16:43 ai-client-gateway.key
+# -rw-r--r--   1 mlajkim  staff   451 May 2 16:43 ai-client-gateway.public.key
 ```
 
 ## Mount the Secret
@@ -187,8 +187,8 @@ Now, create a Kubernetes secret using the generated certificates:
 ```sh
 kubectl -n ai delete secret ai-client-gateway-cert --ignore-not-found
 kubectl -n ai create secret generic ai-client-gateway-cert \
-  --from-file=open-webui.crt=./ai_client_gateway/certs/open-webui.crt \
-  --from-file=open-webui.key=./ai_client_gateway/certs/open-webui.key \
+  --from-file=ai-client-gateway.crt=./ai_client_gateway/certs/ai-client-gateway.crt \
+  --from-file=ai-client-gateway.key=./ai_client_gateway/certs/ai-client-gateway.key \
   --from-file=ca.crt=./ai_client_gateway/certs/ca.crt
 ```
 
