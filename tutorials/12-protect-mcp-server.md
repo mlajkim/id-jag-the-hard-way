@@ -95,17 +95,33 @@ kubectl expose deploy mcp -n api --port 8081 --target-port 8082 --name mcp
 
 ## Verify (Expected Failure)
 
-Reload the MCP tools in Claude Code by running `/mcp`, then ask:
+Reload the plugin with `/reload-plugins` in Claude Code, then ask:
 
-```
-get docs!
+```sh
+get docs from k8s doc server!
 ```
 
-🟡 TODO: put image about Claude Code showing an authorization error from the MCP proxy (similar to 12_open_webui_says_no_permission_against_mcp_server.png)
 
 This fails because the proxy requires `access` on the `api:mcp` resource, and we haven't created that policy yet:
 
-🟡 TODO: put image about the architecture diagram showing the proxy blocking the request (similar to 12_failed_to_go_through_authorization_server.png)
+![12_no_access_to_mcp](./assets/12_no_access_to_mcp)
+
+You can also see from the log of the `auth-proxy` container that the request was rejected:
+
+```sh
+kubectl logs deploy/mcp -n api -c auth-proxy
+```
+
+```sh
+# =========================================================
+# 🚀 OpenAPI MCP Auth Proxy Server listening on: http://0.0.0.0:8082
+# 🔗 Upstream API: http://localhost:8081
+# 📄 OpenAPI Spec available at: http://0.0.0.0:8082/openapi.json
+# 📄 MCP endpoint available at: http://0.0.0.0:8082/mcp
+# =========================================================
+
+# [2026-06-21 01:38:33] [WARN] [MCP-Auth-Proxy] ❌ REJECTED: Policy denied access. (Action: 'access', Resource: 'mcp', Token: eyJraWQiOi...)
+```
 
 ## Fix Insufficient Permission
 
@@ -129,10 +145,10 @@ The Access Token must now include both scopes — one to pass through the MCP pr
 ```sh
 _scope="api:role.mcp-accessor api:role.docs-getter"
 ./tools/athenz/fetch-access-token.sh \
-  "./athenz_dist/certs/athenz_admin.cert.pem" \
-  "./athenz_dist/keys/athenz_admin.private.pem" \
+  "./keys/idjag-learner.crt" \
+  "./keys/idjag-learner.key" \
   "${_scope}" \
-  "./keys/api_mcp-accessor_api_docs-getter.jwt"
+  "./keys/idjag-learner.jwt"
 ```
 
 Verify that the token's `scp` claim contains both roles:
@@ -148,6 +164,7 @@ Verify that the token's `scp` claim contains both roles:
 
 ```sh
 _mcp_port=$(./tools/port.sh mcp)
+_at=$(cat ./keys/idjag-learner.jwt)
 
 cat > .mcp.json <<EOF
 {
@@ -156,7 +173,7 @@ cat > .mcp.json <<EOF
       "type": "http",
       "url": "http://localhost:${_mcp_port}/mcp",
       "headers": {
-        "Authorization": "Bearer $(cat ./keys/api_mcp-accessor_api_docs-getter.jwt)"
+        "Authorization": "Bearer ${_at}"
       }
     }
   }
@@ -166,10 +183,10 @@ EOF
 
 ## Verify
 
-Run `/mcp` to reload, then ask Claude:
+Reload with `/reload-plugins` in Claude Code, then ask:
 
-```
-get docs!
+```sh
+get docs from k8s doc server!
 ```
 
 🟡 TODO: put image about Claude Code successfully getting docs after the proxy is configured (similar to 12_successsfully_get_docs_from_api_mcp_server.png)
@@ -193,6 +210,6 @@ We deployed the Authorization Proxy (red dotted box below) in front of the MCP s
 
 ## What's next?
 
-We have been using the `athenz_admin` certificate to fetch Access Tokens. In a real enterprise environment, each user has their own account. In the next tutorial, we will deploy Keycloak as an Identity Provider so that individual users can sign in with their own credentials.
+We have been using the `human.idjag-learner` certificate to fetch Access Tokens — a static X.509 identity that represents a human user in Athenz. In a real enterprise environment, users sign in through an Identity Provider. In the next tutorial, we will deploy Keycloak so that individual users can sign in with their own credentials and receive a proper ID token.
 
 Next: [Identity Provider](./13-identity-provider.md)

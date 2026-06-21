@@ -11,8 +11,7 @@ In this tutorial, we connect an AI agent to the MCP server for the first time. W
 - [Install Claude](#install-claude)
 - [Login to Claude](#login-to-claude)
 - [Add the MCP Server to Claude Code](#add-the-mcp-server-to-claude-code)
-- [Get Access Token & Attach](#get-access-token--attach)
-- [Reload and Open Claude](#reload-and-open-claude)
+- [Connect to MCP Server](#connect-to-mcp-server)
 - [Verify](#verify)
 - [What's happened?](#whats-happened)
 
@@ -23,11 +22,6 @@ In this tutorial, we connect an AI agent to the MCP server for the first time. W
 > - [Open WebUI](./open_webui/10-ai-agent.md)
 
 ## Install Claude
-
-> [!NOTE]
-> Official Claude installation guide: [Claude Code Quickstart](https://code.claude.com/docs/en/quickstart#native-install-recommended)
-
-![10_install_calude_app](./assets/10_install_calude_app.png)
 
 Check if Claude is already installed:
 
@@ -55,6 +49,10 @@ Windows CMD:
 curl -fsSL https://claude.ai/install.cmd -o install.cmd && install.cmd && del install.cmd
 ```
 
+> [!NOTE]
+> Official Claude installation guide: [Claude Code Quickstart](https://code.claude.com/docs/en/quickstart#native-install-recommended)
+> ![10_install_calude_app](./assets/10_install_calude_app.png)
+
 ## Login to Claude
 
 Run the following and follow the prompts:
@@ -67,48 +65,24 @@ If it is your first time, choose `2. Anthropic Console account`. You can create 
 
 ## Add the MCP Server to Claude Code
 
-Create a `.mcp.json` at the root of this project (no auth yet):
-
-```sh
-_mcp_port=$(./tools/port.sh mcp)
-
-cat > .mcp.json <<EOF
-{
-  "mcpServers": {
-    "id-jag-the-hard-way-mcp": {
-      "type": "http",
-      "url": "http://localhost:${_mcp_port}/mcp"
-    }
-  }
-}
-EOF
-```
-
-Inside Claude Code, type `/mcp` to check the MCP server status.
-
-🟡 TODO: put image about the `/mcp` command showing the server with no permission / not connected
-
-You will see that the MCP server has no tools loaded — this is expected because the MCP server requires an Authorization header, which we have not provided yet.
-
-## Get Access Token & Attach
-
-Fetch an Athenz Access Token for the `docs-getter` scope:
+To access the API Server through MCP server, we need to get the Acces Token.
 
 ```sh
 _scope="api:role.docs-getter"
-./tools/athenz/fetch-access-token.sh \
-  "./athenz_dist/certs/athenz_admin.cert.pem" \
-  "./athenz_dist/keys/athenz_admin.private.pem" \
+_my_access_token=$(./tools/athenz/fetch-access-token.sh \
+  "./keys/idjag-learner.crt" \
+  "./keys/idjag-learner.key" \
   "${_scope}" \
-  "./keys/api_docs-getter.jwt"
+  "./keys/idjag-learner.jwt")
 
-cat "./keys/api_docs-getter.jwt"
+cat "./keys/idjag-learner.jwt"
 ```
 
-Now re-create `.mcp.json` with the token attached as a Bearer header:
+Create a `.mcp.json` at the root of this project, with Access Token Attached:
 
 ```sh
 _mcp_port=$(./tools/port.sh mcp)
+_at=$(cat ./keys/idjag-learner.jwt)
 
 cat > .mcp.json <<EOF
 {
@@ -117,7 +91,7 @@ cat > .mcp.json <<EOF
       "type": "http",
       "url": "http://localhost:${_mcp_port}/mcp",
       "headers": {
-        "Authorization": "Bearer $(cat ./keys/api_docs-getter.jwt)"
+        "Authorization": "Bearer ${_at}"
       }
     }
   }
@@ -125,43 +99,42 @@ cat > .mcp.json <<EOF
 EOF
 ```
 
-## Reload and Open Claude
+## Connect to MCP Server
 
-Run `/mcp` inside Claude Code to reload the configuration. You should now see the tools registered from the MCP server.
+First, reload the session with `/reload-plugin`:
 
-🟡 TODO: put image about `/mcp` showing the MCP server connected with tools listed
+![10_reload_plugins_in_claude](./assets/10_reload_plugins_in_claude.png)
 
-Open Claude in this directory if it is not already running:
+Then, run `/mcp`, then you can see that you are `✅ Connected` for the `id-jag-the-hard-way-mcp`:
 
-```sh
-claude
-```
-
-🟡 TODO: put image about the Claude Code terminal with the project open
+![10_mcp_connected](./assets/10_mcp_connected.png)
 
 ## Verify
 
-Ask Claude the following:
+Let's see if we can really talk through the `id-jag-the-hard-way-mcp` MCP.
 
-```
-get docs!
+Hit `Esc` one time to back to the prompt dialog:
+
+```sh
+get docs from k8s doc server!
 ```
 
-🟡 TODO: put image about Claude Code calling the tool and returning an error about token exchange
+![ask_k8s_docs_server_in_claude](./assets/10_ask_k8s_docs_server_in_claude.png)
 
-The request will fail with an error similar to:
+You will be prompted `Do you want to proceed?`. select `2` (Or `1` if you want to get asked all the time):
 
-```
-Principal not authorized for token exchange
-```
+![10_claude_says_do_you_want_to_proceed](./assets/10_claude_says_do_you_want_to_proceed.png)
+
+
+The request will fail with an error `No Permission to Token Exchange`, similar to:
+
+![10_claude_says_no_access_for_token_exchange](./assets/10_claude_says_no_access_for_token_exchange.png)
 
 This is expected. The MCP server received your Access Token and tried to exchange it for a narrower-scoped token to call the API server — but it does not yet have permission to do that.
 
 ## What's happened?
 
-We successfully connected Claude Code to the MCP server with an Athenz Access Token. However, the MCP server's token exchange step is not yet authorized:
-
-🟡 TODO: put image about the architecture diagram showing the token exchange failure (similar to 10_arc_failed_to_token_exchange.png)
+We successfully connected Claude Code to the MCP server with an Athenz Access Token. However, the MCP server's token exchange step is not yet authorized.
 
 In the next tutorial we will fix this by granting the MCP server permission to exchange tokens.
 
