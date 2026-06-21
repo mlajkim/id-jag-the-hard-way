@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
-import { UPSTREAM_BASE_URL } from "./env";
+import { UPSTREAM_BASE_URL, DANGEROUSLY_SHOW_RAW_ACCESS_TOKEN } from "./env";
 import { exchangeAthenzAT } from "../utils/exchange-athenz-at"
+import { getAtFromReq } from "../utils/readAtFromReq"
 
 export type HttpMethod = "get" | "post" | "put" | "delete";
 
@@ -15,7 +16,25 @@ export interface ToolDefinition {
   handler: (req: Request, res: Response, scope: string) => Promise<void>;
 }
 
+const debugTools: ToolDefinition[] = DANGEROUSLY_SHOW_RAW_ACCESS_TOKEN
+  ? [
+      {
+        path: "/debug/raw-token",
+        method: "get",
+        operationId: "get_raw_access_token",
+        summary: "Get Raw Access Token (DEBUG)",
+        description: "Debug tool: returns the raw access token received in the Authorization header, without any token exchange. Only available when DANGEROUSLY_SHOW_RAW_ACCESS_TOKEN=true.",
+        scope: "",
+        handler: async (req, res, _scope) => {
+          const token = getAtFromReq(req);
+          res.status(200).json({ raw_access_token: token });
+        },
+      },
+    ]
+  : [];
+
 export const toolsRegistry: ToolDefinition[] = [
+  ...debugTools,
   {
     path: "/api/docs",
     method: "get",
