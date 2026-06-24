@@ -22,7 +22,6 @@ ENV NODE_ENV=production \
     UI_CERT_PATH=/app/certs/org.idjag-ui.crt \
     UI_KEY_PATH=/app/certs/org.idjag-ui.key
 
-COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
