@@ -23,6 +23,21 @@ In this tutorial, we will deploy [Keycloak](https://www.keycloak.org/) as an Ide
 
 If you are using **kind**, do the following:
 
+> [!NOTE]
+> On **Apple Silicon (arm64)**, `kind load docker-image` fails with multi-platform manifest images. Build a single-platform image first:
+>
+> ```sh
+> docker buildx build --platform linux/arm64 --load --provenance=false \
+>   -t keycloak:kind-load - <<'EOF'
+> FROM quay.io/keycloak/keycloak:latest
+> EOF
+> kind load docker-image keycloak:kind-load
+> ```
+>
+> Then replace `quay.io/keycloak/keycloak:latest` with `keycloak:kind-load` in the `kubectl create deployment` command below.
+
+On **amd64** (or if unsure), the standard pull works:
+
 ```sh
 docker pull quay.io/keycloak/keycloak:latest
 kind load docker-image quay.io/keycloak/keycloak:latest
@@ -157,9 +172,18 @@ Fill in the **Step 1** values and click **Next**.
 
 ![13_client_name_and_type](./assets/13_client_name_and_type.png)
 
-Fill in the **Step 2** values and click **Next**.
+Fill in the **Step 2** values and click **Next**:
 
-Fill in the **Step 3** values and click **Save**.
+| Field                 | Value |
+|-----------------------|-------|
+| Client authentication | ON    |
+
+Fill in the **Step 3** values and click **Save**:
+
+| Field               | Value                        |
+|---------------------|------------------------------|
+| Valid redirect URIs | *(from script output above)* |
+| Web origins         | *(from script output above)* |
 
 > [!NOTE]
 > The redirect URI must exactly match `PUBLIC_BASE_URL/oauth/callback` of the human gateway. Port `44443` is the default from `tools/config.yaml`. If you changed it via `config.local.yaml`, update the URI accordingly.

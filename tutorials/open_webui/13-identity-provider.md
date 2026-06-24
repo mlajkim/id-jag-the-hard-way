@@ -105,12 +105,24 @@ kubectl expose deployment keycloak --port=8080 -n idp
 ## Open Keycloak on Browser
 
 > [!NOTE]
-> If you are using `kind` and facing `ImagePullBackOff` error, you can do:
+> If you are using `kind` and facing `ImagePullBackOff`, load the image manually:
 >
 > ```sh
 > docker pull quay.io/keycloak/keycloak:latest
 > kind load docker-image quay.io/keycloak/keycloak:latest
 > ```
+>
+> On **Apple Silicon (arm64)** this may still fail with a content digest error. Use a single-platform build instead:
+>
+> ```sh
+> docker buildx build --platform linux/arm64 --load --provenance=false \
+>   -t keycloak:kind-load - <<'EOF'
+> FROM quay.io/keycloak/keycloak:latest
+> EOF
+> kind load docker-image keycloak:kind-load
+> ```
+>
+> Then patch the deployment to use `keycloak:kind-load` as the image.
 
 Make sure the Keycloak pod is running before opening the browser:
 

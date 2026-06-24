@@ -23,6 +23,21 @@ In this tutorial, we will deploy [Keycloak](https://www.keycloak.org/) as an Ide
 
 If you are using **kind**, do the following:
 
+> [!NOTE]
+> On **Apple Silicon (arm64)**, `kind load docker-image` fails with multi-platform manifest images. Build a single-platform image first:
+>
+> ```sh
+> docker buildx build --platform linux/arm64 --load --provenance=false \
+>   -t keycloak:kind-load - <<'EOF'
+> FROM quay.io/keycloak/keycloak:latest
+> EOF
+> kind load docker-image keycloak:kind-load
+> ```
+>
+> Then replace `quay.io/keycloak/keycloak:latest` with `keycloak:kind-load` in the `kubectl create deployment` command below.
+
+On **amd64** (or if unsure), the standard pull works:
+
 ```sh
 docker pull quay.io/keycloak/keycloak:latest
 kind load docker-image quay.io/keycloak/keycloak:latest
