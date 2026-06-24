@@ -223,7 +223,7 @@ spec:
                   name: keycloak-client-secret
                   key: client-secret
             - name: OPENID_PROVIDER_URL
-              value: "http://keycloak.idp:8080/realms/master/.well-known/openid-configuration"
+              value: "http://localhost:${_keycloak_port}/realms/master/.well-known/openid-configuration"
             - name: OAUTH_PROVIDER_NAME
               value: "Keycloak"
             - name: OAUTH_SCOPES

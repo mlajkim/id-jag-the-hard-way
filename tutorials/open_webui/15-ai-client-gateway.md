@@ -92,9 +92,24 @@ kubectl logs deploy/ai-client-gateway -n ai
 You will likely encounter an error similar to this:
 
 ```sh
-# Error: ENOENT: no such file or directory, open '...certs/ai-client-gateway.crt'
-#     at Object.openSync (node:fs:563:18)
-#     at Object.readFileSync (node:fs:447:35)
+# node:fs:560
+#   return binding.open(
+#                  ^
+
+# Error: ENOENT: no such file or directory, open '/app/certs/ai-client-gateway.crt'
+#     at Object.openSync (node:fs:560:18)
+#     at Object.readFileSync (node:fs:444:35)
+#     at file:///app/src/utils/idtokenIntoIdjag.js:11:12
+#     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+#     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+#     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
+#   errno: -2,
+#   code: 'ENOENT',
+#   syscall: 'open',
+#   path: '/app/certs/ai-client-gateway.crt'
+# }
+
+# Node.js v22.23.0
 ```
 
 This happens because the AI Client Gateway requires a TLS certificate to connect to Athenz Server securely.
@@ -218,6 +233,10 @@ EOF
 )"
 ```
 
+```sh
+# deployment.apps/ai-client-gateway patched
+```
+
 Check the logs again to ensure it started successfully:
 
 ```sh
@@ -245,7 +264,7 @@ Open the Open WebUI in your browser:
 
 ```sh
 _open_webui_keycloak_port=54443
-open http://localhost:$_open_webui_keycloak_port
+open "http://localhost:${_open_webui_keycloak_port}/admin/settings/integrations"
 ```
 
 1. Log in to Open WebUI using an admin account (required to modify integrations).

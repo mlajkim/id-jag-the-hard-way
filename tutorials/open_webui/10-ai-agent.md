@@ -24,7 +24,7 @@ In this tutorial, we will install Open WebUI as the AI client and connect it to 
 - [Install Gemma 4 with Ollama](#install-gemma-4-with-ollama)
 - [Install Open WebUI](#install-open-webui)
 - [Open Open WebUI](#open-open-webui)
-- [Register MCP Server as a Tool Server in Open WebUI](#register-mcp-server-as-a-tool-server-in-open-webui)
+- [Register MCP Server in Open WebUI](#register-mcp-server-in-open-webui)
 - [Verify](#verify)
 - [What's happened?](#whats-happened)
 
@@ -169,43 +169,45 @@ However, the credentials are up to you.
 
 ![10_create_admin_account](./assets/10_create_admin_account.png)
 
-## Register MCP Server as a Tool Server in Open WebUI
+## Register MCP Server in Open WebUI
 
-Get Access Token again:
+Get Access Token:
 
 ```sh
 _scope="api:role.docs-getter"
 _root_user_at=$(./tools/athenz/fetch-access-token.sh \
-  "./athenz_dist/certs/athenz_admin.cert.pem" \
-  "./athenz_dist/keys/athenz_admin.private.pem" \
+  "./keys/idjag-learner.crt" \
+  "./keys/idjag-learner.key" \
   "${_scope}" \
-  "./keys/api_docs-getter.jwt")
+  "./keys/idjag-learner.jwt")
 
-cat "./keys/api_docs-getter.jwt"
+cat "./keys/idjag-learner.jwt"
 ```
 
-Go to `User Icon` > `Admin Panel` > `Settings` > `Integrations` > `Manage Tool Servers` > `+ Icon` to register the MCP server as a tool server.
+Go to `User Icon` > `Admin Panel` > `Settings` > `Connections` > `MCP Servers` > `+ Icon` to register the MCP server.
 
 - Name: `API MCP Server`
-- Description: `MCP server for API that holds documentation`
-- URL: `http://mcp.api:8081`
+- ID: `api.mcp-api`
+- URL: `http://mcp.api:8081/mcp`
+- Type: `Streamable HTTP`
 - Auth type: `Bearer`
-- API Key: `<YOUR_ACCESS_TOKEN_THAT_YOU'VE_FETCHED`
+- API Key: `<paste the token from cat ./keys/idjag-learner.jwt>`
 - Access: Change to `Public`
 
 ![10_api_mcp_server_in_open_webui](./assets/10_api_mcp_server_in_open_webui.png)
 
-Before we ask the AI Agent, let's quickly add the tool as the default tool server, so that you do not have to manually add the tool every time.
+> [!NOTE]
+> **OpenAPI (Tool Servers) also works** but is no longer the recommended path. If you registered it there previously, remove it and use the MCP Servers entry above instead.
 
-Go to `User Icon` > `Admin Panel` > `Settings` > `Models`,
+Before we ask the AI Agent, let's quickly set the MCP server as the default for the model so it activates automatically.
 
-Select the edit (Pencil) Icon.
+Go to `User Icon` > `Admin Panel` > `Settings` > `Models`, select the edit (Pencil) Icon.
 
-Select `Access` > `Private` then change to `Public` (auotmatic save):
+Select `Access` > `Private` then change to `Public` (automatic save):
 
 ![10_model_now_public](./assets/10_model_now_public.png)
 
-Then in `tools` section, select the tool that we just created as the following:
+Then in the `tools` section, select the MCP server we just created:
 
 ![10_select_tool_as_default_for_the_model](./assets/10_select_tool_as_default_for_the_model.png)
 
