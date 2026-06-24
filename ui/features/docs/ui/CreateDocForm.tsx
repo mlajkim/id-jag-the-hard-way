@@ -6,8 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export default function CreateDocForm() {
-  const [state, action, pending] = useActionState(createDocAction, null);
+interface Props { onSuccess?: () => void }
+
+export default function CreateDocForm({ onSuccess }: Props = {}) {
+  const [state, action, pending] = useActionState(
+    async (prev: any, formData: FormData) => {
+      const result = await createDocAction(prev, formData);
+      if (result?.success) onSuccess?.();
+      return result;
+    },
+    null,
+  );
 
   return (
     <form

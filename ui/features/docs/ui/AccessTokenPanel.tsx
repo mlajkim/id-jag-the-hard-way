@@ -13,7 +13,9 @@ const OPERATIONS = [
   { label: "DELETE", scope: "api:role.docs-deleter" },
 ] as const;
 
-export default function AccessTokenPanel() {
+interface Props { onToken?: (at: string) => void }
+
+export default function AccessTokenPanel({ onToken }: Props = {}) {
   const [checked, setChecked] = useState<Set<string>>(new Set(["GET"]));
   const [result, setResult]   = useState<AT | null>(null);
   const [error, setError]     = useState<string | null>(null);
@@ -36,7 +38,9 @@ export default function AccessTokenPanel() {
     setError(null);
     start(async () => {
       try {
-        setResult(await fetchAccessToken(scopes));
+        const token = await fetchAccessToken(scopes);
+        setResult(token);
+        onToken?.(token.at);
       } catch (e: any) {
         setError(e.message);
       }

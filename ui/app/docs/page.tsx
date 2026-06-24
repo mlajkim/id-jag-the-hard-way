@@ -1,11 +1,8 @@
 import { auth } from "@/shared/lib/auth";
 import { redirect } from "next/navigation";
 import { getDocs } from "@/features/docs/api/server";
-import CreateDocForm from "@/features/docs/ui/CreateDocForm";
-import AccessTokenPanel from "@/features/docs/ui/AccessTokenPanel";
+import DocsPageClient from "@/features/docs/ui/DocsPageClient";
 import { SignOutButton } from "@/features/auth/ui/SignInButton";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function DocsPage() {
   const session = await auth();
@@ -43,42 +40,7 @@ export default async function DocsPage() {
           </div>
         </div>
 
-        {/* Access token */}
-        <AccessTokenPanel />
-
-        {/* Create form */}
-        <CreateDocForm />
-
-        {/* Docs list */}
-        <section>
-          <h2 className="text-xs font-semibold mb-3 tracking-wide" style={{ color: "var(--text-secondary)" }}>
-            ALL DOCUMENTS
-          </h2>
-
-          {fetchError ? (
-            <p className="text-sm text-destructive">{fetchError}</p>
-          ) : docs.length === 0 ? (
-            <p className="text-sm" style={{ color: "var(--text-muted)" }}>No documents yet.</p>
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {docs.map((doc) => (
-                <Card key={doc.id} style={{ borderColor: "var(--border)", boxShadow: "var(--shadow-sm)" }}>
-                  <CardHeader className="pb-1 pt-4 px-4">
-                    <div className="flex items-center justify-between gap-2">
-                      <CardTitle className="text-sm font-semibold truncate" style={{ color: "var(--text-primary)" }}>
-                        {doc.name}
-                      </CardTitle>
-                      <Badge variant="secondary" className="text-xs shrink-0">#{doc.id}</Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="px-4 pb-4">
-                    <p className="text-sm" style={{ color: "var(--text-secondary)" }}>{doc.content}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </section>
+        <DocsPageClient docs={docs} fetchError={fetchError} />
       </div>
     </main>
   );

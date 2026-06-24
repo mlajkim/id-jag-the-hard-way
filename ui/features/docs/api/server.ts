@@ -8,9 +8,12 @@ async function authHeaders() {
   return { Authorization: `Bearer ${idToken}`, "Content-Type": "application/json" };
 }
 
-export async function getDocs(): Promise<{ id: number; name: string; content: string }[]> {
+export async function getDocs(accessToken?: string): Promise<{ id: number; name: string; content: string }[]> {
+  const headers = accessToken
+    ? { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }
+    : await authHeaders();
   const res = await fetch(`${config.api.serverUrl}/api/docs`, {
-    headers: await authHeaders(),
+    headers,
     cache: "no-store",
   });
   if (!res.ok) throw new Error(`API error ${res.status}`);
