@@ -21,10 +21,24 @@ export async function getDocs(accessToken?: string): Promise<{ id: number; name:
   return data.docs;
 }
 
-export async function createDoc(name: string, content: string) {
+export async function deleteDoc(id: number, accessToken?: string) {
+  const headers = accessToken
+    ? { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }
+    : await authHeaders();
+  const res = await fetch(`${config.api.serverUrl}/api/docs/${id}`, {
+    method: "DELETE",
+    headers,
+  });
+  if (!res.ok) throw new Error(`API error ${res.status}`);
+}
+
+export async function createDoc(name: string, content: string, accessToken?: string) {
+  const headers = accessToken
+    ? { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }
+    : await authHeaders();
   const res = await fetch(`${config.api.serverUrl}/api/docs`, {
     method: "POST",
-    headers: await authHeaders(),
+    headers,
     body: JSON.stringify({ name, content }),
   });
   if (!res.ok) throw new Error(`API error ${res.status}`);

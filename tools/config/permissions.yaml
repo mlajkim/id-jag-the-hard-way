@@ -86,6 +86,9 @@ roles:
         on: role.docs-getter
       - allow: zts.jag_exchange
         on: role.mcp-accessor
+      # Intentionally disabled to mimic organization not allow AI agents to delete docs on behalf of humans:
+      # - allow: zts.jag_exchange
+      #   on: role.docs-deleter
 
   # jag-exchanging-uis: Next.js UI => exchange into docs roles on the user's behalf
   - name: jag-exchanging-uis
@@ -108,3 +111,7 @@ roles:
         on: api
       - allow: zts.token_target_exchange
         on: role.docs-getter
+      - allow: zts.token_target_exchange
+        on: role.docs-poster
+      - allow: zts.token_target_exchange
+        on: role.docs-deleter

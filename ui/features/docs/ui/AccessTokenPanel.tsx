@@ -16,7 +16,7 @@ const OPERATIONS = [
 interface Props { onToken?: (at: string) => void }
 
 export default function AccessTokenPanel({ onToken }: Props = {}) {
-  const [checked, setChecked] = useState<Set<string>>(new Set(["GET"]));
+  const [checked, setChecked] = useState<Set<string>>(new Set(["GET", "POST", "DELETE"]));
   const [result, setResult]   = useState<AT | null>(null);
   const [error, setError]     = useState<string | null>(null);
   const [isPending, start]    = useTransition();

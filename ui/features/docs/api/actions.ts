@@ -1,16 +1,27 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createDoc, getDocs } from "./server";
+import { createDoc, deleteDoc, getDocs } from "./server";
 
 export async function createDocAction(_: unknown, formData: FormData) {
   const name = formData.get("name") as string;
   const content = formData.get("content") as string;
+  const accessToken = formData.get("accessToken") as string | null;
   if (!name?.trim() || !content?.trim()) {
     return { error: "Name and content are required." };
   }
   try {
-    await createDoc(name.trim(), content.trim());
+    const doc = await createDoc(name.trim(), content.trim(), accessToken ?? undefined);
+    revalidatePath("/docs");
+    return { success: true, doc };
+  } catch (e: any) {
+    return { error: e.message };
+  }
+}
+
+export async function deleteDocAction(id: number, accessToken?: string): Promise<{ error: string } | { success: true }> {
+  try {
+    await deleteDoc(id, accessToken);
     revalidatePath("/docs");
     return { success: true };
   } catch (e: any) {

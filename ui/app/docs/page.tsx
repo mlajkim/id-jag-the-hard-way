@@ -1,6 +1,5 @@
 import { auth } from "@/shared/lib/auth";
 import { redirect } from "next/navigation";
-import { getDocs } from "@/features/docs/api/server";
 import DocsPageClient from "@/features/docs/ui/DocsPageClient";
 import { SignOutButton } from "@/features/auth/ui/SignInButton";
 
@@ -8,13 +7,9 @@ export default async function DocsPage() {
   const session = await auth();
   if (!session) redirect("/");
 
-  let docs: { id: number; name: string; content: string }[] = [];
-  let fetchError: string | null = null;
-  try {
-    docs = await getDocs();
-  } catch (e: any) {
-    fetchError = e.message;
-  }
+  // Don't fetch on SSR — no access token yet; user refreshes from the client after fetching an AT
+  const docs: { id: number; name: string; content: string }[] = [];
+  const fetchError: string | null = null;
 
   const user = session.user;
 
