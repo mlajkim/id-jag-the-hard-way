@@ -23,6 +23,7 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmDoc, setConfirmDoc] = useState<Doc | null>(null);
   const [newDocId, setNewDocId]     = useState<number | null>(null);
+  const [deletedIds, setDeletedIds] = useState<Set<number>>(new Set());
 
   async function confirmDelete() {
     if (!confirmDoc) return;
@@ -33,7 +34,7 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
     if ("error" in result) {
       setFetchError(result.error);
     } else {
-      setDocs((prev) => prev.filter((d) => d.id !== id));
+      setDeletedIds((prev) => new Set(prev).add(id));
     }
     setDeletingId(null);
   }
@@ -43,13 +44,6 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
     setDocs((prev) => [doc, ...prev]);
     setNewDocId(doc.id);
     setTimeout(() => setNewDocId(null), 2000);
-    // background sync — deduplicate by id in case optimistic doc is already present
-    getDocsAction(accessToken).then((result) => {
-      if (!result.error) {
-        const seen = new Set<number>();
-        setDocs(result.docs!.filter((d) => !seen.has(d.id) && seen.add(d.id) as unknown as boolean));
-      }
-    });
   }
 
   async function refresh() {
@@ -63,6 +57,7 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
       setFetchError(result.error);
     } else {
       setDocs(result.docs!);
+      setDeletedIds(new Set());
     }
     setRefreshing(false);
   }
@@ -142,7 +137,18 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
 
       {/* Error */}
       {!refreshing && fetchError && (
-        <p className="text-sm text-destructive">{fetchError}</p>
+        <div className="space-y-1">
+          <p className="text-sm text-destructive">{fetchError}</p>
+          {fetchError.includes("Expired") && (
+            <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+              Your session has expired. Please{" "}
+              <a href="/api/auth/signin" className="underline" style={{ color: "var(--line-green)" }}>
+                sign in again
+              </a>{" "}
+              to continue.
+            </p>
+          )}
+        </div>
       )}
 
       {/* List */}
@@ -157,29 +163,34 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
                 style={{
                   borderColor: newDocId === doc.id ? "var(--line-green)" : "var(--border)",
                   boxShadow: newDocId === doc.id ? "0 0 0 2px var(--line-green)" : "var(--shadow-sm)",
-                  transition: "border-color 0.6s ease, box-shadow 0.6s ease",
+                  transition: "border-color 0.6s ease, box-shadow 0.6s ease, opacity 0.4s ease",
+                  opacity: deletedIds.has(doc.id) ? 0.4 : 1,
                 }}
               >
                 <CardHeader className="pb-1 pt-4 px-4">
                   <div className="flex items-center justify-between gap-2">
-                    <CardTitle className="text-sm font-semibold truncate" style={{ color: "var(--text-primary)" }}>
+                    <CardTitle className="text-sm font-semibold truncate" style={{ color: "var(--text-primary)", textDecoration: deletedIds.has(doc.id) ? "line-through" : "none" }}>
                       {doc.name}
                     </CardTitle>
                     <div className="flex items-center gap-1.5 shrink-0">
                       <Badge variant="secondary" className="text-xs">#{doc.id}</Badge>
-                      <button
-                        onClick={() => setConfirmDoc(doc)}
-                        disabled={deletingId === doc.id}
-                        title="Delete document"
-                        className="p-0.5 rounded hover:opacity-60 disabled:opacity-30 transition-opacity cursor-pointer"
-                        style={{ color: "var(--text-muted)" }}
-                      >
-                        {deletingId === doc.id ? (
-                          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
-                        ) : (
-                          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                        )}
-                      </button>
+                      {deletedIds.has(doc.id) ? (
+                        <span className="text-xs px-1.5 py-0.5 rounded" style={{ color: "var(--text-muted)", background: "var(--border)" }}>deleted</span>
+                      ) : (
+                        <button
+                          onClick={() => setConfirmDoc(doc)}
+                          disabled={deletingId === doc.id}
+                          title="Delete document"
+                          className="p-0.5 rounded hover:opacity-60 disabled:opacity-30 transition-opacity cursor-pointer"
+                          style={{ color: "var(--text-muted)" }}
+                        >
+                          {deletingId === doc.id ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+                          ) : (
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                          )}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </CardHeader>

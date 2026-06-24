@@ -84,7 +84,20 @@ export default function AccessTokenPanel({ onToken }: Props = {}) {
         </Button>
       </div>
 
-      {error && <p className="text-xs text-destructive break-all">{error}</p>}
+      {error && (
+        <div className="space-y-1">
+          <p className="text-xs text-destructive break-all">{error}</p>
+          {error.includes("Expired") && (
+            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+              Your session has expired. Please{" "}
+              <a href="/api/auth/signin" className="underline" style={{ color: "var(--line-green)" }}>
+                sign in again
+              </a>{" "}
+              to get a fresh token.
+            </p>
+          )}
+        </div>
+      )}
 
       {result && (
         <div className="space-y-2 pt-2 border-t" style={{ borderColor: "var(--border)" }}>
