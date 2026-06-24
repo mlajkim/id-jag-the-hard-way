@@ -43,9 +43,12 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
     setDocs((prev) => [doc, ...prev]);
     setNewDocId(doc.id);
     setTimeout(() => setNewDocId(null), 2000);
-    // background sync to reconcile server state
+    // background sync — deduplicate by id in case optimistic doc is already present
     getDocsAction(accessToken).then((result) => {
-      if (!result.error) setDocs(result.docs!);
+      if (!result.error) {
+        const seen = new Set<number>();
+        setDocs(result.docs!.filter((d) => !seen.has(d.id) && seen.add(d.id) as unknown as boolean));
+      }
     });
   }
 
@@ -127,7 +130,7 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
                 ✕
               </button>
             </div>
-            <CreateDocForm accessToken={accessToken} onSuccess={() => { setShowForm(false); refresh(); }} />
+            <CreateDocForm accessToken={accessToken} onSuccess={onDocCreated} />
           </div>
         </div>
       )}
@@ -149,7 +152,14 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
             {docs.map((doc) => (
-              <Card key={doc.id} style={{ borderColor: "var(--border)", boxShadow: "var(--shadow-sm)" }}>
+              <Card
+                key={doc.id}
+                style={{
+                  borderColor: newDocId === doc.id ? "var(--line-green)" : "var(--border)",
+                  boxShadow: newDocId === doc.id ? "0 0 0 2px var(--line-green)" : "var(--shadow-sm)",
+                  transition: "border-color 0.6s ease, box-shadow 0.6s ease",
+                }}
+              >
                 <CardHeader className="pb-1 pt-4 px-4">
                   <div className="flex items-center justify-between gap-2">
                     <CardTitle className="text-sm font-semibold truncate" style={{ color: "var(--text-primary)" }}>

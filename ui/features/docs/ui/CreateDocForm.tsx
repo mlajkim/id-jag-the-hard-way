@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-interface Props { onSuccess?: () => void; accessToken?: string }
+interface Doc { id: number; name: string; content: string }
+interface Props { onSuccess?: (doc: Doc) => void; accessToken?: string }
 
 export default function CreateDocForm({ onSuccess, accessToken }: Props = {}) {
   const [name, setName]       = useState("");
@@ -16,7 +17,7 @@ export default function CreateDocForm({ onSuccess, accessToken }: Props = {}) {
   const [state, action, pending] = useActionState(
     async (prev: any, formData: FormData) => {
       const result = await createDocAction(prev, formData);
-      if (result?.success) onSuccess?.();
+      if (result?.success && result.doc) onSuccess?.(result.doc);
       return result;
     },
     null,
@@ -30,6 +31,7 @@ export default function CreateDocForm({ onSuccess, accessToken }: Props = {}) {
         <Input
           id="name" name="name" placeholder="My doc" required autoComplete="off"
           value={name} onChange={(e) => setName(e.target.value)}
+          autoFocus
         />
       </div>
 

@@ -102,16 +102,16 @@ roles:
       - allow: zts.jag_exchange
         on: role.docs-deleter
 
-  # mcp-token-exchanger: MCP server => narrow inbound token to docs-getter scope before calling the API server
-  - name: mcp-token-exchanger
+  # token-exchanging-mcp: MCP server => narrow inbound token to docs-getter scope before calling the API server
+  - name: token-exchanging-mcp
     members:
       - api.api-mcp
     policies:
       - allow: zts.token_source_exchange
         on: api
       - allow: zts.token_target_exchange
-        on: role.docs-getter
+        on: api:role.docs-getter
       - allow: zts.token_target_exchange
-        on: role.docs-poster
+        on: api:role.docs-poster
       - allow: zts.token_target_exchange
-        on: role.docs-deleter
+        on: api:role.docs-deleter

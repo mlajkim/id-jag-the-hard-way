@@ -11,9 +11,9 @@ export async function createDocAction(_: unknown, formData: FormData) {
     return { error: "Name and content are required." };
   }
   try {
-    const doc = await createDoc(name.trim(), content.trim(), accessToken ?? undefined);
+    const res = await createDoc(name.trim(), content.trim(), accessToken ?? undefined);
     revalidatePath("/docs");
-    return { success: true, doc };
+    return { success: true, doc: res.doc as { id: number; name: string; content: string } };
   } catch (e: any) {
     return { error: e.message };
   }

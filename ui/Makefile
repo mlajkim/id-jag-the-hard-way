@@ -36,7 +36,7 @@ setup-ui-service: create-athenz-domain
 	@echo "Next: make register-client && make get-client-secret"
 
 setup-permissions:
-	../tools/setup-permissions.sh ../tools/config/permissions.yaml
+	../tools/setup-permissions.sh ../tools/config/init.yaml
 
 create-athenz-domain:
 	cd .. && ./tools/athenz/create-tld.sh $(_TLD) && \

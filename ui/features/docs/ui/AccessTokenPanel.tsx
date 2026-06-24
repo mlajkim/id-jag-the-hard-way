@@ -38,7 +38,10 @@ export default function AccessTokenPanel({ onToken }: Props = {}) {
     setError(null);
     start(async () => {
       try {
-        const token = await fetchAccessToken(scopes);
+        const [token] = await Promise.all([
+          fetchAccessToken(scopes),
+          new Promise((r) => setTimeout(r, 1000)),
+        ]);
         setResult(token);
         onToken?.(token.at);
       } catch (e: any) {
