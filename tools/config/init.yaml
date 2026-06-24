@@ -83,9 +83,11 @@ roles:
       - human.idjag-learner.claude
     policies:
       - allow: zts.jag_exchange
+        on: role.mcp-accessor
+      - allow: zts.jag_exchange
         on: role.docs-getter
       - allow: zts.jag_exchange
-        on: role.mcp-accessor
+        on: role.docs-poster
       # Intentionally disabled to mimic organization not allow AI agents to delete docs on behalf of humans:
       # - allow: zts.jag_exchange
       #   on: role.docs-deleter
