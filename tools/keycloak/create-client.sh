@@ -51,5 +51,11 @@ if [ "$http_code" != "201" ]; then
   fatal "Failed to create client ${client_id} (HTTP ${http_code})"
 fi
 
+client_uuid=$(curl -s \
+  "http://localhost:${_keycloak_port}/admin/realms/${_realm}/clients?clientId=${client_id}" \
+  -H "Authorization: Bearer ${token}" \
+  | sed 's/.*"id":"\([^"]*\)".*/\1/' | head -1)
+
 ok "Client created: ${client_id}"
 info "Fetch the generated secret with: tools/keycloak/create-client-k8s-secret.sh"
+"${TOOLS_DIR}/open.sh" "http://localhost:${_keycloak_port}/admin/master/console/#/${_realm}/clients/${client_uuid}"

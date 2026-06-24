@@ -14,3 +14,4 @@ keycloak:
   realm: master
   admin: admin
   admin-password: admin
+  user-password: password
