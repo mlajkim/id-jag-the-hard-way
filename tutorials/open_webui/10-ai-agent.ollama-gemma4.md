@@ -2,26 +2,76 @@
 |:------------------------------------:|:--------------:|:----------------------------------------:|
 | [AI Client Agent](../10-ai-agent.md) | **Open WebUI** | [Token Exchange](./11-token-exchange.md) |
 
-# Open WebUI
+# Open WebUI: With Ollama & Gemma4
 
-In this tutorial, we will install Open WebUI as the AI client, connect it to a remote LLM endpoint, and connect it to the MCP server for the first time.
+> [!WARNING]
+> Open WebUI + Ollama is resource-intensive. Running a local LLM requires significant RAM and CPU. On machines with less than 32 GB of memory you may experience very slow inference or out-of-memory errors.
+>
+> This path has been verified on the following hardware:
+>
+> |      OS       |          CPU          | Memory |    LLM     |      Status      |
+> |:-------------:|:---------------------:|:------:|:----------:|:----------------:|
+> |  Tahoe 26.2   |        M3 Pro         |  36GB  | gemma4:e4b | Verified Working |
+> | Ubuntu 24 LTS | Intel Core i7-11700KF |  32GB  | gemma4:e4b | Verified Working |
+>
+> If your machine does not meet these specs, consider using [Claude Code](../10-ai-agent.md) as the AI client instead — it runs in the cloud and has no local hardware requirements.
 
-> [!NOTE]
-> This path uses a remote LLM API (e.g. Claude, OpenAI) — no local GPU or large RAM required.
-> If you prefer to run a local model instead, go to [Open WebUI with Ollama & Gemma4](./10-ai-agent.ollama-gemma4.md).
+In this tutorial, we will install Open WebUI as the AI client and connect it to the MCP server for the first time.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
+- [Install Ollama](#install-ollama)
+- [Install Gemma 4 with Ollama](#install-gemma-4-with-ollama)
 - [Install Open WebUI](#install-open-webui)
 - [Open Open WebUI](#open-open-webui)
-- [Add Remote LLM Endpoint](#add-remote-llm-endpoint)
 - [Register MCP Server in Open WebUI](#register-mcp-server-in-open-webui)
 - [Verify](#verify)
 - [What's happened?](#whats-happened)
 
 <!-- /TOC -->
 
+## Install Ollama
+
+> [!NOTE]
+> Ollama is installed locally
+
+Ollama is one of the easiest ways to install an open LLM locally and interact with it.
+
+Simply run the following command:
+
+```sh
+curl -fsSL https://ollama.com/install.sh | sh
+```
+
+```sh
+# Starting Ollama...
+# >>> Downloading Ollama for macOS...
+# ######################################################################## 100.0%
+# >>> Installing Ollama to /Applications...
+# >>> Adding 'ollama' command to PATH (may require password)...
+# Password:
+# >>> Starting Ollama...
+# >>> Install complete. You can now run 'ollama'.
+```
+
+> [!NOTE]
+> For the SSOT install method, visit: https://ollama.com/
+
+## Install Gemma 4 with Ollama
+
+> [!NOTE]
+> Learn about the specs for the Gemma 4 model [here](https://ai.google.dev/gemma/docs/core?_gl=1*57y72w*_up*MQ..*_ga*MTM5MjUyNzM5NC4xNzc4NDU1OTc0*_ga_P1DBVKWT6V*czE3Nzg0NTU5NzQkbzEkZzAkdDE3Nzg0NTU5NzQkajYwJGwwJGgxMjMzODIwOTA0#gemma-4-inference-memory-requirements) 
+
+In this tutorial, we will use Gemma 4's `gemma4:e4b` as our AI model:
+
+```sh
+ollama pull gemma4:e4b
+```
+
 ## Install Open WebUI
+
+Instead of using Ollama's native UI, we will use Open WebUI for a more feature-rich experience. Open WebUI requires a specific Python version and some system dependencies. At the time of writing, the official documentation states that Open WebUI runs on Python 3.11 or lower.
+
 
 ### Create namespace for webui
 
@@ -32,6 +82,11 @@ kubectl create ns ai
 ```
 
 ### Deploy Open WebUI in K8s
+
+> [!NOTE]
+> Open WebUI is smart enough to find the ollama running in your local machine, despite Open WebUI is runnning on K8s
+
+Deploy Open WebUI:
 
 > [!NOTE]
 > If you are using kind, pre-loading the image can speed things up significantly:
@@ -54,6 +109,8 @@ kubectl expose deploy open-webui -n ai --port 8080 --name open-webui
 
 ### Deploy pvc for the Open WebUI
 
+First, create a very simple `pvc`:
+
 ```sh
 cat <<EOF | kubectl apply -f -
 apiVersion: v1
@@ -69,7 +126,7 @@ spec:
 EOF
 ```
 
-Mount the volume:
+Mount the volume we just created:
 
 ```sh
 kubectl patch deploy open-webui -n ai --patch "$(cat <<'EOF'
@@ -112,33 +169,6 @@ However, the credentials are up to you.
 
 ![10_create_admin_account](./assets/10_create_admin_account.png)
 
-## Add Remote LLM Endpoint
-
-```sh
-_open_webui_port=$(./tools/port.sh open-webui)
-./tools/open.sh "http://localhost:${_open_webui_port}/admin/settings/connections"
-```
-
-Click `+ Icon` next to **OpenAI API**.
-
-![10_open_webui_add_llm_endpoint](./assets/10_open_webui_add_llm_endpoint.png)
-
-For **Claude**:
-
-| Field    | Value                          |
-|----------|--------------------------------|
-| Base URL | `https://api.anthropic.com/v1` |
-| API Key  | your Anthropic API key         |
-
-For **OpenAI**:
-
-| Field    | Value                       |
-|----------|-----------------------------|
-| Base URL | `https://api.openai.com/v1` |
-| API Key  | your OpenAI API key         |
-
-Click **Save**. Models from the endpoint will appear in the model selector.
-
 ## Register MCP Server in Open WebUI
 
 Get Access Token:
@@ -154,12 +184,7 @@ _root_user_at=$(./tools/athenz/fetch-access-token.sh \
 cat "./keys/idjag-learner.jwt"
 ```
 
-```sh
-_open_webui_port=$(./tools/port.sh open-webui)
-./tools/open.sh "http://localhost:${_open_webui_port}/admin/settings/connections"
-```
-
-Click `+ Icon` next to **MCP Servers** to register the MCP server.
+Go to `User Icon` > `Admin Panel` > `Settings` > `Connections` > `MCP Servers` > `+ Icon` to register the MCP server.
 
 - Name: `API MCP Server`
 - ID: `api.mcp-api`
@@ -186,6 +211,7 @@ Then in the `tools` section, select the MCP server we just created:
 
 ![10_select_tool_as_default_for_the_model](./assets/10_select_tool_as_default_for_the_model.png)
 
+
 ## Verify
 
 Follow the steps below to verify the setup.
@@ -209,8 +235,9 @@ get docs!
 We were able to successfully install the AI Client Agent, using:
 
 - Open WebUI as an LLM Front-end (for human interaction)
-- A remote LLM API as the model provider
+- Ollama as a Local LLM Provider
+- Gemma 4's `gemma4:26b` as an LLM model
 
-We manually passed the Access Token, which has permission to access the API server. However, it fails due to the default behavior of the MCP, which attempts to exchange the given Access Token into another token. This is an expected failure. We will fix it in the next section.
+We manually passed the Access Token, which has permission to access the API server. However, it fails due to the default behavior of the MCP, which attempts to exchange the given Access Token into another token. This is an expected failure however. We will fix it in the next section.
 
 Next: [Token Exchange](./11-token-exchange.md)
