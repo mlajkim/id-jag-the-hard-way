@@ -2,6 +2,60 @@
 
 import { useEffect, useState } from "react";
 
+type PermissionKind = "get" | "post" | "delete";
+
+type PermissionState = {
+  enabled: boolean;
+  toggling: boolean;
+  toggle: () => Promise<void>;
+};
+
+const permissionMeta: Record<PermissionKind, {
+  apiPath: string;
+  aiApiPath: string;
+  title: string;
+  targetLabel: string;
+  policyLine: string;
+  aiPolicyLine: string;
+  accent: string;
+  tint: string;
+  tabTint: string;
+}> = {
+  get: {
+    apiPath: "/api/permissions/direct-docs",
+    aiApiPath: "/api/permissions/ai-agent-role?permission=get",
+    title: "GET",
+    targetLabel: "get:docs",
+    policyLine: "ALLOW get api:role.docs-getter api:docs",
+    aiPolicyLine: "ALLOW zts.jag_exchange api:role.jag-exchanging-ai-agents api:role.docs-getter",
+    accent: "#6366F1",
+    tint: "#EEF2FF",
+    tabTint: "#F8FAFF",
+  },
+  post: {
+    apiPath: "/api/permissions/direct-posts",
+    aiApiPath: "/api/permissions/ai-agent-role?permission=post",
+    title: "POST",
+    targetLabel: "post:docs",
+    policyLine: "ALLOW post api:role.docs-poster api:docs",
+    aiPolicyLine: "ALLOW zts.jag_exchange api:role.jag-exchanging-ai-agents api:role.docs-poster",
+    accent: "#0891B2",
+    tint: "#ECFEFF",
+    tabTint: "#F6FEFF",
+  },
+  delete: {
+    apiPath: "/api/permissions/direct-deletes",
+    aiApiPath: "/api/permissions/ai-agent-role?permission=delete",
+    title: "DELETE",
+    targetLabel: "delete:docs",
+    policyLine: "ALLOW delete api:role.docs-deleter api:docs",
+    aiPolicyLine: "ALLOW zts.jag_exchange api:role.jag-exchanging-ai-agents api:role.docs-deleter",
+    accent: "#7C3AED",
+    tint: "#F5F3FF",
+    tabTint: "#FBFAFF",
+  },
+};
+
 function NodeBox({
   x,
   y,
@@ -77,7 +131,6 @@ function Arrow({
 }) {
   return (
     <g onClick={onClick} style={{ cursor: "pointer" }}>
-      {/* wider transparent hit area */}
       <rect x={x1 - 4} y={y - 12} width={x2 - x1 + 8} height={24} fill="transparent" />
       <path d={`M ${x1} ${y} H ${x2}`} stroke={color} strokeWidth="2" strokeLinecap="round" />
       <path
@@ -92,10 +145,28 @@ function Arrow({
   );
 }
 
+function StatusChip({ label, enabled }: { label: string; enabled: boolean }) {
+  return (
+    <span
+      style={{
+        fontSize: "0.65rem",
+        fontWeight: 700,
+        padding: "2px 7px",
+        borderRadius: 999,
+        background: enabled ? "#ECFDF5" : "#FEF2F2",
+        color: enabled ? "var(--line-green)" : "#ef4444",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {label} {enabled ? "✓" : "✕"}
+    </span>
+  );
+}
+
 type DialogState =
   | { type: "info"; label: string }
-  | { type: "confirm-ai-agent"; currentlyEnabled: boolean; onConfirm: () => void }
-  | { type: "confirm-direct-docs"; currentlyEnabled: boolean; onConfirm: () => void };
+  | { type: "confirm-ai-agent"; permission: PermissionKind; currentlyEnabled: boolean; onConfirm: () => void | Promise<void> }
+  | { type: "confirm-direct-policy"; permission: PermissionKind; currentlyEnabled: boolean; onConfirm: () => void | Promise<void> };
 
 function PermissionDialog({ state, onClose }: { state: DialogState; onClose: () => void }) {
   if (state.type === "info") {
@@ -122,18 +193,26 @@ function PermissionDialog({ state, onClose }: { state: DialogState; onClose: () 
     );
   }
 
-  const { currentlyEnabled, onConfirm } = state;
-  const action = currentlyEnabled ? "Revoke" : "Allow";
-  const isDirectDocs = state.type === "confirm-direct-docs";
-  const title = isDirectDocs ? `${action} direct docs permission?` : `${action} AI agent permission?`;
-  const detail = isDirectDocs
-    ? currentlyEnabled
-      ? "This will remove the Athenz policy that lets human.idjag-learner directly call get:docs."
-      : "This will recreate the Athenz policy that lets human.idjag-learner directly call get:docs."
-    : currentlyEnabled
-      ? "This will remove ai.open-webui, human.idjag-learner.claude, and human.idjag-learner.codex from api:role.jag-exchanging-ai-agents."
-      : "This will add ai.open-webui, human.idjag-learner.claude, and human.idjag-learner.codex to api:role.jag-exchanging-ai-agents.";
-  const target = isDirectDocs ? "ALLOW get api:role.docs-getter api:docs" : "api:role.jag-exchanging-ai-agents";
+  const action = state.currentlyEnabled ? "Revoke" : "Allow";
+  let title: string;
+  let detail: string;
+  let target: string;
+
+  if (state.type === "confirm-direct-policy") {
+    const meta = permissionMeta[state.permission];
+    title = `${action} direct ${meta.targetLabel} permission?`;
+    detail = state.currentlyEnabled
+      ? `This will remove the Athenz policy that lets human.idjag-learner directly call ${meta.targetLabel}.`
+      : `This will recreate the Athenz policy that lets human.idjag-learner directly call ${meta.targetLabel}.`;
+    target = meta.policyLine;
+  } else {
+    const meta = permissionMeta[state.permission];
+    title = `${action} AI agent permission?`;
+    detail = state.currentlyEnabled
+      ? `This will remove the zts.jag_exchange policy that lets AI agents exchange into ${meta.targetLabel}.`
+      : `This will recreate the zts.jag_exchange policy that lets AI agents exchange into ${meta.targetLabel}.`;
+    target = meta.aiPolicyLine;
+  }
 
   return (
     <div
@@ -141,7 +220,7 @@ function PermissionDialog({ state, onClose }: { state: DialogState; onClose: () 
       onClick={onClose}
     >
       <div
-        style={{ background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 28, maxWidth: 380, width: "90%", boxShadow: "0 8px 32px rgba(0,0,0,0.18)" }}
+        style={{ background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 16, padding: 28, maxWidth: 390, width: "90%", boxShadow: "0 8px 32px rgba(0,0,0,0.18)" }}
         onClick={(e) => e.stopPropagation()}
       >
         <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: 8 }}>
@@ -158,8 +237,11 @@ function PermissionDialog({ state, onClose }: { state: DialogState; onClose: () 
             Cancel
           </button>
           <button
-            onClick={() => { onConfirm(); onClose(); }}
-            style={{ padding: "8px 18px", borderRadius: 8, fontSize: "0.875rem", border: "none", background: currentlyEnabled ? "#ef4444" : "var(--line-green)", color: "#fff", cursor: "pointer", fontWeight: 600 }}
+            onClick={() => {
+              void state.onConfirm();
+              onClose();
+            }}
+            style={{ padding: "8px 18px", borderRadius: 8, fontSize: "0.875rem", border: "none", background: state.currentlyEnabled ? "#ef4444" : "var(--line-green)", color: "#fff", cursor: "pointer", fontWeight: 600 }}
           >
             {action}
           </button>
@@ -169,14 +251,14 @@ function PermissionDialog({ state, onClose }: { state: DialogState; onClose: () 
   );
 }
 
-function usePermission(apiPath: string) {
+function usePermission(apiPath: string): PermissionState {
   const [enabled, setEnabled] = useState<boolean>(true);
   const [toggling, setToggling] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     fetch(apiPath, { cache: "no-store" })
-      .then((r) => r.ok ? r.json() : null)
+      .then((response) => response.ok ? response.json() : null)
       .then((data: { enabled?: unknown } | null) => {
         if (!cancelled && data && typeof data.enabled === "boolean") setEnabled(data.enabled);
       })
@@ -190,13 +272,13 @@ function usePermission(apiPath: string) {
     setToggling(true);
     setEnabled(next);
     try {
-      const res = await fetch(apiPath, {
+      const response = await fetch(apiPath, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ enabled: next }),
       });
-      if (!res.ok) { setEnabled(!next); return; }
-      const data = (await res.json()) as { enabled?: unknown };
+      if (!response.ok) { setEnabled(!next); return; }
+      const data = (await response.json()) as { enabled?: unknown };
       if (typeof data.enabled === "boolean") setEnabled(data.enabled);
     } catch {
       setEnabled(!next);
@@ -208,18 +290,134 @@ function usePermission(apiPath: string) {
   return { enabled, toggling, toggle };
 }
 
+function PermissionCard({
+  permission,
+  directPermission,
+  aiAgentPermission,
+  setDialog,
+}: {
+  permission: PermissionKind;
+  directPermission: PermissionState;
+  aiAgentPermission: PermissionState;
+  setDialog: (dialog: DialogState) => void;
+}) {
+  const meta = permissionMeta[permission];
+  const directColor = directPermission.enabled ? "var(--line-green)" : "#ef4444";
+  const aiArrowColor = aiAgentPermission.enabled ? "var(--line-green)" : "#ef4444";
+  const downstreamArrowColor = aiAgentPermission.enabled && directPermission.enabled ? "var(--line-green)" : "#ef4444";
+
+  function openDirectDialog() {
+    if (directPermission.toggling) return;
+    setDialog({
+      type: "confirm-direct-policy",
+      permission,
+      currentlyEnabled: directPermission.enabled,
+      onConfirm: directPermission.toggle,
+    });
+  }
+
+  return (
+    <div
+      className="rounded-2xl p-4"
+      style={{
+        background: "var(--surface)",
+        border: "1.5px solid var(--border)",
+        borderTop: `4px solid ${meta.accent}`,
+        boxShadow: "0 10px 28px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.05)",
+      }}
+    >
+      <div className="mb-2 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span
+            className="rounded-full px-2 py-0.5 text-xs font-bold"
+            style={{ background: meta.tint, color: meta.accent }}
+          >
+            {meta.title}
+          </span>
+          <span className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>
+            {meta.targetLabel}
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <StatusChip label="AI" enabled={aiAgentPermission.enabled} />
+          <StatusChip label="direct" enabled={directPermission.enabled} />
+        </div>
+      </div>
+      <svg className="block h-auto w-full" viewBox="0 0 770 260" fill="none" aria-label={`${meta.targetLabel} permission flow diagram`}>
+        <NodeBox x={0} y={30} label="human.idjag-learner" image="/human-idjag-learner.png" />
+        <NodeBox x={210} y={30} label="AI" image="/ai-agent.png" />
+        <NodeBox x={420} y={30} label="MCP" image="/mcp.png" fill="#FFFFFF" />
+        <NodeBox x={630} y={30} label={meta.targetLabel} fill={meta.tint} />
+
+        <Arrow
+          x1={157} x2={193} y={84}
+          color={aiArrowColor}
+          onClick={() => setDialog({ type: "confirm-ai-agent", permission, currentlyEnabled: aiAgentPermission.enabled, onConfirm: aiAgentPermission.toggle })}
+        />
+        <Arrow x1={367} x2={403} y={84} color={downstreamArrowColor} onClick={() => setDialog({ type: "info", label: `AI → MCP (${meta.title.toLowerCase()} token exchange)` })} />
+        <Arrow x1={577} x2={613} y={84} color={downstreamArrowColor} onClick={() => setDialog({ type: "info", label: `MCP → ${meta.targetLabel} (API call)` })} />
+
+        <g
+          role="button"
+          tabIndex={0}
+          aria-pressed={directPermission.enabled}
+          aria-label={`Toggle direct ${meta.targetLabel} policy`}
+          onClick={openDirectDialog}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              openDirectDialog();
+            }
+          }}
+          style={{ cursor: directPermission.toggling ? "wait" : "pointer", opacity: directPermission.toggling ? 0.55 : 1 }}
+        >
+          <rect x={60} y={208} width={650} height={20} fill="transparent" />
+          <path
+            d="M 70 138 V 218 H 700 V 138"
+            stroke={directColor}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M 694 145 L 700 138 L 706 145"
+            fill="none"
+            stroke={directColor}
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <rect x="308" y="199" width="118" height="20" rx="10" fill={directPermission.enabled ? "#ECFDF5" : "#FEF2F2"} />
+          <text x="367" y="213" textAnchor="middle" fill={directColor} fontSize="12" fontWeight="700">
+            direct {meta.targetLabel}
+          </text>
+        </g>
+      </svg>
+    </div>
+  );
+}
+
 export default function PermissionsPageClient() {
   const [dialog, setDialog] = useState<DialogState | null>(null);
-  const directDocs = usePermission("/api/permissions/direct-docs");
-  const aiAgentRole = usePermission("/api/permissions/ai-agent-role");
-
-  const directDocsColor = directDocs.enabled ? "var(--line-green)" : "#ef4444";
-  const aiArrowColor = aiAgentRole.enabled ? "var(--line-green)" : "#ef4444";
-
-  function openDirectDocsDialog() {
-    if (directDocs.toggling) return;
-    setDialog({ type: "confirm-direct-docs", currentlyEnabled: directDocs.enabled, onConfirm: directDocs.toggle });
-  }
+  const [focused, setFocused] = useState<PermissionKind>("get");
+  const [pressed, setPressed] = useState<PermissionKind | null>(null);
+  const [popKey, setPopKey] = useState(0);
+  const directGet = usePermission(permissionMeta.get.apiPath);
+  const directPost = usePermission(permissionMeta.post.apiPath);
+  const directDelete = usePermission(permissionMeta.delete.apiPath);
+  const aiGet = usePermission(permissionMeta.get.aiApiPath);
+  const aiPost = usePermission(permissionMeta.post.aiApiPath);
+  const aiDelete = usePermission(permissionMeta.delete.aiApiPath);
+  const directPermissions: Record<PermissionKind, PermissionState> = {
+    get: directGet,
+    post: directPost,
+    delete: directDelete,
+  };
+  const aiPermissions: Record<PermissionKind, PermissionState> = {
+    get: aiGet,
+    post: aiPost,
+    delete: aiDelete,
+  };
 
   return (
     <main className="min-h-screen p-6 md:p-10" style={{ background: "var(--bg)" }}>
@@ -240,65 +438,80 @@ export default function PermissionsPageClient() {
           </p>
         </div>
 
-        {/* Diagram card */}
-        <div
-          className="rounded-2xl p-6"
-          style={{ background: "var(--surface)", border: "1.5px solid var(--border)", boxShadow: "var(--shadow-sm)" }}
-        >
-          <svg className="block h-auto w-full" viewBox="0 0 770 260" fill="none" aria-label="Permission flow diagram">
-            <NodeBox x={0} y={30} label="human.idjag-learner" image="/human-idjag-learner.png" />
-            <NodeBox x={210} y={30} label="AI" image="/ai-agent.png" />
-            <NodeBox x={420} y={30} label="MCP" image="/mcp.png" fill="#FFFFFF" />
-            <NodeBox x={630} y={30} label="get:docs" fill="#F0FAF4" />
-
-            {/* human → AI: toggles jag-exchanging-ai-agents membership */}
-            <Arrow
-              x1={157} x2={193} y={84}
-              color={aiArrowColor}
-              onClick={() => setDialog({ type: "confirm-ai-agent", currentlyEnabled: aiAgentRole.enabled, onConfirm: aiAgentRole.toggle })}
-            />
-            <Arrow x1={367} x2={403} y={84} color={aiArrowColor} onClick={() => setDialog({ type: "info", label: "AI → MCP (token exchange)" })} />
-            <Arrow x1={577} x2={613} y={84} color={aiArrowColor} onClick={() => setDialog({ type: "info", label: "MCP → get:docs (API call)" })} />
-
-            {/* U-shaped direct path — clickable */}
-            <g
-              role="button"
-              tabIndex={0}
-              aria-pressed={directDocs.enabled}
-              aria-label="Toggle direct get docs policy"
-              onClick={openDirectDocsDialog}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  openDirectDocsDialog();
-                }
-              }}
-              style={{ cursor: directDocs.toggling ? "wait" : "pointer", opacity: directDocs.toggling ? 0.55 : 1 }}
-            >
-              {/* transparent hit area along the bottom segment */}
-              <rect x={60} y={208} width={650} height={20} fill="transparent" />
-              <path
-                d="M 70 138 V 218 H 700 V 138"
-                stroke={directDocsColor}
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M 694 145 L 700 138 L 706 145"
-                fill="none"
-                stroke={directDocsColor}
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <rect x="315" y="199" width="104" height="20" rx="10" fill={directDocs.enabled ? "#ECFDF5" : "#FEF2F2"} />
-              <text x="367" y="213" textAnchor="middle" fill={directDocsColor} fontSize="12" fontWeight="700">
-                direct get:docs
-              </text>
-            </g>
-          </svg>
-        </div>
+        {/* Stacked card deck — active card on top, others peek as tabs below */}
+        {(() => {
+          const kinds = ["get", "post", "delete"] as const;
+          const PEEK = 40;
+          const rest = kinds.filter((k) => k !== focused);
+          return (
+            <div style={{ position: "relative", paddingBottom: rest.length * PEEK }}>
+              <div key={`${focused}-${popKey}`} className="permission-card-pop">
+                <PermissionCard
+                  permission={focused}
+                  directPermission={directPermissions[focused]}
+                  aiAgentPermission={aiPermissions[focused]}
+                  setDialog={setDialog}
+                />
+              </div>
+              {rest.map((kind, i) => {
+                const meta = permissionMeta[kind];
+                const directEnabled = directPermissions[kind].enabled;
+                const aiEnabled = aiPermissions[kind].enabled;
+                const isPressed = pressed === kind;
+                return (
+                  <button
+                    key={kind}
+                    type="button"
+                    onMouseDown={() => setPressed(kind)}
+                    onMouseLeave={() => setPressed(null)}
+                    onMouseUp={() => setPressed(null)}
+                    onTouchStart={() => setPressed(kind)}
+                    onTouchEnd={() => setPressed(null)}
+                    onClick={() => {
+                      setPressed(kind);
+                      setFocused(kind);
+                      setPopKey((current) => current + 1);
+                      window.setTimeout(() => setPressed(null), 130);
+                    }}
+                    style={{
+                      position: "absolute",
+                      bottom: (rest.length - 1 - i) * PEEK,
+                      left: 0, right: 0,
+                      height: PEEK,
+                      background: meta.tabTint,
+                      border: "1.5px solid var(--border)",
+                      borderLeft: `5px solid ${meta.accent}`,
+                      borderTop: "none",
+                      borderRadius: "0 0 16px 16px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "0 20px",
+                      boxShadow: isPressed ? "0 1px 2px rgba(15, 23, 42, 0.08)" : "0 5px 14px rgba(15, 23, 42, 0.08)",
+                      transform: isPressed ? "translateY(2px) scale(0.997)" : "translateY(0) scale(1)",
+                      transition: "transform 120ms ease, box-shadow 120ms ease, background 120ms ease",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ width: 7, height: 7, borderRadius: 999, background: meta.accent }} />
+                      <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "var(--text-primary)" }}>
+                        {meta.title}
+                      </span>
+                      <span style={{ fontSize: "0.72rem", fontWeight: 600, color: "var(--text-muted)" }}>
+                        {meta.targetLabel}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <StatusChip label="AI" enabled={aiEnabled} />
+                      <StatusChip label="direct" enabled={directEnabled} />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          );
+        })()}
 
         <div>
           <a href="/docs" className="text-xs underline" style={{ color: "var(--text-muted)" }}>
