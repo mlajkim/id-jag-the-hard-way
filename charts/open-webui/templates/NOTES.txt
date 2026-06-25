@@ -1,0 +1,13 @@
+Open WebUI deployed to namespace: {{ .Values.namespace }}
+
+Open WebUI can take 3-5 minutes to become ready on first install (large image).
+Use --wait to block until the pod is ready:
+
+  helm install open-webui ./charts/open-webui --wait --timeout 5m
+
+Or wait manually:
+
+  kubectl wait -n {{ .Values.namespace }} \
+    --for=condition=ready pod \
+    --selector=app=open-webui \
+    --timeout=300s

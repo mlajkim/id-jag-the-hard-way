@@ -1,0 +1,6 @@
+apiVersion: v2
+name: open-webui
+description: Open WebUI deployment for ID-JAG the easy way
+type: application
+version: 0.1.0
+appVersion: "main"

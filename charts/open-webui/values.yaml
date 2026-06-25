@@ -1,0 +1,25 @@
+namespace: ai
+
+image: ghcr.io/open-webui/open-webui:main
+
+service:
+  port: 8080
+
+pvc:
+  size: 1Gi
+
+# Keycloak OAuth integration (tutorial 13).
+# Requires the keycloak-client-secret K8s secret to be created first:
+#   ./tools/keycloak/create-client-k8s-secret.sh ai.open-webui ai keycloak-client-secret
+keycloak:
+  enabled: false
+  realm: master
+  # Port that the socat proxy inside the pod listens on (must match your port-forward).
+  # Default matches tools/config.yaml keycloak port (34443).
+  proxyPort: 34443
+  # Redirect URI shown to the browser — use the external port-forward port.
+  redirectPort: 54443
+
+# ZTS URL used by the AI Client Gateway sidecar (tutorial 15).
+zts:
+  url: https://athenz-zts-server.athenz:4443/zts/v1
