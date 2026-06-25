@@ -3,6 +3,7 @@ import fs from "fs";
 import { URLSearchParams } from "url";
 import jwt from "jsonwebtoken";
 import { exchangeToIdjag } from "./idtokenIntoIdjag.js";
+import { parseAthenzError } from "./errors.js";
 import { ZTS_URL, CERT_PATH, KEY_PATH, CA_PATH } from "../config/env.js";
 
 const httpsAgent = new https.Agent({
@@ -51,7 +52,7 @@ async function fetchATFromZTS(idJag: string, scope: string): Promise<string> {
         if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
           resolve(JSON.parse(data).access_token);
         } else {
-          reject(new Error(`ZTS Error: ${res.statusCode} - ${data}`));
+          reject(parseAthenzError(data, res.statusCode ?? 0, "idjag_to_at", scope));
         }
       });
     });

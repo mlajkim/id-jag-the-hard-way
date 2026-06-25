@@ -1,4 +1,5 @@
 import { UPSTREAM_BASE_URL, DANGEROUSLY_SHOW_RAW_ACCESS_TOKEN, PUBLIC_BASE_URL } from "../config/env.js";
+import { AthenzError } from "../utils/errors.js";
 import { collectForwardHeaders } from "../utils/httpHelpers.js";
 import { logIncomingRequest } from "./logger.js";
 import { getAccessToken } from "../utils/athenzAt.ts";
@@ -156,6 +157,10 @@ export async function proxyMiddleware(req: Request, res: Response) {
         error: "id_token_expired",
         message: "Your session has expired. Please sign out from your IdP (e.g. Keycloak) and re-login to get a new session. (Automatic re-login is not yet implemented but coming soon.)",
       });
+    }
+    if (error instanceof AthenzError) {
+      console.error(`[${new Date().toISOString()}] Athenz token exchange failed:`, error.message);
+      return res.status(502).json(error.toResponseBody());
     }
     console.error(`[${new Date().toISOString()}] Proxy request failed:`, error);
     res.status(502).json({
