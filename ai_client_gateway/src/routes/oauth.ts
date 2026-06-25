@@ -18,7 +18,7 @@
 import { Router, Request, Response } from "express";
 import crypto from "crypto";
 import { URLSearchParams } from "url";
-import { PUBLIC_BASE_URL } from "../config/env.js";
+import { PUBLIC_BASE_URL, BROWSER_BASE_URL } from "../config/env.js";
 import { createSession, getSession } from "../utils/sessionStore.js";
 
 const router = Router();
@@ -59,7 +59,7 @@ function deriveChallenge(verifier: string): string {
 router.get("/.well-known/oauth-authorization-server", (_req: Request, res: Response) => {
   res.json({
     issuer: PUBLIC_BASE_URL,
-    authorization_endpoint: `${PUBLIC_BASE_URL}/oauth/authorize`,
+    authorization_endpoint: `${BROWSER_BASE_URL}/oauth/authorize`,
     token_endpoint: `${PUBLIC_BASE_URL}/oauth/token`,
     registration_endpoint: `${PUBLIC_BASE_URL}/oauth/register`,
     response_types_supported: ["code"],
@@ -104,7 +104,7 @@ router.get("/oauth/authorize", (req: Request, res: Response) => {
   const params = new URLSearchParams({
     client_id: CLIENT_ID,
     response_type: "code",
-    redirect_uri: `${PUBLIC_BASE_URL}/oauth/callback`,
+    redirect_uri: `${BROWSER_BASE_URL}/oauth/callback`,
     scope: "openid email profile",
     state,
     code_challenge: challenge,
@@ -138,7 +138,7 @@ router.get("/oauth/callback", async (req: Request, res: Response) => {
       client_id: CLIENT_ID,
       ...(CLIENT_SECRET ? { client_secret: CLIENT_SECRET } : {}),
       code,
-      redirect_uri: `${PUBLIC_BASE_URL}/oauth/callback`,
+      redirect_uri: `${BROWSER_BASE_URL}/oauth/callback`,
       code_verifier: pending.codeVerifier,
     });
 

@@ -9,6 +9,10 @@ export const CA_PATH = path.join(__dirname, "../../certs/ca.crt");
 export const PORT = Number(process.env.PORT ?? 3101);
 export const UPSTREAM_BASE_URL = process.env.UPSTREAM_BASE_URL ?? "http://localhost:8101";
 export const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL ?? `http://localhost:${PORT}`;
+// BROWSER_BASE_URL is the address the end-user's browser can reach.
+// Defaults to PUBLIC_BASE_URL when not set (local dev).
+// Set this in K8s when PUBLIC_BASE_URL is in-cluster but the browser needs a different address (e.g. port-forward).
+export const BROWSER_BASE_URL = process.env.BROWSER_BASE_URL ?? PUBLIC_BASE_URL;
 export const DEBUG_HEADERS = process.env.DEBUG_HEADERS === "true";
 export const ZTS_URL = process.env.ZTS_URL ?? "https://athenz-zts-server.athenz:4443/zts/v1";
 
