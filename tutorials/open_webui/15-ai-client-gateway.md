@@ -56,10 +56,24 @@ kubectl create deploy ai-client-gateway -n ai \
   --image=ghcr.io/mlajkim/ai-client-gateway:latest
 ```
 
-Configure the `ai-client-gateway` to watch the MCP server:
+The AI Client Gateway runs its own OAuth callback at `/oauth/callback`. Keycloak needs this URL added as an allowed redirect URI for the `ai.open-webui` client (which was registered in tutorial 13 with only the Open WebUI SSO callback):
 
-```yaml
-kubectl patch deploy ai-client-gateway -n ai --patch "$(cat <<'EOF'
+```sh
+_open_webui_ai_client_gateway_port=$(./tools/port.sh open-webui-ai-client-gateway)
+_open_webui_port=$(./tools/port.sh open-webui)
+./tools/keycloak/add-redirect-uri.sh \
+  ai.open-webui \
+  "http://localhost:${_open_webui_port}/oauth/oidc/callback" \
+  "http://localhost:${_open_webui_ai_client_gateway_port}/oauth/callback"
+```
+
+Configure the `ai-client-gateway`. The Keycloak settings (`KEYCLOAK_URL`, `KEYCLOAK_REALM`, `KEYCLOAK_CLIENT_ID`, `KEYCLOAK_CLIENT_SECRET`, `KEYCLOAK_PUBLIC_URL`) reuse the same values and secret (`keycloak-client-secret`) established in tutorial 13. The new additions here are `UPSTREAM_BASE_URL`, `ZTS_URL`, and `PUBLIC_BASE_URL`:
+
+```sh
+_open_webui_ai_client_gateway_port=$(./tools/port.sh open-webui-ai-client-gateway)
+_keycloak_port=$(./tools/port.sh keycloak)
+
+kubectl patch deploy ai-client-gateway -n ai --patch "$(cat <<EOF
 spec:
   template:
     spec:
@@ -71,6 +85,26 @@ spec:
               value: "http://mcp.api:8081"
             - name: ZTS_URL
               value: "https://athenz-zts-server.athenz:4443/zts/v1"
+            - name: KEYCLOAK_URL
+              value: "http://keycloak.idp:8080"
+            - name: KEYCLOAK_REALM
+              value: "master"
+            - name: KEYCLOAK_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-client-secret
+                  key: client-id
+            - name: KEYCLOAK_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-client-secret
+                  key: client-secret
+            - name: PUBLIC_BASE_URL
+              value: "http://ai-client-gateway.ai:3101"
+            - name: BROWSER_BASE_URL
+              value: "http://localhost:${_open_webui_ai_client_gateway_port}"
+            - name: KEYCLOAK_PUBLIC_URL
+              value: "http://localhost:${_keycloak_port}"
 EOF
 )"
 ```
@@ -263,16 +297,22 @@ Instead of pointing the Open WebUI directly to the MCP server, we will route it 
 Open the Open WebUI in your browser:
 
 ```sh
-_open_webui_keycloak_port=54443
-open "http://localhost:${_open_webui_keycloak_port}/admin/settings/integrations"
+_open_webui_port=$(./tools/port.sh open-webui)
+open "http://localhost:${_open_webui_port}/admin/settings/integrations"
 ```
 
 1. Log in to Open WebUI using an admin account (required to modify integrations).
 1. Navigate to `User Icon` > `Admin Panel` > `Settings` > `Integrations`.
 1. Click the configuration icon for the API MCP Server.
 1. Make the following changes:
-  - Change the MCP Authorization Server URL to the proxy URL: http://ai-client-gateway.ai:3101
-  - Change the `Auth` to `Oauth`
+  - Change the MCP Authorization Server URL to the proxy URL: `http://ai-client-gateway.ai:3101/mcp`
+  - Change the `Auth` to `Oauth 2.1 Static`
+    - **Client ID**: `ai.open-webui`
+    - **Secret**: run the following command and paste the output:
+      ```sh
+      ./tools/keycloak/get-client-secret.sh ai.open-webui
+      ```
+    - **OAuth Server URL**: `http://ai-client-gateway.ai:3101`
 
 ![15_edit_connection_of_tool](./assets/15_edit_connection_of_tool.png)
 

@@ -95,6 +95,7 @@ _api_port=$(resolve_port api-server)
 _mcp_port=$(resolve_port mcp)
 _idp_port=$(resolve_port keycloak)
 _ai_client_gateway_port=$(resolve_port ai-client-gateway)
+_open_webui_ai_client_gateway_port=$(resolve_port open-webui-ai-client-gateway)
 _open_webui_port=$(resolve_port open-webui)
 
 _pf() {
@@ -115,7 +116,8 @@ _pf athenz deployment/athenz-ui           "${_athenz_ui_port}"         3000 &
 _pf api   deployment/api-server           "${_api_port}"               8080 &
 _pf api   service/mcp                     "${_mcp_port}"               8081 &
 _pf idp   deployment/keycloak             "${_idp_port}"               8080 &
-_pf human service/ai-client-gateway       "${_ai_client_gateway_port}" 3101 &
-_pf ai    service/open-webui              "${_open_webui_port}"        8080 &
+_pf human service/ai-client-gateway       "${_ai_client_gateway_port}"            3101 &
+_pf ai    service/open-webui              "${_open_webui_port}"                   8080 &
+_pf ai    service/ai-client-gateway       "${_open_webui_ai_client_gateway_port}" 3101 &
 
 wait
