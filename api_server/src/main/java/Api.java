@@ -15,7 +15,9 @@ import java.time.format.DateTimeFormatter;
 public class Api {
     static final JSONArray docs = new JSONArray("""
         [
-            {"id": 1, "name": "Hi, Tech Verse 2026!👋", "content": "Welcome to Tech Verse 2026! Today we're demonstrating how ID-JAG enables seamless delegation of human authority to AI agents — no consent screens, full enterprise control.\\n\\nTech Verse 2026へようこそ！ID-JAGがどのようにユーザーに負担をかけることなく、企業の統制を保ちながら人間の権限をAIエージェントへ安全に委譲するかをご紹介します。\\n\\nTech Verse 2026에 오신 것을 환영합니다! ID-JAG가 동의 화면 없이도 기업 통제를 유지하며 AI 에이전트에게 권한을 안전하게 위임하는 방법을 소개합니다."}
+            {"id": 1, "name": "Hi, Tech Verse 2026!👋", "content": "Today we're demonstrating how ID-JAG enables seamless delegation of human authority to AI agents — no consent screens, full enterprise control."},
+            {"id": 2, "name": "こんにちは、Tech Verse 2026 🙇‍♂️", "content": "ID-JAGがどのようにユーザーに負担をかけることなく、企業の統制を保ちながら人間の権限をAIエージェントへ安全に委譲するかをご紹介します。"},
+            {"id": 3, "name": "Tech Verse 2026에 오신 것을 환영합니다! 😄", "content": "ID-JAG가 동의 화면 없이도 기업 통제를 유지하며 AI 에이전트에게 권한을 안전하게 위임하는 방법을 소개합니다."}
         ]
     """);
 
@@ -24,7 +26,7 @@ public class Api {
 
     static Authorizer authorizer;
     
-    static int docIdSequence = 1;
+    static int docIdSequence = 3;
 
     public static void main(String[] args) throws Exception {
         authorizer = new Authorizer();
