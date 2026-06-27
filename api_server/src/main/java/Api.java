@@ -15,8 +15,11 @@ import java.time.format.DateTimeFormatter;
 public class Api {
     static final JSONArray docs = new JSONArray("""
         [
-            {"id": 1, "name": "first default doc", "content": "hello world"},
-            {"id": 2, "name": "second default doc", "content": "how are you?"}
+            {"id": 1, "name": "Why AI Security Matters", "content": "As AI agents gain the ability to take real actions — sending emails, modifying files, calling APIs — the stakes of getting authorization wrong rise dramatically. Unlike a human who can pause and reflect, an AI agent executes instantly and at scale. A misconfigured permission can cascade into data leaks, unauthorized transactions, or irreversible deletions before anyone notices. AI security is not about slowing AI down; it is about making sure AI can move fast safely."},
+            {"id": 2, "name": "The Principle of Least Privilege for AI Agents", "content": "Least privilege means granting an agent only the permissions it needs for the specific task at hand — nothing more. When a user asks an AI to read a document, the agent should not silently hold a token that also allows it to delete or share that document. Scoped, short-lived tokens enforced at the authorization server level are the foundation of safe agentic systems. Without this, every AI action carries the blast radius of the user's full permission set."},
+            {"id": 3, "name": "Consent Fatigue and the UX Problem in AI Authorization", "content": "Traditional OAuth flows ask users to approve every permission scope before an agent can act. In practice, users click through consent screens without reading them — a behavior known as consent fatigue. The result is the worst of both worlds: users feel burdened, and security teams get meaningless approvals. The solution is to move authorization decisions upstream to enterprise policy, so the system enforces limits automatically and users never need to see a consent screen at all."},
+            {"id": 4, "name": "Agentic AI and the Accountability Gap", "content": "When an AI agent causes harm — leaking sensitive data, deleting the wrong record, sending a message to the wrong audience — who is responsible? The agent cannot be held accountable. Responsibility falls on the user who delegated to it and the organization that deployed it. Closing this accountability gap requires a clear, auditable chain: which human authorized which agent, under which policy, to access which resource. Without that chain, post-incident investigation is nearly impossible."},
+            {"id": 5, "name": "Enterprise-Grade AI Authorization: Key Requirements", "content": "A production-ready AI authorization system must satisfy four properties. (1) Delegated identity: the agent acts as the user, not as itself, so every action is traceable back to a human. (2) Centralized policy: organizations define what agents can and cannot do at the IdP or authorization server level, not per-user. (3) Narrow scopes: tokens are issued per-action with minimal permissions, not as long-lived broad grants. (4) Full auditability: every token exchange is logged with enough context to answer who authorized the AI, when, and to do exactly what."}
         ]
     """);
 
@@ -25,7 +28,7 @@ public class Api {
 
     static Authorizer authorizer;
     
-    static int docIdSequence = docs.length();
+    static int docIdSequence = 5;
 
     public static void main(String[] args) throws Exception {
         authorizer = new Authorizer();
