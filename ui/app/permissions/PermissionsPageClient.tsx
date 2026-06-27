@@ -28,9 +28,9 @@ const permissionMeta: Record<PermissionKind, {
     targetLabel: "get:docs",
     policyLine: "ALLOW get api:role.docs-getter api:docs",
     aiPolicyLine: "ALLOW zts.jag_exchange api:role.jag-exchanging-ai-agents api:role.docs-getter",
-    accent: "#6366F1",
-    tint: "#EEF2FF",
-    tabTint: "#F8FAFF",
+    accent: "#1D4ED8",
+    tint: "#DBEAFE",
+    tabTint: "#EFF6FF",
   },
   post: {
     apiPath: "/api/permissions/direct-posts",
@@ -39,9 +39,9 @@ const permissionMeta: Record<PermissionKind, {
     targetLabel: "post:docs",
     policyLine: "ALLOW post api:role.docs-poster api:docs",
     aiPolicyLine: "ALLOW zts.jag_exchange api:role.jag-exchanging-ai-agents api:role.docs-poster",
-    accent: "#0891B2",
-    tint: "#ECFEFF",
-    tabTint: "#F6FEFF",
+    accent: "#B45309",
+    tint: "#FEF3C7",
+    tabTint: "#FFFBEB",
   },
   delete: {
     apiPath: "/api/permissions/direct-deletes",
@@ -50,9 +50,9 @@ const permissionMeta: Record<PermissionKind, {
     targetLabel: "delete:docs",
     policyLine: "ALLOW delete api:role.docs-deleter api:docs",
     aiPolicyLine: "ALLOW zts.jag_exchange api:role.jag-exchanging-ai-agents api:role.docs-deleter",
-    accent: "#7C3AED",
-    tint: "#F5F3FF",
-    tabTint: "#FBFAFF",
+    accent: "#BE185D",
+    tint: "#FCE7F3",
+    tabTint: "#FDF2F8",
   },
 };
 
@@ -170,7 +170,7 @@ function Arrow({
   );
 }
 
-function StatusChip({ label, enabled, accent, tint }: { label: string; enabled: boolean; accent?: string; tint?: string }) {
+function StatusChip({ label, enabled }: { label: string; enabled: boolean }) {
   return (
     <span
       style={{
@@ -178,8 +178,8 @@ function StatusChip({ label, enabled, accent, tint }: { label: string; enabled: 
         fontWeight: 700,
         padding: "2px 7px",
         borderRadius: 999,
-        background: enabled ? (tint ?? "#ECFDF5") : "#FEF2F2",
-        color: enabled ? (accent ?? "var(--line-green)") : "#ef4444",
+        background: enabled ? "#ECFDF5" : "#FEF2F2",
+        color: enabled ? "var(--line-green)" : "#ef4444",
         whiteSpace: "nowrap",
       }}
     >
@@ -364,8 +364,8 @@ function PermissionCard({
           </span>
         </div>
         <div className="flex items-center gap-1.5">
-          <StatusChip label="AI" enabled={aiAgentPermission.enabled} accent={meta.accent} tint={meta.tint} />
-          <StatusChip label="direct" enabled={directPermission.enabled} accent={meta.accent} tint={meta.tint} />
+          <StatusChip label="AI" enabled={aiAgentPermission.enabled} />
+          <StatusChip label="direct" enabled={directPermission.enabled} />
         </div>
       </div>
       <svg className="block h-auto w-full" viewBox="0 0 770 280" fill="none" aria-label={`${meta.targetLabel} permission flow diagram`}>
@@ -461,17 +461,23 @@ export default function PermissionsPageClient() {
 
         {/* Header */}
         <div>
-          <div className="mb-0.5 flex items-center gap-2">
-            <span className="inline-block h-2 w-2 rounded-full" style={{ background: "var(--line-green)" }} />
-            <span className="text-xs font-medium" style={{ color: "var(--line-green)" }}>ID-JAG Demo</span>
-          </div>
-          <h1 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>Permission Check</h1>
+          <h1 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>Permission Control Panel</h1>
           <p className="mt-1 text-sm" style={{ color: "var(--text-secondary)" }}>
             Athenz policy evaluation for{" "}
             <code className="rounded px-1" style={{ background: "var(--border)", color: "var(--text-primary)" }}>
               human.idjag-learner
             </code>
+            {" "}— changes take effect immediately across all AI agents.
           </p>
+        </div>
+
+        <div className="-mt-3">
+          <span
+            className="inline-flex items-center gap-1.5 font-bold px-3 py-1 rounded-lg"
+            style={{ background: "#ef4444", color: "#fff", fontSize: "0.75rem", letterSpacing: "0.08em" }}
+          >
+            🔒 ADMIN ONLY
+          </span>
         </div>
 
         {/* Stacked card deck — active card on top, others peek as tabs below */}
@@ -539,8 +545,8 @@ export default function PermissionsPageClient() {
                       </span>
                     </div>
                     <div style={{ display: "flex", gap: 6 }}>
-                      <StatusChip label="AI" enabled={aiEnabled} accent={meta.accent} tint={meta.tint} />
-                      <StatusChip label="direct" enabled={directEnabled} accent={meta.accent} tint={meta.tint} />
+                      <StatusChip label="AI" enabled={aiEnabled} />
+                      <StatusChip label="direct" enabled={directEnabled} />
                     </div>
                   </button>
                 );
@@ -551,7 +557,7 @@ export default function PermissionsPageClient() {
 
         <div>
           <a href="/docs" className="text-xs underline" style={{ color: "var(--text-muted)" }}>
-            ← Back to Documents
+            ← Exit Admin Panel
           </a>
         </div>
       </div>
