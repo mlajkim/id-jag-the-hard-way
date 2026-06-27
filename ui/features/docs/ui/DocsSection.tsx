@@ -177,33 +177,31 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
                   opacity: deletedIds.has(doc.id) ? 0.4 : 1,
                 }}
               >
-                <CardHeader className="pb-1 pt-4 px-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <CardTitle className="text-sm font-semibold truncate" style={{ color: "var(--text-primary)", textDecoration: deletedIds.has(doc.id) ? "line-through" : "none" }}>
-                      {doc.name}
-                    </CardTitle>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <Badge variant="secondary" className="text-xs">#{doc.id}</Badge>
-                      {deletedIds.has(doc.id) ? (
-                        <span className="text-xs px-1.5 py-0.5 rounded" style={{ color: "var(--text-muted)", background: "var(--border)" }}>deleted</span>
-                      ) : (
-                        <button
-                          onClick={() => setConfirmDoc(doc)}
-                          disabled={deletingId === doc.id}
-                          title="Delete document"
-                          className="p-0.5 rounded hover:opacity-60 disabled:opacity-30 transition-opacity cursor-pointer"
-                          style={{ color: "var(--text-muted)" }}
-                        >
-                          {deletingId === doc.id ? (
-                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
-                          ) : (
-                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                          )}
-                        </button>
-                      )}
-                    </div>
+                <div className="flex items-start gap-2 pt-4 px-4 pb-1 w-full">
+                  <p className="text-sm font-semibold flex-1 min-w-0" style={{ color: "var(--text-primary)", textDecoration: deletedIds.has(doc.id) ? "line-through" : "none" }}>
+                    {doc.name}
+                  </p>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Badge variant="secondary" className="text-xs">#{doc.id}</Badge>
+                    {deletedIds.has(doc.id) ? (
+                      <span className="text-xs px-1.5 py-0.5 rounded" style={{ color: "var(--text-muted)", background: "var(--border)" }}>deleted</span>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmDoc(doc)}
+                        disabled={deletingId === doc.id}
+                        title="Delete document"
+                        className="p-0.5 rounded hover:opacity-60 disabled:opacity-30 transition-opacity cursor-pointer"
+                        style={{ color: "var(--text-muted)" }}
+                      >
+                        {deletingId === doc.id ? (
+                          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                        )}
+                      </button>
+                    )}
                   </div>
-                </CardHeader>
+                </div>
                 <CardContent className="px-4 pb-4">
                   <p className="text-sm" style={{ color: "var(--text-secondary)" }}>{doc.content}</p>
                 </CardContent>
