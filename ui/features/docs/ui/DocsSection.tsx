@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from "next/link";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import CreateDocForm from "./CreateDocForm";
@@ -15,6 +16,14 @@ interface Props {
   accessToken?: string;
 }
 
+function sameIds(a: Set<number>, b: Set<number>) {
+  if (a.size !== b.size) return false;
+  for (const id of a) {
+    if (!b.has(id)) return false;
+  }
+  return true;
+}
+
 export default function DocsSection({ docs: initialDocs, fetchError: initialError, accessToken }: Props) {
   const [docs, setDocs]             = useState<Doc[]>(initialDocs);
   const [fetchError, setFetchError] = useState<string | null>(initialError);
@@ -24,7 +33,6 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
   const [confirmDoc, setConfirmDoc] = useState<Doc | null>(null);
   const [newDocId, setNewDocId]     = useState<number | null>(null);
   const [deletedIds, setDeletedIds] = useState<Set<number>>(new Set());
-  const [ghostIds, setGhostIds]     = useState<Set<number>>(new Set());
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [sortAsc, setSortAsc] = useState(false);
   const didAutoRefresh = useRef(false);
@@ -81,33 +89,28 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
     if (result.error) {
       setFetchError(result.error);
     } else {
-      const freshIds = new Set(result.docs!.map((d) => d.id));
+      const freshDocs = result.docs!;
+      const freshIds = new Set(freshDocs.map((d) => d.id));
+      const visibleIds = new Set(docs.filter((d) => !deletedIds.has(d.id)).map((d) => d.id));
 
-      setDocs((prev) => {
-        // Docs present on server: keep as-is
-        // Docs missing from server that were already ghosted: drop them
-        // Docs missing from server that were not ghosted yet: keep as ghost
-        const kept = prev.filter((d) => freshIds.has(d.id) || !ghostIds.has(d.id));
-        // Merge in any new docs from server not already in list
-        const prevIds = new Set(kept.map((d) => d.id));
-        const added = result.docs!.filter((d) => !prevIds.has(d.id));
-        return [...kept, ...added];
-      });
-
-      setGhostIds((prev) => {
-        // Newly missing docs (not ghosted yet, not locally deleted) become ghosts
-        const newGhosts = new Set(prev);
+      if (sameIds(freshIds, visibleIds)) {
+        setDocs(freshDocs);
+        setDeletedIds(new Set());
+      } else {
+        const nextDeletedIds = new Set(deletedIds);
         docs.forEach((d) => {
-          if (!freshIds.has(d.id) && !deletedIds.has(d.id) && !prev.has(d.id)) {
-            newGhosts.add(d.id);
+          if (!deletedIds.has(d.id) && !freshIds.has(d.id)) {
+            nextDeletedIds.add(d.id);
           }
         });
-        // Docs that were already ghosted and still missing: they got dropped above, clear them
-        prev.forEach((id) => { if (!freshIds.has(id)) newGhosts.delete(id); });
-        return newGhosts;
-      });
 
-      setDeletedIds(new Set());
+        setDocs((prev) => {
+          const prevIds = new Set(prev.map((d) => d.id));
+          const added = freshDocs.filter((d) => !prevIds.has(d.id));
+          return [...prev, ...added];
+        });
+        setDeletedIds(nextDeletedIds);
+      }
     }
     setRefreshing(false);
   }
@@ -197,9 +200,9 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
           {fetchError.includes("Expired") && (
             <p className="text-sm" style={{ color: "var(--text-muted)" }}>
               Your session has expired. Please{" "}
-              <a href="/api/auth/signin" className="underline" style={{ color: "var(--line-green)" }}>
+              <Link href="/api/auth/signin" className="underline" style={{ color: "var(--line-green)" }}>
                 sign in again
-              </a>{" "}
+              </Link>{" "}
               to continue.
             </p>
           )}
@@ -219,16 +222,16 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
                   borderColor: newDocId === doc.id ? "var(--line-green)" : "var(--border)",
                   boxShadow: newDocId === doc.id ? "0 0 0 2px var(--line-green)" : "var(--shadow-sm)",
                   transition: "border-color 0.6s ease, box-shadow 0.6s ease, opacity 0.4s ease",
-                  opacity: deletedIds.has(doc.id) || ghostIds.has(doc.id) ? 0.4 : 1,
+                  opacity: deletedIds.has(doc.id) ? 0.4 : 1,
                 }}
               >
                 <div className="flex items-start gap-2 pt-4 px-4 pb-1 w-full">
-                  <p className="text-sm font-semibold flex-1 min-w-0" style={{ color: "var(--text-primary)", textDecoration: deletedIds.has(doc.id) || ghostIds.has(doc.id) ? "line-through" : "none" }}>
+                  <p className="text-sm font-semibold flex-1 min-w-0" style={{ color: "var(--text-primary)", textDecoration: deletedIds.has(doc.id) ? "line-through" : "none" }}>
                     {doc.name}
                   </p>
                   <div className="flex items-center gap-1.5 shrink-0">
                     <Badge variant="secondary" className="text-xs">#{doc.id}</Badge>
-                    {deletedIds.has(doc.id) || ghostIds.has(doc.id) ? (
+                    {deletedIds.has(doc.id) ? (
                       <span className="text-xs px-1.5 py-0.5 rounded" style={{ color: "var(--text-muted)", background: "var(--border)" }}>deleted</span>
                     ) : (
                       <button
@@ -269,7 +272,7 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
           >
             <h2 className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>Delete document?</h2>
             <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-              <span className="font-medium" style={{ color: "var(--text-primary)" }}>"{confirmDoc.name}"</span> will be permanently deleted.
+              <span className="font-medium" style={{ color: "var(--text-primary)" }}>&quot;{confirmDoc.name}&quot;</span> will be permanently deleted.
             </p>
             <div className="flex gap-2 pt-1">
               <button
@@ -304,7 +307,7 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
           >
             <h2 className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>Permission denied</h2>
             <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
-              You don't have permission to delete this document.
+              You don&apos;t have permission to delete this document.
             </p>
             <p className="text-xs font-mono break-all" style={{ color: "#ef4444" }}>{deleteError}</p>
             <button
