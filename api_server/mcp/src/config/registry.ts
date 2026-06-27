@@ -11,6 +11,7 @@ export interface ToolDefinition {
   summary: string;
   description: string;
   scope: string; // required scope for that specific endpoint
+  pathParamSchemas?: Record<string, any>;
   requestBodySchema?: any;
   handler: (req: Request, res: Response, scope: string) => Promise<void>;
 }
@@ -48,6 +49,13 @@ export const toolsRegistry: ToolDefinition[] = [
     summary: "Delete Kubernetes Document",
     description: "Delete a document with the specified ID from the API running on local Kubernetes.",
     scope: "api:role.docs-deleter",
+    pathParamSchemas: {
+      doc_id: {
+        type: "integer",
+        minimum: 1,
+        description: "Document ID. Pass only the numeric ID, for example 5.",
+      },
+    },
     handler: async (req, res, scope) => {
       try {
         const docId = req.params.doc_id;
