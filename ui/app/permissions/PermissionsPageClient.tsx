@@ -61,12 +61,14 @@ function NodeBox({
   y,
   label,
   image,
+  circleImage = false,
   fill = "var(--surface)",
 }: {
   x: number;
   y: number;
   label: string;
   image?: string;
+  circleImage?: boolean;
   fill?: string;
 }) {
   const boxWidth = 140;
@@ -78,6 +80,10 @@ function NodeBox({
   const imageX = x + (boxWidth - imageSize) / 2;
   const imageY = y + (boxHeight - imageGroupHeight) / 2;
   const labelY = image ? imageY + imageSize + imageLabelGap : y + boxHeight / 2;
+  const clipId = `clip-${x}-${y}`;
+  const cx = imageX + imageSize / 2;
+  const cy = imageY + imageSize / 2;
+  const r = imageSize / 2;
 
   return (
     <g>
@@ -91,7 +97,26 @@ function NodeBox({
         stroke="var(--border)"
         strokeWidth="1.5"
       />
-      {image && (
+      {image && circleImage && (
+        <>
+          <defs>
+            <clipPath id={clipId}>
+              <circle cx={cx} cy={cy} r={r} />
+            </clipPath>
+          </defs>
+          <image
+            href={image}
+            x={imageX}
+            y={imageY}
+            width={imageSize}
+            height={imageSize}
+            preserveAspectRatio="xMidYMid slice"
+            clipPath={`url(#${clipId})`}
+          />
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--border)" strokeWidth="1.5" />
+        </>
+      )}
+      {image && !circleImage && (
         <image
           href={image}
           x={imageX}
@@ -347,7 +372,7 @@ function PermissionCard({
         <rect x={0} y={0} width={770} height={280} fill={meta.tint} opacity={0.45} />
 
         {/* Row 1: human.idjag-learner and get:docs, connected by direct arrow */}
-        <NodeBox x={0} y={10} label="human.idjag-learner" image="/human-idjag-learner.png" fill={meta.tint} />
+        <NodeBox x={0} y={10} label="human.idjag-learner" image="/mlajkim.png" circleImage fill={meta.tint} />
         <NodeBox x={630} y={10} label={meta.targetLabel} fill={meta.tint} />
 
         {/* Row 2: AI and MCP */}

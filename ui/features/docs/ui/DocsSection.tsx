@@ -235,7 +235,7 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
                   </div>
                 </div>
                 <CardContent className="px-4 pb-4">
-                  <p className="text-sm" style={{ color: "var(--text-secondary)" }}>{doc.content}</p>
+                  <p className="text-sm whitespace-pre-line" style={{ color: "var(--text-secondary)" }}>{doc.content}</p>
                 </CardContent>
               </Card>
             ))}
