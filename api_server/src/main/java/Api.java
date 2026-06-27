@@ -15,10 +15,8 @@ import java.time.format.DateTimeFormatter;
 public class Api {
     static final JSONArray docs = new JSONArray("""
         [
-            {"id": 1, "name": "Consent Fatigue and the UX Problem in AI Authorization", "content": "Traditional OAuth flows ask users to approve every permission scope before an agent can act. In practice, users click through consent screens without reading them — a behavior known as consent fatigue. The result is the worst of both worlds: users feel burdened, and security teams get meaningless approvals. The solution is to move authorization decisions upstream to enterprise policy, so the system enforces limits automatically and users never need to see a consent screen at all."},
-            {"id": 2, "name": "Agentic AI and the Accountability Gap", "content": "When an AI agent causes harm — leaking sensitive data, deleting the wrong record, sending a message to the wrong audience — who is responsible? The agent cannot be held accountable. Responsibility falls on the user who delegated to it and the organization that deployed it. Closing this accountability gap requires a clear, auditable chain: which human authorized which agent, under which policy, to access which resource. Without that chain, post-incident investigation is nearly impossible."},
-            {"id": 3, "name": "Delete me", "content": "Delete me on demo"},
-            {"id": 4, "name": "Hi, Tech Verse 2026!👋", "content": "Welcome to Tech Verse 2026! Today we're demonstrating how ID-JAG enables seamless delegation of human authority to AI agents — no consent screens, full enterprise control.\\n\\nTech Verse 2026へようこそ！ID-JAGがどのようにユーザーに負担をかけることなく、企業の統制を保ちながら人間の権限をAIエージェントへ安全に委譲するかをご紹介します。\\n\\nTech Verse 2026에 오신 것을 환영합니다! ID-JAG가 동의 화면 없이도 기업 통제를 유지하며 AI 에이전트에게 권한을 안전하게 위임하는 방법을 소개합니다."}
+            {"id": 1, "name": "Delete me", "content": "Delete me on demo"},
+            {"id": 2, "name": "Hi, Tech Verse 2026!👋", "content": "Welcome to Tech Verse 2026! Today we're demonstrating how ID-JAG enables seamless delegation of human authority to AI agents — no consent screens, full enterprise control.\\n\\nTech Verse 2026へようこそ！ID-JAGがどのようにユーザーに負担をかけることなく、企業の統制を保ちながら人間の権限をAIエージェントへ安全に委譲するかをご紹介します。\\n\\nTech Verse 2026에 오신 것을 환영합니다! ID-JAG가 동의 화면 없이도 기업 통제를 유지하며 AI 에이전트에게 권한을 안전하게 위임하는 방법을 소개합니다."}
         ]
     """);
 
@@ -27,7 +25,7 @@ public class Api {
 
     static Authorizer authorizer;
     
-    static int docIdSequence = 4;
+    static int docIdSequence = 2;
 
     public static void main(String[] args) throws Exception {
         authorizer = new Authorizer();
