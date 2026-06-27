@@ -47,7 +47,7 @@ export const toolsRegistry: ToolDefinition[] = [
     method: "delete",
     operationId: "delete_k8s_doc",
     summary: "Delete Kubernetes Document",
-    description: "Delete a document with the specified ID from the API running on local Kubernetes.",
+    description: "Delete a document with the specified ID from the API running on local Kubernetes. IMPORTANT: doc_id must be the numeric integer ID. If you only know the document name, call get_k8s_docs first to look up the ID, then use that integer ID here.",
     scope: "api:role.docs-deleter",
     pathParamSchemas: {
       doc_id: {
