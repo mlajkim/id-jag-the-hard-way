@@ -25,6 +25,7 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
   const [newDocId, setNewDocId]     = useState<number | null>(null);
   const [deletedIds, setDeletedIds] = useState<Set<number>>(new Set());
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [sortAsc, setSortAsc] = useState(false);
   const didAutoRefresh = useRef(false);
 
   useEffect(() => {
@@ -76,9 +77,19 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
     <section>
       {/* Section header */}
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-xs font-semibold tracking-wide" style={{ color: "var(--text-secondary)" }}>
-          ALL DOCUMENTS
-        </h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-xs font-semibold tracking-wide" style={{ color: "var(--text-secondary)" }}>
+            ALL DOCUMENTS
+          </h2>
+          <button
+            onClick={() => setSortAsc((v) => !v)}
+            title={sortAsc ? "Showing oldest first" : "Showing newest first"}
+            className="flex items-center gap-0.5 text-xs font-medium px-1.5 py-0.5 rounded transition-opacity hover:opacity-70"
+            style={{ color: "var(--text-muted)", border: "1px solid var(--border)" }}
+          >
+            {sortAsc ? "↑ Oldest" : "↓ Newest"}
+          </button>
+        </div>
         <div className="flex items-center gap-2">
           {/* Refresh */}
           <button
@@ -167,7 +178,7 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
           <p className="text-sm" style={{ color: "var(--text-muted)" }}>No documents yet.</p>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
-            {docs.map((doc) => (
+            {[...docs].sort((a, b) => sortAsc ? a.id - b.id : b.id - a.id).map((doc) => (
               <Card
                 key={doc.id}
                 style={{

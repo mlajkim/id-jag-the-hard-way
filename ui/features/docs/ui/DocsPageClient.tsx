@@ -37,9 +37,19 @@ export default function DocsPageClient({ docs, fetchError, user }: Props) {
           <h1 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>Documents</h1>
         </div>
         <div className="flex items-center gap-3">
-          <div className="text-right hidden sm:block">
-            <p className="text-xs font-medium" style={{ color: "var(--text-primary)" }}>{user?.name}</p>
-            <p className="text-xs" style={{ color: "var(--text-muted)" }}>{user?.email}</p>
+          <div className="hidden sm:flex items-center gap-2">
+            <div className="text-right">
+              <p className="text-xs font-medium" style={{ color: "var(--text-primary)" }}>{user?.name}</p>
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>{user?.email}</p>
+            </div>
+            <img
+              src="/mlajkim.png"
+              alt={user?.name ?? "user"}
+              width={32}
+              height={32}
+              className="rounded-full object-cover shrink-0"
+              style={{ border: "2px solid var(--border)" }}
+            />
           </div>
           <button
             onClick={() => setSettingsOpen(true)}
