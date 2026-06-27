@@ -42,7 +42,10 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
     const id = confirmDoc.id;
     setConfirmDoc(null);
     setDeletingId(id);
-    const result = await deleteDocAction(id, accessToken);
+    const [result] = await Promise.all([
+      deleteDocAction(id, accessToken),
+      new Promise((r) => setTimeout(r, 1000)),
+    ]);
     if ("error" in result) {
       setDeleteError(result.error);
     } else {
@@ -61,10 +64,20 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
   async function refresh() {
     setRefreshing(true);
     setFetchError(null);
-    const [result] = await Promise.all([
-      getDocsAction(accessToken),
+    let result: Awaited<ReturnType<typeof getDocsAction>>;
+    const [res] = await Promise.all([
+      (async () => {
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          const r = await getDocsAction(accessToken);
+          if (!r.error) return r;
+          if (attempt < 3) await new Promise((r2) => setTimeout(r2, 800));
+          result = r;
+        }
+        return result!;
+      })(),
       new Promise((r) => setTimeout(r, 1000)),
     ]);
+    result = res;
     if (result.error) {
       setFetchError(result.error);
     } else {
