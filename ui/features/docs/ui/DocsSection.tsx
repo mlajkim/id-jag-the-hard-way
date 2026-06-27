@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,16 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
   const [confirmDoc, setConfirmDoc] = useState<Doc | null>(null);
   const [newDocId, setNewDocId]     = useState<number | null>(null);
   const [deletedIds, setDeletedIds] = useState<Set<number>>(new Set());
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const didAutoRefresh = useRef(false);
+
+  useEffect(() => {
+    if (accessToken && !didAutoRefresh.current) {
+      didAutoRefresh.current = true;
+      void refresh();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessToken]);
 
   async function confirmDelete() {
     if (!confirmDoc) return;
@@ -32,7 +42,7 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
     setDeletingId(id);
     const result = await deleteDocAction(id, accessToken);
     if ("error" in result) {
-      setFetchError(result.error);
+      setDeleteError(result.error);
     } else {
       setDeletedIds((prev) => new Set(prev).add(id));
     }
@@ -234,6 +244,33 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
                 Delete
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Delete error dialog */}
+      {deleteError && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.5)" }}
+          onClick={() => setDeleteError(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl p-6 space-y-3"
+            style={{ background: "var(--surface)", boxShadow: "var(--shadow-sm)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>Permission denied</h2>
+            <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+              You don't have permission to delete this document.
+            </p>
+            <p className="text-xs font-mono break-all" style={{ color: "#ef4444" }}>{deleteError}</p>
+            <button
+              onClick={() => setDeleteError(null)}
+              className="w-full rounded-lg border py-2 text-sm font-medium cursor-pointer hover:opacity-70 transition-opacity"
+              style={{ borderColor: "var(--border)", color: "var(--text-secondary)" }}
+            >
+              OK
+            </button>
           </div>
         </div>
       )}

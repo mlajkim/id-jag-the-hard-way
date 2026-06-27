@@ -145,7 +145,7 @@ function Arrow({
   );
 }
 
-function StatusChip({ label, enabled }: { label: string; enabled: boolean }) {
+function StatusChip({ label, enabled, accent, tint }: { label: string; enabled: boolean; accent?: string; tint?: string }) {
   return (
     <span
       style={{
@@ -153,8 +153,8 @@ function StatusChip({ label, enabled }: { label: string; enabled: boolean }) {
         fontWeight: 700,
         padding: "2px 7px",
         borderRadius: 999,
-        background: enabled ? "#ECFDF5" : "#FEF2F2",
-        color: enabled ? "var(--line-green)" : "#ef4444",
+        background: enabled ? (tint ?? "#ECFDF5") : "#FEF2F2",
+        color: enabled ? (accent ?? "var(--line-green)") : "#ef4444",
         whiteSpace: "nowrap",
       }}
     >
@@ -339,24 +339,22 @@ function PermissionCard({
           </span>
         </div>
         <div className="flex items-center gap-1.5">
-          <StatusChip label="AI" enabled={aiAgentPermission.enabled} />
-          <StatusChip label="direct" enabled={directPermission.enabled} />
+          <StatusChip label="AI" enabled={aiAgentPermission.enabled} accent={meta.accent} tint={meta.tint} />
+          <StatusChip label="direct" enabled={directPermission.enabled} accent={meta.accent} tint={meta.tint} />
         </div>
       </div>
-      <svg className="block h-auto w-full" viewBox="0 0 770 260" fill="none" aria-label={`${meta.targetLabel} permission flow diagram`}>
-        <NodeBox x={0} y={30} label="human.idjag-learner" image="/human-idjag-learner.png" />
-        <NodeBox x={210} y={30} label="AI" image="/ai-agent.png" />
-        <NodeBox x={420} y={30} label="MCP" image="/mcp.png" fill="#FFFFFF" />
-        <NodeBox x={630} y={30} label={meta.targetLabel} fill={meta.tint} />
+      <svg className="block h-auto w-full" viewBox="0 0 770 280" fill="none" aria-label={`${meta.targetLabel} permission flow diagram`}>
+        <rect x={0} y={0} width={770} height={280} fill={meta.tint} opacity={0.45} />
 
-        <Arrow
-          x1={157} x2={193} y={84}
-          color={aiArrowColor}
-          onClick={() => setDialog({ type: "confirm-ai-agent", permission, currentlyEnabled: aiAgentPermission.enabled, onConfirm: aiAgentPermission.toggle })}
-        />
-        <Arrow x1={367} x2={403} y={84} color={downstreamArrowColor} onClick={() => setDialog({ type: "info", label: `AI → MCP (${meta.title.toLowerCase()} token exchange)` })} />
-        <Arrow x1={577} x2={613} y={84} color={downstreamArrowColor} onClick={() => setDialog({ type: "info", label: `MCP → ${meta.targetLabel} (API call)` })} />
+        {/* Row 1: human.idjag-learner and get:docs, connected by direct arrow */}
+        <NodeBox x={0} y={10} label="human.idjag-learner" image="/human-idjag-learner.png" fill={meta.tint} />
+        <NodeBox x={630} y={10} label={meta.targetLabel} fill={meta.tint} />
 
+        {/* Row 2: AI and MCP */}
+        <NodeBox x={200} y={155} label="AI" image="/ai-agent.png" fill={meta.tint} />
+        <NodeBox x={420} y={155} label="MCP" image="/mcp.png" fill={meta.tint} />
+
+        {/* Direct arrow: human → get:docs (straight, top row) */}
         <g
           role="button"
           tabIndex={0}
@@ -371,26 +369,37 @@ function PermissionCard({
           }}
           style={{ cursor: directPermission.toggling ? "wait" : "pointer", opacity: directPermission.toggling ? 0.55 : 1 }}
         >
-          <rect x={60} y={208} width={650} height={20} fill="transparent" />
-          <path
-            d="M 70 138 V 218 H 700 V 138"
-            stroke={directColor}
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M 694 145 L 700 138 L 706 145"
-            fill="none"
-            stroke={directColor}
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <rect x="308" y="199" width="118" height="20" rx="10" fill={directPermission.enabled ? "#ECFDF5" : "#FEF2F2"} />
-          <text x="367" y="213" textAnchor="middle" fill={directColor} fontSize="12" fontWeight="700">
+          <rect x={140} y={52} width={490} height={24} fill="transparent" />
+          <path d="M 155 64 H 315" stroke={directColor} strokeWidth="2" strokeLinecap="round" />
+          <path d="M 455 64 H 622" stroke={directColor} strokeWidth="2" strokeLinecap="round" />
+          <path d="M 614 58 L 622 64 L 614 70" fill="none" stroke={directColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <rect x="315" y="54" width="140" height="20" rx="10" fill={directPermission.enabled ? meta.tint : "#FEF2F2"} stroke={directColor} strokeWidth="1.5" />
+          <text x="385" y="64" textAnchor="middle" dominantBaseline="middle" fill={directColor} fontSize="12" fontWeight="700">
             direct {meta.targetLabel}
           </text>
+        </g>
+
+        {/* human → AI (elbow: down then right) */}
+        <g
+          onClick={() => setDialog({ type: "confirm-ai-agent", permission, currentlyEnabled: aiAgentPermission.enabled, onConfirm: aiAgentPermission.toggle })}
+          style={{ cursor: "pointer" }}
+        >
+          <rect x={58} y={118} width={154} height={103} fill="transparent" />
+          <path d="M 70 118 V 209 H 192" stroke={aiArrowColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+          <path d="M 184 203 L 192 209 L 184 215" fill="none" stroke={aiArrowColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </g>
+
+        {/* AI → MCP */}
+        <Arrow x1={340} x2={420} y={209} color={downstreamArrowColor} onClick={() => setDialog({ type: "info", label: `AI → MCP (${meta.title.toLowerCase()} token exchange)` })} />
+
+        {/* MCP → get:docs (elbow: right then up) */}
+        <g
+          onClick={() => setDialog({ type: "info", label: `MCP → ${meta.targetLabel} (API call)` })}
+          style={{ cursor: "pointer" }}
+        >
+          <rect x={558} y={118} width={154} height={103} fill="transparent" />
+          <path d="M 560 209 H 700 V 126" stroke={downstreamArrowColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+          <path d="M 694 134 L 700 126 L 706 134" fill="none" stroke={downstreamArrowColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </g>
       </svg>
     </div>
@@ -419,8 +428,10 @@ export default function PermissionsPageClient() {
     delete: aiDelete,
   };
 
+  const focusedMeta = permissionMeta[focused];
+
   return (
-    <main className="min-h-screen p-6 md:p-10" style={{ background: "var(--bg)" }}>
+    <main className="min-h-screen p-6 md:p-10" style={{ background: focusedMeta.tint, transition: "background 300ms ease" }}>
       <div className="mx-auto w-full max-w-[818px] space-y-6">
 
         {/* Header */}
@@ -503,8 +514,8 @@ export default function PermissionsPageClient() {
                       </span>
                     </div>
                     <div style={{ display: "flex", gap: 6 }}>
-                      <StatusChip label="AI" enabled={aiEnabled} />
-                      <StatusChip label="direct" enabled={directEnabled} />
+                      <StatusChip label="AI" enabled={aiEnabled} accent={meta.accent} tint={meta.tint} />
+                      <StatusChip label="direct" enabled={directEnabled} accent={meta.accent} tint={meta.tint} />
                     </div>
                   </button>
                 );
