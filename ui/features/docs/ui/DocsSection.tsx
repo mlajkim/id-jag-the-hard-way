@@ -40,7 +40,7 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
   useEffect(() => {
     if (accessToken && !didAutoRefresh.current) {
       didAutoRefresh.current = true;
-      void refresh();
+      void refresh(15);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessToken]);
@@ -69,17 +69,18 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
     setTimeout(() => setNewDocId(null), 2000);
   }
 
-  async function refresh() {
+  async function refresh(minGetAttempts = 1) {
     setRefreshing(true);
     setFetchError(null);
     let result: Awaited<ReturnType<typeof getDocsAction>>;
     const [res] = await Promise.all([
       (async () => {
-        for (let attempt = 1; attempt <= 3; attempt++) {
+        const maxAttempts = Math.max(3, minGetAttempts);
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
           const r = await getDocsAction(accessToken);
-          if (!r.error) return r;
-          if (attempt < 3) await new Promise((r2) => setTimeout(r2, 800));
           result = r;
+          if (!r.error && attempt >= minGetAttempts) return r;
+          if (attempt < maxAttempts) await new Promise((r2) => setTimeout(r2, 800));
         }
         return result!;
       })(),
@@ -135,7 +136,7 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
         <div className="flex items-center gap-2">
           {/* Refresh */}
           <button
-            onClick={refresh}
+            onClick={() => void refresh()}
             disabled={refreshing}
             title="Refresh list"
             className="p-1 rounded-md transition-opacity hover:opacity-70 disabled:opacity-40"
