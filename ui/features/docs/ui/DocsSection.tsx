@@ -79,7 +79,10 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
           const r = await getDocsAction(accessToken);
           result = r;
-          if (!r.error && attempt >= minGetAttempts) return r;
+          if (!r.error) {
+            if (attempt >= minGetAttempts) return r;
+            continue;
+          }
           if (attempt < maxAttempts) await new Promise((r2) => setTimeout(r2, 800));
         }
         return result!;
