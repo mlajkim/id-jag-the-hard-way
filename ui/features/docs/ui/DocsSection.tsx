@@ -24,6 +24,7 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
   const [confirmDoc, setConfirmDoc] = useState<Doc | null>(null);
   const [newDocId, setNewDocId]     = useState<number | null>(null);
   const [deletedIds, setDeletedIds] = useState<Set<number>>(new Set());
+  const [ghostIds, setGhostIds]     = useState<Set<number>>(new Set());
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [sortAsc, setSortAsc] = useState(false);
   const didAutoRefresh = useRef(false);
@@ -67,7 +68,32 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
     if (result.error) {
       setFetchError(result.error);
     } else {
-      setDocs(result.docs!);
+      const freshIds = new Set(result.docs!.map((d) => d.id));
+
+      setDocs((prev) => {
+        // Docs present on server: keep as-is
+        // Docs missing from server that were already ghosted: drop them
+        // Docs missing from server that were not ghosted yet: keep as ghost
+        const kept = prev.filter((d) => freshIds.has(d.id) || !ghostIds.has(d.id));
+        // Merge in any new docs from server not already in list
+        const prevIds = new Set(kept.map((d) => d.id));
+        const added = result.docs!.filter((d) => !prevIds.has(d.id));
+        return [...kept, ...added];
+      });
+
+      setGhostIds((prev) => {
+        // Newly missing docs (not ghosted yet, not locally deleted) become ghosts
+        const newGhosts = new Set(prev);
+        docs.forEach((d) => {
+          if (!freshIds.has(d.id) && !deletedIds.has(d.id) && !prev.has(d.id)) {
+            newGhosts.add(d.id);
+          }
+        });
+        // Docs that were already ghosted and still missing: they got dropped above, clear them
+        prev.forEach((id) => { if (!freshIds.has(id)) newGhosts.delete(id); });
+        return newGhosts;
+      });
+
       setDeletedIds(new Set());
     }
     setRefreshing(false);
@@ -151,11 +177,6 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
         </div>
       )}
 
-      {/* Loading state */}
-      {refreshing && (
-        <p className="text-sm" style={{ color: "var(--text-muted)" }}>Getting documents…</p>
-      )}
-
       {/* Error */}
       {!refreshing && fetchError && (
         <div className="space-y-1">
@@ -173,9 +194,9 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
       )}
 
       {/* List */}
-      {!refreshing && !fetchError && (
+      {!fetchError && (
         docs.length === 0 ? (
-          <p className="text-sm" style={{ color: "var(--text-muted)" }}>No documents yet.</p>
+          <p className="text-sm" style={{ color: "var(--text-muted)" }}>{refreshing ? "Getting documents…" : "No documents yet."}</p>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
             {[...docs].sort((a, b) => sortAsc ? a.id - b.id : b.id - a.id).map((doc) => (
@@ -185,16 +206,16 @@ export default function DocsSection({ docs: initialDocs, fetchError: initialErro
                   borderColor: newDocId === doc.id ? "var(--line-green)" : "var(--border)",
                   boxShadow: newDocId === doc.id ? "0 0 0 2px var(--line-green)" : "var(--shadow-sm)",
                   transition: "border-color 0.6s ease, box-shadow 0.6s ease, opacity 0.4s ease",
-                  opacity: deletedIds.has(doc.id) ? 0.4 : 1,
+                  opacity: deletedIds.has(doc.id) || ghostIds.has(doc.id) ? 0.4 : 1,
                 }}
               >
                 <div className="flex items-start gap-2 pt-4 px-4 pb-1 w-full">
-                  <p className="text-sm font-semibold flex-1 min-w-0" style={{ color: "var(--text-primary)", textDecoration: deletedIds.has(doc.id) ? "line-through" : "none" }}>
+                  <p className="text-sm font-semibold flex-1 min-w-0" style={{ color: "var(--text-primary)", textDecoration: deletedIds.has(doc.id) || ghostIds.has(doc.id) ? "line-through" : "none" }}>
                     {doc.name}
                   </p>
                   <div className="flex items-center gap-1.5 shrink-0">
                     <Badge variant="secondary" className="text-xs">#{doc.id}</Badge>
-                    {deletedIds.has(doc.id) ? (
+                    {deletedIds.has(doc.id) || ghostIds.has(doc.id) ? (
                       <span className="text-xs px-1.5 py-0.5 rounded" style={{ color: "var(--text-muted)", background: "var(--border)" }}>deleted</span>
                     ) : (
                       <button
