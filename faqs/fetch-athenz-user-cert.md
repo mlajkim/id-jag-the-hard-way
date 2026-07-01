@@ -21,9 +21,6 @@ The PR adds a ZTS `POST /usercert` endpoint and a `zts-usercert` CLI. The flow i
 - [Configure ZTS](#configure-zts)
 - [Create the User Certificate Private Key](#create-the-user-certificate-private-key)
 - [Run `zts-usercert`](#run-zts-usercert)
-- [Raw HTTP Fallback](#raw-http-fallback)
-- [Use the New User Certificate](#use-the-new-user-certificate)
-- [Troubleshooting](#troubleshooting)
 
 <!-- /TOC -->
 
@@ -134,30 +131,52 @@ Verify the registered service:
 
 ## Configure ZTS
 
+Registering the provider service in ZMS is not enough. ZTS must also be told which provider to use for `/usercert`, where Keycloak's token and JWKS endpoints are, and which token claim maps back to the requested Athenz user.
+
 Edit the ZTS ConfigMap:
 
 ```sh
 kubectl edit configmap athenz-zts-conf -n athenz
 ```
 
-Append these lines under `zts.properties`:
+Inside `vim`:
+
+1. Type `/zts.prop` and press **Enter** to jump to the properties section.
+2. Press `o` to open a new line below in Insert mode.
+3. Paste the following properties:
 
 ```properties
-athenz.zts.user_cert_provider=sys.auth.usercert
-athenz.zts.user_cert_max_timeout=60
-athenz.zts.user_cert_default_timeout=30
-athenz.zts.user_cert.idp_token_endpoint=http://keycloak.idp:8080/realms/master/protocol/openid-connect/token
-athenz.zts.user_cert.idp_jwks_endpoint=http://keycloak.idp:8080/realms/master/protocol/openid-connect/certs
-athenz.zts.user_cert.idp_client_id=athenz-usercert
-athenz.zts.user_cert.idp_redirect_uri=http://127.0.0.1:9213/oauth2/callback
-athenz.zts.user_cert.user_name_claim=preferred_username
+    athenz.zts.user_cert_provider=sys.auth.usercert
+    athenz.zts.user_cert_max_timeout=60
+    athenz.zts.user_cert_default_timeout=30
+    athenz.zts.user_cert.idp_token_endpoint=http://keycloak.idp:8080/realms/master/protocol/openid-connect/token
+    athenz.zts.user_cert.idp_jwks_endpoint=http://keycloak.idp:8080/realms/master/protocol/openid-connect/certs
+    athenz.zts.user_cert.idp_client_id=athenz-usercert
+    athenz.zts.user_cert.idp_redirect_uri=http://127.0.0.1:9213/oauth2/callback
+    athenz.zts.user_cert.user_name_claim=preferred_username
 ```
 
-Restart ZTS:
+*The four spaces above are **intended**.*
+
+4. Press **Esc**, then type `:wq!` and press **Enter** to save.
+
+```sh
+# configmap/athenz-zts-conf edited
+```
+
+Restart ZTS so the new properties are mounted into the running server:
 
 ```sh
 kubectl -n athenz rollout restart deployment/athenz-zts-server
 kubectl -n athenz rollout status deployment/athenz-zts-server
+```
+
+```sh
+# deployment.apps/athenz-zts-server restarted
+# Waiting for deployment "athenz-zts-server" rollout to finish: 0 out of 1 new replicas have been updated...
+# Waiting for deployment "athenz-zts-server" rollout to finish: 0 out of 1 new replicas have been updated...
+# Waiting for deployment "athenz-zts-server" rollout to finish: 0 of 1 updated replicas are available...
+# deployment "athenz-zts-server" successfully rolled out
 ```
 
 ## Create the User Certificate Private Key
@@ -226,119 +245,3 @@ openssl x509 \
 ```
 
 The subject should include `CN = user.idjag-learner`.
-
-## Raw HTTP Fallback
-
-Use this if the CLI path fails and you want to isolate ZTS `/usercert`. Reuse `./keys/user-idjag-learner.key` from [Create the User Certificate Private Key](#create-the-user-certificate-private-key).
-
-Create a CSR whose CN matches the full Athenz user principal:
-
-```sh
-openssl req -new \
-  -key ./keys/user-idjag-learner.key \
-  -subj "/CN=user.idjag-learner/O=Athenz" \
-  -out /tmp/user-idjag-learner.csr
-```
-
-Capture the Keycloak callback query string:
-
-```sh
-rm -f /tmp/usercert-callback.txt
-
-(
-  printf 'HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nAuthentication captured. You can close this window.\n'
-) | nc -l 9213 > /tmp/usercert-callback.txt &
-```
-
-Open the authorization URL:
-
-```sh
-_keycloak_port=$(./tools/port.sh keycloak)
-
-./tools/open.sh "http://127.0.0.1:${_keycloak_port}/realms/master/protocol/openid-connect/auth?client_id=athenz-usercert&redirect_uri=http%3A%2F%2F127.0.0.1%3A9213%2Foauth2%2Fcallback&response_type=code&scope=openid&state=manual"
-```
-
-After login, extract the callback data:
-
-```sh
-_attestation_data=$(
-  sed -n 's#GET /oauth2/callback?\([^ ]*\) HTTP.*#\1#p' /tmp/usercert-callback.txt | head -1
-)
-
-printf '%s\n' "${_attestation_data}"
-```
-
-POST directly to ZTS:
-
-```sh
-_zts_port=$(./tools/port.sh zts)
-
-jq -n \
-  --arg name "user.idjag-learner" \
-  --arg csr "$(awk 'NF { sub(/\r/, ""); printf "%s\n", $0 }' /tmp/user-idjag-learner.csr)" \
-  --arg attestationData "${_attestation_data}" \
-  '{
-    name: $name,
-    csr: $csr,
-    attestationData: $attestationData,
-    expiryTime: 30
-  }' > /tmp/usercert-request.json
-
-curl -sk \
-  -X POST "https://localhost:${_zts_port}/zts/v1/usercert" \
-  -H "Content-Type: application/json" \
-  --data @/tmp/usercert-request.json \
-  | jq -r .x509Certificate \
-  > ./keys/user-idjag-learner.crt
-```
-
-## Use the New User Certificate
-
-The existing API roles grant access to `human.idjag-learner`. Add the new real user principal separately:
-
-```sh
-./tools/athenz/add-role-member.sh "api" "docs-getter" "user.idjag-learner"
-```
-
-Fetch an Athenz access token using the new user certificate:
-
-```sh
-./tools/athenz/fetch-access-token.sh \
-  "./keys/user-idjag-learner.crt" \
-  "./keys/user-idjag-learner.key" \
-  "api:role.docs-getter" \
-  "./keys/user-idjag-learner.jwt"
-```
-
-Decode the token and confirm the subject:
-
-```sh
-cat ./keys/user-idjag-learner.jwt \
-  | jq -Rr 'split(".") | .[1] | @base64d' \
-  | jq .
-```
-
-Expected subject:
-
-```json
-"sub": "user.idjag-learner"
-```
-
-## Troubleshooting
-
-If ZTS rejects the request with `User authority configuration is not set`, confirm the PR image is running and `athenz.zts.user_cert_provider` is present in the mounted ZTS config.
-
-```sh
-kubectl -n athenz exec deployment/athenz-zts-server -c athenz-zts-server -- \
-  grep -n "user_cert" /opt/athenz/zts/conf/zts.properties
-```
-
-If ZTS rejects the request with `User name is not valid for certificate request`, use the full principal `user.idjag-learner` for both the request `name` and CSR `CN`.
-
-If the provider says `Subject token does not match requested user name`, confirm Keycloak's access token contains `preferred_username: "idjag-learner"` and ZTS has:
-
-```properties
-athenz.zts.user_cert.user_name_claim=preferred_username
-```
-
-If Keycloak's token endpoint returns `401`, the client is probably confidential. Set the `athenz-usercert` client to public for this local test, or configure the provider's client secret through Athenz `PrivateKeyStore`.
