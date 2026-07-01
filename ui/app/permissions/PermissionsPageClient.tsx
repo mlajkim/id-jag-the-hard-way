@@ -1,25 +1,25 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "react"
 
-type PermissionKind = "get" | "post" | "delete";
+type PermissionKind = "get" | "post" | "delete"
 
 type PermissionState = {
-  enabled: boolean;
-  toggling: boolean;
-  toggle: () => Promise<void>;
-};
+  enabled: boolean
+  toggling: boolean
+  toggle: () => Promise<void>
+}
 
 const permissionMeta: Record<PermissionKind, {
-  apiPath: string;
-  aiApiPath: string;
-  title: string;
-  targetLabel: string;
-  policyLine: string;
-  aiPolicyLine: string;
-  accent: string;
-  tint: string;
-  tabTint: string;
+  apiPath: string
+  aiApiPath: string
+  title: string
+  targetLabel: string
+  policyLine: string
+  aiPolicyLine: string
+  accent: string
+  tint: string
+  tabTint: string
 }> = {
   get: {
     apiPath: "/api/permissions/direct-docs",
@@ -54,7 +54,7 @@ const permissionMeta: Record<PermissionKind, {
     tint: "#FCE7F3",
     tabTint: "#FDF2F8",
   },
-};
+}
 
 function NodeBox({
   x,
@@ -64,26 +64,26 @@ function NodeBox({
   circleImage = false,
   fill = "var(--surface)",
 }: {
-  x: number;
-  y: number;
-  label: string;
-  image?: string;
-  circleImage?: boolean;
-  fill?: string;
+  x: number
+  y: number
+  label: string
+  image?: string
+  circleImage?: boolean
+  fill?: string
 }) {
-  const boxWidth = 140;
-  const boxHeight = 108;
-  const imageSize = 48;
-  const imageLabelGap = 8;
-  const labelHeight = 12;
-  const imageGroupHeight = imageSize + imageLabelGap + labelHeight;
-  const imageX = x + (boxWidth - imageSize) / 2;
-  const imageY = y + (boxHeight - imageGroupHeight) / 2;
-  const labelY = image ? imageY + imageSize + imageLabelGap : y + boxHeight / 2;
-  const clipId = `clip-${x}-${y}`;
-  const cx = imageX + imageSize / 2;
-  const cy = imageY + imageSize / 2;
-  const r = imageSize / 2;
+  const boxWidth = 140
+  const boxHeight = 108
+  const imageSize = 48
+  const imageLabelGap = 8
+  const labelHeight = 12
+  const imageGroupHeight = imageSize + imageLabelGap + labelHeight
+  const imageX = x + (boxWidth - imageSize) / 2
+  const imageY = y + (boxHeight - imageGroupHeight) / 2
+  const labelY = image ? imageY + imageSize + imageLabelGap : y + boxHeight / 2
+  const clipId = `clip-${x}-${y}`
+  const cx = imageX + imageSize / 2
+  const cy = imageY + imageSize / 2
+  const r = imageSize / 2
 
   return (
     <g>
@@ -138,7 +138,7 @@ function NodeBox({
         {label}
       </text>
     </g>
-  );
+  )
 }
 
 function Arrow({
@@ -148,11 +148,11 @@ function Arrow({
   color = "var(--line-green)",
   onClick,
 }: {
-  x1: number;
-  x2: number;
-  y: number;
-  color?: string;
-  onClick: () => void;
+  x1: number
+  x2: number
+  y: number
+  color?: string
+  onClick: () => void
 }) {
   return (
     <g onClick={onClick} style={{ cursor: "pointer" }}>
@@ -167,7 +167,7 @@ function Arrow({
         strokeLinejoin="round"
       />
     </g>
-  );
+  )
 }
 
 function StatusChip({ label, enabled }: { label: string; enabled: boolean }) {
@@ -185,13 +185,13 @@ function StatusChip({ label, enabled }: { label: string; enabled: boolean }) {
     >
       {label} {enabled ? "✓" : "✕"}
     </span>
-  );
+  )
 }
 
 type DialogState =
   | { type: "info"; label: string }
   | { type: "confirm-ai-agent"; permission: PermissionKind; currentlyEnabled: boolean; onConfirm: () => void | Promise<void> }
-  | { type: "confirm-direct-policy"; permission: PermissionKind; currentlyEnabled: boolean; onConfirm: () => void | Promise<void> };
+  | { type: "confirm-direct-policy"; permission: PermissionKind; currentlyEnabled: boolean; onConfirm: () => void | Promise<void> }
 
 function PermissionDialog({ state, onClose }: { state: DialogState; onClose: () => void }) {
   if (state.type === "info") {
@@ -215,28 +215,28 @@ function PermissionDialog({ state, onClose }: { state: DialogState; onClose: () 
           </div>
         </div>
       </div>
-    );
+    )
   }
 
-  const action = state.currentlyEnabled ? "Revoke" : "Allow";
-  let title: string;
-  let detail: string;
-  let target: string;
+  const action = state.currentlyEnabled ? "Revoke" : "Allow"
+  let title: string
+  let detail: string
+  let target: string
 
   if (state.type === "confirm-direct-policy") {
-    const meta = permissionMeta[state.permission];
-    title = `${action} direct ${meta.targetLabel} permission?`;
+    const meta = permissionMeta[state.permission]
+    title = `${action} direct ${meta.targetLabel} permission?`
     detail = state.currentlyEnabled
       ? `This will remove the Athenz policy that lets human.idjag-learner directly call ${meta.targetLabel}.`
-      : `This will recreate the Athenz policy that lets human.idjag-learner directly call ${meta.targetLabel}.`;
-    target = meta.policyLine;
+      : `This will recreate the Athenz policy that lets human.idjag-learner directly call ${meta.targetLabel}.`
+    target = meta.policyLine
   } else {
-    const meta = permissionMeta[state.permission];
-    title = `${action} AI agent permission?`;
+    const meta = permissionMeta[state.permission]
+    title = `${action} AI agent permission?`
     detail = state.currentlyEnabled
       ? `This will remove the zts.jag_exchange policy that lets AI agents exchange into ${meta.targetLabel}.`
-      : `This will recreate the zts.jag_exchange policy that lets AI agents exchange into ${meta.targetLabel}.`;
-    target = meta.aiPolicyLine;
+      : `This will recreate the zts.jag_exchange policy that lets AI agents exchange into ${meta.targetLabel}.`
+    target = meta.aiPolicyLine
   }
 
   return (
@@ -263,8 +263,8 @@ function PermissionDialog({ state, onClose }: { state: DialogState; onClose: () 
           </button>
           <button
             onClick={() => {
-              void state.onConfirm();
-              onClose();
+              void state.onConfirm()
+              onClose()
             }}
             style={{ padding: "8px 18px", borderRadius: 8, fontSize: "0.875rem", border: "none", background: state.currentlyEnabled ? "#ef4444" : "var(--line-green)", color: "#fff", cursor: "pointer", fontWeight: 600 }}
           >
@@ -273,46 +273,46 @@ function PermissionDialog({ state, onClose }: { state: DialogState; onClose: () 
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 function usePermission(apiPath: string): PermissionState {
-  const [enabled, setEnabled] = useState<boolean>(true);
-  const [toggling, setToggling] = useState(false);
+  const [enabled, setEnabled] = useState<boolean>(true)
+  const [toggling, setToggling] = useState(false)
 
   useEffect(() => {
-    let cancelled = false;
+    let cancelled = false
     fetch(apiPath, { cache: "no-store" })
       .then((response) => response.ok ? response.json() : null)
       .then((data: { enabled?: unknown } | null) => {
-        if (!cancelled && data && typeof data.enabled === "boolean") setEnabled(data.enabled);
+        if (!cancelled && data && typeof data.enabled === "boolean") setEnabled(data.enabled)
       })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, [apiPath]);
+      .catch(() => { })
+    return () => { cancelled = true }
+  }, [apiPath])
 
   async function toggle() {
-    if (toggling) return;
-    const next = !enabled;
-    setToggling(true);
-    setEnabled(next);
+    if (toggling) return
+    const next = !enabled
+    setToggling(true)
+    setEnabled(next)
     try {
       const response = await fetch(apiPath, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ enabled: next }),
-      });
-      if (!response.ok) { setEnabled(!next); return; }
-      const data = (await response.json()) as { enabled?: unknown };
-      if (typeof data.enabled === "boolean") setEnabled(data.enabled);
+      })
+      if (!response.ok) { setEnabled(!next); return }
+      const data = (await response.json()) as { enabled?: unknown }
+      if (typeof data.enabled === "boolean") setEnabled(data.enabled)
     } catch {
-      setEnabled(!next);
+      setEnabled(!next)
     } finally {
-      setToggling(false);
+      setToggling(false)
     }
   }
 
-  return { enabled, toggling, toggle };
+  return { enabled, toggling, toggle }
 }
 
 function PermissionCard({
@@ -321,24 +321,24 @@ function PermissionCard({
   aiAgentPermission,
   setDialog,
 }: {
-  permission: PermissionKind;
-  directPermission: PermissionState;
-  aiAgentPermission: PermissionState;
-  setDialog: (dialog: DialogState) => void;
+  permission: PermissionKind
+  directPermission: PermissionState
+  aiAgentPermission: PermissionState
+  setDialog: (dialog: DialogState) => void
 }) {
-  const meta = permissionMeta[permission];
-  const directColor = directPermission.enabled ? "var(--line-green)" : "#ef4444";
-  const aiArrowColor = aiAgentPermission.enabled ? "var(--line-green)" : "#ef4444";
-  const downstreamArrowColor = aiAgentPermission.enabled && directPermission.enabled ? "var(--line-green)" : "#ef4444";
+  const meta = permissionMeta[permission]
+  const directColor = directPermission.enabled ? "var(--line-green)" : "#ef4444"
+  const aiArrowColor = aiAgentPermission.enabled ? "var(--line-green)" : "#ef4444"
+  const downstreamArrowColor = aiAgentPermission.enabled && directPermission.enabled ? "var(--line-green)" : "#ef4444"
 
   function openDirectDialog() {
-    if (directPermission.toggling) return;
+    if (directPermission.toggling) return
     setDialog({
       type: "confirm-direct-policy",
       permission,
       currentlyEnabled: directPermission.enabled,
       onConfirm: directPermission.toggle,
-    });
+    })
   }
 
   return (
@@ -388,8 +388,8 @@ function PermissionCard({
           onClick={openDirectDialog}
           onKeyDown={(event) => {
             if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              openDirectDialog();
+              event.preventDefault()
+              openDirectDialog()
             }
           }}
           style={{ cursor: directPermission.toggling ? "wait" : "pointer", opacity: directPermission.toggling ? 0.55 : 1 }}
@@ -428,32 +428,107 @@ function PermissionCard({
         </g>
       </svg>
     </div>
-  );
+  )
+}
+
+function AdminLoginScreen({ onLogin }: { onLogin: () => void }) {
+  const [id, setId] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState(false)
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (id === "admin" && password === "admin") {
+      onLogin()
+    } else {
+      setError(true)
+    }
+  }
+
+  return (
+    <main className="min-h-screen flex items-center justify-center p-6" style={{ background: "#F7F8FA" }}>
+      <div className="w-full max-w-sm space-y-6">
+        <div className="text-center space-y-1">
+          <span
+            className="inline-block text-xs font-bold tracking-widest px-2 py-0.5 rounded mb-2"
+            style={{ background: "#ef4444", color: "#fff" }}
+          >
+            🔒 ADMIN ONLY
+          </span>
+          <h1 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>Permission Control Panel</h1>
+          <p className="text-sm" style={{ color: "var(--text-muted)" }}>Sign in to manage Athenz policies</p>
+        </div>
+        <form
+          onSubmit={handleSubmit}
+          className="rounded-2xl p-6 space-y-4"
+          style={{ background: "#fff", boxShadow: "var(--shadow-sm)", border: "1px solid var(--border)" }}
+        >
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>ID</label>
+            <input
+              type="text"
+              value={id}
+              onChange={(e) => { setId(e.target.value); setError(false) }}
+              autoComplete="username"
+              className="w-full rounded-lg px-3 py-2 text-sm outline-none"
+              style={{ border: "1px solid var(--border)", background: "#F7F8FA", color: "var(--text-primary)" }}
+              placeholder="admin"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => { setPassword(e.target.value); setError(false) }}
+              autoComplete="current-password"
+              className="w-full rounded-lg px-3 py-2 text-sm outline-none"
+              style={{ border: "1px solid var(--border)", background: "#F7F8FA", color: "var(--text-primary)" }}
+              placeholder="••••••••"
+            />
+          </div>
+          {error && (
+            <p className="text-xs" style={{ color: "#ef4444" }}>Invalid ID or password.</p>
+          )}
+          <button
+            type="submit"
+            className="w-full rounded-lg py-2 text-sm font-semibold transition-opacity hover:opacity-80"
+            style={{ background: "#ef4444", color: "#fff" }}
+          >
+            Sign in
+          </button>
+        </form>
+      </div>
+    </main>
+  )
 }
 
 export default function PermissionsPageClient() {
-  const [dialog, setDialog] = useState<DialogState | null>(null);
-  const [focused, setFocused] = useState<PermissionKind>("get");
-  const [pressed, setPressed] = useState<PermissionKind | null>(null);
-  const [popKey, setPopKey] = useState(0);
-  const directGet = usePermission(permissionMeta.get.apiPath);
-  const directPost = usePermission(permissionMeta.post.apiPath);
-  const directDelete = usePermission(permissionMeta.delete.apiPath);
-  const aiGet = usePermission(permissionMeta.get.aiApiPath);
-  const aiPost = usePermission(permissionMeta.post.aiApiPath);
-  const aiDelete = usePermission(permissionMeta.delete.aiApiPath);
+  const [loggedIn, setLoggedIn] = useState(false)
+  const [dialog, setDialog] = useState<DialogState | null>(null)
+  const [focused, setFocused] = useState<PermissionKind>("delete")
+  const [pressed, setPressed] = useState<PermissionKind | null>(null)
+  const [popKey, setPopKey] = useState(0)
+  const directGet = usePermission(permissionMeta.get.apiPath)
+  const directPost = usePermission(permissionMeta.post.apiPath)
+  const directDelete = usePermission(permissionMeta.delete.apiPath)
+  const aiGet = usePermission(permissionMeta.get.aiApiPath)
+  const aiPost = usePermission(permissionMeta.post.aiApiPath)
+  const aiDelete = usePermission(permissionMeta.delete.aiApiPath)
   const directPermissions: Record<PermissionKind, PermissionState> = {
     get: directGet,
     post: directPost,
     delete: directDelete,
-  };
+  }
   const aiPermissions: Record<PermissionKind, PermissionState> = {
     get: aiGet,
     post: aiPost,
     delete: aiDelete,
-  };
+  }
 
-  const focusedMeta = permissionMeta[focused];
+  const focusedMeta = permissionMeta[focused]
+
+  if (!loggedIn) return <AdminLoginScreen onLogin={() => setLoggedIn(true)} />
 
   return (
     <main className="min-h-screen p-6 md:p-10" style={{ background: focusedMeta.tint, transition: "background 300ms ease" }}>
@@ -482,9 +557,9 @@ export default function PermissionsPageClient() {
 
         {/* Stacked card deck — active card on top, others peek as tabs below */}
         {(() => {
-          const kinds = ["get", "post", "delete"] as const;
-          const PEEK = 40;
-          const rest = kinds.filter((k) => k !== focused);
+          const kinds = ["get", "post", "delete"] as const
+          const PEEK = 40
+          const rest = kinds.filter((k) => k !== focused)
           return (
             <div style={{ position: "relative", paddingBottom: rest.length * PEEK }}>
               <div key={`${focused}-${popKey}`} className="permission-card-pop">
@@ -496,10 +571,10 @@ export default function PermissionsPageClient() {
                 />
               </div>
               {rest.map((kind, i) => {
-                const meta = permissionMeta[kind];
-                const directEnabled = directPermissions[kind].enabled;
-                const aiEnabled = aiPermissions[kind].enabled;
-                const isPressed = pressed === kind;
+                const meta = permissionMeta[kind]
+                const directEnabled = directPermissions[kind].enabled
+                const aiEnabled = aiPermissions[kind].enabled
+                const isPressed = pressed === kind
                 return (
                   <button
                     key={kind}
@@ -510,10 +585,10 @@ export default function PermissionsPageClient() {
                     onTouchStart={() => setPressed(kind)}
                     onTouchEnd={() => setPressed(null)}
                     onClick={() => {
-                      setPressed(kind);
-                      setFocused(kind);
-                      setPopKey((current) => current + 1);
-                      window.setTimeout(() => setPressed(null), 130);
+                      setPressed(kind)
+                      setFocused(kind)
+                      setPopKey((current) => current + 1)
+                      window.setTimeout(() => setPressed(null), 130)
                     }}
                     style={{
                       position: "absolute",
@@ -549,10 +624,10 @@ export default function PermissionsPageClient() {
                       <StatusChip label="direct" enabled={directEnabled} />
                     </div>
                   </button>
-                );
+                )
               })}
             </div>
-          );
+          )
         })()}
 
         <div>
@@ -564,5 +639,5 @@ export default function PermissionsPageClient() {
 
       {dialog && <PermissionDialog state={dialog} onClose={() => setDialog(null)} />}
     </main>
-  );
+  )
 }
