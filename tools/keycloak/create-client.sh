@@ -84,4 +84,7 @@ fi
 if [ "$client_type" = "confidential" ]; then
   info "Fetch the generated secret with: tools/keycloak/create-client-k8s-secret.sh"
 fi
-"${TOOLS_DIR}/open.sh" "http://localhost:${_keycloak_port}/admin/master/console/#/${_realm}/clients/${client_uuid}/settings"
+
+if [ "${KEYCLOAK_OPEN_UI:-true}" = "true" ]; then
+  "${TOOLS_DIR}/open.sh" "http://localhost:${_keycloak_port}/admin/master/console/#/${_realm}/clients/${client_uuid}/settings"
+fi

@@ -6,7 +6,7 @@ The PR adds a ZTS `POST /usercert` endpoint and a `zts-usercert` CLI. The flow i
 
 1. `zts-usercert` generates a CSR for a full Athenz user principal such as `user.idjag-learner`.
 2. It opens the Keycloak authorization endpoint in your browser.
-3. Keycloak redirects to `http://localhost:9213/oauth2/callback`.
+3. Keycloak redirects to `http://127.0.0.1:9213/oauth2/callback`.
 4. `zts-usercert` sends the CSR and callback query string to ZTS `/usercert`.
 5. ZTS exchanges the authorization code with Keycloak, validates the token subject, and signs the user certificate.
 
@@ -19,6 +19,7 @@ The PR adds a ZTS `POST /usercert` endpoint and a `zts-usercert` CLI. The flow i
 - [Create a Keycloak Client for User Certificates](#create-a-keycloak-client-for-user-certificates)
 - [Register the User Certificate Provider in Athenz](#register-the-user-certificate-provider-in-athenz)
 - [Configure ZTS](#configure-zts)
+- [Create the User Certificate Private Key](#create-the-user-certificate-private-key)
 - [Run `zts-usercert`](#run-zts-usercert)
 - [Raw HTTP Fallback](#raw-http-fallback)
 - [Use the New User Certificate](#use-the-new-user-certificate)
@@ -61,37 +62,25 @@ Create a separate public Keycloak client for this test. Public is intentional fo
 
 This client represents the Athenz user-certificate login flow, not one individual user. You can use the same `athenz-usercert` client for many users because Keycloak still authenticates each person separately and ZTS verifies the user claim in the returned token.
 
-First, collect the Keycloak values from the tutorial config. The redirect URI must match the callback endpoint that `zts-usercert` or the raw HTTP fallback listens on.
+Create or update the client with the shared Keycloak helper. The helper reads the Keycloak port, realm, admin user, and admin password from the tutorial config, so the only values you need to provide here are the client ID, the callback redirect URI, the browser origin, and the client type.
 
-```sh
-_keycloak_port=$(./tools/port.sh keycloak)
-_realm=$(./tools/config.sh keycloak realm)
-_client_id="athenz-usercert"
-_redirect_uri="http://localhost:9213/oauth2/callback"
-
-echo "Keycloak port: $_keycloak_port"
-echo "Keycloak realm: $_realm"
-echo "Keycloak client ID: $_client_id"
-echo "Keycloak redirect URI: $_redirect_uri"
-```
-
-```sh
-# Keycloak port: 34443
-# Keycloak realm: master
-# Keycloak client ID: athenz-usercert
-# Keycloak redirect URI: http://localhost:9213/oauth2/callback
-```
-
-Next, create or update the Keycloak client using the shared helper. The final `public` argument makes this a public OIDC client, which means Keycloak will not require a client secret during the local authorization-code exchange.
+The redirect URI must match the local callback endpoint that `zts-usercert` or the raw HTTP fallback listens on. The PR CLI uses `127.0.0.1` for the callback host, so use that value here instead of `localhost`. The final `public` argument makes this a public OIDC client, which means Keycloak will not require a client secret during the local authorization-code exchange.
 
 ```sh
 ./tools/keycloak/create-client.sh \
-  "${_client_id}" \
-  "${_redirect_uri}" \
-  "http://localhost:9213" \
+  "athenz-usercert" \
+  "http://127.0.0.1:9213/oauth2/callback" \
+  "http://127.0.0.1:9213" \
   public
 ```
 
+```sh
+  # ·  Fetching Keycloak admin token...
+  # ·  Looking up client athenz-usercert in realm master...
+  # ·  Updating existing client athenz-usercert...
+  # ✔  Client updated: athenz-usercert
+  # ✔  Opened: http://localhost:34443/admin/master/console/#/master/clients/567425db-94c8-402d-8d01-0bfa94e94b11/settings
+```
 
 ![new_client_athenz_usercert](./assets/new_client_athenz_usercert.png)
 
@@ -99,36 +88,48 @@ The helper sets the important client values for this flow:
 
 - `publicClient: true`: no client secret is required for this local test.
 - `standardFlowEnabled: true`: enables the OAuth authorization-code flow.
-- `redirectUris`: allows Keycloak to redirect the browser back to `localhost:9213`.
+- `redirectUris`: allows Keycloak to redirect the browser back to `127.0.0.1:9213`.
 - `webOrigins`: allows browser-based redirects from the local callback origin.
 
 ## Register the User Certificate Provider in Athenz
 
-Register `sys.auth.user_cert` as a class-based instance provider:
+Register `sys.auth.usercert` as a class-based instance provider. This is an Athenz provider identity, not a Keycloak client and not a per-human-user object. ZTS uses this provider name from `athenz.zts.user_cert_provider` when it decides which provider implementation is allowed to issue user certificates.
+
+The config property name contains underscores, but the service name cannot. Use `usercert` for the Athenz service name and `sys.auth.usercert` for the provider value.
 
 ```sh
-kubectl -n athenz exec deployment/athenz-cli -- sh -c '
-set -e
+./tools/athenz/create-service.sh \
+  "sys.auth" \
+  "usercert"
+```
 
-ZMS=https://athenz-zms-server.athenz:4443/zms/v1
-KEY=/var/run/athenz/athenz_admin.private.pem
-CERT=/var/run/athenz/athenz_admin.cert.pem
+This registers the Athenz service identity `sys.auth.usercert` in ZMS. No public key is needed for this class-based provider marker because it is not used as a normal service identity that authenticates with its own private key. The helper uses the local tutorial admin certificate against the local ZMS port-forward, then opens the Athenz services page for `sys.auth` so you can confirm `usercert` appears in the UI.
 
-openssl rsa -in "${KEY}" -pubout -out /tmp/user_cert.public.pem >/dev/null 2>&1
+```sh
+./tools/athenz/set-service-endpoint.sh \
+  "sys.auth" \
+  "usercert" \
+  "class://com.yahoo.athenz.instance.provider.impl.UserCertificateProvider"
+```
 
-if ! zms-cli -i user.athenz_admin -z "${ZMS}" -key "${KEY}" -cert "${CERT}" \
-  -d sys.auth show-service user_cert >/dev/null 2>&1; then
-  zms-cli -i user.athenz_admin -z "${ZMS}" -key "${KEY}" -cert "${CERT}" \
-    -d sys.auth add-service user_cert athenz-zts-server.athenz /tmp/user_cert.public.pem
-fi
+> [!NOTE]
+> The source code for [UserCertifcateProvider.java](https://github.com/AthenZ/athenz/blob/master/libs/java/instance_provider/src/main/java/com/yahoo/athenz/instance/provider/impl/UserCertificateProvider.java)
 
-zms-cli -i user.athenz_admin -z "${ZMS}" -key "${KEY}" -cert "${CERT}" \
-  -d sys.auth set-service-endpoint user_cert \
-  class://com.yahoo.athenz.instance.provider.impl.UserCertificateProvider
+This changes the service endpoint from a network URL into a class endpoint. That tells Athenz this provider is implemented inside ZTS by `com.yahoo.athenz.instance.provider.impl.UserCertificateProvider`.
 
-zms-cli -i user.athenz_admin -z "${ZMS}" -key "${KEY}" -cert "${CERT}" \
-  -d sys.auth show-service user_cert
-'
+Verify the registered service:
+
+```sh
+./tools/athenz/show-service.sh "sys.auth" "usercert"
+```
+
+```sh
+# ·  Showing service sys.auth.usercert...
+# service:
+#     - name: sys.auth.usercert
+#       modified: 2026-07-01T23:19:32.295Z
+#       providerEndpoint: class://com.yahoo.athenz.instance.provider.impl.UserCertificateProvider
+#       publicKeys: []
 ```
 
 ## Configure ZTS
@@ -142,13 +143,13 @@ kubectl edit configmap athenz-zts-conf -n athenz
 Append these lines under `zts.properties`:
 
 ```properties
-athenz.zts.user_cert_provider=sys.auth.user_cert
+athenz.zts.user_cert_provider=sys.auth.usercert
 athenz.zts.user_cert_max_timeout=60
 athenz.zts.user_cert_default_timeout=30
 athenz.zts.user_cert.idp_token_endpoint=http://keycloak.idp:8080/realms/master/protocol/openid-connect/token
 athenz.zts.user_cert.idp_jwks_endpoint=http://keycloak.idp:8080/realms/master/protocol/openid-connect/certs
 athenz.zts.user_cert.idp_client_id=athenz-usercert
-athenz.zts.user_cert.idp_redirect_uri=http://localhost:9213/oauth2/callback
+athenz.zts.user_cert.idp_redirect_uri=http://127.0.0.1:9213/oauth2/callback
 athenz.zts.user_cert.user_name_claim=preferred_username
 ```
 
@@ -159,38 +160,52 @@ kubectl -n athenz rollout restart deployment/athenz-zts-server
 kubectl -n athenz rollout status deployment/athenz-zts-server
 ```
 
-## Run `zts-usercert`
-
-Use this path only if you already have a `zts-usercert` binary built from PR 3239 available on your host. If not, skip to [Raw HTTP Fallback](#raw-http-fallback); it tests the same ZTS endpoint without the CLI.
+## Create the User Certificate Private Key
 
 Generate a new private key for the real user certificate:
 
 ```sh
-openssl genrsa -out ./keys/user-idjag-learner.key 2048
-chmod 600 ./keys/user-idjag-learner.key
+./tools/athenz/create-private-key.sh "./keys/user-idjag-learner"
 ```
-
-Run the flow from your host, not inside the `athenz-cli` pod. The browser callback is local to your workstation.
 
 ```sh
-_zts_port=$(./tools/port.sh zts)
-_keycloak_port=$(./tools/port.sh keycloak)
-_zts_usercert_bin="${ZTS_USERCERT_BIN:-zts-usercert}"
-
-"${_zts_usercert_bin}" \
-  -zts "https://localhost:${_zts_port}/zts/v1" \
-  -private-key ./keys/user-idjag-learner.key \
-  -user user.idjag-learner \
-  -idp-endpoint "http://localhost:${_keycloak_port}/realms/master/protocol/openid-connect/auth?scope=openid" \
-  -idp-client-id athenz-usercert \
-  -cert-file ./keys/user-idjag-learner.crt \
-  -subj-o Athenz \
-  -callback-port 9213 \
-  -expiry-time 30 \
-  -cacert ./athenz_dist/certs/ca.cert.pem \
-  -proxy=false \
-  -verbose
+  # ·  Generating RSA key pair for: ./keys/user-idjag-learner...
+  # ✔  Keys generated: ./keys/user-idjag-learner.key, ./keys/user-idjag-learner.public.key
 ```
+
+This creates `./keys/user-idjag-learner.key`, which `zts-usercert` uses to build the CSR, and `./keys/user-idjag-learner.public.key`, which is not registered in ZMS for this user-certificate flow.
+
+## Run `zts-usercert`
+
+Use the `zts-usercert` binary from the running `athenz-cli` deployment. This avoids installing or building the CLI on your host.
+
+The helper checks that `zts-usercert` exists in `deployment/athenz-cli`, updates the `athenz-usercert` Keycloak client to allow the exact callback URI, copies your local private key into that pod, runs the pod-local CLI there, and writes the fetched certificate back to your local `./keys` directory.
+
+Run the flow through the helper:
+
+```sh
+./tools/athenz/fetch-user-cert.sh \
+  "./keys/user-idjag-learner.key" \
+  "user.idjag-learner" \
+  "./keys/user-idjag-learner.crt"
+```
+
+```sh
+  # ·  Checking zts-usercert in athenz-cli...
+  # ·  Ensuring Keycloak client allows callback URI http://127.0.0.1:9213/oauth2/callback...
+  # ·  Fetching Keycloak admin token...
+  # ·  Looking up client athenz-usercert in realm master...
+  # ·  Updating existing client athenz-usercert...
+  # ✔  Client updated: athenz-usercert
+  # ·  Copying private key into athenz-cli...
+  # ·  Preparing browser URL handoff inside athenz-cli...
+  # ·  Forwarding local callback port 9213 to athenz-cli...
+  # ·  Running zts-usercert inside athenz-cli...
+  # ·  Opening the Keycloak authorization URL from your host browser...
+  # ✔  Opened: http://127.0.0.1:34443/realms/master/protocol/openid-connect/auth?client_id=athenz-usercert&code_challenge=XUdxT5dzm3PG4Ij6je0AgOlco5Q3L3U4BLWJMQangEw&code_challenge_method=S256&nonce=yZk2bkcIWKTKoSEjpsy6mz5l_87MDbz-&redirect_uri=http%3A%2F%2F127.0.0.1%3A9213%2Foauth2%2Fcallback&response_type=code&scope=openid&state=GU16KRrV-nGBHp2HajdbE4yR3QQhKd4s
+```
+
+The helper opens the Keycloak authorization URL in your workstation browser with `tools/open.sh`. After the callback completes, it copies the issued certificate from the `athenz-cli` pod to `./keys/user-idjag-learner.crt`.
 
 Sign in to Keycloak as:
 
@@ -214,14 +229,7 @@ The subject should include `CN = user.idjag-learner`.
 
 ## Raw HTTP Fallback
 
-Use this if the CLI path fails and you want to isolate ZTS `/usercert`.
-
-Generate the private key if you did not already do it in the CLI section:
-
-```sh
-test -f ./keys/user-idjag-learner.key || openssl genrsa -out ./keys/user-idjag-learner.key 2048
-chmod 600 ./keys/user-idjag-learner.key
-```
+Use this if the CLI path fails and you want to isolate ZTS `/usercert`. Reuse `./keys/user-idjag-learner.key` from [Create the User Certificate Private Key](#create-the-user-certificate-private-key).
 
 Create a CSR whose CN matches the full Athenz user principal:
 
@@ -247,7 +255,7 @@ Open the authorization URL:
 ```sh
 _keycloak_port=$(./tools/port.sh keycloak)
 
-./tools/open.sh "http://localhost:${_keycloak_port}/realms/master/protocol/openid-connect/auth?client_id=athenz-usercert&redirect_uri=http%3A%2F%2Flocalhost%3A9213%2Foauth2%2Fcallback&response_type=code&scope=openid&state=manual"
+./tools/open.sh "http://127.0.0.1:${_keycloak_port}/realms/master/protocol/openid-connect/auth?client_id=athenz-usercert&redirect_uri=http%3A%2F%2F127.0.0.1%3A9213%2Foauth2%2Fcallback&response_type=code&scope=openid&state=manual"
 ```
 
 After login, extract the callback data:
