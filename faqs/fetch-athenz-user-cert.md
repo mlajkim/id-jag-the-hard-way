@@ -131,7 +131,7 @@ Verify the registered service:
 
 ## Configure ZTS
 
-Registering the provider service in ZMS is not enough. ZTS must also be told which provider to use for `/usercert`, where Keycloak's token and JWKS endpoints are, and which token claim maps back to the requested Athenz user.
+Registering the provider service in ZMS is not enough. ZTS must also be told which user authority to use, which provider to use for `/usercert`, where Keycloak's token and JWKS endpoints are, which token audience to accept, and which token claim maps back to the requested Athenz user.
 
 Edit the ZTS ConfigMap:
 
@@ -146,6 +146,7 @@ Inside `vim`:
 3. Paste the following properties:
 
 ```properties
+    athenz.zts.user_authority_class=com.yahoo.athenz.common.server.debug.DebugUserAuthority
     athenz.zts.user_cert_provider=sys.auth.usercert
     athenz.zts.user_cert_max_timeout=60
     athenz.zts.user_cert_default_timeout=30
@@ -153,10 +154,45 @@ Inside `vim`:
     athenz.zts.user_cert.idp_jwks_endpoint=http://keycloak.idp:8080/realms/master/protocol/openid-connect/certs
     athenz.zts.user_cert.idp_client_id=athenz-usercert
     athenz.zts.user_cert.idp_redirect_uri=http://127.0.0.1:9213/oauth2/callback
+    athenz.zts.user_cert.idp_audience=account
     athenz.zts.user_cert.user_name_claim=preferred_username
 ```
 
 *The four spaces above are **intended**.*
+
+4. Press `Esc` to exit Insert mode.
+5. Them type `/athenz.zts.authority_classes`
+6. Press **Enter** to jump to the authority_classes section.
+7. Hit `Shift` + `e`
+8. Press `a`, then enter the following:
+```sh
+,com.yahoo.athenz.common.server.debug.DebugUserAuthority
+```
+9. Press `Esc` to exit Insert mode.
+10. Enter `:wq` then **Enter**
+
+
+The debug authority's domain is `user`, which matches the principal requested below: `user.idjag-learner`. Without a configured user authority, ZTS returns `400 User authority configuration is not set` before CSR parsing and before the Keycloak token exchange.
+
+The `idp_audience` property is easy to miss. It is part of the upstream OSS User Certificate provider properties, and newer Athenz builds require it during provider initialization. With the plain Keycloak public client created above, Keycloak usually puts `account` in the first `aud` value of the access token. If you add a Keycloak audience protocol mapper for this client instead, set `athenz.zts.user_cert.idp_audience` to the audience value emitted by that mapper, such as `athenz-usercert`.
+
+The upstream User Certificate provider also supports these optional properties:
+
+```properties
+    athenz.zts.user_cert.idp_config_endpoint=
+    athenz.zts.user_cert.connect_timeout=10000
+    athenz.zts.user_cert.read_timeout=15000
+    athenz.zts.user_cert.idp_client_secret_app=
+    athenz.zts.user_cert.idp_client_secret_keygroup=
+    athenz.zts.user_cert.idp_client_secret_keyname=
+```
+
+You do not need the client-secret properties for the public local Keycloak client above. You also do not need `idp_config_endpoint` when `idp_token_endpoint` and `idp_jwks_endpoint` are set directly.
+
+The upstream ZTS server config also has `athenz.zts.user_cert_signer_key_id_list` to restrict requested user-certificate signer key IDs. Leave it unset for this local flow unless you are testing multiple X.509 signers.
+
+> [!NOTE]
+> Recent Athenz OSS builds also require the IdP token and JWKS endpoints to use `https://`. The original PR 3239 implementation did not enforce that. If your ZTS logs say `IdP token endpoint must be an https url` or `IdP jwks endpoint must be an https url`, either run the exact PR 3239-era code for this local HTTP-only Keycloak test, or put Keycloak behind an HTTPS endpoint and update `idp_token_endpoint` and `idp_jwks_endpoint`.
 
 4. Press **Esc**, then type `:wq!` and press **Enter** to save.
 
@@ -177,6 +213,21 @@ kubectl -n athenz rollout status deployment/athenz-zts-server
 # Waiting for deployment "athenz-zts-server" rollout to finish: 0 out of 1 new replicas have been updated...
 # Waiting for deployment "athenz-zts-server" rollout to finish: 0 of 1 updated replicas are available...
 # deployment "athenz-zts-server" successfully rolled out
+```
+
+Quickly verify the three required properties before rerunning the helper:
+
+```sh
+kubectl -n athenz get configmap athenz-zts-conf -o yaml | \
+  grep -E 'athenz.zts.(authority_classes|user_authority_class|user_cert_provider)'
+```
+
+Expected output should include all three:
+
+```properties
+athenz.zts.authority_classes=com.yahoo.athenz.auth.impl.PrincipalAuthority,com.yahoo.athenz.common.server.debug.DebugUserAuthority
+athenz.zts.user_authority_class=com.yahoo.athenz.common.server.debug.DebugUserAuthority
+athenz.zts.user_cert_provider=sys.auth.usercert
 ```
 
 ## Create the User Certificate Private Key
