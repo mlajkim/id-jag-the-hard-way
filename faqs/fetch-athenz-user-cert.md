@@ -300,4 +300,12 @@ openssl x509 \
   -ext subjectAltName
 ```
 
+```sh
+# ubject=O=Athenz, OU=Athenz, CN=user.idjag-learner
+# issuer=CN=Test CA Certificate
+# notBefore=Jul  2 03:57:46 2026 GMT
+# notAfter=Jul  2 04:27:46 2026 GMT
+# No extensions in certificate
+```
+
 The subject should include `CN = user.idjag-learner`.

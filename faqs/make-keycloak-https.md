@@ -13,7 +13,7 @@ The fix is to put an Envoy TLS sidecar in front of Keycloak:
 
 1. Keycloak keeps listening on `http://127.0.0.1:8080` inside its pod.
 2. Envoy listens on `https://keycloak.idp:8443`.
-3. Envoy forwards requests to Keycloak over localhost HTTP, injecting `X-Forwarded-Proto: https` so Keycloak generates correct redirect URIs.
+3. Envoy forwards requests to Keycloak over localhost HTTP, injecting `X-Forwarded-Proto`, `X-Forwarded-Host`, and `X-Forwarded-Port` so Keycloak generates correct redirect URIs.
 4. The Envoy server certificate is signed by the existing Athenz tutorial CA.
 5. ZTS uses the HTTPS Envoy endpoint for the back-channel token and JWKS calls.
 6. The tutorial port-forwarder keeps `http://localhost:34443` for Keycloak HTTP and adds `https://localhost:34444` for Keycloak HTTPS.
@@ -235,12 +235,20 @@ data:
                               route:
                                 cluster: keycloak_http
                                 timeout: 30s
-                              request_headers_to_add:
-                                - header:
-                                    key: X-Forwarded-Proto
-                                    value: https
-                                  keep_empty_value: false
                     http_filters:
+                      - name: envoy.filters.http.lua
+                        typed_config:
+                          "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+                          inline_code: |
+                            function envoy_on_request(request_handle)
+                              local headers = request_handle:headers()
+                              local authority = headers:get(":authority") or headers:get("host") or "localhost"
+                              local port = string.match(authority, ":(%d+)$") or "443"
+
+                              headers:replace("x-forwarded-proto", "https")
+                              headers:replace("x-forwarded-host", authority)
+                              headers:replace("x-forwarded-port", port)
+                            end
                       - name: envoy.filters.http.router
                         typed_config:
                           "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
@@ -506,6 +514,8 @@ If the browser cannot connect to `localhost:34444`, restart `./tools/keep-k8s-po
 kubectl -n idp get deploy keycloak
 kubectl -n idp get pod -l app=keycloak -o jsonpath='{.items[0].spec.containers[*].name}{"\n"}'
 ```
+
+If Keycloak redirects to an unexpected port such as `https://localhost:80/admin`, recreate the Envoy ConfigMap from this FAQ and restart the Keycloak deployment. That redirect means Keycloak is not receiving the original browser-facing host and port through `X-Forwarded-Host` and `X-Forwarded-Port`.
 
 ## Update ZTS User Certificate Endpoints
 
