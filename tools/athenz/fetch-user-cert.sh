@@ -20,9 +20,9 @@ fi
 
 mkdir -p "$(dirname "${cert_output_path}")"
 
-keycloak_port=$("${TOOLS_DIR}/port.sh" keycloak)
+keycloak_https_port=$("${TOOLS_DIR}/port.sh" keycloak-https)
 realm=$("${TOOLS_DIR}/config.sh" keycloak realm)
-idp_endpoint="http://127.0.0.1:${keycloak_port}/realms/${realm}/protocol/openid-connect/auth"
+idp_endpoint="https://localhost:${keycloak_https_port}/realms/${realm}/protocol/openid-connect/auth"
 redirect_uri="http://127.0.0.1:${callback_port}/oauth2/callback"
 web_origin="http://127.0.0.1:${callback_port}"
 

@@ -8,7 +8,7 @@ The PR adds a ZTS `POST /usercert` endpoint and a `zts-usercert` CLI. The flow i
 2. It opens the Keycloak authorization endpoint in your browser.
 3. Keycloak redirects to `http://127.0.0.1:9213/oauth2/callback`.
 4. `zts-usercert` sends the CSR and callback query string to ZTS `/usercert`.
-5. ZTS exchanges the authorization code with Keycloak, validates the token subject, and signs the user certificate.
+5. ZTS exchanges the authorization code with Keycloak over HTTPS, validates the token subject, and signs the user certificate.
 
 > [!NOTE]
 > This creates an Athenz user principal such as `user.idjag-learner`. That is different from the earlier tutorial identity `human.idjag-learner`, which was modeled as an Athenz service.
@@ -33,10 +33,13 @@ This FAQ assumes you have already completed the main tutorial flow through [ID-J
 - the `idjag-learner` Keycloak user from [Identity Provider](../tutorials/13-identity-provider.md)
 - the `api` domain and `docs-getter` role from the earlier authorization tutorials
 - the local Kubernetes port-forwarder available from the tutorial tooling
+- the Keycloak HTTPS Envoy sidecar from [Make Keycloak HTTPS for ZTS User Certificates](./make-keycloak-https.md)
 
 This FAQ does not reinstall Athenz, Keycloak, `kind`, `kubectl`, Docker, Go, or the tutorial dependencies. It only covers the extra configuration needed to test PR 3239.
 
 Before starting, make sure your ZTS server is already running code that contains PR 3239. The easiest check is that ZTS recognizes `/zts/v1/usercert`; without that PR code, all later configuration will still fail.
+
+Recent Athenz OSS builds require the IdP token and JWKS endpoints to use `https://`, so run [Make Keycloak HTTPS for ZTS User Certificates](./make-keycloak-https.md) before configuring ZTS below.
 
 Keep the existing tutorial port-forwarder running:
 
@@ -51,6 +54,7 @@ The examples below use the tutorial defaults:
 - Athenz user principal to issue: `user.idjag-learner`
 - ZTS local port: `$(./tools/port.sh zts)`
 - Keycloak local port: `$(./tools/port.sh keycloak)`
+- Keycloak local HTTPS port: `$(./tools/port.sh keycloak-https)`
 - User cert callback port: `9213`
 
 ## Create a Keycloak Client for User Certificates
@@ -150,8 +154,8 @@ Inside `vim`:
     athenz.zts.user_cert_provider=sys.auth.usercert
     athenz.zts.user_cert_max_timeout=60
     athenz.zts.user_cert_default_timeout=30
-    athenz.zts.user_cert.idp_token_endpoint=http://keycloak.idp:8080/realms/master/protocol/openid-connect/token
-    athenz.zts.user_cert.idp_jwks_endpoint=http://keycloak.idp:8080/realms/master/protocol/openid-connect/certs
+    athenz.zts.user_cert.idp_token_endpoint=https://keycloak.idp:8443/realms/master/protocol/openid-connect/token
+    athenz.zts.user_cert.idp_jwks_endpoint=https://keycloak.idp:8443/realms/master/protocol/openid-connect/certs
     athenz.zts.user_cert.idp_client_id=athenz-usercert
     athenz.zts.user_cert.idp_redirect_uri=http://127.0.0.1:9213/oauth2/callback
     athenz.zts.user_cert.idp_audience=account
@@ -161,7 +165,7 @@ Inside `vim`:
 *The four spaces above are **intended**.*
 
 4. Press `Esc` to exit Insert mode.
-5. Them type `/athenz.zts.authority_classes`
+5. Then type `/athenz.zts.authority_classes`
 6. Press **Enter** to jump to the authority_classes section.
 7. Hit `Shift` + `e`
 8. Press `a`, then enter the following:
@@ -191,10 +195,9 @@ You do not need the client-secret properties for the public local Keycloak clien
 
 The upstream ZTS server config also has `athenz.zts.user_cert_signer_key_id_list` to restrict requested user-certificate signer key IDs. Leave it unset for this local flow unless you are testing multiple X.509 signers.
 
-> [!NOTE]
-> Recent Athenz OSS builds also require the IdP token and JWKS endpoints to use `https://`. The original PR 3239 implementation did not enforce that. If your ZTS logs say `IdP token endpoint must be an https url` or `IdP jwks endpoint must be an https url`, either run the exact PR 3239-era code for this local HTTP-only Keycloak test, or put Keycloak behind an HTTPS endpoint and update `idp_token_endpoint` and `idp_jwks_endpoint`.
+The IdP token and JWKS endpoints use the in-cluster Envoy HTTPS listener from [Make Keycloak HTTPS for ZTS User Certificates](./make-keycloak-https.md). The browser-facing authorization URL still uses a local port-forward, and the helper below opens `https://localhost:$(./tools/port.sh keycloak-https)`.
 
-4. Press **Esc**, then type `:wq!` and press **Enter** to save.
+11. Press **Esc**, then type `:wq!` and press **Enter** to save.
 
 ```sh
 # configmap/athenz-zts-conf edited
@@ -219,7 +222,7 @@ Quickly verify the three required properties before rerunning the helper:
 
 ```sh
 kubectl -n athenz get configmap athenz-zts-conf -o yaml | \
-  grep -E 'athenz.zts.(authority_classes|user_authority_class|user_cert_provider)'
+  grep -E 'athenz.zts.(authority_classes|user_authority_class|user_cert_provider|user_cert.idp_(token|jwks)_endpoint)'
 ```
 
 Expected output should include all three:
@@ -228,6 +231,8 @@ Expected output should include all three:
 athenz.zts.authority_classes=com.yahoo.athenz.auth.impl.PrincipalAuthority,com.yahoo.athenz.common.server.debug.DebugUserAuthority
 athenz.zts.user_authority_class=com.yahoo.athenz.common.server.debug.DebugUserAuthority
 athenz.zts.user_cert_provider=sys.auth.usercert
+athenz.zts.user_cert.idp_token_endpoint=https://keycloak.idp:8443/realms/master/protocol/openid-connect/token
+athenz.zts.user_cert.idp_jwks_endpoint=https://keycloak.idp:8443/realms/master/protocol/openid-connect/certs
 ```
 
 ## Create the User Certificate Private Key
@@ -272,7 +277,7 @@ Run the flow through the helper:
   # ·  Forwarding local callback port 9213 to athenz-cli...
   # ·  Running zts-usercert inside athenz-cli...
   # ·  Opening the Keycloak authorization URL from your host browser...
-  # ✔  Opened: http://127.0.0.1:34443/realms/master/protocol/openid-connect/auth?client_id=athenz-usercert&code_challenge=XUdxT5dzm3PG4Ij6je0AgOlco5Q3L3U4BLWJMQangEw&code_challenge_method=S256&nonce=yZk2bkcIWKTKoSEjpsy6mz5l_87MDbz-&redirect_uri=http%3A%2F%2F127.0.0.1%3A9213%2Foauth2%2Fcallback&response_type=code&scope=openid&state=GU16KRrV-nGBHp2HajdbE4yR3QQhKd4s
+  # ✔  Opened: https://localhost:34444/realms/master/protocol/openid-connect/auth?client_id=athenz-usercert&code_challenge=XUdxT5dzm3PG4Ij6je0AgOlco5Q3L3U4BLWJMQangEw&code_challenge_method=S256&nonce=yZk2bkcIWKTKoSEjpsy6mz5l_87MDbz-&redirect_uri=http%3A%2F%2F127.0.0.1%3A9213%2Foauth2%2Fcallback&response_type=code&scope=openid&state=GU16KRrV-nGBHp2HajdbE4yR3QQhKd4s
 ```
 
 The helper opens the Keycloak authorization URL in your workstation browser with `tools/open.sh`. After the callback completes, it copies the issued certificate from the `athenz-cli` pod to `./keys/user-idjag-learner.crt`.
