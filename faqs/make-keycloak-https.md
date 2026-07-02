@@ -1,71 +1,30 @@
-# Make Keycloak HTTPS for ZTS User Certificates
+# Goal
 
-This note is for the local Athenz and Keycloak Kubernetes deployments from this repo.
+The goal of this tutorial is to add HTTPS support to the local Keycloak deployment while keeping the existing HTTP port available, with the following steps:
 
-Recent Athenz OSS builds require the user-certificate IdP token and JWKS endpoints to use `https://`. The tutorial Keycloak deployment listens on plain HTTP, so ZTS can fail while initializing the user certificate provider:
+<!-- TOC depthFrom:2 depthTo:3 -->
 
-```sh
-# 09:45:33.719 ERROR c.y.a.zts.InstanceProviderManager - Unable to initialize class provider sys.auth.usercert: ResourceException (500): IdP token endpoint must be an https url
-# 09:45:33.719 ERROR com.yahoo.athenz.zts.ZTSImpl - Error: postusercertificaterequest request-domain: user principal-domain: user code: 400 message: unable to get instance for provider: sys.auth.usercert
-```
-
-The fix is to put an Envoy TLS sidecar in front of Keycloak:
-
-1. Keycloak keeps listening on `http://127.0.0.1:8080` inside its pod.
-2. Envoy listens on `https://keycloak.idp:8443`.
-3. Envoy forwards requests to Keycloak over localhost HTTP, injecting `X-Forwarded-Proto`, `X-Forwarded-Host`, and `X-Forwarded-Port` so Keycloak generates correct redirect URIs.
-4. The Envoy server certificate is signed by the existing Athenz tutorial CA.
-5. ZTS uses the HTTPS Envoy endpoint for the back-channel token and JWKS calls.
-6. The tutorial port-forwarder keeps `http://localhost:34443` for Keycloak HTTP and adds `https://localhost:34444` for Keycloak HTTPS.
-
-Both ports remain active. `34443` (HTTP) and `34444` (HTTPS) are fully functional. Browser access to `https://localhost:34444` works without warnings after the certificate includes `localhost`, the Athenz CA is trusted by your browser, and the port-forwarder is forwarding the Keycloak HTTPS listener.
-
-This does not create another root CA.
-
-<!-- TOC depthFrom:2 depthTo:2 -->
-
-- [Prerequisites](#prerequisites)
-- [Create the Keycloak TLS Certificate](#create-the-keycloak-tls-certificate)
-- [Create the Kubernetes TLS Secret](#create-the-kubernetes-tls-secret)
-- [Patch the Keycloak Deployment](#patch-the-keycloak-deployment)
-- [Create Envoy Config](#create-envoy-config)
-- [Patch the Keycloak Service](#patch-the-keycloak-service)
-- [Verify Both Endpoints](#verify-both-endpoints)
-- [Trust the CA for Browser HTTPS Access](#trust-the-ca-for-browser-https-access)
-- [Open Keycloak over Local HTTPS](#open-keycloak-over-local-https)
-- [Update ZTS User Certificate Endpoints](#update-zts-user-certificate-endpoints)
-- [Rerun `zts-usercert`](#rerun-zts-usercert)
+- [Step 1. Create the Keycloak TLS Certificate](#step-1-create-the-keycloak-tls-certificate)
+- [Step 2. Create the Kubernetes TLS Secret](#step-2-create-the-kubernetes-tls-secret)
+- [Step 3. Patch the Keycloak Deployment](#step-3-patch-the-keycloak-deployment)
+- [Step 4. Create Envoy Config](#step-4-create-envoy-config)
+- [Step 5. Patch the Keycloak Service](#step-5-patch-the-keycloak-service)
+- [Step 6. Verify Both Endpoints](#step-6-verify-both-endpoints)
+- [Step 7. Trust the CA for Browser HTTPS Access](#step-7-trust-the-ca-for-browser-https-access)
+- [Step 8. Open Keycloak over Local HTTPS](#step-8-open-keycloak-over-local-https)
 
 <!-- /TOC -->
 
-## Prerequisites
+After this tutorial, Keycloak remains reachable over HTTP at `http://localhost:34443` and also becomes reachable over HTTPS at `https://localhost:34444`.
 
-This FAQ assumes you have already completed the main tutorial flow through [Identity Provider](../tutorials/13-identity-provider.md), and that you are testing the user certificate flow from [Athenz User Certificate PR 3239](./fetch-athenz-user-cert.md).
+# Prerequisites
 
-You should already have:
+- Complete the main tutorial through [Identity Provider](../tutorials/13-identity-provider.md).
+- Keep `./tools/keep-k8s-port-forward.sh` running in another terminal.
 
-- Athenz running in the `athenz` namespace
-- Keycloak running in the `idp` namespace
-- a Keycloak deployment named `keycloak`
-- a Keycloak service named `keycloak`
-- the existing Athenz tutorial CA files:
-  - `./athenz_dist/certs/ca.cert.pem`
-  - `./athenz_dist/keys/ca.private.pem`
+# Steps
 
-Keep the existing tutorial port-forwarder running in another terminal:
-
-```sh
-./tools/keep-k8s-port-forward.sh
-```
-
-After this FAQ, both local ports will be active:
-
-```sh
-http://localhost:$(./tools/port.sh keycloak)         # HTTP  — 34443
-https://localhost:$(./tools/port.sh keycloak-https)  # HTTPS — 34444
-```
-
-## Create the Keycloak TLS Certificate
+## Step 1. Create the Keycloak TLS Certificate
 
 Create one server certificate for the Envoy sidecar. It is signed by the existing Athenz tutorial CA, so ZTS can trust it through the same local trust chain.
 
@@ -107,7 +66,7 @@ openssl x509 \
 
 The SAN list must include `DNS:keycloak.idp` because ZTS will call that hostname. It also includes `DNS:localhost` so the local `34444` port-forward can be tested without a hostname mismatch.
 
-## Create the Kubernetes TLS Secret
+## Step 2. Create the Kubernetes TLS Secret
 
 Create or update the TLS secret in the `idp` namespace:
 
@@ -123,7 +82,7 @@ kubectl -n idp create secret tls keycloak-tls \
 # secret/keycloak-tls configured
 ```
 
-## Patch the Keycloak Deployment
+## Step 3. Patch the Keycloak Deployment
 
 Add the Envoy sidecar container.
 
@@ -187,7 +146,7 @@ EOF
 # deployment.apps/keycloak patched
 ```
 
-## Create Envoy Config
+## Step 4. Create Envoy Config
 
 Create an Envoy config that terminates TLS on `8443` and forwards to the Keycloak container on `127.0.0.1:8080`.
 
@@ -330,7 +289,7 @@ kubectl -n idp rollout status deployment/keycloak
 # deployment "keycloak" successfully rolled out
 ```
 
-## Patch the Keycloak Service
+## Step 5. Patch the Keycloak Service
 
 Expose the Envoy HTTPS port on the existing Keycloak service.
 
@@ -381,7 +340,7 @@ If the port-forwarder was already running before you added the Envoy sidecar, re
 ./tools/keep-k8s-port-forward.sh
 ```
 
-## Verify Both Endpoints
+## Step 6. Verify Both Endpoints
 
 **HTTP (34443)** — verify from your workstation:
 
@@ -455,35 +414,18 @@ kubectl -n idp get pod -l app=keycloak
 kubectl -n idp logs deploy/keycloak -c keycloak-envoy --tail=100
 ```
 
-## Trust the CA for Browser HTTPS Access
+## Step 7. Trust the CA for Browser HTTPS Access
 
 `34444` uses a certificate signed by the Athenz tutorial CA, which browsers do not trust by default. To open `https://localhost:34444` without a warning, add the CA to your browser's trust store.
 
-**macOS Chrome, Safari, and Edge:**
+| Environment                | Trust action                                                                                                                         | Notes                                                                                                       |
+|----------------------------|--------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------|
+| macOS Chrome, Safari, Edge | `sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain ./athenz_dist/certs/ca.cert.pem`               | Restart the browser after running the command.                                                              |
+| macOS Firefox              | Import `./athenz_dist/certs/ca.cert.pem` under Settings > Privacy & Security > Certificates > View Certificates > Authorities.       | Use this if Firefox still shows `SEC_ERROR_UNKNOWN_ISSUER`.                                                 |
+| Linux Debian/Ubuntu        | `sudo cp ./athenz_dist/certs/ca.cert.pem /usr/local/share/ca-certificates/athenz-tutorial-ca.crt` then `sudo update-ca-certificates` | Restart the browser after updating the system CA store. Firefox may still need a manual Authorities import. |
+| Skip browser trust         | Click through the browser warning, or use `curl --cacert ./athenz_dist/certs/ca.cert.pem`.                                           | `34444` still works. ZTS and in-cluster callers use the CA bundle directly.                                 |
 
-```sh
-sudo security add-trusted-cert -d -r trustRoot \
-  -k /Library/Keychains/System.keychain \
-  ./athenz_dist/certs/ca.cert.pem
-```
-
-Restart the browser after running this command.
-
-**Firefox on macOS:** Firefox may use its own certificate store. If `https://localhost:34444` still shows `SEC_ERROR_UNKNOWN_ISSUER`, import `./athenz_dist/certs/ca.cert.pem` in Firefox under Settings > Privacy & Security > Certificates > View Certificates > Authorities, and trust it for websites.
-
-**Linux (Debian/Ubuntu):**
-
-```sh
-sudo cp ./athenz_dist/certs/ca.cert.pem \
-  /usr/local/share/ca-certificates/athenz-tutorial-ca.crt
-sudo update-ca-certificates
-```
-
-Restart the browser after updating the system CA store. Firefox on Linux may also need the same manual Authorities import as Firefox on macOS.
-
-**Skipping this step** — browsers show a certificate warning, but `34444` still works. You can click through the warning, or use `curl --cacert ./athenz_dist/certs/ca.cert.pem` to bypass it in scripts. ZTS and in-cluster callers always use the CA bundle directly and are unaffected.
-
-## Open Keycloak over Local HTTPS
+## Step 8. Open Keycloak over Local HTTPS
 
 Open Keycloak through the HTTPS port-forward:
 
@@ -493,101 +435,13 @@ Open Keycloak through the HTTPS port-forward:
 
 Sign in with the tutorial admin credentials:
 
-```text
+```sh
 username: admin
 password: admin
 ```
 
-Expected browser behavior:
+![keycloak_https](./assets/keycloak_https.png)
 
-- The address bar stays on `https://localhost:34444`.
-- The browser does not show a certificate warning after the CA trust step.
-- Keycloak pages and admin-console navigation keep using `https://localhost:34444`, not `http://localhost:34443` and not `http://keycloak.idp:8080`.
+# References
 
-If the browser shows `NET::ERR_CERT_AUTHORITY_INVALID` or `SEC_ERROR_UNKNOWN_ISSUER`, the Athenz CA is not trusted by that browser yet.
-
-If the browser shows a hostname or common-name error, recreate the certificate and confirm the SAN output includes `DNS:localhost`.
-
-If the browser cannot connect to `localhost:34444`, restart `./tools/keep-k8s-port-forward.sh` and confirm the Keycloak deployment has both containers:
-
-```sh
-kubectl -n idp get deploy keycloak
-kubectl -n idp get pod -l app=keycloak -o jsonpath='{.items[0].spec.containers[*].name}{"\n"}'
-```
-
-If Keycloak redirects to an unexpected port such as `https://localhost:80/admin`, recreate the Envoy ConfigMap from this FAQ and restart the Keycloak deployment. That redirect means Keycloak is not receiving the original browser-facing host and port through `X-Forwarded-Host` and `X-Forwarded-Port`.
-
-## Update ZTS User Certificate Endpoints
-
-Update only the ZTS back-channel IdP endpoints. Keep the browser authorization endpoint in `fetch-user-cert.sh` as the local `127.0.0.1` URL.
-
-Edit the ZTS ConfigMap:
-
-```sh
-kubectl edit configmap athenz-zts-conf -n athenz
-```
-
-Replace the old HTTP endpoint values:
-
-```properties
-    athenz.zts.user_cert.idp_token_endpoint=http://keycloak.idp:8080/realms/master/protocol/openid-connect/token
-    athenz.zts.user_cert.idp_jwks_endpoint=http://keycloak.idp:8080/realms/master/protocol/openid-connect/certs
-```
-
-With the Envoy HTTPS endpoint:
-
-```properties
-    athenz.zts.user_cert.idp_token_endpoint=https://keycloak.idp:8443/realms/master/protocol/openid-connect/token
-    athenz.zts.user_cert.idp_jwks_endpoint=https://keycloak.idp:8443/realms/master/protocol/openid-connect/certs
-```
-
-Restart ZTS:
-
-```sh
-kubectl -n athenz rollout restart deployment/athenz-zts-server
-kubectl -n athenz rollout status deployment/athenz-zts-server
-```
-
-```sh
-# deployment.apps/athenz-zts-server restarted
-# deployment "athenz-zts-server" successfully rolled out
-```
-
-Verify the active config values:
-
-```sh
-kubectl -n athenz get configmap athenz-zts-conf -o yaml | \
-  grep -E 'athenz.zts.user_cert.idp_(token|jwks)_endpoint'
-```
-
-Expected output:
-
-```properties
-athenz.zts.user_cert.idp_token_endpoint=https://keycloak.idp:8443/realms/master/protocol/openid-connect/token
-athenz.zts.user_cert.idp_jwks_endpoint=https://keycloak.idp:8443/realms/master/protocol/openid-connect/certs
-```
-
-## Rerun `zts-usercert`
-
-Rerun the user certificate helper:
-
-```sh
-./tools/athenz/fetch-user-cert.sh \
-  "./keys/user-idjag-learner.key" \
-  "user.idjag-learner" \
-  "./keys/user-idjag-learner.crt"
-```
-
-The browser authorization step can use either the HTTP or HTTPS URL — both ports are now active. The script defaults to the local HTTP URL; replace it with `https://localhost:34444` if you prefer HTTPS in the browser.
-
-If the request still fails, check the ZTS logs:
-
-```sh
-kubectl logs -n athenz deployment/athenz-zts-server -c athenz-zts-server --tail=200
-```
-
-You should no longer see:
-
-```sh
-# IdP token endpoint must be an https url
-```
+*None*

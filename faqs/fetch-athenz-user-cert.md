@@ -1,71 +1,36 @@
-# Athenz User Certificate PR 3239
+# Goal
 
-This note is for testing Athenz PR 3239 locally with the Athenz and Keycloak Kubernetes deployments from this repo.
+The goal of this tutorial is to fetch an Athenz user certificate for `user.idjag-learner` through the local Keycloak IdP and ZTS deployments from this repo, with the following steps:
 
-The PR adds a ZTS `POST /usercert` endpoint and a `zts-usercert` CLI. The flow is:
+<!-- TOC depthFrom:2 depthTo:3 -->
 
-1. `zts-usercert` generates a CSR for a full Athenz user principal such as `user.idjag-learner`.
-2. It opens the Keycloak authorization endpoint in your browser.
-3. Keycloak redirects to `http://127.0.0.1:9213/oauth2/callback`.
-4. `zts-usercert` sends the CSR and callback query string to ZTS `/usercert`.
-5. ZTS exchanges the authorization code with Keycloak over HTTPS, validates the token subject, and signs the user certificate.
+- [Step 1. Create a Keycloak Client for User Certificates](#step-1-create-a-keycloak-client-for-user-certificates)
+- [Step 2. Register the User Certificate Provider in Athenz](#step-2-register-the-user-certificate-provider-in-athenz)
+- [Step 3. Configure ZTS](#step-3-configure-zts)
+- [Step 4. Create the User Certificate Private Key](#step-4-create-the-user-certificate-private-key)
+- [Step 5. Run `zts-usercert`](#step-5-run-zts-usercert)
+
+<!-- /TOC -->
 
 > [!NOTE]
 > This creates an Athenz user principal such as `user.idjag-learner`. That is different from the earlier tutorial identity `human.idjag-learner`, which was modeled as an Athenz service.
 
-<!-- TOC depthFrom:2 depthTo:2 -->
+# Prerequisites
 
-- [Prerequisites](#prerequisites)
-- [Create a Keycloak Client for User Certificates](#create-a-keycloak-client-for-user-certificates)
-- [Register the User Certificate Provider in Athenz](#register-the-user-certificate-provider-in-athenz)
-- [Configure ZTS](#configure-zts)
-- [Create the User Certificate Private Key](#create-the-user-certificate-private-key)
-- [Run `zts-usercert`](#run-zts-usercert)
+- Complete the main tutorial through [ID-JAG](../tutorials/16-id-jag.md).
+- Complete [Make Keycloak HTTPS for ZTS User Certificates](./make-keycloak-https.md).
 
-<!-- /TOC -->
+# Steps
 
-## Prerequisites
+## Step 1. Create a Keycloak Client for User Certificates
 
-This FAQ assumes you have already completed the main tutorial flow through [ID-JAG](../tutorials/16-id-jag.md). That means you already have:
-
-- Athenz running in the `athenz` namespace
-- Keycloak running in the `idp` namespace
-- the `idjag-learner` Keycloak user from [Identity Provider](../tutorials/13-identity-provider.md)
-- the `api` domain and `docs-getter` role from the earlier authorization tutorials
-- the local Kubernetes port-forwarder available from the tutorial tooling
-- the Keycloak HTTPS Envoy sidecar from [Make Keycloak HTTPS for ZTS User Certificates](./make-keycloak-https.md)
-
-This FAQ does not reinstall Athenz, Keycloak, `kind`, `kubectl`, Docker, Go, or the tutorial dependencies. It only covers the extra configuration needed to test PR 3239.
-
-Before starting, make sure your ZTS server is already running code that contains PR 3239. The easiest check is that ZTS recognizes `/zts/v1/usercert`; without that PR code, all later configuration will still fail.
-
-Recent Athenz OSS builds require the IdP token and JWKS endpoints to use `https://`, so run [Make Keycloak HTTPS for ZTS User Certificates](./make-keycloak-https.md) before configuring ZTS below.
-
-Keep the existing tutorial port-forwarder running:
-
-```sh
-./tools/keep-k8s-port-forward.sh
-```
-
-The examples below use the tutorial defaults:
-
-- Keycloak realm: `master`
-- Keycloak user: `idjag-learner`
-- Athenz user principal to issue: `user.idjag-learner`
-- ZTS local port: `$(./tools/port.sh zts)`
-- Keycloak local port: `$(./tools/port.sh keycloak)`
-- Keycloak local HTTPS port: `$(./tools/port.sh keycloak-https)`
-- User cert callback port: `9213`
-
-## Create a Keycloak Client for User Certificates
-
-Create a separate public Keycloak client for this test. Public is intentional for the local test because the PR provider only sends a client secret when one is configured through Athenz `PrivateKeyStore`.
+Create a separate public Keycloak client for this test. Public is intentional for the local test because the provider only sends a client secret when one is configured through Athenz `PrivateKeyStore`.
 
 This client represents the Athenz user-certificate login flow, not one individual user. You can use the same `athenz-usercert` client for many users because Keycloak still authenticates each person separately and ZTS verifies the user claim in the returned token.
 
 Create or update the client with the shared Keycloak helper. The helper reads the Keycloak port, realm, admin user, and admin password from the tutorial config, so the only values you need to provide here are the client ID, the callback redirect URI, the browser origin, and the client type.
 
-The redirect URI must match the local callback endpoint that `zts-usercert` or the raw HTTP fallback listens on. The PR CLI uses `127.0.0.1` for the callback host, so use that value here instead of `localhost`. The final `public` argument makes this a public OIDC client, which means Keycloak will not require a client secret during the local authorization-code exchange.
+The redirect URI must match the local callback endpoint that `zts-usercert` or the raw HTTP fallback listens on. The CLI uses `127.0.0.1` for the callback host, so use that value here instead of `localhost`. The final `public` argument makes this a public OIDC client, which means Keycloak will not require a client secret during the local authorization-code exchange.
 
 ```sh
 ./tools/keycloak/create-client.sh \
@@ -92,7 +57,7 @@ The helper sets the important client values for this flow:
 - `redirectUris`: allows Keycloak to redirect the browser back to `127.0.0.1:9213`.
 - `webOrigins`: allows browser-based redirects from the local callback origin.
 
-## Register the User Certificate Provider in Athenz
+## Step 2. Register the User Certificate Provider in Athenz
 
 Register `sys.auth.usercert` as a class-based instance provider. This is an Athenz provider identity, not a Keycloak client and not a per-human-user object. ZTS uses this provider name from `athenz.zts.user_cert_provider` when it decides which provider implementation is allowed to issue user certificates.
 
@@ -113,9 +78,6 @@ This registers the Athenz service identity `sys.auth.usercert` in ZMS. No public
   "class://com.yahoo.athenz.instance.provider.impl.UserCertificateProvider"
 ```
 
-> [!NOTE]
-> The source code for [UserCertifcateProvider.java](https://github.com/AthenZ/athenz/blob/master/libs/java/instance_provider/src/main/java/com/yahoo/athenz/instance/provider/impl/UserCertificateProvider.java)
-
 This changes the service endpoint from a network URL into a class endpoint. That tells Athenz this provider is implemented inside ZTS by `com.yahoo.athenz.instance.provider.impl.UserCertificateProvider`.
 
 Verify the registered service:
@@ -133,7 +95,7 @@ Verify the registered service:
 #       publicKeys: []
 ```
 
-## Configure ZTS
+## Step 3. Configure ZTS
 
 Registering the provider service in ZMS is not enough. ZTS must also be told which user authority to use, which provider to use for `/usercert`, where Keycloak's token and JWKS endpoints are, which token audience to accept, and which token claim maps back to the requested Athenz user.
 
@@ -235,7 +197,7 @@ athenz.zts.user_cert.idp_token_endpoint=https://keycloak.idp:8443/realms/master/
 athenz.zts.user_cert.idp_jwks_endpoint=https://keycloak.idp:8443/realms/master/protocol/openid-connect/certs
 ```
 
-## Create the User Certificate Private Key
+## Step 4. Create the User Certificate Private Key
 
 Generate a new private key for the real user certificate:
 
@@ -250,7 +212,7 @@ Generate a new private key for the real user certificate:
 
 This creates `./keys/user-idjag-learner.key`, which `zts-usercert` uses to build the CSR, and `./keys/user-idjag-learner.public.key`, which is not registered in ZMS for this user-certificate flow.
 
-## Run `zts-usercert`
+## Step 5. Run `zts-usercert`
 
 Use the `zts-usercert` binary from the running `athenz-cli` deployment. This avoids installing or building the CLI on your host.
 
@@ -309,3 +271,9 @@ openssl x509 \
 ```
 
 The subject should include `CN = user.idjag-learner`.
+
+# Reference
+
+- [Athenz PR 3239](https://github.com/AthenZ/athenz/pull/3239) added user certificate support in ZTS, including the `POST /usercert` endpoint, the `zts-usercert` CLI, and `UserCertificateProvider`.
+- The provider requires the IdP token endpoint and JWKS endpoint to use `https://`. This FAQ uses the Keycloak HTTPS Envoy sidecar from [Make Keycloak HTTPS for ZTS User Certificates](./make-keycloak-https.md) to satisfy that requirement while keeping the tutorial's local HTTP Keycloak port available.
+  - [UserCertificateProvider.java](https://github.com/AthenZ/athenz/blob/master/libs/java/instance_provider/src/main/java/com/yahoo/athenz/instance/provider/impl/UserCertificateProvider.java)
