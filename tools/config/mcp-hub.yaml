@@ -25,7 +25,7 @@ services:
             k8s_name: ca.crt
             import_from: ./athenz_dist/certs/ca.cert.pem
 
-  - name: mcp-zpu
+  - name: zpu
     key_version: v1
     local_keys_dir: ./keys
     k8s:
@@ -36,10 +36,10 @@ services:
         files:
           cert:
             k8s_name: cert
-            local_name: mcp-zpu.crt
+            local_name: zpu.crt
           key:
             k8s_name: key
-            local_name: mcp-zpu.key
+            local_name: zpu.key
           ca:
             k8s_name: ca
             import_from: ./athenz_dist/certs/ca.cert.pem

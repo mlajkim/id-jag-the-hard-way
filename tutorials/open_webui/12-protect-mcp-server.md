@@ -52,15 +52,15 @@ EOF
 The ZPU sidecar needs a service identity in the `mcp-hub` domain so it can fetch and evaluate the MCP Hub policies locally.
 
 ```sh
-./tools/athenz/create-private-key.sh "./keys/mcp-zpu"
-./tools/athenz/create-service.sh "mcp-hub" "mcp-zpu" "./keys/mcp-zpu.public.key"
-./tools/athenz/enable-cert-provider.sh "mcp-hub" "mcp-zpu"
-./tools/athenz/fetch-cert.sh "mcp-hub" "mcp-zpu" "./keys/mcp-zpu.key" "v1"
+./tools/athenz/create-private-key.sh "./keys/zpu"
+./tools/athenz/create-service.sh "mcp-hub" "zpu" "./keys/zpu.public.key"
+./tools/athenz/enable-cert-provider.sh "mcp-hub" "zpu"
+./tools/athenz/fetch-cert.sh "mcp-hub" "zpu" "./keys/zpu.key" "v1"
 
 kubectl -n mcp-hub delete secret mcp-hub-zpu-cert --ignore-not-found
 kubectl -n mcp-hub create secret generic mcp-hub-zpu-cert \
-  --from-file=cert=./keys/mcp-zpu.crt \
-  --from-file=key=./keys/mcp-zpu.key \
+  --from-file=cert=./keys/zpu.crt \
+  --from-file=key=./keys/zpu.key \
   --from-file=ca=./athenz_dist/certs/ca.cert.pem
 ```
 
@@ -152,16 +152,31 @@ Since we haven't prepared any roles or policies yet, let's create an explicit ro
 ./tools/athenz/create-role.sh "mcp-hub" "mcp-accessor"
 ```
 
+```sh
+#   ·  Creating Role: mcp-hub:role.mcp-accessor...
+#   ✔  Role created: mcp-hub:role.mcp-accessor
+```
+
 Next, attach the policy to the role:
 
 ```sh
 ./tools/athenz/add-policy.sh "mcp-hub" "mcp-accessor" "access" "k8s-doc-server"
 ```
 
+```sh
+#   ·  Creating Policy: mcp-hub:policy.mcp-accessor_access_k8s-doc-server...
+#   ✔  Policy created: mcp-hub:policy.mcp-accessor_access_k8s-doc-server
+```
+
 Finally, add you `human.idjag-learner` principal to the role:
 
 ```sh
 ./tools/athenz/add-role-member.sh "mcp-hub" "mcp-accessor" "human.idjag-learner"
+```
+
+```sh
+#   ·  Adding Member human.idjag-learner to Role: mcp-hub:role.mcp-accessor...
+#   ✔  human.idjag-learner  →  mcp-hub:role.mcp-accessor
 ```
 
 ## Fetch a New Access Token for the New Role

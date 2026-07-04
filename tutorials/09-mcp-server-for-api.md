@@ -4,7 +4,7 @@
 
 # MCP Server for API
 
-In this tutorial, we will set up MCP Server for API so that our AI client agent that we will install in the next tutorial can interact with our protected API server for you.
+In this tutorial, we will set up MCP Server for API so that our AI client agent that we will install in the next tutorial can interact with our protected API server for you with the following steps:
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
@@ -30,6 +30,7 @@ Run the following:
 ./tools/athenz/create-private-key.sh "./keys/k8s-doc-server"
 ./tools/athenz/create-service.sh "mcp-hub" "k8s-doc-server" "./keys/k8s-doc-server.public.key"
 ./tools/athenz/enable-cert-provider.sh "mcp-hub" "k8s-doc-server"
+./tools/athenz/fetch-cert.sh "mcp-hub" "k8s-doc-server" "./keys/k8s-doc-server.key" "v1"
 ```
 
 ```sh
@@ -40,7 +41,12 @@ Run the following:
 #   ·  Registering Service: mcp-hub.k8s-doc-server...
 #   ✔  Service registered: mcp-hub.k8s-doc-server
 #   ·  Enabling ZTS Certificate Provider for mcp-hub.k8s-doc-server...
+# [Template(s) successfully applied to domain]
 #   ✔  ZTS Certificate Provider enabled for mcp-hub.k8s-doc-server
+#   ·  Fetching X.509 Certificate for mcp-hub.k8s-doc-server...
+# command terminated with exit code 1
+#   ⚠  Certificate fetch attempt 1/5 failed; retrying in 3s...
+#   ✔  Certificate saved to: ./keys/k8s-doc-server.crt
 ```
 
 ## Create K8s Secret
@@ -48,7 +54,6 @@ Run the following:
 Create a secret based on the generated certificates:
 
 ```sh
-./tools/athenz/fetch-cert.sh "mcp-hub" "k8s-doc-server" "./keys/k8s-doc-server.key" "v1"
 kubectl create namespace mcp-hub --dry-run=client -o yaml | kubectl apply -f -
 kubectl -n mcp-hub delete secret k8s-doc-server-cert --ignore-not-found
 kubectl -n mcp-hub create secret generic k8s-doc-server-cert \
@@ -58,6 +63,7 @@ kubectl -n mcp-hub create secret generic k8s-doc-server-cert \
 ```
 
 ```sh
+# namespace/mcp-hub created
 # secret/k8s-doc-server-cert created
 ```
 
@@ -70,10 +76,18 @@ kubectl create deploy k8s-doc-server -n mcp-hub \
   --image=ghcr.io/mlajkim/mcp:latest
 ```
 
+```sh
+# deployment.apps/k8s-doc-server created
+```
+
 Expose the deployment above:
 
 ```sh
 kubectl expose deploy k8s-doc-server -n mcp-hub --port 8081 --name k8s-doc-server
+```
+
+```sh
+# service/k8s-doc-server exposed
 ```
 
 Wait for the container to be ready:
@@ -82,12 +96,10 @@ Wait for the container to be ready:
 kubectl rollout status deploy/k8s-doc-server -n mcp-hub
 ```
 
-> [!NOTE]
-> If you see the following error, the container is still starting up. Wait a few seconds and try again.
->
-> ```
-> Error from server (BadRequest): container "k8s-doc-server" in pod is waiting to start: ContainerCreating
-> ```
+```sh
+# Waiting for deployment "k8s-doc-server" rollout to finish: 0 of 1 updated replicas are available...
+# deployment "k8s-doc-server" successfully rolled out
+```
 
 ## Mount Secret
 
@@ -99,7 +111,7 @@ spec:
   template:
     spec:
       containers:
-        - name: k8s-doc-server
+        - name: mcp
           env:
             - name: UPSTREAM_BASE_URL
               value: "http://api-server.api:8080"
@@ -142,7 +154,7 @@ kubectl logs deploy/k8s-doc-server -n mcp-hub
 ```
 
 ```sh
-# ◇ injected env (0) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+# ◇ injected env (0) from .env // tip: ⌘ override existing { override: true }
 # 🚀 OpenAPI MCP Server for API listening on: http://k8s-doc-server.mcp-hub:8081
 # 🌐 Upstream API: http://api-server.api:8080
 # 📄 OpenAPI Spec available at: http://k8s-doc-server.mcp-hub:8081/openapi.json

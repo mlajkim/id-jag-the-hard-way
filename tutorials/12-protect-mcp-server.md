@@ -52,16 +52,31 @@ EOF
 The ZPU sidecar needs a service identity in the `mcp-hub` domain so it can fetch and evaluate the MCP Hub policies locally.
 
 ```sh
-./tools/athenz/create-private-key.sh "./keys/mcp-zpu"
-./tools/athenz/create-service.sh "mcp-hub" "mcp-zpu" "./keys/mcp-zpu.public.key"
-./tools/athenz/enable-cert-provider.sh "mcp-hub" "mcp-zpu"
-./tools/athenz/fetch-cert.sh "mcp-hub" "mcp-zpu" "./keys/mcp-zpu.key" "v1"
+./tools/athenz/create-private-key.sh "./keys/zpu"
+./tools/athenz/create-service.sh "mcp-hub" "zpu" "./keys/zpu.public.key"
+./tools/athenz/enable-cert-provider.sh "mcp-hub" "zpu"
+./tools/athenz/fetch-cert.sh "mcp-hub" "zpu" "./keys/zpu.key" "v1"
 
 kubectl -n mcp-hub delete secret mcp-hub-zpu-cert --ignore-not-found
 kubectl -n mcp-hub create secret generic mcp-hub-zpu-cert \
-  --from-file=cert=./keys/mcp-zpu.crt \
-  --from-file=key=./keys/mcp-zpu.key \
+  --from-file=cert=./keys/zpu.crt \
+  --from-file=key=./keys/zpu.key \
   --from-file=ca=./athenz_dist/certs/ca.cert.pem
+```
+
+```sh
+#   ·  Generating RSA key pair for: ./keys/zpu...
+#   ✔  Keys generated: ./keys/zpu.key, ./keys/zpu.public.key
+#   ·  Registering Service: mcp-hub.zpu...
+#   ✔  Service registered: mcp-hub.zpu
+#   ·  Enabling ZTS Certificate Provider for mcp-hub.zpu...
+# [Template(s) successfully applied to domain]
+#   ✔  ZTS Certificate Provider enabled for mcp-hub.zpu
+#   ·  Fetching X.509 Certificate for mcp-hub.zpu...
+# command terminated with exit code 1
+#   ⚠  Certificate fetch attempt 1/5 failed; retrying in 3s...
+#   ✔  Certificate saved to: ./keys/zpu.crt
+# secret/mcp-hub-zpu-cert created
 ```
 
 Attach the ZPU sidecar so the proxy can evaluate policies locally:
@@ -104,6 +119,10 @@ EOF
 )"
 ```
 
+```sh
+# deployment.apps/k8s-doc-server patched
+```
+
 ## Update the MCP Service to Point to the Proxy
 
 The `k8s-doc-server` service currently routes traffic directly to the MCP container on port `8081`. We need to re-point it to the proxy on port `8082`:
@@ -128,6 +147,7 @@ Reload the plugin in Claude Code, then ask:
 get docs from k8s doc server!
 ```
 
+![12_no_permission_to_access_mcp](./assets/12_no_permission_to_access_mcp.png)
 
 This fails because the proxy requires `access` on the `mcp-hub:k8s-doc-server` resource, and we haven't created that policy yet.
 
@@ -157,10 +177,22 @@ Create the `mcp-accessor` role and attach the required policy:
 ./tools/athenz/add-policy.sh "mcp-hub" "mcp-accessor" "access" "k8s-doc-server"
 ```
 
+```sh
+#   ·  Creating Role: mcp-hub:role.mcp-accessor...
+#   ✔  Role created: mcp-hub:role.mcp-accessor
+#   ·  Creating Policy: mcp-hub:policy.mcp-accessor_access_k8s-doc-server...
+#   ✔  Policy created: mcp-hub:policy.mcp-accessor_access_k8s-doc-server
+```
+
 Add `human.idjag-learner` (the identity whose token we are using) as a member:
 
 ```sh
 ./tools/athenz/add-role-member.sh "mcp-hub" "mcp-accessor" "human.idjag-learner"
+```
+
+```sh
+#   ·  Adding Member human.idjag-learner to Role: mcp-hub:role.mcp-accessor...
+#   ✔  human.idjag-learner  →  mcp-hub:role.mcp-accessor
 ```
 
 ## Fetch a New Access Token for the New Role
@@ -181,7 +213,7 @@ Verify that the token's `scp` claim contains both roles:
 ```json
 "scp": [
   "docs-getter",
-  "mcp-accessor"
+  "mcp-hub:role.mcp-accessor"
 ],
 ```
 

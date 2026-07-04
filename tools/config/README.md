@@ -73,4 +73,4 @@ make -C ui setup-permissions-mcp-hub
 | Service | K8s namespace | K8s secret | Cert files |
 |---|---|---|---|
 | `k8s-doc-server` | `mcp-hub` | `k8s-doc-server-cert` | `k8s-doc-server.crt` / `k8s-doc-server.key` |
-| `mcp-zpu` | `mcp-hub` | `mcp-hub-zpu-cert` | `cert` / `key` |
+| `zpu` | `mcp-hub` | `mcp-hub-zpu-cert` | `cert` / `key` |
