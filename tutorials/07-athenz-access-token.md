@@ -4,7 +4,7 @@
 
 # Athenz Access Token
 
-In this tutorial, you will get Access Token that the API server requests.
+In this tutorial, you will get the Access Token that the API server requests with the following steps:
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
