@@ -5,7 +5,6 @@ export type McpServer = {
   description: string
   project: string
   totalToolCalls: string
-  tools?: string[]
   iconSrc?: string
   logoText: string
   logoBg: string

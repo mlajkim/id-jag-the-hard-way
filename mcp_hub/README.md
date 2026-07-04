@@ -60,6 +60,28 @@ The catalog reader supports two execution modes:
 
 This lets local development use the current `kubectl` context while the deployed MCP Hub can use Kubernetes RBAC.
 
+## Live Tool Discovery
+
+The Tools page does not read tools from deployment labels or annotations. Tools are discovered from the running MCP server with JSON-RPC `tools/list`.
+
+For local development, port-forward the MCP service before opening the Tools page:
+
+```bash
+kubectl -n mcp-hub port-forward svc/mcp 18081:8081
+```
+
+The local default MCP endpoint is:
+
+```text
+MCP_HUB_LOCAL_MCP_URL=http://127.0.0.1:18081/mcp
+```
+
+When MCP Hub runs in-cluster, the default endpoint is:
+
+```text
+MCP_HUB_IN_CLUSTER_MCP_URL=http://mcp.mcp-hub:8081/mcp
+```
+
 ## Required Label
 
 Every MCP server deployment must have these labels:
@@ -106,7 +128,6 @@ metadata:
     mcp.idthw.dev/alias: "K8s Docs Server"
     mcp.idthw.dev/description: "The MCP server for ID-JAG tutorial documents"
     mcp.idthw.dev/transport: "streamable-http"
-    mcp.idthw.dev/tools: "search_docs,read_doc,list_tutorials"
 ```
 
 ### `mcp.idthw.dev/alias`
@@ -148,16 +169,6 @@ mcp.idthw.dev/transport: "stdio"
 ```
 
 The current catalog does not display transport yet, but future detail pages should.
-
-### `mcp.idthw.dev/tools`
-
-Comma-separated action/tool names exposed by the MCP server.
-
-```yaml
-mcp.idthw.dev/tools: "search_docs,read_doc,list_tutorials"
-```
-
-The current catalog does not display tools yet. The next detail page should use this value to show actions available to users.
 
 ### `mcp.idthw.dev/icon`
 
@@ -214,7 +225,6 @@ metadata:
     mcp.idthw.dev/alias: "K8s Docs Server"
     mcp.idthw.dev/description: "The MCP server for ID-JAG tutorial documents"
     mcp.idthw.dev/transport: "streamable-http"
-    mcp.idthw.dev/tools: "search_docs,read_doc,list_tutorials"
 spec:
   replicas: 1
   selector:
