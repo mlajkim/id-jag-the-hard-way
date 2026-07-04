@@ -32,7 +32,7 @@ const servers: McpServer[] = [
     id: "confluence",
     name: "confluence",
     description: "The MCP server for Confluence",
-    project: "admin",
+    project: "confluence",
     totalToolCalls: "N/A",
     iconSrc: "/icons/confluence.png",
     logoText: "CF",
@@ -43,9 +43,20 @@ const servers: McpServer[] = [
     id: "doc-server",
     name: "doc-server",
     description: "The MCP server for ID-JAG tutorial documents",
-    project: "admin",
+    project: "k8s-docs-server",
     totalToolCalls: "N/A",
     logoText: "DS",
+    logoBg: "#ffffff",
+    logoFg: "#111111",
+  },
+  {
+    id: "athenz",
+    name: "athenz",
+    description: "The MCP server for Athenz",
+    project: "athenz",
+    totalToolCalls: "N/A",
+    iconSrc: "/icons/athenz.png",
+    logoText: "AZ",
     logoBg: "#111111",
     logoFg: "#ffffff",
   },
@@ -67,7 +78,7 @@ export default function McpHubPage() {
           <button className="context-select" type="button" disabled>
             <span className="select-type">Project</span>
             <span className="select-name">
-              athenz
+              k8s-docs-server
               <ChevronDown size={12} aria-hidden="true" />
             </span>
           </button>
@@ -138,7 +149,7 @@ export default function McpHubPage() {
         <section className="main-content">
           <nav className="breadcrumbs" aria-label="Breadcrumb">
             <Home size={14} aria-hidden="true" />
-            <span>athenz</span>
+            <span>k8s-docs-server</span>
             <ChevronRight size={14} aria-hidden="true" />
             <span>Catalog</span>
             <ChevronRight size={14} aria-hidden="true" />
@@ -207,7 +218,7 @@ export default function McpHubPage() {
                     <td>
                       <div className="server-cell">
                         <div
-                          className="server-logo"
+                          className={`server-logo ${server.iconSrc ? "image-logo" : "text-logo"}`}
                           style={{
                             "--logo-bg": server.logoBg,
                             "--logo-fg": server.logoFg,

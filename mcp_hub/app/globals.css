@@ -534,10 +534,20 @@ input:disabled {
   place-items: center;
   flex: 0 0 auto;
   border-radius: 4px;
-  background: var(--logo-bg);
   color: var(--logo-fg);
   font-size: 10px;
   font-weight: 900;
+}
+
+.server-logo.image-logo {
+  padding: 2px;
+  border: 1px solid var(--line);
+  background: #ffffff;
+}
+
+.server-logo.text-logo {
+  border: 0;
+  background: var(--logo-bg);
 }
 
 .server-logo-image {
