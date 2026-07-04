@@ -178,6 +178,9 @@ Add your `human.idjag-learner` principal to the role:
 
 ## Fetch a New Access Token for the New Role
 
+> [!NOTE]
+> 🟡 TODO: The current Athenz Server does NOT support multiple scopes. This has to be fixed.
+
 Now, let's generate a new Access Token containing both scopes (space-separated values):
 
 - `mcp-hub:role.mcp-accessor`: to access the MCP Authorization Server

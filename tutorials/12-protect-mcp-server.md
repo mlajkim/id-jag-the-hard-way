@@ -197,6 +197,9 @@ Add `human.idjag-learner` (the identity whose token we are using) as a member:
 
 ## Fetch a New Access Token for the New Role
 
+> [!NOTE]
+> 🟡 TODO: The current Athenz Server does NOT support multiple scopes. This has to be fixed.
+
 The Access Token must now include both scopes — one to pass through the MCP proxy, and one to call the API server:
 
 ```sh
