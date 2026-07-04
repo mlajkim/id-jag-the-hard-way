@@ -8,9 +8,8 @@ In this tutorial, we will secure the MCP server using an Authorization Server (A
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
-- [Run Authorization Proxy for MCP Hub](#run-authorization-proxy-for-mcp-hub)
-- [Service Cert for MCP Hub ZPU](#service-cert-for-mcp-hub-zpu)
-- [Update the MCP Service to Point to the Proxy](#update-the-mcp-service-to-point-to-the-proxy)
+- [Run Authorization Proxy for API MCP](#run-authorization-proxy-for-api-mcp)
+- [Update the MCP Target Port to Proxy](#update-the-mcp-target-port-to-proxy)
 - [Verify](#verify)
 - [Fix Insufficient Permission](#fix-insufficient-permission)
 - [Fetch a New Access Token for the New Role](#fetch-a-new-access-token-for-the-new-role)
@@ -21,16 +20,17 @@ In this tutorial, we will secure the MCP server using an Authorization Server (A
 
 <!-- /TOC -->
 
-## Run Authorization Proxy for MCP Hub
+## Run Authorization Proxy for API MCP
 
-We will deploy an authorization proxy for the MCP server managed by MCP Hub. The proxy checks the access token before forwarding requests to the MCP server:
+We will deploy an authorization proxy for the API MCP server, that will check the access token to access to MCP:
 
 ```yaml
-kubectl patch deploy k8s-doc-server -n mcp-hub --patch "$(cat <<'EOF'
+kubectl patch deploy mcp -n api --patch "$(cat <<'EOF'
 spec:
   template:
     spec:
       containers:
+        # 1. Add a new container auth-proxy
         - name: auth-proxy
           image: ghcr.io/mlajkim/mcp-authorization-proxy:latest
           imagePullPolicy: Always
@@ -39,86 +39,70 @@ spec:
               value: "8082"
             - name: MCP_TARGET_URL
               value: "http://localhost:8081"
-            - name: MCP_RESOURCE
-              value: "k8s-doc-server"
           ports:
             - containerPort: 8082
 EOF
 )"
 ```
 
-## Service Cert for MCP Hub ZPU
-
-The ZPU sidecar needs a service identity in the `mcp-hub` domain so it can fetch and evaluate the MCP Hub policies locally.
-
-```sh
-./tools/athenz/create-private-key.sh "./keys/mcp-zpu"
-./tools/athenz/create-service.sh "mcp-hub" "mcp-zpu" "./keys/mcp-zpu.public.key"
-./tools/athenz/enable-cert-provider.sh "mcp-hub" "mcp-zpu"
-./tools/athenz/fetch-cert.sh "mcp-hub" "mcp-zpu" "./keys/mcp-zpu.key" "v1"
-
-kubectl -n mcp-hub delete secret mcp-hub-zpu-cert --ignore-not-found
-kubectl -n mcp-hub create secret generic mcp-hub-zpu-cert \
-  --from-file=cert=./keys/mcp-zpu.crt \
-  --from-file=key=./keys/mcp-zpu.key \
-  --from-file=ca=./athenz_dist/certs/ca.cert.pem
-```
-
-Attach the ZPU sidecar so the proxy can evaluate policies locally:
+We are then going to attach the ZPU, that we have done:
 
 ```yaml
-kubectl patch deploy k8s-doc-server -n mcp-hub --patch "$(cat <<'EOF'
+kubectl patch deploy mcp -n api --patch "$(cat <<'EOF'
 spec:
   template:
     spec:
       containers:
+        # 1. Update existing api-server container to read policies
         - name: auth-proxy
           volumeMounts:
-            - name: mcp-hub-policies
+            - name: api-server-policies
               mountPath: /app/policies
               readOnly: true
 
+        # 2. Add ZPU sidecar container
         - name: zpu
           image: ghcr.io/mlajkim/zpu:latest
           imagePullPolicy: Always
           env:
             - name: ZPU_DOMAIN
-              value: "mcp-hub"
+              value: "api"
             - name: ZTS_URL
               value: "https://athenz-zts-server.athenz:4443/zts/v1"
             - name: ZPU_INTERVAL_SECONDS
               value: "5"
           volumeMounts:
-            - name: mcp-hub-policies
+            - name: api-server-policies
               mountPath: /policies
-            - name: mcp-hub-zpu-cert
+            - name: api-zpu-cert
               mountPath: /var/run/athenz/zpu
               readOnly: true
 
+      # 3. Define the volumes
       volumes:
-        - name: mcp-hub-policies
+        - name: api-server-policies
           emptyDir: {}
-        - name: mcp-hub-zpu-cert
+        - name: api-zpu-cert
           secret:
-            secretName: mcp-hub-zpu-cert
+            secretName: api-zpu-cert
             defaultMode: 0400
 EOF
 )"
 ```
 
-## Update the MCP Service to Point to the Proxy
+## Update the MCP Target Port to Proxy
 
-We have a service `k8s-doc-server` that watches the `k8s-doc-server` server right now, with selector: `Selector: app=k8s-doc-server`:
+We have a service `mcp` that watches the `mcp` server right now, with selector: `Selector: app=mcp`:
 
 ```sh
-kubectl describe svc k8s-doc-server -n mcp-hub
+kubectl describe svc mcp -n api
 ```
 
-We are going to change the service `k8s-doc-server` to watch the authorization proxy instead, but with the same port and name:
+We are going to change the service `mcp` to watch `mcp-authorization-proxy` instead, but with the same port and name:
 
 ```sh
-kubectl delete svc k8s-doc-server -n mcp-hub
-kubectl expose deploy k8s-doc-server -n mcp-hub --port 8081 --target-port 8082 --name k8s-doc-server
+kubectl delete svc mcp -n api
+kubectl expose deploy mcp -n api --port 8081 --target-port 8082
 ```
 
 ## Verify
@@ -135,7 +119,7 @@ It will fail with an error similar to the following:
 
 ![12_open_webui_says_no_permission_against_mcp_server](./assets/12_open_webui_says_no_permission_against_mcp_server.png)
 
-This happens because the Authorization Proxy server we just configured requires the `access` action on the `mcp-hub:k8s-doc-server` resource, which we haven't granted yet. This permission check is illustrated in the architecture diagram below:
+This happens because the Authorization Proxy server we just configured requires the `access` action on the `api:mcp` resource, which we haven't granted yet. This permission check is illustrated in the architecture diagram below:
 
 ![12_failed_to_go_through_authorization_server](./assets/12_failed_to_go_through_authorization_server.png)
 
@@ -143,49 +127,49 @@ This happens because the Authorization Proxy server we just configured requires 
 
 To authorize access to the authorization server, our identity service (`human.idjag-learner`) must have the following permissions:
 
-- resource: `k8s-doc-server` on domain `mcp-hub`
+- resource: `mcp` on domain `api`
 - action: `access`
 
-Since we haven't prepared any roles or policies yet, let's create an explicit role named `mcp-accessor` and attach an access policy for the `k8s-doc-server` resource.
+Since we haven't prepared any roles or policies yet, let's create an explicit role named `mcp-accessor` and attach an access policy for the `mcp` resource.
 
 ```sh
-./tools/athenz/create-role.sh "mcp-hub" "mcp-accessor"
+./tools/athenz/create-role.sh "api" "mcp-accessor"
 ```
 
 Next, attach the policy to the role:
 
 ```sh
-./tools/athenz/add-policy.sh "mcp-hub" "mcp-accessor" "access" "k8s-doc-server"
+./tools/athenz/add-policy.sh "api" "mcp-accessor" "access" "mcp"
 ```
 
 Finally, add you `human.idjag-learner` principal to the role:
 
 ```sh
-./tools/athenz/add-role-member.sh "mcp-hub" "mcp-accessor" "human.idjag-learner"
+./tools/athenz/add-role-member.sh "api" "mcp-accessor" "human.idjag-learner"
 ```
 
 ## Fetch a New Access Token for the New Role
 
 Now, let's generate a new Access Token containing both scopes (space-separated values):
 
-- `mcp-hub:role.mcp-accessor`: to access the MCP Authorization Server
+- `api:role.mcp-accessor`: to access the MCP Authorization Server
 - `api:role.docs-getter`: to access `get /docs` endpoint
 
 ```sh
-_scope="mcp-hub:role.mcp-accessor api:role.docs-getter"
+_scope="api:role.mcp-accessor api:role.docs-getter"
 _my_access_token=$(./tools/athenz/fetch-access-token.sh \
   "./keys/idjag-learner.crt" \
   "./keys/idjag-learner.key" \
   "${_scope}" \
-  "./keys/mcp-hub_mcp-accessor_api_docs-getter.jwt")
+  "./keys/api_mcp-accessor_api_docs-getter.jwt")
 
-cat "./keys/mcp-hub_mcp-accessor_api_docs-getter.jwt"
+cat "./keys/api_mcp-accessor_api_docs-getter.jwt"
 ```
 
 Note that the scope now includes both roles. This is because we need an Access Token that passes both authorization layer:
 
 - Able to call `GET /api/docs` (Or `get` on `api:docs`)
-- Able to access MCP Server (Or `access` on `mcp-hub:k8s-doc-server`)
+- Able to access MCP Server (Or `access` on `api:mcp`)
 
 Check your access token with `scp` including both scopes:
 
@@ -222,7 +206,7 @@ And we successfully get the docs from the API MCP Server!
 Check the MCP server logs to see what happened:
 
 ```sh
-kubectl logs deploy/k8s-doc-server -n mcp-hub -c k8s-doc-server
+kubectl logs deploy/mcp -n api -c mcp
 ```
 
 The permission check is illustrated in the architecture diagram below:
@@ -231,7 +215,7 @@ The permission check is illustrated in the architecture diagram below:
 
 ## Review Summary of Changes
 
-First, we deployed the Authorization Proxy Server (indicated by the red dotted box), which checks for `access` to the `mcp-hub:k8s-doc-server` resource. To grant this access, we created a new `mcp-accessor` role under the `mcp-hub` domain and attached a policy matching the authorization server's requirements. As a result, the MCP server can only be accessed by an authenticated user holding an access token with the `mcp-accessor` scope—a key application of the Principle of Least Privilege.
+First, we deployed the Authorization Proxy Server (indicated by the red dotted box), which checks for `access` to the `api:mcp` resource. To grant this access, we created a new `mcp-accessor` role under the `api` domain and attached a policy matching the authorization server's requirements. As a result, the MCP server can only be accessed by an authenticated user holding an access token with the `mcp-accessor` scope—a key application of the Principle of Least Privilege.
 
 ![12_arch_architecture_of_mcp_server_with_authorization_proxy](./assets/12_arch_architecture_of_mcp_server_with_authorization_proxy.png)
 

@@ -9,16 +9,8 @@ kill-local:
 	npx kill-port $(PORT)
 
 setup-permissions:
-	$(MAKE) setup-permissions-api
-
-setup-permissions-api:
+	# ../tools/setup-permissions.sh ../tools/config/org.yaml
 	../tools/setup-permissions.sh ../tools/config/init.yaml
-
-setup-permissions-mcp-hub:
-	../tools/setup-permissions.sh ../tools/config/mcp-hub.yaml
-
-setup-permissions-org:
-	../tools/setup-permissions.sh ../tools/config/org.yaml
 
 register-client:
 	cd .. && ./tools/keycloak/create-client.sh \
