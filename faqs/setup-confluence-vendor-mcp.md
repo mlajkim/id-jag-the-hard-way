@@ -8,8 +8,11 @@ The goal of this tutorial is to connect a vendor MCP server to MCP Hub, using Co
 - [Step 2. Create ID-JAG Space](#step-2-create-id-jag-space)
 - [Step 3. Create Starter Pages](#step-3-create-starter-pages)
 - [Step 4. Create API Token](#step-4-create-api-token)
-- [Step 5. Run Vendor MCP Server](#step-5-run-vendor-mcp-server)
-- [Step 6. Register Vendor MCP in MCP Hub](#step-6-register-vendor-mcp-in-mcp-hub)
+- [Step 5. Deploy Vendor MCP Server](#step-5-deploy-vendor-mcp-server)
+  - [Deploy Confluence MCP](#deploy-confluence-mcp)
+  - [Configure Confluence Toolsets](#configure-confluence-toolsets)
+  - [Register MCP Hub Metadata](#register-mcp-hub-metadata)
+- [Step 6. Forward Confluence MCP Locally](#step-6-forward-confluence-mcp-locally)
 - [Step 7. Verify Tool Discovery](#step-7-verify-tool-discovery)
 - [Step 8. Keep SSOT Boundary Clear](#step-8-keep-ssot-boundary-clear)
 
@@ -23,7 +26,7 @@ The goal of this tutorial is to connect a vendor MCP server to MCP Hub, using Co
 - Complete the main tutorial through [MCP Server for API](../tutorials/09-mcp-server-for-api.md).
 - Have the local Kubernetes cluster and MCP Hub namespace available.
 - Have a Confluence Cloud site. The free plan is enough for a local multi-user demo.
-- Install `uv` or be ready to run the vendor MCP server another way.
+- Make sure your Kubernetes cluster can pull `ghcr.io/sooperset/mcp-atlassian:latest`.
 
 # Background
 
@@ -116,57 +119,96 @@ Go to the following page:
 https://id.atlassian.com/manage-profile/security/api-tokens
 ```
 
-Create an Atlassian API token for the Confluence Cloud user that the vendor MCP server will use.
+Create an Atlassian API token with id `id-jag-confluence-mcp`:
 
-Export the connection settings in your shell:
+![click_create_token](./assets/click_create_token.png)
+
+Get key:
+
+![store_api_token](./assets/store_api_token.png)
+
+## Step 5. Deploy Vendor MCP Server
+
+Create a Kubernetes Secret for the Confluence credentials using the values obtained above. The helper will ask you for the API token value, so go ahead and paste it when prompted:
 
 ```sh
-export CONFLUENCE_URL="https://<your-site>.atlassian.net/wiki"
-export CONFLUENCE_USERNAME="<your-email>"
-export CONFLUENCE_API_TOKEN="<your-api-token>"
+./tools/confluence/create-admin-key-secret.sh
 ```
 
-Use a dedicated test user if you want the demo to show a clean service boundary. The permissions of this Confluence user still matter because Confluence enforces its own space and page access.
+The helper prompts for the namespace, secret name, API token name, Confluence URL, username, and API token. The default API token name is `id-jag-confluence-mcp`. If you exported the `CONFLUENCE_*` values above, it uses them as defaults. Prompts with defaults use this shape: `Enter for default: xxx`.
 
-## Step 5. Run Vendor MCP Server
+### Deploy Confluence MCP
 
-Run the Atlassian MCP server with streamable HTTP on port `9000`:
+Deploy the vendor MCP server into the `mcp-hub` namespace. The upstream MCP server still serves the standard `/mcp` path on container port `9000`.
 
 ```sh
-uvx mcp-atlassian \
-  --transport streamable-http \
-  --host 127.0.0.1 \
+kubectl apply -f - <<'EOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: confluence-mcp
+  namespace: mcp-hub
+  labels:
+    app: confluence-mcp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: confluence-mcp
+  template:
+    metadata:
+      labels:
+        app: confluence-mcp
+    spec:
+      containers:
+        - name: confluence-mcp
+          image: ghcr.io/sooperset/mcp-atlassian:latest
+          args:
+            - "--transport"
+            - "streamable-http"
+            - "--stateless"
+            - "--host"
+            - "0.0.0.0"
+            - "--port"
+            - "9000"
+          envFrom:
+            - secretRef:
+                name: confluence-mcp-env
+          ports:
+            - name: http
+              containerPort: 9000
+EOF
+```
+
+Expose the deployment:
+
+```sh
+kubectl expose deploy confluence-mcp -n mcp-hub \
   --port 9000 \
-  -vv
+  --target-port 9000 \
+  --name confluence-mcp
 ```
 
-The endpoint for MCP Hub will be:
+### Configure Confluence Toolsets
 
-```text
-http://127.0.0.1:9000/mcp
-```
+`mcp-atlassian` supports both Jira and Confluence. This tutorial is Confluence-only, so set `TOOLSETS` explicitly to Confluence toolsets. This also avoids the startup warning about the default toolset behavior changing in a future `mcp-atlassian` release.
 
-Keep this process running in its own terminal.
-
-> [!IMPORTANT]
-> `127.0.0.1` only works when MCP Hub runs on the same host as this vendor MCP server. If MCP Hub runs inside Kubernetes, `127.0.0.1` means the MCP Hub pod itself, not your laptop. For in-cluster MCP Hub, deploy the vendor MCP server in the cluster or expose it through a real reachable URL.
-
-## Step 6. Register Vendor MCP in MCP Hub
-
-MCP Hub discovers catalog entries from Kubernetes deployments labeled as part of `mcp-hub`. For a locally running vendor MCP server, create a lightweight catalog marker deployment:
+Set the Confluence toolsets:
 
 ```sh
-kubectl create namespace mcp-hub --dry-run=client -o yaml | kubectl apply -f -
-
-kubectl create deploy confluence-mcp -n mcp-hub \
-  --image=registry.k8s.io/pause:3.9 \
-  --replicas=0 \
-  --dry-run=client -o yaml | kubectl apply -f -
+kubectl set env deploy/confluence-mcp -n mcp-hub \
+  TOOLSETS=confluence_pages,confluence_comments,confluence_labels,confluence_attachments,confluence_users,confluence_analytics
 ```
 
-Label and annotate the deployment:
+### Register MCP Hub Metadata
+
+MCP Hub discovers catalog entries from Kubernetes deployments labeled as part of `mcp-hub`. Add the MCP Hub labels and annotations after the deployment exists.
+
+This annotation value assumes MCP Hub is running locally with a port-forward to the Confluence MCP service:
 
 ```sh
+_confluence_mcp_port=$(./tools/port.sh confluence-mcp)
+
 kubectl label deploy confluence-mcp -n mcp-hub \
   app.kubernetes.io/part-of=mcp-hub \
   mcp.idthw.dev/project=confluence-cloud \
@@ -175,26 +217,62 @@ kubectl label deploy confluence-mcp -n mcp-hub \
 kubectl annotate deploy confluence-mcp -n mcp-hub \
   mcp.idthw.dev/alias="Confluence MCP" \
   mcp.idthw.dev/description="Vendor MCP server backed by Confluence Cloud" \
-  mcp.idthw.dev/public-url="http://127.0.0.1:9000/mcp" \
+  mcp.idthw.dev/public-url="http://127.0.0.1:${_confluence_mcp_port}/mcp" \
   mcp.idthw.dev/transport="streamable-http" \
   --overwrite
 ```
 
-This does not deploy Confluence or the vendor MCP server into Kubernetes. It only registers the MCP endpoint in MCP Hub's Kubernetes-backed catalog.
+If MCP Hub is running inside Kubernetes instead of through `make -C mcp_hub local`, use the in-cluster service DNS name instead:
+
+```sh
+kubectl annotate deploy confluence-mcp -n mcp-hub \
+  mcp.idthw.dev/public-url="http://confluence-mcp.mcp-hub:9000/mcp" \
+  --overwrite
+```
+
+Wait for it to become ready:
+
+```sh
+kubectl -n mcp-hub rollout status deploy/confluence-mcp
+```
+
+If the logs mention `Excluding Jira tool ... Jira configuration/authentication is incomplete`, that is expected for this tutorial. The `mcp-atlassian` server supports both Jira and Confluence, but this setup only provides Confluence credentials. A successful `tools/list` response should still include Confluence tools.
+
+> [!IMPORTANT]
+> The vendor MCP server is now running inside Kubernetes. For local MCP Hub development, the local `confluence-mcp` port defaults to `24444` and forwards to the in-cluster service port `9000`.
+
+## Step 6. Forward Confluence MCP Locally
+
+For the local MCP Hub dev server, forward the in-cluster Confluence MCP service to your laptop:
+
+```sh
+_confluence_mcp_port=$(./tools/port.sh confluence-mcp)
+kubectl -n mcp-hub port-forward svc/confluence-mcp "${_confluence_mcp_port}:9000"
+```
+
+If `svc/confluence-mcp` is missing, expose the deployment from Step 5:
+
+```sh
+kubectl expose deploy confluence-mcp -n mcp-hub \
+  --port 9000 \
+  --target-port 9000 \
+  --name confluence-mcp
+```
+
+If MCP Hub is running inside Kubernetes, skip the local port-forward and use the in-cluster `mcp.idthw.dev/public-url` annotation from Step 5.
 
 ## Step 7. Verify Tool Discovery
 
 Start MCP Hub locally if it is not already running:
 
 ```sh
-cd mcp_hub
-npm run dev
+make -C mcp_hub local
 ```
 
 Open the MCP Hub catalog and select `Confluence MCP`. The Tools page should call:
 
 ```text
-http://127.0.0.1:9000/mcp
+http://127.0.0.1:24444/mcp
 ```
 
 Expected tools depend on the vendor MCP server version, but they should be Confluence-shaped, such as:
@@ -211,15 +289,22 @@ If the page shows a fetch error, check these in order:
 1. The vendor MCP server is still running.
 2. The annotation is exactly `mcp.idthw.dev/public-url`.
 3. The URL ends with `/mcp`, or is an origin that MCP Hub can normalize to `/mcp`.
-4. MCP Hub is running on the same host as `127.0.0.1:9000`.
-5. The vendor MCP server supports direct `tools/list` over streamable HTTP.
+4. If MCP Hub is running locally, `kubectl -n mcp-hub port-forward svc/confluence-mcp "$(./tools/port.sh confluence-mcp):9000"` is still running.
+5. If MCP Hub is running inside Kubernetes, `mcp.idthw.dev/public-url` uses `http://confluence-mcp.mcp-hub:9000/mcp`.
+6. The vendor MCP server supports direct `tools/list` over streamable HTTP.
 
 ## Step 8. Keep SSOT Boundary Clear
 
 For now, MCP Hub is the SSOT for the MCP server endpoint and live tool discovery:
 
 ```yaml
-mcp.idthw.dev/public-url: "http://127.0.0.1:9000/mcp"
+mcp.idthw.dev/public-url: "http://127.0.0.1:24444/mcp"
+```
+
+For in-cluster MCP Hub, use:
+
+```yaml
+mcp.idthw.dev/public-url: "http://confluence-mcp.mcp-hub:9000/mcp"
 ```
 
 Do not make the AI client guess vendor MCP URLs. The AI client should look at MCP Hub-managed MCP servers.
