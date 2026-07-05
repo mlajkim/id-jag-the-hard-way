@@ -4,6 +4,7 @@ export type McpServer = {
   alias?: string
   description: string
   project: string
+  publicUrl?: string
   totalToolCalls: string
   iconSrc?: string
   logoText: string

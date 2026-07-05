@@ -25,7 +25,7 @@ export default async function McpServerClientConfigurationRoute({
   if (!server) notFound()
 
   const displayName = server.alias ?? server.name
-  const mcpServerUrl = resolveMcpDisplayUrl()
+  const mcpServerUrl = resolveMcpDisplayUrl(server)
 
   return (
     <ConsoleTemplate>

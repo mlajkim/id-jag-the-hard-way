@@ -13,6 +13,7 @@ const ANNOTATION_DESCRIPTION = "mcp.idthw.dev/description"
 const ANNOTATION_ICON = "mcp.idthw.dev/icon"
 const ANNOTATION_PROJECT = "mcp.idthw.dev/project"
 const ANNOTATION_ALIAS = "mcp.idthw.dev/alias"
+const ANNOTATION_PUBLIC_URL = "mcp.idthw.dev/public-url"
 const LEGACY_ANNOTATION_SERVER = "mcp.idthw.dev/server"
 const LABEL_PROJECT = "mcp.idthw.dev/project"
 const LABEL_ALIAS = "mcp.idthw.dev/alias"
@@ -104,6 +105,7 @@ function deploymentToMcpServer(deployment: Deployment): McpServer | null {
     alias,
     description: annotations[ANNOTATION_DESCRIPTION] ?? `The MCP server for ${displayName}`,
     project,
+    publicUrl: annotations[ANNOTATION_PUBLIC_URL],
     totalToolCalls: "N/A",
     iconSrc: annotations[ANNOTATION_ICON] ?? iconForServer(displayName),
     logoText: initialsFor(displayName),

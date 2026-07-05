@@ -2,8 +2,8 @@ import type { McpServer } from "@/features/catalog/types/catalog"
 import type { McpTool, McpToolsResult } from "@/features/catalog/types/tools"
 
 const DEFAULT_NAMESPACE = process.env.MCP_HUB_K8S_NAMESPACE ?? "mcp-hub"
-const DEFAULT_LOCAL_MCP_URL = process.env.MCP_HUB_LOCAL_MCP_URL ?? "http://127.0.0.1:18081/mcp"
-const DEFAULT_IN_CLUSTER_MCP_URL = process.env.MCP_HUB_IN_CLUSTER_MCP_URL ?? `http://mcp.${DEFAULT_NAMESPACE}:8081/mcp`
+const DEFAULT_LOCAL_MCP_URL = process.env.MCP_HUB_LOCAL_MCP_URL ?? "http://127.0.0.1:24443/mcp"
+const DEFAULT_IN_CLUSTER_MCP_URL = process.env.MCP_HUB_IN_CLUSTER_MCP_URL ?? `http://api-mcp.${DEFAULT_NAMESPACE}:8081/mcp`
 
 type JsonRpcToolsListResponse = {
   jsonrpc?: string
@@ -51,8 +51,8 @@ export async function listLiveMcpTools(server: McpServer): Promise<McpToolsResul
   }
 }
 
-export function resolveMcpDisplayUrl() {
-  return process.env.MCP_HUB_PUBLIC_MCP_URL ?? DEFAULT_IN_CLUSTER_MCP_URL
+export function resolveMcpDisplayUrl(server?: McpServer) {
+  return normalizeMcpEndpoint(server?.publicUrl ?? process.env.MCP_HUB_PUBLIC_MCP_URL ?? DEFAULT_LOCAL_MCP_URL)
 }
 
 function resolveMcpToolsEndpoint(server: McpServer) {
@@ -64,9 +64,32 @@ function resolveMcpToolsEndpoint(server: McpServer) {
       .replaceAll("{namespace}", encodeURIComponent(DEFAULT_NAMESPACE))
   }
 
+  if (server.publicUrl) {
+    return normalizeMcpEndpoint(server.publicUrl)
+  }
+
+  if (process.env.MCP_HUB_PUBLIC_MCP_URL) {
+    return normalizeMcpEndpoint(process.env.MCP_HUB_PUBLIC_MCP_URL)
+  }
+
   if (process.env.KUBERNETES_SERVICE_HOST) {
     return DEFAULT_IN_CLUSTER_MCP_URL
   }
 
   return DEFAULT_LOCAL_MCP_URL
+}
+
+function normalizeMcpEndpoint(value: string) {
+  const raw = value.trim()
+  const withProtocol = /^https?:\/\//.test(raw) ? raw : `http://${raw}`
+
+  try {
+    const url = new URL(withProtocol)
+    if (url.pathname === "" || url.pathname === "/") {
+      url.pathname = "/mcp"
+    }
+    return url.toString()
+  } catch {
+    return raw
+  }
 }
