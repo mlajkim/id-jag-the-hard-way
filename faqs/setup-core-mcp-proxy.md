@@ -1,8 +1,8 @@
-# Goal
+# Setup Core MCP Proxy
 
-The goal of this FAQ is to define the first shape of `core-mcp-proxy`.
+The goal of this tutorial is to deploy `core-mcp-proxy` as the central MCP routing proxy in the `mcp-hub` namespace.
 
-`core-mcp-proxy` is a central MCP routing proxy in the `mcp-hub` namespace. For now, it should not be a new database or SSOT. It should read the same Kubernetes-backed MCP registry that MCP Hub already uses, then expose stable proxy routes.
+For now, `core-mcp-proxy` should not be a new database or SSOT. It should read the same Kubernetes-backed MCP registry that MCP Hub already uses, then expose stable proxy routes.
 
 ```text
 AI client
@@ -15,7 +15,7 @@ AI client
 - [What should be the SSOT?](#what-should-be-the-ssot)
 - [What should the proxy do first?](#what-should-the-proxy-do-first)
 - [Kubernetes RBAC](#kubernetes-rbac)
-- [Build Local Image](#build-local-image)
+- [Use the GHCR Image](#use-the-ghcr-image)
 - [Deploy the Proxy](#deploy-the-proxy)
 - [Route Shape](#route-shape)
 - [What should wait?](#what-should-wait)
@@ -117,13 +117,15 @@ EOF
 # rolebinding.rbac.authorization.k8s.io/core-mcp-proxy-reader created
 ```
 
-## Build Local Image
+## Use the GHCR Image
 
-Build the local image and load it into the Kind cluster:
+The normal tutorial path should use the published GHCR image:
 
-```sh
-make -C core_mcp_proxy push-local-image-kind
+```text
+ghcr.io/mlajkim/core-mcp-proxy:latest
 ```
+
+The image is built by GitHub Actions from `core_mcp_proxy/`. After a change lands on `main`, the workflow publishes the `latest` tag.
 
 ## Deploy the Proxy
 
@@ -152,8 +154,8 @@ spec:
       serviceAccountName: core-mcp-proxy
       containers:
         - name: core-mcp-proxy
-          image: core-mcp-proxy:dev
-          imagePullPolicy: IfNotPresent
+          image: ghcr.io/mlajkim/core-mcp-proxy:latest
+          imagePullPolicy: Always
           env:
             - name: MCP_HUB_NAMESPACE
               value: mcp-hub
@@ -165,13 +167,19 @@ spec:
 EOF
 ```
 
-Expose the deployment:
+Create the Kubernetes Service:
 
 ```sh
 kubectl expose deploy core-mcp-proxy -n mcp-hub \
   --port 8080 \
   --target-port 8080 \
   --name core-mcp-proxy
+```
+
+Expose the Service locally with the shared port-forward helper. It uses the configured `core-mcp-proxy` port from `tools/config.yaml`, which defaults to `24442`:
+
+```sh
+./tools/keep-k8s-port-forward.sh
 ```
 
 ## Route Shape
@@ -184,15 +192,32 @@ http://core-mcp-proxy.mcp-hub:8080/mcp/{id}
 
 For local development, MCP Hub can show proxy URLs:
 
-```text
-http://127.0.0.1:24442/mcp/confluence-mcp
+```sh
+_core_mcp_proxy_port=$(./tools/port.sh core-mcp-proxy)
+echo "http://127.0.0.1:${_core_mcp_proxy_port}/mcp/api-mcp"
+echo "http://127.0.0.1:${_core_mcp_proxy_port}/mcp/confluence-mcp"
 ```
 
-At that point, the metadata can look like:
+At that point, the K8s Docs Server metadata can look like:
 
-```text
-mcp.idthw.dev/public-url=http://127.0.0.1:24442/mcp/confluence-mcp
-mcp.idthw.dev/upstream-url=http://confluence-mcp.mcp-hub:9000/mcp
+```sh
+_core_mcp_proxy_port=$(./tools/port.sh core-mcp-proxy)
+
+kubectl annotate deploy api-mcp -n mcp-hub \
+  mcp.idthw.dev/public-url="http://127.0.0.1:${_core_mcp_proxy_port}/mcp/api-mcp" \
+  mcp.idthw.dev/upstream-url="http://api-mcp.mcp-hub:8081/mcp" \
+  --overwrite
+```
+
+The Confluence metadata can look like:
+
+```sh
+_core_mcp_proxy_port=$(./tools/port.sh core-mcp-proxy)
+
+kubectl annotate deploy confluence-mcp -n mcp-hub \
+  mcp.idthw.dev/public-url="http://127.0.0.1:${_core_mcp_proxy_port}/mcp/confluence-mcp" \
+  mcp.idthw.dev/upstream-url="http://confluence-mcp.mcp-hub:9000/mcp" \
+  --overwrite
 ```
 
 ## What should wait?

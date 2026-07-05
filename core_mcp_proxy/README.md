@@ -19,13 +19,13 @@ For each deployment, it uses `mcp.idthw.dev/upstream-url` when present. Otherwis
 http://<same-name-service>.<namespace>:<service-port>/mcp
 ```
 
-## Local Image
+## Image
 
-```sh
-make push-local-image-kind
+GitHub Actions publishes:
+
+```text
+ghcr.io/mlajkim/core-mcp-proxy:latest
 ```
-
-This builds `core-mcp-proxy:dev` and loads it into the local Kind cluster.
 
 ## Runtime
 

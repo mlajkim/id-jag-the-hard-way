@@ -9,7 +9,7 @@
 - [Setup Tutorials](#setup-tutorials)
   - [Run MCP Hub](#run-mcp-hub)
   - [Confluence Vendor MCP Server](#confluence-vendor-mcp-server)
-  - [Core MCP Proxy](#core-mcp-proxy)
+  - [Setup Core MCP Proxy](#setup-core-mcp-proxy)
 - [Governance](#governance)
   - [What should we do if Resource Server](#what-should-we-do-if-resource-server)
   - [Can I simply make MCP pass down the received AT to the API Server?](#can-i-simply-make-mcp-pass-down-the-received-at-to-the-api-server)
@@ -80,9 +80,9 @@ See [Run MCP Hub](./run-mcp-hub.md).
 
 See [Setup Confluence Vendor MCP Server](./setup-confluence-vendor-mcp.md).
 
-## Core MCP Proxy
+## Setup Core MCP Proxy
 
-See [Core MCP Proxy](./core-mcp-proxy.md).
+See [Setup Core MCP Proxy](./setup-core-mcp-proxy.md).
 
 # Governance
 

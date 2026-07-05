@@ -24,7 +24,7 @@ The goal of this tutorial is to connect a vendor MCP server to MCP Hub, using Co
 
 - Complete the main tutorial through [MCP Server for API](../tutorials/09-mcp-server-for-api.md).
 - Have the local Kubernetes cluster and MCP Hub namespace available.
-- Complete [Core MCP Proxy](./core-mcp-proxy.md) if you want MCP Hub to show proxied `/mcp/{id}` URLs.
+- Complete [Setup Core MCP Proxy](./setup-core-mcp-proxy.md).
 - Have a Confluence Cloud site. The free plan is enough for a local multi-user demo.
 - Make sure your Kubernetes cluster can pull `ghcr.io/sooperset/mcp-atlassian:latest`.
 
@@ -212,7 +212,7 @@ If the logs mention `Excluding Jira tool ... Jira configuration/authentication i
 
 MCP Hub discovers catalog entries from Kubernetes deployments labeled as part of `mcp-hub`. Add the MCP Hub labels and annotations after the deployment exists.
 
-This annotation value assumes MCP Hub is running locally and `core-mcp-proxy` is exposed on local port `24442`.
+This annotation value assumes MCP Hub is running locally and `core-mcp-proxy` is exposed on the configured local port. The default is `24442`, but use `port.sh` so local overrides keep working.
 
 ```sh
 _core_mcp_proxy_port=$(./tools/port.sh core-mcp-proxy)
@@ -241,7 +241,7 @@ kubectl annotate deploy confluence-mcp -n mcp-hub \
 ```
 
 > [!IMPORTANT]
-> The vendor MCP server is now running inside Kubernetes. For local MCP Hub development, MCP Hub should use `core-mcp-proxy` on local port `24442`.
+> The vendor MCP server is now running inside Kubernetes. For local MCP Hub development, MCP Hub should use `core-mcp-proxy` on the port returned by `./tools/port.sh core-mcp-proxy`.
 
 ## Step 6. Get MCP Client Settings from MCP Hub
 
@@ -261,8 +261,9 @@ Copy either the MCP server URL or the JSON block for your client, such as Codex 
 
 The MCP Hub page should show:
 
-```text
-http://127.0.0.1:24442/mcp/confluence-mcp
+```sh
+_core_mcp_proxy_port=$(./tools/port.sh core-mcp-proxy)
+echo "http://127.0.0.1:${_core_mcp_proxy_port}/mcp/confluence-mcp"
 ```
 
 Use the settings from MCP Hub instead of manually reconstructing the client config. Once the client has this MCP server entry, it can talk to the Confluence MCP server.
