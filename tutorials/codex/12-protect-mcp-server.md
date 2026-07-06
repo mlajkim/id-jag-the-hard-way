@@ -46,6 +46,10 @@ EOF
 )"
 ```
 
+```sh
+# deployment.apps/mcp patched
+```
+
 Attach the ZPU sidecar so the proxy can evaluate policies locally:
 
 ```sh
@@ -86,11 +90,20 @@ EOF
 )"
 ```
 
+```sh
+# deployment.apps/mcp patched
+```
+
 ## Update the MCP Service to Point to the Proxy
 
 ```sh
 kubectl delete svc mcp -n api
 kubectl expose deploy mcp -n api --port 8081 --target-port 8082 --name mcp
+```
+
+```sh
+# service "mcp" deleted
+# service/mcp exposed
 ```
 
 ## Verify (Expected Failure)
@@ -117,6 +130,15 @@ Create the `mcp-accessor` role and attach the required policy:
 ./tools/athenz/add-role-member.sh "api" "mcp-accessor" "human.idjag-learner"
 ```
 
+```sh
+#   ·  Creating Role: api:role.mcp-accessor...
+#   ✔  Role created: api:role.mcp-accessor
+#   ·  Creating Policy: api:policy.mcp-accessor_access_mcp...
+#   ✔  Policy created: api:policy.mcp-accessor_access_mcp
+#   ·  Adding Member human.idjag-learner to Role: api:role.mcp-accessor...
+#   ✔  human.idjag-learner  →  api:role.mcp-accessor
+```
+
 ## Fetch a New Access Token for the New Role
 
 The Access Token must now include both scopes - one to pass through the MCP proxy, and one to call the API server:
@@ -128,6 +150,12 @@ _scope="api:role.mcp-accessor api:role.docs-getter"
   "./keys/idjag-learner.key" \
   "${_scope}" \
   "./keys/idjag-learner.jwt"
+```
+
+```sh
+#   ·  Fetching Access Token for scope: api:role.mcp-accessor api:role.docs-getter...
+#   ✔  Access token issued for scope: api:role.mcp-accessor api:role.docs-getter
+#   ✔  Token saved to: ./keys/idjag-learner.jwt
 ```
 
 ## Update .codex/config.toml with the New Token

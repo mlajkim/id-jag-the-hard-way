@@ -33,6 +33,12 @@ _scope="api:role.docs-getter"
   "./keys/idjag-learner.jwt"
 ```
 
+```sh
+#   ·  Fetching Access Token for scope: api:role.docs-getter...
+#   ✔  Access token issued for scope: api:role.docs-getter
+#   ✔  Token saved to: ./keys/idjag-learner.jwt
+```
+
 Update `.mcp.json` with the fresh token:
 
 ```sh
@@ -64,11 +70,23 @@ Create the `token-exchanging-mcp` role:
 ./tools/athenz/create-role.sh "api" "token-exchanging-mcp"
 ```
 
+```sh
+#   ·  Creating Role: api:role.token-exchanging-mcp...
+#   ✔  Role created: api:role.token-exchanging-mcp
+```
+
 In Athenz, you must explicitly define both the source and the target of the exchange. Add both policies:
 
 ```sh
 ./tools/athenz/add-policy.sh "api" "token-exchanging-mcp" "zts.token_source_exchange" "api"
 ./tools/athenz/add-policy.sh "api" "token-exchanging-mcp" "zts.token_target_exchange" "api:role.docs-getter"
+```
+
+```sh
+#   ·  Creating Policy: api:policy.token-exchanging-mcp_zts_token_source_exchange_api...
+#   ✔  Policy created: api:policy.token-exchanging-mcp_zts_token_source_exchange_api
+#   ·  Creating Policy: api:policy.token-exchanging-mcp_zts_token_target_exchange_api_role_docs-getter...
+#   ✔  Policy created: api:policy.token-exchanging-mcp_zts_token_target_exchange_api_role_docs-getter
 ```
 
 > [!NOTE]
@@ -78,6 +96,11 @@ Add the `api.api-mcp` service principal as a member of this role:
 
 ```sh
 ./tools/athenz/add-role-member.sh "api" "token-exchanging-mcp" "api.api-mcp"
+```
+
+```sh
+#   ·  Adding Member api.api-mcp to Role: api:role.token-exchanging-mcp...
+#   ✔  api.api-mcp  →  api:role.token-exchanging-mcp
 ```
 
 ## Verify

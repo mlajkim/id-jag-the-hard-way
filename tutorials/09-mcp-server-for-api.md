@@ -67,16 +67,29 @@ kubectl create deploy mcp -n api \
   --image=ghcr.io/mlajkim/mcp:latest
 ```
 
+```sh
+# deployment.apps/mcp created
+```
+
 Expose the deployment:
 
 ```sh
 kubectl expose deploy mcp -n api --port 8081 --name mcp
 ```
 
+```sh
+# service/mcp exposed
+```
+
 Wait for the container to be ready:
 
 ```sh
 kubectl rollout status deploy/mcp -n api
+```
+
+```sh
+# Waiting for deployment "mcp" rollout to finish: 0 of 1 updated replicas are available...
+# deployment "mcp" successfully rolled out
 ```
 
 > [!NOTE]
@@ -120,6 +133,10 @@ spec:
             secretName: api-mcp-cert
 EOF
 )"
+```
+
+```sh
+# deployment.apps/mcp patched
 ```
 
 Wait for the rollout to complete:
