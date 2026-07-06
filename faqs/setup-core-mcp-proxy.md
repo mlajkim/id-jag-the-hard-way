@@ -14,6 +14,7 @@ AI client
 
 - [What should be the SSOT?](#what-should-be-the-ssot)
 - [What should the proxy do first?](#what-should-the-proxy-do-first)
+- [Create MCP Hub Namespace](#create-mcp-hub-namespace)
 - [Kubernetes RBAC](#kubernetes-rbac)
 - [Use the GHCR Image](#use-the-ghcr-image)
 - [Deploy the Proxy](#deploy-the-proxy)
@@ -68,6 +69,18 @@ For example:
 ```
 
 This is not one giant merged tool list yet. It is a stable fan-in route namespace.
+
+## Create MCP Hub Namespace
+
+`core-mcp-proxy` is part of MCP Hub infrastructure, so deploy it in the `mcp-hub` namespace:
+
+```sh
+kubectl create namespace mcp-hub --dry-run=client -o yaml | kubectl apply -f -
+```
+
+```sh
+# namespace/mcp-hub created
+```
 
 ## Kubernetes RBAC
 
