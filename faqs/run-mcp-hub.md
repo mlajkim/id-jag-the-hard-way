@@ -5,7 +5,7 @@ The goal of this FAQ is to run MCP Hub locally.
 <!-- TOC depthFrom:2 depthTo:3 -->
 
 - [Step 1. Run MCP Hub](#step-1-run-mcp-hub)
-- [Step 2. Open MCP Hub](#step-2-open-mcp-hub)
+- [Import K8s API Docs Server](#import-k8s-api-docs-server)
 
 <!-- /TOC -->
 
@@ -14,12 +14,6 @@ The goal of this FAQ is to run MCP Hub locally.
 - Have the local Kubernetes cluster configured for this repo.
 - Have `kubectl` pointed at that cluster.
 - Have Node.js and npm available.
-- Have at least one MCP server deployment registered in the `mcp-hub` namespace.
-- If you want the Tools page to load live tools from an MCP server, have that MCP service reachable from your laptop:
-
-```sh
-kubectl -n mcp-hub port-forward svc/example-mcp 24443:8081
-```
 
 # Steps
 
@@ -28,35 +22,33 @@ kubectl -n mcp-hub port-forward svc/example-mcp 24443:8081
 From the repository root:
 
 ```sh
-make -C mcp_hub local
+make -C mcp_hub local PORT=3102 OPEN_UI=true
 ```
 
-This runs:
+## Import K8s API Docs Server
+
+MCP Hub discovers servers from Kubernetes labels and annotations. Add the MCP Hub metadata to the existing `mcp` deployment in the `api` namespace:
 
 ```sh
-npm install
-npm run dev -- --port 3102
-```
+_core_mcp_proxy_port=$(./tools/port.sh mcp)
 
-To use a different port:
+kubectl label deploy mcp -n api \
+  app.kubernetes.io/part-of=mcp-hub \
+  mcp.idthw.dev/project=k8s-docs-server \
+  --overwrite
+
+kubectl annotate deploy mcp -n api \
+  mcp.idthw.dev/alias="K8s API Docs Server" \
+  mcp.idthw.dev/description="MCP server for Kubernetes API docs used by ID-JAG tutorials" \
+  mcp.idthw.dev/public-url="http://127.0.0.1:${_core_mcp_proxy_port}" \
+  mcp.idthw.dev/upstream-url="http://mcp.api:8081/mcp" \
+  mcp.idthw.dev/transport="streamable-http" \
+  --overwrite
+```
 
 ```sh
-make -C mcp_hub local PORT=3103
+# deployment.apps/mcp labeled
+# deployment.apps/mcp annotated
 ```
 
-## Step 2. Open MCP Hub
-
-Open:
-
-```text
-http://localhost:3102
-```
-
-MCP Hub reads MCP server catalog entries from matching Kubernetes deployments across all namespaces. For local development, it uses your current `kubectl` context.
-
-If the catalog is empty, make sure the MCP server deployment has the required label:
-
-```sh
-kubectl get deploy --all-namespaces \
-  -l app.kubernetes.io/part-of=mcp-hub
-```
+Refresh MCP Hub. The tutorial has been finished.

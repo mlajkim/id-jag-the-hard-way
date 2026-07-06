@@ -6,6 +6,25 @@ This tutorial walks you through building an ID-JAG-based AI agent authorization 
 
 [![Start Tutorial](./assets/start-tutorial-glow.svg)](./tutorials/01-working-directory.md)
 
+## Complete Tutorial
+
+1. [Working Directory](./tutorials/01-working-directory.md)
+2. [Prerequisites](./tutorials/02-prerequisites.md)
+3. [Kubernetes Cluster](./tutorials/03-kubernetes-cluster.md)
+4. [API Server](./tutorials/04-api-server.md)
+5. [Authorization Server](./tutorials/05-authorization-server.md)
+6. [ZPU Server](./tutorials/06-zpu-server.md)
+7. [Athenz Access Token](./tutorials/07-athenz-access-token.md)
+8. [Granular Permission](./tutorials/08-granular-permission.md)
+9. [MCP Server for API](./tutorials/09-mcp-server-for-api.md)
+10. [AI Agent: Claude](./tutorials/10-ai-agent.md)
+11. [Token Exchange](./tutorials/11-token-exchange.md)
+12. [Protect MCP Server](./tutorials/12-protect-mcp-server.md)
+13. [Identity Provider](./tutorials/13-identity-provider.md)
+14. [Trusted Identity Provider](./tutorials/14-trusted-identity-provider.md)
+15. [AI Client Gateway](./tutorials/15-ai-client-gateway.md)
+16. [ID-JAG](./tutorials/16-id-jag.md)
+
 ## What You Will Get
 
 By the end of this tutorial, you will have a fully functional local flow (like the demo below)
