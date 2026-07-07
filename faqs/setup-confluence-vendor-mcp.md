@@ -275,6 +275,16 @@ echo "http://127.0.0.1:${_core_mcp_proxy_port}/mcp/confluence-mcp"
 
 Use the settings from MCP Hub instead of manually reconstructing the client config. Once the client has this MCP server entry, it can talk to the Confluence MCP server.
 
+Open the Confluence MCP tools page to verify MCP Hub can load the live tool list:
+
+```sh
+./tools/open.sh "http://localhost:3102/k8s-docs-server/mcp-hub/catalog/mcp-hub%3Aconfluence-mcp/tools"
+```
+
+The page should show the Confluence tools returned by `tools/list`:
+
+![confluence_mcp_tools_page](./assets/confluence_mcp_tools_page.png)
+
 ## Step 7. Verify from the MCP Client
 
 Open the Confluence MCP client configuration page if it is not already open:
