@@ -52,6 +52,8 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+info "Exchanging access token for scope: ${scope}..." >&2
+
 curl_args=(
   -sS
   -X POST "${zts_url}"
@@ -80,16 +82,25 @@ if [ -n "${actor}" ]; then
 fi
 
 response=$(curl "${curl_args[@]}")
+token=$(echo "${response}" | jq -r '.access_token // empty')
 
 if [ "${token_only}" = "true" ]; then
-  token=$(echo "${response}" | jq -r '.access_token // empty')
   if [ -z "${token}" ]; then
     err "Access token was not returned. ZTS response:" >&2
     echo "${response}" | jq . >&2
     fatal "Access token exchange failed for scope: ${scope}"
   fi
+  ok "Access token exchanged for scope: ${scope}" >&2
+  echo "${token}" | jq -R 'split(".") | .[0] | @base64d | fromjson' >&2
+  echo "${token}" | jq -R 'split(".") | .[1] | @base64d | fromjson' >&2
   echo "${token}"
   exit 0
 fi
 
-echo "${response}"
+if [ -n "${token}" ]; then
+  ok "Access token exchanged for scope: ${scope}" >&2
+  echo "${token}" | jq -R 'split(".") | .[0] | @base64d | fromjson' >&2
+  echo "${token}" | jq -R 'split(".") | .[1] | @base64d | fromjson' >&2
+fi
+
+echo "${response}" | jq .
