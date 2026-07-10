@@ -7,15 +7,16 @@ The goal of this document is to model a full ID-JAG delegated exchange chain fro
 - [Setup 1. Create the mcp-hub access and JAG exchange roles](#setup-1-create-the-mcp-hub-access-and-jag-exchange-roles)
 - [Setup 2. Create the mcp-hub service identity](#setup-2-create-the-mcp-hub-service-identity)
 - [Setup 3. Allow mcp-hub to use api tokens as exchange input](#setup-3-allow-mcp-hub-to-use-api-tokens-as-exchange-input)
-- [Setup 4. Allow mcp-hub to exchange into mcp-accessor](#setup-4-allow-mcp-hub-to-exchange-into-mcp-accessor)
+- [Setup 4. Allow mcp-hub to exchange into the mcp carry-forward scopes](#setup-4-allow-mcp-hub-to-exchange-into-the-mcp-carry-forward-scopes)
 - [Step 1. Fetch an id_token for the Claude service client](#step-1-fetch-an-id_token-for-the-claude-service-client)
 - [Step 2. Exchange the id_token for ID_JAG](#step-2-exchange-the-id_token-for-id_jag)
 - [Step 3. Fetch a delegated mcp-hub access token with ID_JAG](#step-3-fetch-a-delegated-mcp-hub-access-token-with-id_jag)
 - [Step 4. Fetch actor id_tokens for mcp-hub and mcp](#step-4-fetch-actor-id_tokens-for-mcp-hub-and-mcp)
 - [Step 5. Reproduce the wrong actor token failure](#step-5-reproduce-the-wrong-actor-token-failure)
 - [Step 6. Exchange from mcp-hub to mcp](#step-6-exchange-from-mcp-hub-to-mcp)
-- [Step 7. Continue with the intended mcp to API exchange](#step-7-continue-with-the-intended-mcp-to-api-exchange)
-- [Clean-up 8. Delete temporary test resources](#clean-up-8-delete-temporary-test-resources)
+- [Step 7. Capture the mcp access token](#step-7-capture-the-mcp-access-token)
+- [Step 8. Exchange from mcp to API](#step-8-exchange-from-mcp-to-api)
+- [Clean-up 9. Delete temporary test resources](#clean-up-9-delete-temporary-test-resources)
 
 <!-- /TOC -->
 
@@ -155,30 +156,36 @@ flowchart LR
 #   ✔  api.mcp-hub  →  api:role.to-api-exchanger
 ```
 
-## Setup 4. Allow mcp-hub to exchange into mcp-accessor
+## Setup 4. Allow mcp-hub to exchange into the mcp carry-forward scopes
 
-Create the matching target-exchange role for `mcp-accessor`, then attach its policy and member:
+The mcp-hub to mcp exchange must keep `docs-getter` in the intermediate token, because a later token exchange can only request scopes that are still present in the subject token. Create the matching target-exchange role for `mcp-accessor`, then add temporary `api.mcp-hub` membership to the existing tutorial-owned `docs-getter-exchanger` role:
 
 ```mermaid
 flowchart LR
   Hub["api.mcp-hub"]
-  TargetRole["api:role.mcp-accessor-exchanger"]
+  MCPRole["api:role.mcp-accessor-exchanger"]
   MCPAccessor["api:role.mcp-accessor"]
+  DocsRole["api:role.docs-getter-exchanger"]
+  DocsGetter["api:role.docs-getter"]
 
-  Hub -->|member of| TargetRole
-  TargetRole -->|zts.token_target_exchange| MCPAccessor
+  Hub -->|member of| MCPRole
+  MCPRole -->|zts.token_target_exchange| MCPAccessor
+  Hub -->|temporary member of existing role| DocsRole
+  DocsRole -->|zts.token_target_exchange| DocsGetter
 ```
 
 ```sh
 ./tools/athenz/create-role.sh api mcp-accessor-exchanger
 ./tools/athenz/add-policy.sh api mcp-accessor-exchanger zts.token_target_exchange api:role.mcp-accessor
 ./tools/athenz/add-role-member.sh api mcp-accessor-exchanger api.mcp-hub
+./tools/athenz/add-role-member.sh api docs-getter-exchanger api.mcp-hub
 ```
 
 ```sh
 #   ✔  Role created: api:role.mcp-accessor-exchanger
 #   ✔  Policy created: api:policy.mcp-accessor-exchanger_zts_token_target_exchange_api_role_mcp-accessor
 #   ✔  api.mcp-hub  →  api:role.mcp-accessor-exchanger
+#   ✔  api.mcp-hub  →  api:role.docs-getter-exchanger
 ```
 
 The final `mcp` to API hop uses the existing `docs-getter` role and the existing `api.api-mcp` exchange permissions from the base tutorial.
@@ -235,7 +242,7 @@ _id_jag=$(./tools/athenz/fetch-id-jag.sh \
 #   ·  Exchanging id_token for ID_JAG (scope: api:role.docs-getter api:role.mcp-accessor api:role.mcp-hub-accessor)...
 #   ✔  ID_JAG issued (scope: api:role.docs-getter api:role.mcp-accessor api:role.mcp-hub-accessor)
 # {
-#   "typ": "N_A",
+#   "typ": "oauth-id-jag+jwt",
 #   "alg": "RS256",
 #   ...
 # }
@@ -243,7 +250,7 @@ _id_jag=$(./tools/athenz/fetch-id-jag.sh \
 #   "sub": "human.idjag-learner",
 #   "aud": "https://athenz-zts-server.athenz:4443/zts/v1",
 #   "client_id": "human.idjag-learner.claude",
-#   "scope": "docs-getter mcp-accessor mcp-hub-accessor",
+#   "scope": "api:role.docs-getter api:role.mcp-accessor api:role.mcp-hub-accessor",
 #   ...
 # }
 ```
@@ -331,7 +338,7 @@ _mcp_actor_id_token=$(./tools/athenz/fetch-actor-token.sh \
 First, try the exchange with the wrong actor token. This intentionally fails because `_hub_at` says `may_act.sub` is `api.mcp-hub`, but this request presents the `api.api-mcp` actor token instead.
 
 ```sh
-_mcp_scope="api:role.mcp-accessor"
+_mcp_scope="api:role.docs-getter api:role.mcp-accessor"
 
 ./tools/athenz/exchange-access-token.sh \
   ./keys/api-mcp-hub.crt \
@@ -343,16 +350,18 @@ _mcp_scope="api:role.mcp-accessor"
 ```
 
 ```sh
-#   ·  Exchanging access token for scope: api:role.mcp-accessor...
+#   ·  Exchanging access token for scope: api:role.docs-getter api:role.mcp-accessor...
 # {
 #   "code": 400,
-#   "message": "..."
+#   "message": "Invalid subject token: may_act sub does not match actor token subject"
 # }
 ```
 
 ## Step 6. Exchange from mcp-hub to mcp
 
-Now perform the first delegated AT→AT exchange correctly: `api.mcp-hub` exchanges the hub token into `mcp-accessor` for `api.api-mcp`.
+Now perform the first delegated AT→AT exchange correctly: `api.mcp-hub` exchanges the hub token into the MCP carry-forward scopes for `api.api-mcp`.
+
+`docs-getter` must stay in `_mcp_scope`; otherwise the final `api.api-mcp` to API exchange cannot request `docs-getter` because Athenz restricts the requested scope to what is present in the subject token.
 
 The `--actor-token "$_mcp_hub_actor_id_token"` proves the current actor is `api.mcp-hub`, which must match the `may_act.sub` in `_hub_at`. The `--actor api.api-mcp` parameter names the next actor, so the exchanged token receives a new `may_act` claim for `api.api-mcp`.
 
@@ -367,8 +376,8 @@ The `--actor-token "$_mcp_hub_actor_id_token"` proves the current actor is `api.
 ```
 
 ```sh
-#   ·  Exchanging access token for scope: api:role.mcp-accessor...
-#   ✔  Access token exchanged for scope: api:role.mcp-accessor
+#   ·  Exchanging access token for scope: api:role.docs-getter api:role.mcp-accessor...
+#   ✔  Access token exchanged for scope: api:role.docs-getter api:role.mcp-accessor
 # {
 #   "typ": "at+jwt",
 #   "alg": "RS256",
@@ -377,6 +386,7 @@ The `--actor-token "$_mcp_hub_actor_id_token"` proves the current actor is `api.
 # {
 #   "sub": "human.idjag-learner",
 #   "scp": [
+#     "docs-getter",
 #     "mcp-accessor"
 #   ],
 #   "client_id": "api.mcp-hub",
@@ -397,7 +407,7 @@ The `--actor-token "$_mcp_hub_actor_id_token"` proves the current actor is `api.
 #   "access_token": "...",
 #   "token_type": "Bearer",
 #   "expires_in": 3600,
-#   "scope": "api:role.mcp-accessor",
+#   "scope": "api:role.docs-getter api:role.mcp-accessor",
 #   ...
 # }
 ```
@@ -405,13 +415,11 @@ The `--actor-token "$_mcp_hub_actor_id_token"` proves the current actor is `api.
 > [!NOTE]
 > Delegated AT→AT exchange with a subject token obtained via ID_JAG is covered by Athenz PR #3388 and PR #3390.
 
-## Step 7. Continue with the intended mcp to API exchange
+## Step 7. Capture the mcp access token
 
-After the mcp-hub to mcp exchange succeeds, the intended final hop is for `api.api-mcp` to exchange the MCP token into the final API role `docs-getter`:
+Capture the successful mcp-hub to mcp exchange as `_mcp_at`. This repeats the Step 6 command with `--token-only` so the variable receives only the raw exchanged token:
 
 ```sh
-_api_scope="api:role.docs-getter"
-
 _mcp_at=$(./tools/athenz/exchange-access-token.sh \
   ./keys/api-mcp-hub.crt \
   ./keys/api-mcp-hub.key \
@@ -420,6 +428,38 @@ _mcp_at=$(./tools/athenz/exchange-access-token.sh \
   --actor-token "$_mcp_hub_actor_id_token" \
   --actor api.api-mcp \
   --token-only)
+```
+
+```sh
+#   ·  Exchanging access token for scope: api:role.docs-getter api:role.mcp-accessor...
+#   ✔  Access token exchanged for scope: api:role.docs-getter api:role.mcp-accessor
+# {
+#   "typ": "at+jwt",
+#   "alg": "RS256",
+#   ...
+# }
+# {
+#   "sub": "human.idjag-learner",
+#   "scp": [
+#     "docs-getter",
+#     "mcp-accessor"
+#   ],
+#   "client_id": "api.mcp-hub",
+#   "aud": "api",
+#   "uid": "api.mcp-hub",
+#   "may_act": {
+#     "sub": "api.api-mcp"
+#   },
+#   ...
+# }
+```
+
+## Step 8. Exchange from mcp to API
+
+After `_mcp_at` is captured, the final hop is for `api.api-mcp` to exchange the MCP token into the final API role `docs-getter`. This works because `_mcp_at` still contains `docs-getter`.
+
+```sh
+_api_scope="api:role.docs-getter"
 
 ./tools/athenz/exchange-access-token.sh \
   ./keys/api-mcp.crt \
@@ -430,15 +470,53 @@ _mcp_at=$(./tools/athenz/exchange-access-token.sh \
   --actor api
 ```
 
-The command above is written with `--token-only` so `_mcp_at` receives only the raw exchanged token.
+```sh
+#   ·  Exchanging access token for scope: api:role.docs-getter...
+#   ✔  Access token exchanged for scope: api:role.docs-getter
+# {
+#   "typ": "at+jwt",
+#   "alg": "RS256",
+#   ...
+# }
+# {
+#   "sub": "human.idjag-learner",
+#   "scp": [
+#     "docs-getter"
+#   ],
+#   "client_id": "api.api-mcp",
+#   "aud": "api",
+#   "uid": "api.api-mcp",
+#   "act": {
+#     "sub": "api.api-mcp",
+#     "act": {
+#       "sub": "api.mcp-hub",
+#       "act": {
+#         "sub": "human.idjag-learner.claude"
+#       }
+#     }
+#   },
+#   "may_act": {
+#     "sub": "api"
+#   },
+#   ...
+# }
+# {
+#   "access_token": "...",
+#   "token_type": "Bearer",
+#   "expires_in": 3600,
+#   "scope": "api:role.docs-getter",
+#   ...
+# }
+```
 
-## Clean-up 8. Delete temporary test resources
+## Clean-up 9. Delete temporary test resources
 
-Delete the temporary `api.mcp-hub` service identity, remove only the temporary `api.mcp-hub` membership from the tutorial-owned `to-api-exchanger` role, and then delete the temporary roles and policies created only for this test:
+Delete the temporary `api.mcp-hub` service identity, remove only the temporary `api.mcp-hub` memberships from tutorial-owned roles, and then delete the temporary roles and policies created only for this test:
 
 ```sh
 ./tools/athenz/delete-service.sh api mcp-hub
 ./tools/athenz/delete-role-member.sh api to-api-exchanger api.mcp-hub
+./tools/athenz/delete-role-member.sh api docs-getter-exchanger api.mcp-hub
 ./tools/athenz/delete-policy.sh api mcp-hub-accessor-jag-exchanger_zts_jag_exchange_role_mcp-hub-accessor
 ./tools/athenz/delete-role.sh api mcp-hub-accessor-jag-exchanger
 ./tools/athenz/delete-policy.sh api mcp-accessor-exchanger_zts_token_target_exchange_api_role_mcp-accessor
@@ -450,6 +528,7 @@ Delete the temporary `api.mcp-hub` service identity, remove only the temporary `
 #   ·  Deleting service api.mcp-hub...
 #   ✔  Service deleted or already absent: api.mcp-hub
 #   ✔  Role member deleted or already absent: api.mcp-hub  →  api:role.to-api-exchanger
+#   ✔  Role member deleted or already absent: api.mcp-hub  →  api:role.docs-getter-exchanger
 #   ✔  Policy deleted or already absent: api:policy.mcp-hub-accessor-jag-exchanger_zts_jag_exchange_role_mcp-hub-accessor
 #   ✔  Role deleted or already absent: api:role.mcp-hub-accessor-jag-exchanger
 #   ✔  Policy deleted or already absent: api:policy.mcp-accessor-exchanger_zts_token_target_exchange_api_role_mcp-accessor
