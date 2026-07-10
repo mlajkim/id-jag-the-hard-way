@@ -38,9 +38,31 @@ This tutorial requires the following to be completed:
 
 Here is the procedure to get to the goals. The setup sections create test-only Athenz objects; the core reproduction starts at Step 1.
 
+The intended delegated path is:
+
+```text
+human.idjag-learner
+  via human.idjag-learner.claude
+    -> api.mcp-hub
+      -> api.api-mcp
+        -> api:role.docs-getter
+```
+
 ## Setup 1. Create the mcp-hub access and JAG exchange roles
 
 Create `api:role.mcp-hub-accessor` as the first-hop role for the hub. This is intentionally separate from `mcp-accessor`, which remains the role for the MCP layer.
+
+```text
+human.idjag-learner
+  -- member of -->
+api:role.mcp-hub-accessor
+
+human.idjag-learner.claude
+  -- member of -->
+api:role.mcp-hub-accessor-jag-exchanger
+  -- zts.jag_exchange on -->
+role.mcp-hub-accessor
+```
 
 ```sh
 ./tools/athenz/create-role.sh api mcp-hub-accessor
@@ -70,6 +92,15 @@ Because the ID_JAG token will request `api:role.mcp-hub-accessor`, create the ma
 
 Create the temporary `api.mcp-hub` service identity and fetch its service certificate:
 
+```text
+./keys/api-mcp-hub.key
+./keys/api-mcp-hub.public.key
+  -- registered as -->
+api.mcp-hub
+  -- ZTS certificate provider -->
+./keys/api-mcp-hub.crt
+```
+
 ```sh
 ./tools/athenz/create-private-key.sh ./keys/api-mcp-hub
 ./tools/athenz/create-service.sh api mcp-hub ./keys/api-mcp-hub.public.key
@@ -94,6 +125,14 @@ The base token-exchange tutorial already creates `api:role.to-api-exchanger` and
 
 For this research flow, add the temporary `api.mcp-hub` service as a member of that existing source-exchange role. Do not create or delete the `to-api-exchanger` role itself here; it belongs to the completed tutorial baseline.
 
+```text
+api.mcp-hub
+  -- member of existing tutorial role -->
+api:role.to-api-exchanger
+  -- already grants -->
+zts.token_source_exchange on api
+```
+
 ```sh
 ./tools/athenz/add-role-member.sh api to-api-exchanger api.mcp-hub
 ```
@@ -105,6 +144,14 @@ For this research flow, add the temporary `api.mcp-hub` service as a member of t
 ## Setup 4. Allow mcp-hub to exchange into mcp-accessor
 
 Create the matching target-exchange role for `mcp-accessor`, then attach its policy and member:
+
+```text
+api.mcp-hub
+  -- member of -->
+api:role.mcp-accessor-exchanger
+  -- zts.token_target_exchange on -->
+api:role.mcp-accessor
+```
 
 ```sh
 ./tools/athenz/create-role.sh api mcp-accessor-exchanger
