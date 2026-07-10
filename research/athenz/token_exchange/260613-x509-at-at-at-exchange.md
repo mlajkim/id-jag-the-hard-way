@@ -190,20 +190,6 @@ Add `api.mcp-hub` to the existing tutorial-owned `docs-getter-exchanger` role se
 
 The final `mcp` to API hop uses the existing `docs-getter` role and the existing `api.api-mcp` exchange permissions from the base tutorial.
 
-Before continuing, `api.mcp-hub` must be a member of all three exchange roles below. If Step 4 fails with `Principal not authorized for token exchange for the requested role`, rerun these membership commands and wait a few seconds for ZTS to observe the policy update:
-
-```sh
-./tools/athenz/add-role-member.sh api to-api-exchanger api.mcp-hub
-./tools/athenz/add-role-member.sh api docs-getter-exchanger api.mcp-hub
-./tools/athenz/add-role-member.sh api mcp-accessor-exchanger api.mcp-hub
-```
-
-```sh
-#   ✔  api.mcp-hub  →  api:role.to-api-exchanger
-#   ✔  api.mcp-hub  →  api:role.docs-getter-exchanger
-#   ✔  api.mcp-hub  →  api:role.mcp-accessor-exchanger
-```
-
 ## Step 1. Fetch a delegated mcp-hub access token with the learner certificate
 
 Use the core `human.idjag-learner` certificate to fetch the first access token directly. This is the X.509 version of the flow, so there is no Keycloak `id_token` and no ID_JAG token.
