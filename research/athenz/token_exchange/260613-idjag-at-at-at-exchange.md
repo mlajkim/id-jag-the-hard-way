@@ -1,6 +1,6 @@
 # Goal
 
-The goal of this document is to model a full ID-JAG delegated exchange chain from Claude to `mcp-hub`, then to `mcp`, then to the final API role, and reproduce the current delegated exchange failure from Athenz ZTS, with the following steps:
+The goal of this document is to model a full ID-JAG delegated exchange chain from Claude to `mcp-hub`, then to `mcp`, then to the final API role, with the following steps:
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
@@ -10,9 +10,9 @@ The goal of this document is to model a full ID-JAG delegated exchange chain fro
 - [Setup 4. Allow mcp-hub to exchange into mcp-accessor](#setup-4-allow-mcp-hub-to-exchange-into-mcp-accessor)
 - [Step 1. Fetch an id_token for the Claude service client](#step-1-fetch-an-id_token-for-the-claude-service-client)
 - [Step 2. Exchange the id_token for ID_JAG](#step-2-exchange-the-id_token-for-id_jag)
-- [Step 3. Fetch an mcp-hub access token with ID_JAG](#step-3-fetch-an-mcp-hub-access-token-with-id_jag)
+- [Step 3. Fetch a delegated mcp-hub access token with ID_JAG](#step-3-fetch-a-delegated-mcp-hub-access-token-with-id_jag)
 - [Step 4. Fetch actor id_tokens for mcp-hub and mcp](#step-4-fetch-actor-id_tokens-for-mcp-hub-and-mcp)
-- [Step 5. Reproduce the mcp-hub to mcp exchange failure](#step-5-reproduce-the-mcp-hub-to-mcp-exchange-failure)
+- [Step 5. Exchange from mcp-hub to mcp](#step-5-exchange-from-mcp-hub-to-mcp)
 - [Step 6. Continue with the intended mcp to API exchange](#step-6-continue-with-the-intended-mcp-to-api-exchange)
 - [Clean-up 7. Delete temporary test resources](#clean-up-7-delete-temporary-test-resources)
 
@@ -24,7 +24,7 @@ The goal of this document is to model a full ID-JAG delegated exchange chain fro
 | # | Date         | Confirmed Working                                                                           |
 |---|--------------|---------------------------------------------------------------------------------------------|
 | 1 | Jun 13, 2026 | 🟡 — setup tokens fetched; exchange blocked pending Athenz PR #3388                         |
-| 2 | Jul 10, 2026 | ✅ — setup completed successfully as expected; 👍 mcp-hub to mcp exchange failed as expected |
+| 2 | Jul 10, 2026 | ✅ — setup completed successfully as expected; ✅ mcp-hub to mcp delegated exchange succeeded |
 
 </details>
 
@@ -203,7 +203,7 @@ _id_token=$(./tools/keycloak/get-id-token.sh human.idjag-learner.claude "$_clien
 # {
 #   "alg": "RS256",
 #   "typ": "JWT",
-#   "kid": "jio8OS-7FzKy8UfOCol-zj1946k1y1JyC6Z6D676WKc"
+#   ...
 # }
 # {
 #   "iss": "http://localhost:34443/realms/master",
@@ -211,7 +211,7 @@ _id_token=$(./tools/keycloak/get-id-token.sh human.idjag-learner.claude "$_clien
 #   "typ": "ID",
 #   "azp": "human.idjag-learner.claude",
 #   "preferred_username": "idjag-learner",
-#   "email": "idjag-learner@athenz.io"
+#   "email": "idjag-learner@athenz.io",
 #   ...
 # }
 ```
@@ -234,21 +234,22 @@ _id_jag=$(./tools/athenz/fetch-id-jag.sh \
 #   ·  Exchanging id_token for ID_JAG (scope: api:role.docs-getter api:role.mcp-accessor api:role.mcp-hub-accessor)...
 #   ✔  ID_JAG issued (scope: api:role.docs-getter api:role.mcp-accessor api:role.mcp-hub-accessor)
 # {
-#   "kid": "athenz-zts-server-b485bd456-lxjkl",
 #   "typ": "N_A",
-#   "alg": "RS256"
+#   "alg": "RS256",
+#   ...
 # }
 # {
 #   "sub": "human.idjag-learner",
 #   "aud": "https://athenz-zts-server.athenz:4443/zts/v1",
 #   "client_id": "human.idjag-learner.claude",
-#   "scope": "docs-getter mcp-accessor mcp-hub-accessor"
+#   "scope": "docs-getter mcp-accessor mcp-hub-accessor",
+#   ...
 # }
 ```
 
-## Step 3. Fetch an mcp-hub access token with ID_JAG
+## Step 3. Fetch a delegated mcp-hub access token with ID_JAG
 
-Request an access token for the full role set and set `api.mcp-hub` as the intended actor:
+Request a delegation access token, not an impersonation-style token. Following Athenz PR #3388, the important switch is the `actor` request parameter: when `actor=api.mcp-hub` is present, ZTS should mint the access token with a `may_act` claim for `api.mcp-hub`.
 
 ```sh
 _hub_scope="api:role.docs-getter api:role.mcp-accessor api:role.mcp-hub-accessor"
@@ -266,9 +267,9 @@ _hub_at=$(./tools/athenz/fetch-access-token-with-id-jag.sh \
 #   ·  Fetching Access Token with ID_JAG for scope: api:role.docs-getter api:role.mcp-accessor api:role.mcp-hub-accessor...
 #   ✔  Access token issued with ID_JAG for scope: api:role.docs-getter api:role.mcp-accessor api:role.mcp-hub-accessor
 # {
-#   "kid": "athenz-zts-server-b485bd456-lxjkl",
 #   "typ": "at+jwt",
-#   "alg": "RS256"
+#   "alg": "RS256",
+#   ...
 # }
 # {
 #   "sub": "human.idjag-learner",
@@ -278,8 +279,12 @@ _hub_at=$(./tools/athenz/fetch-access-token-with-id-jag.sh \
 #     "mcp-accessor",
 #     "mcp-hub-accessor"
 #   ],
+#   "may_act": {
+#     "sub": "api.mcp-hub"
+#   },
 #   "uid": "human.idjag-learner",
-#   "client_id": "human.idjag-learner.claude"
+#   "client_id": "human.idjag-learner.claude",
+#   ...
 # }
 ```
 
@@ -305,20 +310,24 @@ _mcp_actor_id_token=$(./tools/athenz/fetch-actor-token.sh \
 # {
 #   "sub": "api.mcp-hub",
 #   "aud": "api.mcp-hub",
-#   "client_id": "api.mcp-hub"
+#   "client_id": "api.mcp-hub",
+#   ...
 # }
 #   ·  Fetching actor id_token from Athenz ZTS for client: api.api-mcp...
 #   ✔  Actor id_token issued for client: api.api-mcp
 # {
 #   "sub": "api.api-mcp",
 #   "aud": "api.api-mcp",
-#   "client_id": "api.api-mcp"
+#   "client_id": "api.api-mcp",
+#   ...
 # }
 ```
 
-## Step 5. Reproduce the mcp-hub to mcp exchange failure
+## Step 5. Exchange from mcp-hub to mcp
 
-Attempt the first delegated AT→AT exchange: `api.mcp-hub` exchanges the hub token into `mcp-accessor` for `api.api-mcp`. This failure is expected today: the ID_JAG-issued subject access token does not contain the `may_act` claim required for delegated token exchange.
+Perform the first delegated AT→AT exchange: `api.mcp-hub` exchanges the hub token into `mcp-accessor` for `api.api-mcp`.
+
+The `--actor-token "$_mcp_hub_actor_id_token"` proves the current actor is `api.mcp-hub`, which must match the `may_act.sub` in `_hub_at`. The `--actor api.api-mcp` parameter names the next actor, so the exchanged token receives a new `may_act` claim for `api.api-mcp`.
 
 ```sh
 _mcp_scope="api:role.mcp-accessor"
@@ -334,14 +343,42 @@ _mcp_scope="api:role.mcp-accessor"
 
 ```sh
 #   ·  Exchanging access token for scope: api:role.mcp-accessor...
+#   ✔  Access token exchanged for scope: api:role.mcp-accessor
 # {
-#   "code": 400,
-#   "message": "Invalid subject token: missing may_act claim"
+#   "typ": "at+jwt",
+#   "alg": "RS256",
+#   ...
+# }
+# {
+#   "sub": "human.idjag-learner",
+#   "scp": [
+#     "mcp-accessor"
+#   ],
+#   "client_id": "api.mcp-hub",
+#   "aud": "api",
+#   "uid": "api.mcp-hub",
+#   "act": {
+#     "sub": "api.mcp-hub",
+#     "act": {
+#       "sub": "human.idjag-learner.claude"
+#     }
+#   },
+#   "may_act": {
+#     "sub": "api.api-mcp"
+#   },
+#   ...
+# }
+# {
+#   "access_token": "...",
+#   "token_type": "Bearer",
+#   "expires_in": 3600,
+#   "scope": "api:role.mcp-accessor",
+#   ...
 # }
 ```
 
 > [!NOTE]
-> Delegated AT→AT exchange with a subject token obtained via ID_JAG is tracked in Athenz PR #3388.
+> Delegated AT→AT exchange with a subject token obtained via ID_JAG is covered by Athenz PR #3388 and PR #3390.
 
 ## Step 6. Continue with the intended mcp to API exchange
 
@@ -368,9 +405,7 @@ _mcp_at=$(./tools/athenz/exchange-access-token.sh \
   --actor api
 ```
 
-```sh
-# This step is not reached until Step 5 returns an exchanged `_mcp_at`.
-```
+The command above is written with `--token-only` so `_mcp_at` receives only the raw exchanged token.
 
 ## Clean-up 7. Delete temporary test resources
 
@@ -400,5 +435,6 @@ Delete the temporary `api.mcp-hub` service identity, remove only the temporary `
 # Reference
 
 - [Athenz PR #3388 — support ID-JAG AT→AT exchange](https://github.com/AthenZ/athenz/pull/3388)
+- [Athenz PR #3390 — support subsequent delegated AT→AT exchange](https://github.com/AthenZ/athenz/pull/3390)
 - [RFC 7521 — Assertion Framework](https://datatracker.ietf.org/doc/html/rfc7521)
 - [RFC 8693 — Token Exchange](https://datatracker.ietf.org/doc/html/rfc8693)
