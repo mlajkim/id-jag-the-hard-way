@@ -40,28 +40,35 @@ Here is the procedure to get to the goals. The setup sections create test-only A
 
 The intended delegated path is:
 
-```text
-human.idjag-learner
-  via human.idjag-learner.claude
-    -> api.mcp-hub
-      -> api.api-mcp
-        -> api:role.docs-getter
+```mermaid
+flowchart LR
+  User["human.idjag-learner"]
+  Claude["human.idjag-learner.claude"]
+  Hub["api.mcp-hub"]
+  MCP["api.api-mcp"]
+  API["api:role.docs-getter"]
+
+  User -->|signs in through| Claude
+  Claude -->|ID_JAG access token| Hub
+  Hub -->|AT to AT exchange| MCP
+  MCP -->|AT to AT exchange| API
 ```
 
 ## Setup 1. Create the mcp-hub access and JAG exchange roles
 
 Create `api:role.mcp-hub-accessor` as the first-hop role for the hub. This is intentionally separate from `mcp-accessor`, which remains the role for the MCP layer.
 
-```text
-human.idjag-learner
-  -- member of -->
-api:role.mcp-hub-accessor
+```mermaid
+flowchart LR
+  User["human.idjag-learner"]
+  HubAccessor["api:role.mcp-hub-accessor"]
+  Claude["human.idjag-learner.claude"]
+  JagExchanger["api:role.mcp-hub-accessor-jag-exchanger"]
+  JagTarget["role.mcp-hub-accessor"]
 
-human.idjag-learner.claude
-  -- member of -->
-api:role.mcp-hub-accessor-jag-exchanger
-  -- zts.jag_exchange on -->
-role.mcp-hub-accessor
+  User -->|member of| HubAccessor
+  Claude -->|member of| JagExchanger
+  JagExchanger -->|zts.jag_exchange| JagTarget
 ```
 
 ```sh
@@ -92,13 +99,17 @@ Because the ID_JAG token will request `api:role.mcp-hub-accessor`, create the ma
 
 Create the temporary `api.mcp-hub` service identity and fetch its service certificate:
 
-```text
-./keys/api-mcp-hub.key
-./keys/api-mcp-hub.public.key
-  -- registered as -->
-api.mcp-hub
-  -- ZTS certificate provider -->
-./keys/api-mcp-hub.crt
+```mermaid
+flowchart LR
+  PrivateKey["./keys/api-mcp-hub.key"]
+  PublicKey["./keys/api-mcp-hub.public.key"]
+  Service["api.mcp-hub"]
+  Cert["./keys/api-mcp-hub.crt"]
+
+  PrivateKey -->|key pair| PublicKey
+  PublicKey -->|registered public key| Service
+  Service -->|ZTS certificate provider| Cert
+  PrivateKey -->|certificate request key| Cert
 ```
 
 ```sh
@@ -125,12 +136,14 @@ The base token-exchange tutorial already creates `api:role.to-api-exchanger` and
 
 For this research flow, add the temporary `api.mcp-hub` service as a member of that existing source-exchange role. Do not create or delete the `to-api-exchanger` role itself here; it belongs to the completed tutorial baseline.
 
-```text
-api.mcp-hub
-  -- member of existing tutorial role -->
-api:role.to-api-exchanger
-  -- already grants -->
-zts.token_source_exchange on api
+```mermaid
+flowchart LR
+  Hub["api.mcp-hub"]
+  SourceRole["api:role.to-api-exchanger"]
+  SourceGrant["zts.token_source_exchange on api"]
+
+  Hub -->|member of existing tutorial role| SourceRole
+  SourceRole -->|already grants| SourceGrant
 ```
 
 ```sh
@@ -145,12 +158,14 @@ zts.token_source_exchange on api
 
 Create the matching target-exchange role for `mcp-accessor`, then attach its policy and member:
 
-```text
-api.mcp-hub
-  -- member of -->
-api:role.mcp-accessor-exchanger
-  -- zts.token_target_exchange on -->
-api:role.mcp-accessor
+```mermaid
+flowchart LR
+  Hub["api.mcp-hub"]
+  TargetRole["api:role.mcp-accessor-exchanger"]
+  MCPAccessor["api:role.mcp-accessor"]
+
+  Hub -->|member of| TargetRole
+  TargetRole -->|zts.token_target_exchange| MCPAccessor
 ```
 
 ```sh
