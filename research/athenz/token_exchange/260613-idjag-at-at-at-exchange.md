@@ -178,13 +178,21 @@ flowchart LR
 ./tools/athenz/create-role.sh api mcp-accessor-exchanger
 ./tools/athenz/add-policy.sh api mcp-accessor-exchanger zts.token_target_exchange api:role.mcp-accessor
 ./tools/athenz/add-role-member.sh api mcp-accessor-exchanger api.mcp-hub
-./tools/athenz/add-role-member.sh api docs-getter-exchanger api.mcp-hub
 ```
 
 ```sh
 #   ✔  Role created: api:role.mcp-accessor-exchanger
 #   ✔  Policy created: api:policy.mcp-accessor-exchanger_zts_token_target_exchange_api_role_mcp-accessor
 #   ✔  api.mcp-hub  →  api:role.mcp-accessor-exchanger
+```
+
+Add `api.mcp-hub` to the existing tutorial-owned `docs-getter-exchanger` role separately, because that membership is what lets the intermediate MCP token keep `docs-getter` for the final hop:
+
+```sh
+./tools/athenz/add-role-member.sh api docs-getter-exchanger api.mcp-hub
+```
+
+```sh
 #   ✔  api.mcp-hub  →  api:role.docs-getter-exchanger
 ```
 
