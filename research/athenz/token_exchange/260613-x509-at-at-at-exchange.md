@@ -4,10 +4,11 @@ The goal of this document is to model a full X.509 delegated access-token exchan
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
-- [Setup 1. Create the mcp-hub access role](#setup-1-create-the-mcp-hub-access-role)
-- [Setup 2. Create the mcp-hub service identity](#setup-2-create-the-mcp-hub-service-identity)
-- [Setup 3. Allow mcp-hub to use api tokens as exchange input](#setup-3-allow-mcp-hub-to-use-api-tokens-as-exchange-input)
-- [Setup 4. Allow mcp-hub to exchange into the mcp carry-forward scopes](#setup-4-allow-mcp-hub-to-exchange-into-the-mcp-carry-forward-scopes)
+- [Setup 1. Refresh the learner certificate](#setup-1-refresh-the-learner-certificate)
+- [Setup 2. Create the mcp-hub access role](#setup-2-create-the-mcp-hub-access-role)
+- [Setup 3. Create the mcp-hub service identity](#setup-3-create-the-mcp-hub-service-identity)
+- [Setup 4. Allow mcp-hub to use api tokens as exchange input](#setup-4-allow-mcp-hub-to-use-api-tokens-as-exchange-input)
+- [Setup 5. Allow mcp-hub to exchange into the mcp carry-forward scopes](#setup-5-allow-mcp-hub-to-exchange-into-the-mcp-carry-forward-scopes)
 - [Step 1. Fetch a delegated mcp-hub access token with the learner certificate](#step-1-fetch-a-delegated-mcp-hub-access-token-with-the-learner-certificate)
 - [Step 2. Fetch actor id_tokens for mcp-hub and mcp](#step-2-fetch-actor-id_tokens-for-mcp-hub-and-mcp)
 - [Step 3. Reproduce the wrong actor token failure](#step-3-reproduce-the-wrong-actor-token-failure)
@@ -51,7 +52,20 @@ flowchart LR
   MCP -->|AT to AT exchange| API
 ```
 
-## Setup 1. Create the mcp-hub access role
+## Setup 1. Refresh the learner certificate
+
+Refresh the existing `human.idjag-learner` service certificate once, just in case the local certificate is missing or stale:
+
+```sh
+./tools/athenz/fetch-cert.sh human idjag-learner ./keys/idjag-learner.key v1
+```
+
+```sh
+#   ·  Fetching X.509 Certificate for human.idjag-learner...
+#   ✔  Certificate saved to: ./keys/idjag-learner.crt
+```
+
+## Setup 2. Create the mcp-hub access role
 
 Create `api:role.mcp-hub-accessor` as the first-hop role for the hub. This is intentionally separate from `mcp-accessor`, which remains the role for the MCP layer.
 
@@ -73,7 +87,7 @@ flowchart LR
 #   ✔  human.idjag-learner  →  api:role.mcp-hub-accessor
 ```
 
-## Setup 2. Create the mcp-hub service identity
+## Setup 3. Create the mcp-hub service identity
 
 Create the temporary `api.mcp-hub` service identity and fetch its service certificate:
 
@@ -108,7 +122,7 @@ flowchart LR
 #   ✔  Certificate saved to: ./keys/api-mcp-hub.crt
 ```
 
-## Setup 3. Allow mcp-hub to use api tokens as exchange input
+## Setup 4. Allow mcp-hub to use api tokens as exchange input
 
 The base token-exchange tutorial already creates `api:role.to-api-exchanger` and grants it `zts.token_source_exchange` on the `api` domain. That role controls who may use an existing `api` access token as the subject token in a token exchange.
 
@@ -132,7 +146,7 @@ flowchart LR
 #   ✔  api.mcp-hub  →  api:role.to-api-exchanger
 ```
 
-## Setup 4. Allow mcp-hub to exchange into the mcp carry-forward scopes
+## Setup 5. Allow mcp-hub to exchange into the mcp carry-forward scopes
 
 The mcp-hub to mcp exchange must keep `docs-getter` in the intermediate token, because a later token exchange can only request scopes that are still present in the subject token. Create the matching target-exchange role for `mcp-accessor`, then add temporary `api.mcp-hub` membership to the existing tutorial-owned `docs-getter-exchanger` role:
 
