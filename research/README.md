@@ -46,17 +46,19 @@ The goal of this document is to ..., with the following steps:
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
-- [✅ 1. Step name](#step-1-step-name)
-- [🟡 2. Step name](#step-2-step-name)
+- [Step 1. Step name](#step-1-step-name)
+- [Step 2. Expected failure step](#step-2-expected-failure-step)
+- [Step 3. Step name](#step-3-step-name)
+- [Clean-up 4. Clean up temporary state](#clean-up-4-clean-up-temporary-state)
 
 <!-- /TOC -->
 
 <details>
-<summary>Last verified on Mon DD, YYYY — ✅ / 🟡 / ❌ Status</summary>
+<summary>Last verified on Mon DD, YYYY — ✅ / 👍 / 🟡 / ❌ Status</summary>
 
 | # | Date         | Confirmed Working       |
 |---|--------------|-------------------------|
-| 1 | Mon DD, YYYY | ✅ / ❌ / 🟡 — short note |
+| 1 | Mon DD, YYYY | ✅ / 👍 / ❌ / 🟡 — short note |
 
 </details>
 
@@ -74,13 +76,17 @@ Here is the procedure to get to the goals.
 
 Begin from the completed prerequisites.
 
-## Step 2. Step name
+## Step 2. Expected failure step
 
-Description and commands.
+Use this form when a negative test must fail in a specific, expected way.
 
 ## Step 3. Step name
 
 Description and commands.
+
+## Clean-up 4. Clean up temporary state
+
+Restore any temporary clients, aliases, metadata, or local state created only for the research flow.
 
 # Reference
 
@@ -91,10 +97,13 @@ Description and commands.
 
 - `# Goal` is a standalone heading. The goal sentence goes on the next line.
 - The goal sentence must end with `..., with the following steps:` so the TOC block reads as a natural continuation.
+- The TOC block is generated from the `##` headings. Do not treat TOC entries as the source of truth.
 - The TOC block must use `depthFrom:2 depthTo:2` so it captures only `##` headings.
-- Each TOC entry must include a status icon (see [Status Legend](#status-legend)) followed by the step number and title.
+- Each `##` heading is the source of truth for the generated TOC.
 - The `# Steps` section must open with the sentence: *Here is the procedure to get to the goals.*
-- Each step is an `##` heading in the form `## Step N. Title`.
+- Each reproduction/setup step is an `##` heading in the form `## Step N. Title`.
+- Cleanup that is not part of the reproduction/setup goal may use `## Clean-up N. Title`.
+- Use status icons (see [Status Legend](#status-legend)) in the verification details and result notes, not in every `##` heading.
 - Put setup work in the first numbered steps. If a flow needs a token, client, role, or local variable, create or fetch it in the step where it first becomes necessary.
 - Steps should use shared scripts from `tools/` when a script exists for the operation being researched.
 - Do not show raw HTTP request commands in research procedures. If no shared tool covers the operation yet, add one under `tools/` first.
@@ -108,6 +117,7 @@ Description and commands.
 | Icon | Meaning                                         |
 |------|-------------------------------------------------|
 | ✅    | Complete — verified working                     |
+| 👍    | Expected failure — failed as expected           |
 | 🟡   | In progress — partially complete or has caveats |
 | ❌    | Blocked — known issue, no working solution yet  |
 
