@@ -38,6 +38,8 @@ This tutorial requires the following to be completed:
 
 Here is the procedure to get to the goals. The setup sections create test-only Athenz objects; the core reproduction starts at Step 1.
 
+Compared with the ID_JAG version, this X.509 flow does not need a `*-jag-exchanger` role because there is no ID_JAG exchange. It still needs `api:role.to-api-exchanger`, because `api.mcp-hub` later uses an existing `api` access token as the subject token in AT→AT exchange.
+
 The intended delegated path is:
 
 ```mermaid
@@ -124,7 +126,7 @@ flowchart LR
 
 ## Setup 4. Allow mcp-hub to use api tokens as exchange input
 
-The base token-exchange tutorial already creates `api:role.to-api-exchanger` and grants it `zts.token_source_exchange` on the `api` domain. That role controls who may use an existing `api` access token as the subject token in a token exchange.
+The base token-exchange tutorial already creates `api:role.to-api-exchanger` and grants it `zts.token_source_exchange` on the `api` domain. This role is still required in the X.509 flow: it controls who may use an existing `api` access token as the subject token in a token exchange.
 
 For this research flow, add the temporary `api.mcp-hub` service as a member of that existing source-exchange role. Do not create or delete the `to-api-exchanger` role itself here; it belongs to the completed tutorial baseline.
 
@@ -187,6 +189,20 @@ Add `api.mcp-hub` to the existing tutorial-owned `docs-getter-exchanger` role se
 ```
 
 The final `mcp` to API hop uses the existing `docs-getter` role and the existing `api.api-mcp` exchange permissions from the base tutorial.
+
+Before continuing, `api.mcp-hub` must be a member of all three exchange roles below. If Step 4 fails with `Principal not authorized for token exchange for the requested role`, rerun these membership commands and wait a few seconds for ZTS to observe the policy update:
+
+```sh
+./tools/athenz/add-role-member.sh api to-api-exchanger api.mcp-hub
+./tools/athenz/add-role-member.sh api docs-getter-exchanger api.mcp-hub
+./tools/athenz/add-role-member.sh api mcp-accessor-exchanger api.mcp-hub
+```
+
+```sh
+#   ✔  api.mcp-hub  →  api:role.to-api-exchanger
+#   ✔  api.mcp-hub  →  api:role.docs-getter-exchanger
+#   ✔  api.mcp-hub  →  api:role.mcp-accessor-exchanger
+```
 
 ## Step 1. Fetch a delegated mcp-hub access token with the learner certificate
 
