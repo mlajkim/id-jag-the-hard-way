@@ -22,9 +22,9 @@ The goal of this document is to model a full ID-JAG delegated exchange chain fro
 <details>
 <summary>Last verified on Jul 10, 2026 — ✅ Success</summary>
 
-| # | Date         | Confirmed Working                                                                           |
-|---|--------------|---------------------------------------------------------------------------------------------|
-| 1 | Jun 13, 2026 | 🟡 — setup tokens fetched; exchange blocked pending Athenz PR #3388                         |
+| # | Date         | Confirmed Working                                                                                                                    |
+|---|--------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| 1 | Jun 13, 2026 | 🟡 — setup tokens fetched; exchange blocked pending Athenz PR #3388                                                                  |
 | 2 | Jul 10, 2026 | ✅ — setup completed successfully as expected; 👍 wrong actor token failed as expected; ✅ mcp-hub to mcp delegated exchange succeeded |
 
 </details>
@@ -274,17 +274,19 @@ _hub_at=$(./tools/athenz/fetch-access-token-with-id-jag.sh \
 # }
 # {
 #   "sub": "human.idjag-learner",
-#   "aud": "api",
 #   "scp": [
 #     "docs-getter",
 #     "mcp-accessor",
 #     "mcp-hub-accessor"
 #   ],
+#   "client_id": "human.idjag-learner.claude",
+#   "aud": "api",
+#   "act": {
+#     "sub": "human.idjag-learner.claude"
+#   },
 #   "may_act": {
 #     "sub": "api.mcp-hub"
 #   },
-#   "uid": "human.idjag-learner",
-#   "client_id": "human.idjag-learner.claude",
 #   ...
 # }
 ```
