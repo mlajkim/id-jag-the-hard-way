@@ -22,10 +22,10 @@ The goal of this document is to model a full ID-JAG delegated exchange chain fro
 <details>
 <summary>Last verified on Jul 10, 2026 — ✅ Success</summary>
 
-| # | Date         | Confirmed Working                                                                                                                    |
-|---|--------------|--------------------------------------------------------------------------------------------------------------------------------------|
-| 1 | Jun 13, 2026 | 🟡 — setup tokens fetched; exchange blocked pending Athenz PR #3388                                                                  |
-| 2 | Jul 10, 2026 | ✅ — setup completed successfully as expected; 👍 wrong actor token failed as expected; ✅ mcp-hub to mcp delegated exchange succeeded |
+| # | Date         | Confirmed Working                                                                                                                                    |
+|---|--------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1 | Jun 13, 2026 | 🟡 — setup tokens fetched; exchange blocked pending Athenz PR #3388                                                                                  |
+| 2 | Jul 10, 2026 | ✅ — setup completed successfully as expected; 👍 wrong actor token failed as expected; ✅ mcp-hub to mcp and mcp to API delegated exchanges succeeded |
 
 </details>
 
@@ -422,6 +422,8 @@ _mcp_at=$(./tools/athenz/exchange-access-token.sh \
 
 The final hop is for `api.api-mcp` to exchange `_mcp_at` into the final API role `docs-getter`. This works because `_mcp_at` still contains `docs-getter`.
 
+The resulting `act` chain should show `api.api-mcp` as the current actor, wrapping the previous `api.mcp-hub` actor, which wraps the original Claude service client.
+
 ```sh
 _api_scope="api:role.docs-getter"
 
@@ -475,12 +477,19 @@ _api_scope="api:role.docs-getter"
 
 ## Clean-up 8. Delete temporary test resources
 
-Delete the temporary `api.mcp-hub` service identity, remove only the temporary `api.mcp-hub` memberships from tutorial-owned roles, and then delete the temporary roles and policies created only for this test:
+Clean up in dependency order: first remove the temporary `api.mcp-hub` memberships from tutorial-owned roles, then remove the provider-template assertion for `api.mcp-hub`, then delete the temporary `api.mcp-hub` service identity, and then delete the temporary policies and roles created only for this test.
+
+The role deletes also remove their temporary members:
+
+- `human.idjag-learner` from `api:role.mcp-hub-accessor`
+- `human.idjag-learner.claude` from `api:role.mcp-hub-accessor-jag-exchanger`
+- `api.mcp-hub` from `api:role.mcp-accessor-exchanger`
 
 ```sh
-./tools/athenz/delete-service.sh api mcp-hub
 ./tools/athenz/delete-role-member.sh api to-api-exchanger api.mcp-hub
 ./tools/athenz/delete-role-member.sh api docs-getter-exchanger api.mcp-hub
+./tools/athenz/delete-assertion.sh api zts_instance_launch_provider grant launch zts_instance_launch_provider service.mcp-hub
+./tools/athenz/delete-service.sh api mcp-hub
 ./tools/athenz/delete-policy.sh api mcp-hub-accessor-jag-exchanger_zts_jag_exchange_role_mcp-hub-accessor
 ./tools/athenz/delete-role.sh api mcp-hub-accessor-jag-exchanger
 ./tools/athenz/delete-policy.sh api mcp-accessor-exchanger_zts_token_target_exchange_api_role_mcp-accessor
@@ -489,10 +498,12 @@ Delete the temporary `api.mcp-hub` service identity, remove only the temporary `
 ```
 
 ```sh
-#   ·  Deleting service api.mcp-hub...
-#   ✔  Service deleted or already absent: api.mcp-hub
 #   ✔  Role member deleted or already absent: api.mcp-hub  →  api:role.to-api-exchanger
 #   ✔  Role member deleted or already absent: api.mcp-hub  →  api:role.docs-getter-exchanger
+#   ·  Deleting assertion from api:policy.zts_instance_launch_provider: grant launch to zts_instance_launch_provider on service.mcp-hub...
+#   ✔  Assertion deleted or already absent: api:policy.zts_instance_launch_provider  grant launch to zts_instance_launch_provider on service.mcp-hub
+#   ·  Deleting service api.mcp-hub...
+#   ✔  Service deleted or already absent: api.mcp-hub
 #   ✔  Policy deleted or already absent: api:policy.mcp-hub-accessor-jag-exchanger_zts_jag_exchange_role_mcp-hub-accessor
 #   ✔  Role deleted or already absent: api:role.mcp-hub-accessor-jag-exchanger
 #   ✔  Policy deleted or already absent: api:policy.mcp-accessor-exchanger_zts_token_target_exchange_api_role_mcp-accessor
