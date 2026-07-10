@@ -213,7 +213,7 @@ _hub_at=$(./tools/athenz/fetch-access-token.sh \
 # {
 #   "typ": "at+jwt",
 #   "alg": "RS256",
-#   ...
+#   "kid": "<key-id>"
 # }
 # {
 #   "sub": "human.idjag-learner",
@@ -318,7 +318,7 @@ _mcp_at=$(./tools/athenz/exchange-access-token.sh \
 # {
 #   "typ": "at+jwt",
 #   "alg": "RS256",
-#   ...
+#   "kid": "<key-id>"
 # }
 # {
 #   "sub": "human.idjag-learner",
@@ -366,7 +366,7 @@ _api_scope="api:role.docs-getter"
 # {
 #   "typ": "at+jwt",
 #   "alg": "RS256",
-#   ...
+#   "kid": "<key-id>"
 # }
 # {
 #   "sub": "human.idjag-learner",
