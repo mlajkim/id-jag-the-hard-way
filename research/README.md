@@ -46,10 +46,11 @@ The goal of this document is to ..., with the following steps:
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
-- [Step 1. Step name](#step-1-step-name)
+- [Setup 1. Create temporary test state](#setup-1-create-temporary-test-state)
+- [Setup 2. Create another temporary dependency](#setup-2-create-another-temporary-dependency)
+- [Step 1. Core reproduction step](#step-1-core-reproduction-step)
 - [Step 2. Expected failure step](#step-2-expected-failure-step)
-- [Step 3. Step name](#step-3-step-name)
-- [Clean-up 4. Clean up temporary state](#clean-up-4-clean-up-temporary-state)
+- [Clean-up 3. Clean up temporary state](#clean-up-3-clean-up-temporary-state)
 
 <!-- /TOC -->
 
@@ -72,19 +73,23 @@ This tutorial requires the following to be completed:
 
 Here is the procedure to get to the goals.
 
-## Step 1. Start from the tutorial baseline
+## Setup 1. Create temporary test state
 
-Begin from the completed prerequisites.
+Create temporary roles, services, clients, aliases, metadata, or local state that are required only for the research flow.
+
+## Setup 2. Create another temporary dependency
+
+Create any additional temporary dependency that should be separate from the core reproduction.
+
+## Step 1. Core reproduction step
+
+Begin from the completed prerequisites and the temporary setup above.
 
 ## Step 2. Expected failure step
 
 Use this form when a negative test must fail in a specific, expected way.
 
-## Step 3. Step name
-
-Description and commands.
-
-## Clean-up 4. Clean up temporary state
+## Clean-up 3. Clean up temporary state
 
 Restore any temporary clients, aliases, metadata, or local state created only for the research flow.
 
@@ -102,12 +107,13 @@ Restore any temporary clients, aliases, metadata, or local state created only fo
 - Each `##` heading is the source of truth for the generated TOC.
 - The `# Steps` section must open with the sentence: *Here is the procedure to get to the goals.*
 - Each reproduction/setup step is an `##` heading in the form `## Step N. Title`.
+- Test setup that is not part of the core reproduction may use `## Setup N. Title`.
 - Cleanup that is not part of the reproduction/setup goal may use `## Clean-up N. Title`.
 - Use status icons (see [Status Legend](#status-legend)) in the verification details and result notes, not in every `##` heading.
 - Put setup work in the first numbered steps. If a flow needs a token, client, role, or local variable, create or fetch it in the step where it first becomes necessary.
 - Steps should use shared scripts from `tools/` when a script exists for the operation being researched.
 - Do not show raw HTTP request commands in research procedures. If no shared tool covers the operation yet, add one under `tools/` first.
-- Available operation tools: `tools/keycloak/create-client.sh`, `tools/keycloak/delete-client.sh`, `tools/keycloak/get-client-secret.sh`, `tools/keycloak/get-id-token.sh`, `tools/athenz/fetch-id-jag.sh`, `tools/athenz/exchange-id-token-for-id-jag.sh`, `tools/athenz/fetch-actor-token.sh`, `tools/athenz/fetch-access-token.sh`, `tools/athenz/fetch-access-token-with-id-jag.sh`, `tools/athenz/exchange-access-token.sh`, `tools/athenz/show-service.sh`, `tools/athenz/set-service-client-id.sh`.
+- Available operation tools: `tools/keycloak/create-client.sh`, `tools/keycloak/delete-client.sh`, `tools/keycloak/get-client-secret.sh`, `tools/keycloak/get-id-token.sh`, `tools/keycloak/set-direct-access-grants.sh`, `tools/athenz/fetch-id-jag.sh`, `tools/athenz/exchange-id-token-for-id-jag.sh`, `tools/athenz/fetch-actor-token.sh`, `tools/athenz/fetch-access-token.sh`, `tools/athenz/fetch-access-token-with-id-jag.sh`, `tools/athenz/exchange-access-token.sh`, `tools/athenz/delete-policy.sh`, `tools/athenz/delete-role.sh`, `tools/athenz/delete-role-member.sh`, `tools/athenz/delete-service.sh`, `tools/athenz/show-service.sh`, `tools/athenz/set-service-client-id.sh`.
 - Place a `<details>` block immediately after the TOC with summary `Last verified on <date> — <status>` and a table inside. This is the only place verification lives — there is no separate `# Verification` section at the bottom.
 - Put `# Prerequisites` immediately after the verification `<details>` block when a document depends on completed tutorials or setup. Use this exact sentence followed by bullet points: `This tutorial requires the following to be completed:`
 - The `# Reference` section is always last. Write `*None*` if there are no external references.
