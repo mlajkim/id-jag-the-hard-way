@@ -4,9 +4,10 @@ The goal of this document is to model a full ID-JAG delegated exchange chain fro
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
-- [Setup 1. Create the mcp-hub test role](#setup-1-create-the-mcp-hub-test-role)
+- [Setup 1. Create the mcp-hub access and JAG exchange roles](#setup-1-create-the-mcp-hub-access-and-jag-exchange-roles)
 - [Setup 2. Create the mcp-hub service identity](#setup-2-create-the-mcp-hub-service-identity)
-- [Setup 3. Grant mcp-hub exchange permissions](#setup-3-grant-mcp-hub-exchange-permissions)
+- [Setup 3. Allow mcp-hub to use api tokens as exchange input](#setup-3-allow-mcp-hub-to-use-api-tokens-as-exchange-input)
+- [Setup 4. Allow mcp-hub to exchange into mcp-accessor](#setup-4-allow-mcp-hub-to-exchange-into-mcp-accessor)
 - [Step 1. Fetch an id_token for the Claude service client](#step-1-fetch-an-id_token-for-the-claude-service-client)
 - [Step 2. Exchange the id_token for ID_JAG](#step-2-exchange-the-id_token-for-id_jag)
 - [Step 3. Fetch an mcp-hub access token with ID_JAG](#step-3-fetch-an-mcp-hub-access-token-with-id_jag)
@@ -37,9 +38,9 @@ This tutorial requires the following to be completed:
 
 Here is the procedure to get to the goals. The setup sections create test-only Athenz objects; the core reproduction starts at Step 1.
 
-## Setup 1. Create the mcp-hub test role
+## Setup 1. Create the mcp-hub access and JAG exchange roles
 
-Create `api:role.mcp-hub-accessor` as the first-hop role for the hub. This is intentionally separate from `mcp-accessor`, which remains the role for the MCP layer:
+Create `api:role.mcp-hub-accessor` as the first-hop role for the hub. This is intentionally separate from `mcp-accessor`, which remains the role for the MCP layer.
 
 ```sh
 ./tools/athenz/create-role.sh api mcp-hub-accessor
@@ -49,6 +50,20 @@ Create `api:role.mcp-hub-accessor` as the first-hop role for the hub. This is in
 ```sh
 #   ✔  Role created: api:role.mcp-hub-accessor
 #   ✔  human.idjag-learner  →  api:role.mcp-hub-accessor
+```
+
+Because the ID_JAG token will request `api:role.mcp-hub-accessor`, create the matching tutorial-style `mcp-hub-accessor-jag-exchanger` role and grant `human.idjag-learner.claude` permission to perform JAG exchange into that target role:
+
+```sh
+./tools/athenz/create-role.sh api mcp-hub-accessor-jag-exchanger
+./tools/athenz/add-policy.sh api mcp-hub-accessor-jag-exchanger zts.jag_exchange role.mcp-hub-accessor
+./tools/athenz/add-role-member.sh api mcp-hub-accessor-jag-exchanger human.idjag-learner.claude
+```
+
+```sh
+#   ✔  Role created: api:role.mcp-hub-accessor-jag-exchanger
+#   ✔  Policy created: api:policy.mcp-hub-accessor-jag-exchanger_zts_jag_exchange_role_mcp-hub-accessor
+#   ✔  human.idjag-learner.claude  →  api:role.mcp-hub-accessor-jag-exchanger
 ```
 
 ## Setup 2. Create the mcp-hub service identity
@@ -73,22 +88,34 @@ Create the temporary `api.mcp-hub` service identity and fetch its service certif
 #   ✔  Certificate saved to: ./keys/api-mcp-hub.crt
 ```
 
-## Setup 3. Grant mcp-hub exchange permissions
+## Setup 3. Allow mcp-hub to use api tokens as exchange input
 
-Add the temporary `api.mcp-hub` service to the existing tutorial source-exchange role, then create the matching target-exchange role for `mcp-accessor`:
+The base token-exchange tutorial already creates `api:role.to-api-exchanger` and grants it `zts.token_source_exchange` on the `api` domain. That role controls who may use an existing `api` access token as the subject token in a token exchange.
+
+For this research flow, add the temporary `api.mcp-hub` service as a member of that existing source-exchange role. Do not create or delete the `to-api-exchanger` role itself here; it belongs to the completed tutorial baseline.
 
 ```sh
 ./tools/athenz/add-role-member.sh api to-api-exchanger api.mcp-hub
-./tools/athenz/create-role.sh api mcp-accessor-exchanger
-./tools/athenz/add-role-member.sh api mcp-accessor-exchanger api.mcp-hub
-./tools/athenz/add-policy.sh api mcp-accessor-exchanger zts.token_target_exchange api:role.mcp-accessor
 ```
 
 ```sh
 #   ✔  api.mcp-hub  →  api:role.to-api-exchanger
+```
+
+## Setup 4. Allow mcp-hub to exchange into mcp-accessor
+
+Create the matching target-exchange role for `mcp-accessor`, then attach its policy and member:
+
+```sh
+./tools/athenz/create-role.sh api mcp-accessor-exchanger
+./tools/athenz/add-policy.sh api mcp-accessor-exchanger zts.token_target_exchange api:role.mcp-accessor
+./tools/athenz/add-role-member.sh api mcp-accessor-exchanger api.mcp-hub
+```
+
+```sh
 #   ✔  Role created: api:role.mcp-accessor-exchanger
-#   ✔  api.mcp-hub  →  api:role.mcp-accessor-exchanger
 #   ✔  Policy created: api:policy.mcp-accessor-exchanger_zts_token_target_exchange_api_role_mcp-accessor
+#   ✔  api.mcp-hub  →  api:role.mcp-accessor-exchanger
 ```
 
 The final `mcp` to API hop uses the existing `docs-getter` role and the existing `api.api-mcp` exchange permissions from the base tutorial.
@@ -285,32 +312,27 @@ _mcp_at=$(./tools/athenz/exchange-access-token.sh \
 
 ## Clean-up 7. Delete temporary test resources
 
-Delete the temporary `api.mcp-hub` service identity after the test:
+Delete the temporary `api.mcp-hub` service identity, remove only the temporary `api.mcp-hub` membership from the tutorial-owned `to-api-exchanger` role, and then delete the temporary roles and policies created only for this test:
 
 ```sh
 ./tools/athenz/delete-service.sh api mcp-hub
+./tools/athenz/delete-role-member.sh api to-api-exchanger api.mcp-hub
+./tools/athenz/delete-policy.sh api mcp-hub-accessor-jag-exchanger_zts_jag_exchange_role_mcp-hub-accessor
+./tools/athenz/delete-role.sh api mcp-hub-accessor-jag-exchanger
+./tools/athenz/delete-policy.sh api mcp-accessor-exchanger_zts_token_target_exchange_api_role_mcp-accessor
+./tools/athenz/delete-role.sh api mcp-accessor-exchanger
+./tools/athenz/delete-role.sh api mcp-hub-accessor
 ```
 
 ```sh
 #   ·  Deleting service api.mcp-hub...
 #   ✔  Service deleted or already absent: api.mcp-hub
-```
-
-Delete the temporary mcp-hub roles and policies created only for this test:
-
-```sh
-./tools/athenz/delete-role-member.sh api to-api-exchanger api.mcp-hub
-./tools/athenz/delete-policy.sh api mcp-accessor-exchanger_zts_token_target_exchange_api_role_mcp-accessor
-
-./tools/athenz/delete-role.sh api mcp-hub-accessor
-./tools/athenz/delete-role.sh api mcp-accessor-exchanger
-```
-
-```sh
 #   ✔  Role member deleted or already absent: api.mcp-hub  →  api:role.to-api-exchanger
+#   ✔  Policy deleted or already absent: api:policy.mcp-hub-accessor-jag-exchanger_zts_jag_exchange_role_mcp-hub-accessor
+#   ✔  Role deleted or already absent: api:role.mcp-hub-accessor-jag-exchanger
 #   ✔  Policy deleted or already absent: api:policy.mcp-accessor-exchanger_zts_token_target_exchange_api_role_mcp-accessor
-#   ✔  Role deleted or already absent: api:role.mcp-hub-accessor
 #   ✔  Role deleted or already absent: api:role.mcp-accessor-exchanger
+#   ✔  Role deleted or already absent: api:role.mcp-hub-accessor
 ```
 
 # Reference
