@@ -21,7 +21,7 @@ test: idjag-learner
 	@# writeFile/pkceParams: JSON marshal/crypto rand never fail on valid input.
 	@# Run is excluded only because it calls pkceParams — all other branches are tested.
 	go tool cover -func=coverage.out \
-		| grep -vE '(main\.go:.*\bmain|openBrowser|openBrowserForOS|cacheDir|writeFile|pkceParams|login/login\.go:28:.*Run)\b' \
+		| grep -vE '(main\.go:.*\bmain|openBrowser|openBrowserForOS|cacheDir|writeFile|pkceParams|login/login\.go:[0-9]+:.*\bRun)\b' \
 		| grep -v '^total:' \
 		| awk '/\t[0-9]+\.[0-9]+%$$/ && $$NF+0 < 100 { print "UNCOVERED: " $$0; fail=1 } END { if (fail) exit 1; print "Coverage: 100% (excluding OS/crypto/platform primitives and main)" }'
 

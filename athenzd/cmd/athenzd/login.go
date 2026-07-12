@@ -48,6 +48,7 @@ func newLoginCmdWithBrowser(browserFn func(string) error) *cobra.Command {
 				Issuer:       svc.IDP.Issuer,
 				ClientID:     svc.IDP.ClientID,
 				CallbackPort: svc.IDP.CallbackPort,
+				CAFile:       svc.IDP.CAFile,
 			}, browserFn)
 			if err != nil {
 				return fmt.Errorf("login failed: %w", err)
