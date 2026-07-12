@@ -61,8 +61,9 @@ func newLoginCmdWithBrowser(browserFn func(string) error) *cobra.Command {
 				return fmt.Errorf("saving token: %w", err)
 			}
 
-			fmt.Fprintf(cmd.OutOrStdout(), "Logged in as service %q — token cached until %s\n",
-				svcName, result.ExpiresAt.Format(time.RFC3339))
+			fmt.Fprintf(cmd.OutOrStdout(), "Logged in as service %q — token cached until %s (%s)\n",
+				svcName, result.ExpiresAt.Format(time.RFC3339),
+				humanizeRemaining(result.ExpiresAt, time.Now()))
 			return nil
 		},
 	}
@@ -78,6 +79,22 @@ func findService(cfg *config.Config, name string) (*config.ServiceConfig, error)
 		}
 	}
 	return nil, fmt.Errorf("service %q not found in config", name)
+}
+
+// humanizeRemaining renders the time between now and exp as a short, friendly
+// string like "~3h left" or "~45m left". Pure (now is passed in) so it is testable.
+func humanizeRemaining(exp, now time.Time) string {
+	d := exp.Sub(now)
+	if d <= 0 {
+		return "expired"
+	}
+	if d >= time.Hour {
+		return fmt.Sprintf("~%dh left", int(d.Hours()))
+	}
+	if d >= time.Minute {
+		return fmt.Sprintf("~%dm left", int(d.Minutes()))
+	}
+	return "~<1m left"
 }
 
 // openBrowser launches the default browser for the given URL.

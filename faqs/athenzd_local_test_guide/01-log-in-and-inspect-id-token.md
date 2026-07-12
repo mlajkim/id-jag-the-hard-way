@@ -45,6 +45,9 @@ athenzd version
 # athenzd v0.0.0
 ```
 
+> [!NOTE]
+> `athenzd` reads its config relative to the current directory (`./.athenzd/config.yaml` for the project-level config). Commands that load config — like `athenzd login` below — are run as `(cd athenzd && ...)` so the generated project config is always picked up. Commands that don't read config, like `athenzd version`, run from anywhere.
+
 ## Step 2. Create the `athenzd` Keycloak client
 
 `athenzd login` uses the browser Authorization Code flow with PKCE, so the Keycloak client must be **public** (no secret) and must whitelist the local callback redirect URI. The callback runs on `http://localhost:8250/callback`.
@@ -118,10 +121,10 @@ The generated config points `idp.issuer` at the **HTTPS** Keycloak endpoint (`ht
 
 ## Step 4. Run `athenzd login`
 
-Run the login from the `athenzd` directory so the project-level config is picked up. `athenzd` opens your browser to the Keycloak authorization URL and waits on the local callback:
+Run the login so the project-level config is picked up. `athenzd` opens your browser to the Keycloak authorization URL and waits on the local callback:
 
 ```sh
-cd athenzd && athenzd login
+(cd athenzd && athenzd login)
 ```
 
 ```sh
@@ -139,7 +142,7 @@ Sign in to Keycloak as:
 After the redirect completes, the browser tab shows `Login successful — you can close this tab.` and the terminal confirms the cached token:
 
 ```sh
-# Logged in as service "idjag-learner" — token cached until 2026-07-13T09:41:20Z
+# Logged in as service "idjag-learner" — token cached until 2026-07-13T12:29:23+09:00 (~3h left)
 ```
 
 ## Step 5. Inspect the cached ID token
