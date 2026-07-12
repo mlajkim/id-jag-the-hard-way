@@ -8,6 +8,7 @@ help:
 	@echo "  idjag-learner     generate athenzd.idjag-learner.yaml from tools/port.sh"
 
 test: idjag-learner
+	./hack/check-config-test-coverage.sh
 	go test -tags=e2e -coverprofile=coverage.out ./...
 	@# main() calls os.Exit and cannot be unit tested — skip it, require 100% on everything else.
 	go tool cover -func=coverage.out \

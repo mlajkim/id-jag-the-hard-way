@@ -2,6 +2,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=hack/lib.sh
+source "$SCRIPT_DIR/lib.sh"
 PORT="$SCRIPT_DIR/../../tools/port.sh"
 ATHENZD_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 OUT="$ATHENZD_DIR/athenzd.idjag-learner.yaml"
@@ -25,20 +27,17 @@ services:
       provider: sys.auth.zts
 EOF
 
-echo "Generated athenzd.idjag-learner.yaml (ZTS=${ZTS}, ZMS=${ZMS})"
+info "Generated athenzd.idjag-learner.yaml (ZTS=${ZTS}, ZMS=${ZMS})"
 
 validate() {
-  echo "Validating with: go run ./cmd/athenzd config validate -f $OUT"
+  info "Validating with: go run ./cmd/athenzd config validate -f $OUT"
   go run "$ATHENZD_DIR/cmd/athenzd" config validate -f "$OUT"
 }
 
 validate
 
 echo ""
-echo "╔══════════════════════════════════════════════════════════════════════╗"
-echo "║  ⚠  ACTION REQUIRED: edit this script before committing             ║"
-echo "║                                                                      ║"
-echo "║  hack/gen-idjag-learner-config.sh still has placeholder values:     ║"
-echo "║    domain:   home.mlajkim   → replace with your Athenz home domain  ║"
-echo "║    provider: sys.auth.zts   → replace with your identity provider   ║"
-echo "╚══════════════════════════════════════════════════════════════════════╝"
+box "⚠  ACTION REQUIRED: edit this script before committing
+hack/gen-idjag-learner-config.sh still has placeholder values:
+  domain:   home.mlajkim   → replace with your Athenz home domain
+  provider: sys.auth.zts   → replace with your identity provider"

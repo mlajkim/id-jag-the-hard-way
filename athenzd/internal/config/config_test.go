@@ -1,3 +1,8 @@
+// Package config_test validates config loading and parsing.
+//
+// Convention: whenever a new field is added to Config (required or optional),
+// TestLoad_Valid must assert its parsed value with a non-zero test input.
+// This ensures no field is silently ignored by the mapstructure decoder.
 package config_test
 
 import (
@@ -24,11 +29,13 @@ func writeTemp(t *testing.T, content string) string {
 	return f.Name()
 }
 
-// TestLoad_Valid checks that a fully populated config loads without error.
+// TestLoad_Valid checks that a fully populated config loads and every field is parsed correctly.
 func TestLoad_Valid(t *testing.T) {
 	path := writeTemp(t, `
 athenz:
   zts: https://zts.example.com:4443/zts/v1
+  zms: https://zms.example.com:4443/zms/v1
+current_service: my-service
 services:
   - name: my-service
     athenz:
@@ -42,8 +49,20 @@ services:
 	if cfg.Athenz.ZTS != "https://zts.example.com:4443/zts/v1" {
 		t.Errorf("unexpected ZTS: %q", cfg.Athenz.ZTS)
 	}
+	if cfg.Athenz.ZMS != "https://zms.example.com:4443/zms/v1" {
+		t.Errorf("unexpected ZMS: %q", cfg.Athenz.ZMS)
+	}
+	if cfg.CurrentService != "my-service" {
+		t.Errorf("unexpected current_service: %q", cfg.CurrentService)
+	}
 	if cfg.Services[0].Name != "my-service" {
 		t.Errorf("unexpected service name: %q", cfg.Services[0].Name)
+	}
+	if cfg.Services[0].Athenz.Domain != "home.mlajkim" {
+		t.Errorf("unexpected domain: %q", cfg.Services[0].Athenz.Domain)
+	}
+	if cfg.Services[0].Athenz.Provider != "cloud.ynw.identityd" {
+		t.Errorf("unexpected provider: %q", cfg.Services[0].Athenz.Provider)
 	}
 }
 
