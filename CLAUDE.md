@@ -1,3 +1,5 @@
+@/Users/jekim/.codex/RTK.md
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
@@ -107,7 +109,32 @@ The `tutorials/` directory contains the canonical learning path (01–14, with s
 
 ## FAQ Writing Rules
 
-For files under `faqs/`, keep the main path short and procedure-first. Put small details, rationale, caveats, and troubleshooting into a `# FAQ` section after the steps. New FAQ files should also end with a `# Reference` section by default.
+For files under `faqs/`, keep the main path short and procedure-first.
+
+Do not manually hard-wrap normal prose. Keep normal paragraphs on one line unless a list, table, or code block needs structure.
+
+Add a collapsible verification status block near the top of each FAQ, after `# Goal` and its short goal text. Use this shape:
+
+```md
+<details>
+<summary>Last verified on Jul 9, 2026 — ✅ Success</summary>
+
+| # | Date        | Confirmed Working                 |
+|---|-------------|-----------------------------------|
+| 1 | Jul 9, 2026 | ✅ — initial structure established |
+
+</details>
+```
+
+Put small details, rationale, caveats, and troubleshooting into a `# FAQ` section after the steps.
+
+Inside a `# FAQ` section, write each question title as bold text instead of a Markdown heading.
+
+```md
+**How do I check the locally mounted custom solution template?**
+```
+
+New FAQ files should also end with a `# Reference` section by default.
 
 ## Tearing Down the Environment
 
