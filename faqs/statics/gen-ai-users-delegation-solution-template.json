@@ -1,0 +1,85 @@
+{
+    "templates": {
+        "gen_ai_users_delegation": {
+            "metadata": {
+                "latestVersion": 1,
+                "timestamp": "2026-07-15T00:00:00.000Z",
+                "description": "gen ai users delegation template",
+                "keywordsToReplace": "_service_code_",
+                "autoUpdate": false
+            },
+            "roles": [
+                {
+                    "name": "_domain_:role._service_code_.pm-cost-approvial-officer-lv5",
+                    "modified": "1970-01-01T00:00:00.000Z",
+                    "roleMembers": []
+                },
+                {
+                    "name": "_domain_:role._service_code_.gen-ai-users-manager",
+                    "modified": "1970-01-01T00:00:00.000Z",
+                    "roleMembers": []
+                },
+                {
+                    "name": "_domain_:role._service_code_.gen-ai-users",
+                    "modified": "1970-01-01T00:00:00.000Z",
+                    "roleMembers": []
+                },
+                {
+                    "name": "_domain_:role._service_code_.gen-ai-users-jag-exchanger",
+                    "modified": "1970-01-01T00:00:00.000Z",
+                    "roleMembers": []
+                }
+            ],
+            "policies": [
+                {
+                    "name": "_domain_:policy._service_code_.pm-cost-approvial-officer-lv5-role-admin",
+                    "modified": "1970-01-01T00:00:00.000Z",
+                    "assertions": [
+                        {
+                            "resource": "_domain_:role._service_code_.gen-ai-users-manager",
+                            "role": "_domain_:role._service_code_.pm-cost-approvial-officer-lv5",
+                            "action": "update_members"
+                        },
+                        {
+                            "resource": "_domain_:role._service_code_.gen-ai-users",
+                            "role": "_domain_:role._service_code_.pm-cost-approvial-officer-lv5",
+                            "action": "update_members"
+                        },
+                        {
+                            "resource": "_domain_:role._service_code_.gen-ai-users-jag-exchanger",
+                            "role": "_domain_:role._service_code_.pm-cost-approvial-officer-lv5",
+                            "action": "update_members"
+                        }
+                    ]
+                },
+                {
+                    "name": "_domain_:policy._service_code_.gen-ai-users-manager-role-admin",
+                    "modified": "1970-01-01T00:00:00.000Z",
+                    "assertions": [
+                        {
+                            "resource": "_domain_:role._service_code_.gen-ai-users",
+                            "role": "_domain_:role._service_code_.gen-ai-users-manager",
+                            "action": "update_members"
+                        },
+                        {
+                            "resource": "_domain_:role._service_code_.gen-ai-users-jag-exchanger",
+                            "role": "_domain_:role._service_code_.gen-ai-users-manager",
+                            "action": "update_members"
+                        }
+                    ]
+                },
+                {
+                    "name": "_domain_:policy._service_code_.gen-ai-users-jag-exchanger",
+                    "modified": "1970-01-01T00:00:00.000Z",
+                    "assertions": [
+                        {
+                            "resource": "_domain_:role._service_code_.gen-ai-users",
+                            "role": "_domain_:role._service_code_.gen-ai-users-jag-exchanger",
+                            "action": "zts.jag_exchange"
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}
