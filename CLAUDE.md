@@ -105,6 +105,10 @@ The `keycloak_token_exchange_provider` Dockerfile is export-only — it copies t
 
 The `tutorials/` directory contains the canonical learning path (01–14, with sub-steps). They are Markdown files intended to be read in order. The `tutorials/challenges/` subdirectory contains challenge exercises. Always keep tutorial content consistent with the code behavior when making changes.
 
+## FAQ Writing Rules
+
+For files under `faqs/`, keep the main path short and procedure-first. Put small details, rationale, caveats, and troubleshooting into a `# FAQ` section after the steps. New FAQ files should also end with a `# Reference` section by default.
+
 ## Tearing Down the Environment
 
 To fully reset after completing the tutorial:
