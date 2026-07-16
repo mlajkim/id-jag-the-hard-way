@@ -1,5 +1,3 @@
-@/Users/jekim/.codex/RTK.md
-
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
@@ -113,22 +111,24 @@ For files under `faqs/`, keep the main path short and procedure-first.
 
 Do not manually hard-wrap normal prose. Keep normal paragraphs on one line unless a list, table, or code block needs structure.
 
-Add a collapsible verification status block near the top of each FAQ, after `# Goal` and its short goal text. Use this shape:
+Add a collapsible verification status block near the top of each FAQ, after `# Goal` and its short goal text. Only a human user may mark a FAQ as verified or successful. If the user has not explicitly confirmed that the exact procedure worked, use the pending shape:
 
 ```md
 <details>
-<summary>Last verified on Jul 9, 2026 — ✅ Success</summary>
+<summary>Verification status — 🟡 Pending human verification</summary>
 
-| # | Date        | Confirmed Working                 |
-|---|-------------|-----------------------------------|
-| 1 | Jul 9, 2026 | ✅ — initial structure established |
+| # | Date | Status |
+|---|------|--------|
+| 1 | TBD  | 🟡 Pending — human has not confirmed this procedure |
 
 </details>
 ```
 
-Put small details, rationale, caveats, and troubleshooting into a `# FAQ` section after the steps.
+When the user explicitly confirms success, update the summary to `Last verified on <date> — ✅ Success` and add the human-confirmed result to the table.
 
-Inside a `# FAQ` section, write each question title as bold text instead of a Markdown heading.
+Put small details, rationale, caveats, and troubleshooting into a `# FAQs` section after the steps.
+
+Inside a `# FAQs` section, write each question title as bold text instead of a Markdown heading.
 
 ```md
 **How do I check the locally mounted custom solution template?**
