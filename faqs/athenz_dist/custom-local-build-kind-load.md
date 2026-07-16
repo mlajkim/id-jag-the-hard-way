@@ -3,11 +3,11 @@
 Build custom local Athenz ZMS/ZTS images from `athenz_dist`, load them into the local kind cluster, and restart both deployments.
 
 <details>
-<summary>Verification status — 🟡 Pending human verification</summary>
+<summary>Last verified on 2026-07-17 — ✅ Success</summary>
 
-| # | Date | Status                                              |
-|---|------|-----------------------------------------------------|
-| 1 | TBD  | 🟡 Pending — human has not confirmed this procedure |
+| # | Date       | Status                                      |
+|---|------------|---------------------------------------------|
+| 1 | 2026-07-17 | ✅ Success — human confirmed fully tested |
 
 </details>
 

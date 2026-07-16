@@ -3,11 +3,11 @@
 Register and apply the GenAI users delegation domain template to a service domain under `gen-ai.services` without editing the ZMS default `solution_templates.json`.
 
 <details>
-<summary>Verification status — 🟡 Pending human verification</summary>
+<summary>Last verified on 2026-07-17 — ✅ Success</summary>
 
-| # | Date | Status                                              |
-|---|------|-----------------------------------------------------|
-| 1 | TBD  | 🟡 Pending — human has not confirmed this procedure |
+| # | Date       | Status                                      |
+|---|------------|---------------------------------------------|
+| 1 | 2026-07-17 | ✅ Success — human confirmed fully tested |
 
 </details>
 
