@@ -10,6 +10,7 @@
   - [Run MCP Hub](#run-mcp-hub)
   - [Confluence Vendor MCP Server](#confluence-vendor-mcp-server)
   - [Setup Core MCP Proxy](#setup-core-mcp-proxy)
+  - [Ensure the athenzd Home Domain and Service With an ID Token](#ensure-the-athenzd-home-domain-and-service-with-an-id-token)
   - [Register GenAI Users Domain Template](#register-genai-users-domain-template)
 - [Governance](#governance)
   - [What should we do if Resource Server](#what-should-we-do-if-resource-server)
@@ -84,6 +85,10 @@ See [Setup Confluence Vendor MCP Server](./setup-confluence-vendor-mcp.md).
 ## Setup Core MCP Proxy
 
 See [Setup Core MCP Proxy](./setup-core-mcp-proxy.md).
+
+## Ensure the athenzd Home Domain and Service With an ID Token
+
+See [Ensure the Home Domain and Local `athenzd` Service With an ID Token](./athenzd_local_test_guide/02-ensure-home-domain-and-service-with-id-token.md).
 
 ## Register GenAI Users Domain Template
 

@@ -18,7 +18,8 @@
 ### Prerequisites
 
 - An IdP with an `athenzd` client registered. To set up: [here](../faqs/athenzd_local_test_guide/01-log-in-and-inspect-id-token.md)
-- TLD `home` is created beforehand
+- ZMS is configured to authenticate the IdP token with `OIDCJwtAuthority`. To set up and test the ensure flow: [here](../faqs/athenzd_local_test_guide/02-ensure-home-domain-and-service-with-id-token.md)
+- ZMS has `athenz.home_domain=home`; ZMS creates the reserved `home` top-level domain during initial system setup.
 
 ### Constraints
 
