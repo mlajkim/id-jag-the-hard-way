@@ -48,12 +48,19 @@ services:
       service: home.{{.preferred_username}}.local.athenzd
       optional_admins:
         - user.athenz_admin
-      # provider: sys.auth.zts  # reserved for later certificate registration
+      provider: sys.auth.localworkload
     idp:
       issuer: https://keycloak.idp:${KEYCLOAK}/realms/master
       client_id: athenzd
       callback_port: 8250
       ca_file: ${CA}
+    identity:
+      mode: copperargos
+      instance_id: idjag-learner-athenzd
+      cert_file: ~/.config/athenzd/identity/idjag-learner.cert.pem
+      key_file: ~/.config/athenzd/identity/idjag-learner.key.pem
+      ca_file: ~/.config/athenzd/identity/ca.cert.pem
+      expiry_minutes: 60
 EOF
 
 # Validate silently — a broken config still fails the build (set -e), but on

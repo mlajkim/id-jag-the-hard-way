@@ -1,6 +1,6 @@
 # Goal
 
-Test `athenzd` against the local ID-JAG The Hard Way environment: configure Keycloak and ZMS, mount the published local workload provider JAR into ZTS, log in with a real ID token, idempotently ensure `home.<preferred_username>.local.athenzd`, inspect the result, and clean up only the objects created by this test.
+Test `athenzd` against the local ID-JAG The Hard Way environment: configure Keycloak, ZMS, ZTS, and the published local-workload provider; log in with a real ID token; idempotently ensure `home.<preferred_username>.local.athenzd`; use that ID token as Copper Argos attestation to issue an X.509 service certificate; inspect the result; and clean up only the objects created by this test.
 
 <!-- TOC depthFrom:2 depthTo:3 -->
 
@@ -9,16 +9,20 @@ Test `athenzd` against the local ID-JAG The Hard Way environment: configure Keyc
 - [Step 3. Map the Keycloak hostname](#step-3-map-the-keycloak-hostname)
 - [Step 4. Configure ZMS OIDC authentication](#step-4-configure-zms-oidc-authentication)
 - [Step 5. Mount the published provider JAR into ZTS](#step-5-mount-the-published-provider-jar-into-zts)
-- [Step 6. Confirm the personal parent domain exists](#step-6-confirm-the-personal-parent-domain-exists)
-- [Step 7. Generate and validate the config](#step-7-generate-and-validate-the-config)
-- [Step 8. Log in and ensure the service](#step-8-log-in-and-ensure-the-service)
-- [Step 9. Verify idempotency and inspect the result](#step-9-verify-idempotency-and-inspect-the-result)
+- [Step 6. Configure the provider in ZTS](#step-6-configure-the-provider-in-zts)
+- [Step 7. Register and authorize the provider in Athenz](#step-7-register-and-authorize-the-provider-in-athenz)
+- [Step 8. Confirm the personal parent domain exists](#step-8-confirm-the-personal-parent-domain-exists)
+- [Step 9. Generate and validate the config](#step-9-generate-and-validate-the-config)
+- [Step 10. Log in and issue the service certificate](#step-10-log-in-and-issue-the-service-certificate)
+- [Step 11. Verify the certificate and idempotency](#step-11-verify-the-certificate-and-idempotency)
 - [Cleanup 1. Remove the service and local child domain](#cleanup-1-remove-the-service-and-local-child-domain)
-- [Cleanup 2. Remove the provider init container](#cleanup-2-remove-the-provider-init-container)
-- [Cleanup 3. Remove the ZMS OIDC settings](#cleanup-3-remove-the-zms-oidc-settings)
-- [Cleanup 4. Delete the Keycloak client](#cleanup-4-delete-the-keycloak-client)
-- [Cleanup 5. Delete local files](#cleanup-5-delete-local-files)
-- [Cleanup 6. Remove the hostname mapping](#cleanup-6-remove-the-hostname-mapping)
+- [Cleanup 2. Remove the provider registration](#cleanup-2-remove-the-provider-registration)
+- [Cleanup 3. Remove the ZTS provider configuration](#cleanup-3-remove-the-zts-provider-configuration)
+- [Cleanup 4. Remove the provider init container](#cleanup-4-remove-the-provider-init-container)
+- [Cleanup 5. Remove the ZMS OIDC settings](#cleanup-5-remove-the-zms-oidc-settings)
+- [Cleanup 6. Delete the Keycloak client](#cleanup-6-delete-the-keycloak-client)
+- [Cleanup 7. Delete local files](#cleanup-7-delete-local-files)
+- [Cleanup 8. Remove the hostname mapping](#cleanup-8-remove-the-hostname-mapping)
 
 <!-- /TOC -->
 
@@ -41,7 +45,7 @@ Test `athenzd` against the local ID-JAG The Hard Way environment: configure Keyc
 - Ensure the personal parent domain `home.idjag-learner` already exists. `athenzd` never creates the reserved `home` top-level domain or a user's personal parent domain.
 
 > [!NOTE]
-> This test mounts the Copper Argos provider class into ZTS, but it does not register or initialize the provider, request an X.509 certificate, call the ZTS instance-registration endpoint, or exchange the ID token for an Athenz access token.
+> This test calls `POST /zts/v1/instance` and writes an X.509 certificate, private key, and signer CA locally. It does not exchange the ID token for an Athenz access token or start a long-running certificate-rotation daemon.
 
 # Steps
 
@@ -238,7 +242,138 @@ Expected class entry:
 com/yahoo/athenz/instance/provider/impl/InstanceLocalWorkloadProvider.class
 ```
 
-## Step 6. Confirm the personal parent domain exists
+## Step 6. Configure the provider in ZTS
+
+Edit the ZTS ConfigMap:
+
+```sh
+kubectl edit configmap athenz-zts-conf -n athenz
+```
+
+Add these properties to the existing `zts.properties` YAML value. Each line below already has the four leading spaces required by the ConfigMap YAML:
+
+```properties
+    athenz.zts.local_workload.issuer=https://keycloak.idp:34444/realms/master
+    athenz.zts.local_workload.jwks_uri=https://keycloak.idp:8443/realms/master/protocol/openid-connect/certs
+    athenz.zts.local_workload.audience=athenzd
+    athenz.zts.local_workload.user_name_claim=preferred_username
+    athenz.zts.local_workload.user_domain_template=home.%s.local
+    athenz.zts.local_workload.boot_time_offset=300
+```
+
+The issuer must exactly match the browser-issued token's `iss` claim. The explicit JWKS URI lets the ZTS pod retrieve the same issuer's keys through Keycloak's in-cluster HTTPS port. The provider maps `preferred_username: idjag-learner` to the permitted root `home.idjag-learner.local` and rejects enrollment for services outside that subtree.
+
+Save the ConfigMap, restart ZTS, and wait for readiness:
+
+```sh
+kubectl -n athenz rollout restart deployment/athenz-zts-server
+kubectl -n athenz rollout status deployment/athenz-zts-server
+```
+
+Confirm all six properties are present in the live ConfigMap:
+
+```sh
+kubectl -n athenz get configmap athenz-zts-conf \
+  -o jsonpath='{.data.zts\.properties}' \
+  | grep '^athenz\.zts\.local_workload\.'
+```
+
+Confirm ZTS is healthy before changing Athenz authorization data:
+
+```sh
+curl -sS --cacert ./athenz_dist/certs/ca.cert.pem \
+  "https://localhost:$(./tools/port.sh zts)/zts/v1/status" \
+  | jq
+```
+
+```json
+{
+  "code": 200,
+  "message": "OK"
+}
+```
+
+## Step 7. Register and authorize the provider in Athenz
+
+Create the provider service only when it is absent:
+
+```sh
+if kubectl -n athenz exec deployment/athenz-cli -- \
+  zms-cli \
+    -z https://athenz-zms-server.athenz:4443/zms/v1 \
+    -key /var/run/athenz/athenz_admin.private.pem \
+    -cert /var/run/athenz/athenz_admin.cert.pem \
+    -d sys.auth \
+    show-service localworkload >/dev/null 2>&1; then
+  echo 'Provider service already exists: sys.auth.localworkload'
+else
+  kubectl -n athenz exec deployment/athenz-cli -- \
+    zms-cli \
+      -z https://athenz-zms-server.athenz:4443/zms/v1 \
+      -key /var/run/athenz/athenz_admin.private.pem \
+      -cert /var/run/athenz/athenz_admin.cert.pem \
+      -d sys.auth \
+      add-service localworkload
+fi
+```
+
+Set the service endpoint to the class provided by the mounted JAR:
+
+```sh
+kubectl -n athenz exec deployment/athenz-cli -- \
+  zms-cli \
+    -z https://athenz-zms-server.athenz:4443/zms/v1 \
+    -key /var/run/athenz/athenz_admin.private.pem \
+    -cert /var/run/athenz/athenz_admin.cert.pem \
+    -d sys.auth \
+    set-service-endpoint localworkload \
+    class://com.yahoo.athenz.instance.provider.impl.InstanceLocalWorkloadProvider
+```
+
+Apply the `instance_provider` solution template so `sys.auth.localworkload` may launch instances globally:
+
+```sh
+kubectl -n athenz exec deployment/athenz-cli -- \
+  zms-cli \
+    -z https://athenz-zms-server.athenz:4443/zms/v1 \
+    -key /var/run/athenz/athenz_admin.private.pem \
+    -cert /var/run/athenz/athenz_admin.cert.pem \
+    -d sys.auth \
+    set-domain-template instance_provider \
+    provider=sys.auth.localworkload \
+    dnssuffix=local
+```
+
+The CSR generated by `athenzd` contains SPIFFE and provider-scoped instance-ID URI SANs but no DNS SAN. The `dnssuffix` value is still required by the standard template even though this test does not request a provider-controlled DNS name.
+
+Verify the endpoint and global provider-role membership:
+
+```sh
+curl -sS \
+  --cacert ./athenz_dist/certs/ca.cert.pem \
+  --cert ./athenz_dist/certs/athenz_admin.cert.pem \
+  --key ./athenz_dist/keys/athenz_admin.private.pem \
+  https://localhost:4443/zms/v1/domain/sys.auth/service/localworkload \
+  | jq '{name, providerEndpoint}'
+
+curl -sS \
+  --cacert ./athenz_dist/certs/ca.cert.pem \
+  --cert ./athenz_dist/certs/athenz_admin.cert.pem \
+  --key ./athenz_dist/keys/athenz_admin.private.pem \
+  https://localhost:4443/zms/v1/domain/sys.auth/role/providers \
+  | jq -e '.roleMembers | any(.memberName == "sys.auth.localworkload")'
+```
+
+The first command must show the `class://` endpoint and the second must print `true`.
+
+Restart ZTS once so its policy cache immediately sees the new provider service and global launch authorization:
+
+```sh
+kubectl -n athenz rollout restart deployment/athenz-zts-server
+kubectl -n athenz rollout status deployment/athenz-zts-server
+```
+
+## Step 8. Confirm the personal parent domain exists
 
 Check the required parent with the tutorial administrator certificate:
 
@@ -263,7 +398,7 @@ If ZMS returns `404`, stop and provision the personal parent through the environ
 required personal home domain "home.idjag-learner" does not exist; athenzd does not create the reserved home TLD or personal home domains
 ```
 
-## Step 7. Generate and validate the config
+## Step 9. Generate and validate the config
 
 Generate the project-level config without an overwrite prompt:
 
@@ -287,17 +422,26 @@ services:
       service: home.{{.preferred_username}}.local.athenzd
       optional_admins:
         - user.athenz_admin
-      # provider: sys.auth.zts  # reserved for later certificate registration
+      provider: sys.auth.localworkload
     idp:
       issuer: https://keycloak.idp:34444/realms/master
       client_id: athenzd
       callback_port: 8250
       ca_file: /absolute/path/to/athenz_dist/certs/ca.cert.pem
+    identity:
+      mode: copperargos
+      instance_id: idjag-learner-athenzd
+      cert_file: ~/.config/athenzd/identity/idjag-learner.cert.pem
+      key_file: ~/.config/athenzd/identity/idjag-learner.key.pem
+      ca_file: ~/.config/athenzd/identity/ca.cert.pem
+      expiry_minutes: 60
 ```
 
 `current_service` is the local profile and cache key. The full `athenz.service` template renders from the ID token's `preferred_username` claim. `optional_admins` is additive: the signed-in user remains an administrator, and each listed principal is added only when absent.
 
-`provider` remains commented out because this flow does not register an instance or request a certificate.
+`mode: copperargos` makes `athenzd` use the freshly issued ID token as `attestationData`, generate a new private key and Athenz-compatible CSR, call the ZTS instance-registration endpoint, and write the three configured output files. `athenz.provider` is the service ZTS uses for both launch authorization and attestation validation. `identity.instance_id` is stable within that provider's namespace.
+
+The global `athenz.ca_file` is input trust for the ZMS and ZTS HTTPS endpoints. The nested `identity.ca_file` is an output path for the certificate signer chain returned by ZTS.
 
 Validate the generated file:
 
@@ -313,9 +457,10 @@ OK
   current_service:  idjag-learner
   services (1):
     - name: idjag-learner  service: home.{{.preferred_username}}.local.athenzd
+      identity: copperargos  provider: sys.auth.localworkload  instance: idjag-learner-athenzd
 ```
 
-## Step 8. Log in and ensure the service
+## Step 10. Log in and issue the service certificate
 
 Run login immediately before the ZMS checks because the local authority accepts only recently issued tokens:
 
@@ -328,20 +473,30 @@ Sign in to Keycloak as:
 - Username: `idjag-learner`
 - Password: `password`
 
-Expected first-run result when the child domain and service are absent:
+Expected first-run result when the child domain, service, and target launch authorization are absent:
 
 ```text
-Step 1/2 — Log in with the identity provider
+Step 1/3 — Log in with the identity provider
 Opening browser for login...
 ✓ ID token cached for current_service "idjag-learner" until 2026-07-19T13:11:50+09:00 (~3h left)
 
-Step 2/2 — Ensure Athenz service home.idjag-learner.local.athenzd
+Step 2/3 — Ensure Athenz service home.idjag-learner.local.athenzd
 ✓ Required parent exists: home.idjag-learner
 ✓ Local subdomain home.idjag-learner.local: created
 ✓ Optional administrator user.athenz_admin: already present
 ✓ Service home.idjag-learner.local.athenzd: created
+✓ Provider launch authorization sys.auth.localworkload: applied
+  Waiting up to 60s for ZTS to observe the new authorization...
+
+Step 3/3 — Enroll X.509 identity through sys.auth.localworkload
+✓ Certificate issued: home.idjag-learner.local.athenzd (instance idjag-learner-athenzd)
+✓ Certificate: ~/.config/athenzd/identity/idjag-learner.cert.pem
+✓ Private key: ~/.config/athenzd/identity/idjag-learner.key.pem
+✓ Signer CA: ~/.config/athenzd/identity/ca.cert.pem
 ✓ Ready: home.idjag-learner.local.athenzd
 ```
+
+`athenzd` applies the target domain's `identity_provisioning` solution template after creating the service. If that authorization changed, it retries an HTTP 403 from ZTS for up to 60 seconds while ZTS refreshes its policy cache. Other errors fail immediately.
 
 The one service identity is separated internally into:
 
@@ -352,7 +507,68 @@ The one service identity is separated internally into:
 | Simple service name   | `athenzd`                          |
 | Full service identity | `home.idjag-learner.local.athenzd` |
 
-## Step 9. Verify idempotency and inspect the result
+## Step 11. Verify the certificate and idempotency
+
+Confirm the private key is owner-only and all three outputs exist:
+
+```sh
+ls -l \
+  "${HOME}/.config/athenzd/identity/idjag-learner.cert.pem" \
+  "${HOME}/.config/athenzd/identity/idjag-learner.key.pem" \
+  "${HOME}/.config/athenzd/identity/ca.cert.pem"
+```
+
+The private key must show mode `-rw-------`. Verify that the issued certificate has the expected subject, issuer, validity, key usage, and URI SANs:
+
+```sh
+openssl x509 \
+  -in "${HOME}/.config/athenzd/identity/idjag-learner.cert.pem" \
+  -noout \
+  -subject \
+  -issuer \
+  -dates \
+  -ext extendedKeyUsage \
+  -ext subjectAltName
+```
+
+The subject CN must be `home.idjag-learner.local.athenzd`. The extended key usage must permit TLS client authentication. The SAN output must include:
+
+```text
+URI:spiffe://home.idjag-learner.local/sa/athenzd
+URI:athenz://instanceid/sys.auth.localworkload/idjag-learner-athenzd
+```
+
+Verify the private key matches the certificate without printing either credential:
+
+```sh
+_cert_pubkey_sha256="$(openssl x509 \
+  -in "${HOME}/.config/athenzd/identity/idjag-learner.cert.pem" \
+  -pubkey -noout \
+  | openssl pkey -pubin -outform DER \
+  | openssl dgst -sha256)"
+
+_key_pubkey_sha256="$(openssl pkey \
+  -in "${HOME}/.config/athenzd/identity/idjag-learner.key.pem" \
+  -pubout -outform DER \
+  | openssl dgst -sha256)"
+
+test "${_cert_pubkey_sha256}" = "${_key_pubkey_sha256}" \
+  && echo 'Certificate and private key match'
+```
+
+Verify the certificate against the signer chain returned by ZTS:
+
+```sh
+openssl verify \
+  -CAfile "${HOME}/.config/athenzd/identity/ca.cert.pem" \
+  "${HOME}/.config/athenzd/identity/idjag-learner.cert.pem"
+```
+
+Expected output:
+
+```text
+/Users/you/.config/athenzd/identity/idjag-learner.cert.pem: OK
+```
 
 Run login again:
 
@@ -363,13 +579,19 @@ Run login again:
 The ZMS stage should now report no changes:
 
 ```text
-Step 2/2 — Ensure Athenz service home.idjag-learner.local.athenzd
+Step 2/3 — Ensure Athenz service home.idjag-learner.local.athenzd
 ✓ Required parent exists: home.idjag-learner
 ✓ Local subdomain home.idjag-learner.local: already exists
 ✓ Optional administrator user.athenz_admin: already present
 ✓ Service home.idjag-learner.local.athenzd: already exists
+✓ Provider launch authorization sys.auth.localworkload: already present
+
+Step 3/3 — Enroll X.509 identity through sys.auth.localworkload
+✓ Certificate issued: home.idjag-learner.local.athenzd (instance idjag-learner-athenzd)
 ✓ Ready: home.idjag-learner.local.athenzd
 ```
+
+The second login obtains a fresh ID token and a fresh certificate because the local-workload provider intentionally disables certificate refresh. It replaces the configured credential files only after ZTS returns and `athenzd` validates the response.
 
 Inspect the cached identity without printing its bearer token:
 
@@ -397,7 +619,7 @@ _athenz_ui_port="$(./tools/port.sh athenz-ui)"
 
 # Cleanup
 
-Keep the Kubernetes environment and port-forwards running until Cleanup 4 is complete. Never delete `home.idjag-learner`; it is a prerequisite that `athenzd` did not create.
+Keep the Kubernetes environment and port-forwards running until Cleanup 6 is complete. Never delete `home.idjag-learner`; it is a prerequisite that `athenzd` did not create.
 
 ## Cleanup 1. Remove the service and local child domain
 
@@ -467,7 +689,76 @@ case "${_http_code}" in
 esac
 ```
 
-## Cleanup 2. Remove the provider init container
+Deleting the child domain also removes the `identity_provisioning` template, `identityproviders` role, and launch policy that `athenzd` applied inside that child domain.
+
+## Cleanup 2. Remove the provider registration
+
+Run this cleanup only if `sys.auth.localworkload` and the `instance_provider` application were created solely for this test. Removing a shared template application can affect other providers.
+
+Remove the global provider template application:
+
+```sh
+kubectl -n athenz exec deployment/athenz-cli -- \
+  zms-cli \
+    -z https://athenz-zms-server.athenz:4443/zms/v1 \
+    -key /var/run/athenz/athenz_admin.private.pem \
+    -cert /var/run/athenz/athenz_admin.cert.pem \
+    -d sys.auth \
+    delete-domain-template instance_provider
+```
+
+Delete the provider service:
+
+```sh
+kubectl -n athenz exec deployment/athenz-cli -- \
+  zms-cli \
+    -z https://athenz-zms-server.athenz:4443/zms/v1 \
+    -key /var/run/athenz/athenz_admin.private.pem \
+    -cert /var/run/athenz/athenz_admin.cert.pem \
+    -d sys.auth \
+    delete-service localworkload
+```
+
+Verify the provider service is absent:
+
+```sh
+_http_code="$(curl -sS \
+  --cacert ./athenz_dist/certs/ca.cert.pem \
+  --cert ./athenz_dist/certs/athenz_admin.cert.pem \
+  --key ./athenz_dist/keys/athenz_admin.private.pem \
+  -o /dev/null -w '%{http_code}' \
+  https://localhost:4443/zms/v1/domain/sys.auth/service/localworkload)"
+
+test "${_http_code}" = 404 && echo 'Provider registration removed'
+```
+
+## Cleanup 3. Remove the ZTS provider configuration
+
+Keep the properties if ZTS should continue accepting ID tokens through this provider. Otherwise, edit the ConfigMap:
+
+```sh
+kubectl edit configmap athenz-zts-conf -n athenz
+```
+
+Search for `/athenz.zts.local_workload.issuer=` and delete the six contiguous `athenz.zts.local_workload.*` lines with `6dd`, then save with `:wq`. If the properties are no longer contiguous, delete each matching line individually.
+
+Restart ZTS and verify the properties are absent:
+
+```sh
+kubectl -n athenz rollout restart deployment/athenz-zts-server
+kubectl -n athenz rollout status deployment/athenz-zts-server
+
+if kubectl -n athenz get configmap athenz-zts-conf \
+  -o jsonpath='{.data.zts\.properties}' \
+  | grep -q '^athenz\.zts\.local_workload\.'; then
+  echo 'Local-workload ZTS properties still exist' >&2
+  false
+else
+  echo 'Local-workload ZTS properties removed'
+fi
+```
+
+## Cleanup 4. Remove the provider init container
 
 Remove only the init container added by Step 5:
 
@@ -499,7 +790,7 @@ else
 fi
 ```
 
-## Cleanup 3. Remove the ZMS OIDC settings
+## Cleanup 5. Remove the ZMS OIDC settings
 
 Keep the settings if ZMS should continue accepting `athenzd` ID tokens. Otherwise:
 
@@ -537,7 +828,7 @@ else
 fi
 ```
 
-## Cleanup 4. Delete the Keycloak client
+## Cleanup 6. Delete the Keycloak client
 
 Delete the shared client only when no other user needs it:
 
@@ -545,22 +836,31 @@ Delete the shared client only when no other user needs it:
 ./tools/keycloak/delete-client.sh "athenzd"
 ```
 
-## Cleanup 5. Delete local files
+## Cleanup 7. Delete local files
 
 Review the exact files:
 
 ```sh
-ls -l "${HOME}/.cache/athenzd/idjag-learner.json" athenzd/.athenzd/config.yaml 2>/dev/null || true
+ls -l \
+  "${HOME}/.cache/athenzd/idjag-learner.json" \
+  "${HOME}/.config/athenzd/identity/idjag-learner.cert.pem" \
+  "${HOME}/.config/athenzd/identity/idjag-learner.key.pem" \
+  "${HOME}/.config/athenzd/identity/ca.cert.pem" \
+  athenzd/.athenzd/config.yaml \
+  2>/dev/null || true
 ```
 
-Delete only this test's cache and generated config:
+Delete only this test's token cache, generated credentials, and generated config:
 
 ```sh
 rm -f "${HOME}/.cache/athenzd/idjag-learner.json"
+rm -f "${HOME}/.config/athenzd/identity/idjag-learner.cert.pem"
+rm -f "${HOME}/.config/athenzd/identity/idjag-learner.key.pem"
+rm -f "${HOME}/.config/athenzd/identity/ca.cert.pem"
 rm -f athenzd/.athenzd/config.yaml
 ```
 
-## Cleanup 6. Remove the hostname mapping
+## Cleanup 8. Remove the hostname mapping
 
 Refuse to overwrite a backup left by an earlier attempt:
 
@@ -627,15 +927,32 @@ kubectl -n athenz logs deployment/athenz-zms-server --since=5m \
 
 **What does `boot_time_offset=300` do?**
 
-The plugin rejects tokens whose `iat` is older than 300 seconds. `athenzd login` obtains a fresh token and immediately uses that token for the ensure calls.
+The ZMS authority and local-workload provider reject tokens whose `iat` is older than 300 seconds. `athenzd login` obtains a fresh token and immediately uses it for the ZMS ensure calls and ZTS attestation.
 
 **Does this call ZTS or Copper Argos?**
 
-The Kubernetes step restarts ZTS with the provider JAR on its classpath, but `athenzd` still performs only ZMS domain, role-member, and service operations. It does not call the ZTS instance-registration API or request a certificate. Certificate registration comes later.
+Yes. With `identity.mode: copperargos`, `athenzd` generates an RSA private key and a CSR, puts the ID token in `attestationData`, and calls `POST /zts/v1/instance`. ZTS authorizes `sys.auth.localworkload`, invokes `InstanceLocalWorkloadProvider`, and returns the service certificate and signer chain. The private key never leaves the workstation.
+
+**What is the difference between planned `local` mode and `copperargos` mode?**
+
+`copperargos` is implemented now: it uses the ID token as attestation, requests a new certificate, and writes the configured certificate, key, and signer-CA outputs. A future `local` mode will read an externally managed certificate and private key from the configured paths instead of calling the instance provider. `local` mode is intentionally not implemented by this PR.
+
+**Why does athenzd write files if Copper Argos is remote?**
+
+Only certificate issuance is remote. `athenzd` generates and retains the private key locally, sends only the CSR and ID-token attestation, validates that the returned certificate matches that private key, and then writes the configured outputs. It uses mode `0600` for the key and `0644` for the certificate and signer CA.
 
 **Why use an init container for the provider JAR?**
 
 The published image is a JAR carrier rather than a long-running service. Its init container copies the JAR into an `emptyDir` shared with ZTS before ZTS starts, so the class is available on `USER_CLASSPATH` without a workstation build or a custom ZTS image.
+
+**Why might the first ZTS registration briefly return HTTP 403?**
+
+ZMS has already accepted the target `identity_provisioning` template, but ZTS may not have refreshed that domain in its policy cache yet. When `athenzd` applied the authorization during the same login, it retries only HTTP 403 responses for up to 60 seconds. A persistent 403 means the provider or target launch authorization is genuinely missing; inspect the focused ZTS log without printing the ID token:
+
+```sh
+kubectl -n athenz logs deployment/athenz-zts-server --since=5m \
+  | grep -E 'not authorized to launch|unable to get instance for provider|unable to verify attestation data|CSR validation failed'
+```
 
 **Can `idp_user=idjag-learner` choose or override the authenticated user?**
 
@@ -756,7 +1073,10 @@ No. Cleanup removes only the child service and child domain created by this test
 - [`athenzd` README](../../athenzd/README.md)
 - [`athenzd` login command](../../athenzd/cmd/athenzd/login.go)
 - [`athenzd` ZMS client](../../athenzd/internal/zms/client.go)
+- [`athenzd` ZTS enrollment client](../../athenzd/internal/zts/client.go)
 - [`athenzd` config generator](../../athenzd/hack/gen-idjag-learner-config.sh)
 - [`OIDCJwtAuthority` configuration](https://github.com/ctyano/athenz-plugins#oidcjwtauthority)
 - [Athenz domain API](https://github.com/AthenZ/athenz/blob/master/core/zms/src/main/rdl/Domain.rdli)
 - [Athenz service-identity API](https://github.com/AthenZ/athenz/blob/master/core/zms/src/main/rdl/ServiceIdentity.rdli)
+- [Athenz instance-registration API](https://github.com/AthenZ/athenz/blob/master/core/zts/src/main/rdl/Instance.rdli)
+- [Athenz Copper Argos development guide](https://github.com/AthenZ/athenz/blob/master/docs/copper_argos_dev.md)
