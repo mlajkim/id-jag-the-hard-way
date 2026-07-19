@@ -1,6 +1,6 @@
 # Goal
 
-Test `athenzd` against the local ID-JAG The Hard Way environment: configure Keycloak and ZMS, log in with a real ID token, idempotently ensure `home.<preferred_username>.local.athenzd`, inspect the result, and clean up only the objects created by this test.
+Test `athenzd` against the local ID-JAG The Hard Way environment: configure Keycloak and ZMS, mount the published local workload provider JAR into ZTS, log in with a real ID token, idempotently ensure `home.<preferred_username>.local.athenzd`, inspect the result, and clean up only the objects created by this test.
 
 <!-- TOC depthFrom:2 depthTo:3 -->
 
@@ -8,15 +8,17 @@ Test `athenzd` against the local ID-JAG The Hard Way environment: configure Keyc
 - [Step 2. Create the Keycloak client](#step-2-create-the-keycloak-client)
 - [Step 3. Map the Keycloak hostname](#step-3-map-the-keycloak-hostname)
 - [Step 4. Configure ZMS OIDC authentication](#step-4-configure-zms-oidc-authentication)
-- [Step 5. Confirm the personal parent domain exists](#step-5-confirm-the-personal-parent-domain-exists)
-- [Step 6. Generate and validate the config](#step-6-generate-and-validate-the-config)
-- [Step 7. Log in and ensure the service](#step-7-log-in-and-ensure-the-service)
-- [Step 8. Verify idempotency and inspect the result](#step-8-verify-idempotency-and-inspect-the-result)
+- [Step 5. Mount the published provider JAR into ZTS](#step-5-mount-the-published-provider-jar-into-zts)
+- [Step 6. Confirm the personal parent domain exists](#step-6-confirm-the-personal-parent-domain-exists)
+- [Step 7. Generate and validate the config](#step-7-generate-and-validate-the-config)
+- [Step 8. Log in and ensure the service](#step-8-log-in-and-ensure-the-service)
+- [Step 9. Verify idempotency and inspect the result](#step-9-verify-idempotency-and-inspect-the-result)
 - [Cleanup 1. Remove the service and local child domain](#cleanup-1-remove-the-service-and-local-child-domain)
-- [Cleanup 2. Remove the ZMS OIDC settings](#cleanup-2-remove-the-zms-oidc-settings)
-- [Cleanup 3. Delete the Keycloak client](#cleanup-3-delete-the-keycloak-client)
-- [Cleanup 4. Delete local files](#cleanup-4-delete-local-files)
-- [Cleanup 5. Remove the hostname mapping](#cleanup-5-remove-the-hostname-mapping)
+- [Cleanup 2. Remove the provider init container](#cleanup-2-remove-the-provider-init-container)
+- [Cleanup 3. Remove the ZMS OIDC settings](#cleanup-3-remove-the-zms-oidc-settings)
+- [Cleanup 4. Delete the Keycloak client](#cleanup-4-delete-the-keycloak-client)
+- [Cleanup 5. Delete local files](#cleanup-5-delete-local-files)
+- [Cleanup 6. Remove the hostname mapping](#cleanup-6-remove-the-hostname-mapping)
 
 <!-- /TOC -->
 
@@ -32,15 +34,14 @@ Test `athenzd` against the local ID-JAG The Hard Way environment: configure Keyc
 # Prerequisites
 
 - Complete the main tutorial through [Identity Provider](../../tutorials/13-identity-provider.md).
-- Leave `./tools/keep-k8s-port-forward.sh` running throughout setup, testing, and the first three cleanup steps.
+- Leave `./tools/keep-k8s-port-forward.sh` running throughout setup, testing, and the first four cleanup steps.
 - Complete [Make Keycloak HTTPS for ZTS User Certificates](../make-keycloak-https.md).
+- Confirm that `ghcr.io/mlajkim/local-workload-instance-provider:latest` has been published.
 - Run commands from the repository root unless a command explicitly changes directory.
 - Ensure the personal parent domain `home.idjag-learner` already exists. `athenzd` never creates the reserved `home` top-level domain or a user's personal parent domain.
 
 > [!NOTE]
-> This test covers browser login and ZMS registration only. It does not request an X.509 certificate, contact Copper Argos, or exchange the ID token for an Athenz access token.
-
-The next Copper Argos building block is documented in [Build and Publish the Local Workload Instance Provider](./build-local-workload-instance-provider.md). That procedure builds the provider artifact but does not deploy it into ZTS.
+> This test mounts the Copper Argos provider class into ZTS, but it does not register or initialize the provider, request an X.509 certificate, call the ZTS instance-registration endpoint, or exchange the ID token for an Athenz access token.
 
 # Steps
 
@@ -50,9 +51,9 @@ The next Copper Argos building block is documented in [Build and Publish the Loc
 make -C athenzd build
 ```
 
-```text
-go install ./cmd/athenzd
-Installed: /Users/you/go/bin/athenzd
+```sh
+# go install ./cmd/athenzd
+# Installed: /Users/you/go/bin/athenzd
 ```
 
 Confirm the binary runs:
@@ -181,7 +182,63 @@ kubectl -n athenz exec deployment/athenz-zms-server -- \
 
 The result must contain at least one signing key with `"kty": "RSA"` and `"use": "sig"`.
 
-## Step 5. Confirm the personal parent domain exists
+## Step 5. Mount the published provider JAR into ZTS
+
+The GitHub Actions publish workflow builds and tests the provider. No local Maven or Docker build is required. Patch ZTS to pull the published `latest` image as an init container:
+
+```sh
+kubectl -n athenz patch deployment athenz-zts-server \
+  --type=strategic \
+  --patch '
+spec:
+  template:
+    spec:
+      initContainers:
+        - name: fetch-local-workload-plugin
+          image: ghcr.io/mlajkim/local-workload-instance-provider:latest
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: athenz-plugins
+              mountPath: /export
+'
+```
+
+The init container copies `local-workload-instance-provider.jar` into the existing `athenz-plugins` `emptyDir`. The ZTS container mounts the same volume at `/athenz/plugins`, which is already included in `USER_CLASSPATH`.
+
+Wait for ZTS to restart with the PR image:
+
+```sh
+kubectl -n athenz rollout status deployment/athenz-zts-server
+```
+
+Confirm the init container placed the JAR in the running ZTS container:
+
+```sh
+kubectl -n athenz exec deployment/athenz-zts-server \
+  -c athenz-zts-server -- \
+  ls -l /athenz/plugins/local-workload-instance-provider.jar
+```
+
+```sh
+# -rw-r--r-- 1 root root 12991 Jul 19 11:17 /athenz/plugins/local-workload-instance-provider.jar
+```
+
+Confirm the mounted JAR contains the provider class:
+
+```sh
+kubectl -n athenz exec deployment/athenz-zts-server \
+  -c athenz-zts-server -- \
+  sh -c "jar tf /athenz/plugins/local-workload-instance-provider.jar \
+    | grep -F 'com/yahoo/athenz/instance/provider/impl/InstanceLocalWorkloadProvider.class'"
+```
+
+Expected class entry:
+
+```text
+com/yahoo/athenz/instance/provider/impl/InstanceLocalWorkloadProvider.class
+```
+
+## Step 6. Confirm the personal parent domain exists
 
 Check the required parent with the tutorial administrator certificate:
 
@@ -206,7 +263,7 @@ If ZMS returns `404`, stop and provision the personal parent through the environ
 required personal home domain "home.idjag-learner" does not exist; athenzd does not create the reserved home TLD or personal home domains
 ```
 
-## Step 6. Generate and validate the config
+## Step 7. Generate and validate the config
 
 Generate the project-level config without an overwrite prompt:
 
@@ -258,7 +315,7 @@ OK
     - name: idjag-learner  service: home.{{.preferred_username}}.local.athenzd
 ```
 
-## Step 7. Log in and ensure the service
+## Step 8. Log in and ensure the service
 
 Run login immediately before the ZMS checks because the local authority accepts only recently issued tokens:
 
@@ -295,7 +352,7 @@ The one service identity is separated internally into:
 | Simple service name   | `athenzd`                          |
 | Full service identity | `home.idjag-learner.local.athenzd` |
 
-## Step 8. Verify idempotency and inspect the result
+## Step 9. Verify idempotency and inspect the result
 
 Run login again:
 
@@ -340,7 +397,7 @@ _athenz_ui_port="$(./tools/port.sh athenz-ui)"
 
 # Cleanup
 
-Keep the Kubernetes environment and port-forwards running until Cleanup 3 is complete. Never delete `home.idjag-learner`; it is a prerequisite that `athenzd` did not create.
+Keep the Kubernetes environment and port-forwards running until Cleanup 4 is complete. Never delete `home.idjag-learner`; it is a prerequisite that `athenzd` did not create.
 
 ## Cleanup 1. Remove the service and local child domain
 
@@ -410,7 +467,39 @@ case "${_http_code}" in
 esac
 ```
 
-## Cleanup 2. Remove the ZMS OIDC settings
+## Cleanup 2. Remove the provider init container
+
+Remove only the init container added by Step 5:
+
+```sh
+kubectl -n athenz patch deployment athenz-zts-server \
+  --type=strategic \
+  --patch '
+spec:
+  template:
+    spec:
+      initContainers:
+        - name: fetch-local-workload-plugin
+          $patch: delete
+'
+
+kubectl -n athenz rollout status deployment/athenz-zts-server
+```
+
+The replacement pod receives a new `athenz-plugins` `emptyDir`, so the local workload JAR is no longer copied into it. Verify it is absent:
+
+```sh
+if kubectl -n athenz exec deployment/athenz-zts-server \
+  -c athenz-zts-server -- \
+  test -e /athenz/plugins/local-workload-instance-provider.jar; then
+  echo 'Local workload provider JAR still exists' >&2
+  false
+else
+  echo 'Local workload provider init container and JAR removed'
+fi
+```
+
+## Cleanup 3. Remove the ZMS OIDC settings
 
 Keep the settings if ZMS should continue accepting `athenzd` ID tokens. Otherwise:
 
@@ -448,7 +537,7 @@ else
 fi
 ```
 
-## Cleanup 3. Delete the Keycloak client
+## Cleanup 4. Delete the Keycloak client
 
 Delete the shared client only when no other user needs it:
 
@@ -456,7 +545,7 @@ Delete the shared client only when no other user needs it:
 ./tools/keycloak/delete-client.sh "athenzd"
 ```
 
-## Cleanup 4. Delete local files
+## Cleanup 5. Delete local files
 
 Review the exact files:
 
@@ -471,7 +560,7 @@ rm -f "${HOME}/.cache/athenzd/idjag-learner.json"
 rm -f athenzd/.athenzd/config.yaml
 ```
 
-## Cleanup 5. Remove the hostname mapping
+## Cleanup 6. Remove the hostname mapping
 
 Refuse to overwrite a backup left by an earlier attempt:
 
@@ -542,7 +631,118 @@ The plugin rejects tokens whose `iat` is older than 300 seconds. `athenzd login`
 
 **Does this call ZTS or Copper Argos?**
 
-No. This flow performs ZMS domain, role-member, and service operations. Certificate registration comes later.
+The Kubernetes step restarts ZTS with the provider JAR on its classpath, but `athenzd` still performs only ZMS domain, role-member, and service operations. It does not call the ZTS instance-registration API or request a certificate. Certificate registration comes later.
+
+**Why use an init container for the provider JAR?**
+
+The published image is a JAR carrier rather than a long-running service. Its init container copies the JAR into an `emptyDir` shared with ZTS before ZTS starts, so the class is available on `USER_CLASSPATH` without a workstation build or a custom ZTS image.
+
+**Can `idp_user=idjag-learner` choose or override the authenticated user?**
+
+No. A local setting cannot override the identity signed by the IdP. A future OIDC `login_hint` could prefill the login screen, but the returned ID token's configured username claim remains authoritative.
+
+**How can I switch between multiple Keycloak users?**
+
+Keycloak may reuse the current browser SSO session; OpenID Connect does not define one fixed username for the client. Use separate browser sessions or a login flow that forces account selection or reauthentication. Convenient multi-profile token caching is future `athenzd` work and is separate from the provider JAR.
+
+**How do I register the current ZMS key id for ZTS?**
+
+First confirm that ZTS is running but not ready:
+
+```sh
+kubectl -n athenz get deployment athenz-zts-server
+kubectl -n athenz get pod -l app.kubernetes.io/name=athenz-zts-server
+```
+
+The broken state looks like `READY 0/1`. Kubernetes may still show the pod as `Running` because Jetty opened its port even though the ZTS application failed to initialize.
+
+Get the current ZTS pod and inspect the previous container attempt because the liveness probe may already have restarted it:
+
+```sh
+_zts_pod="$(kubectl -n athenz get pod \
+  -l app.kubernetes.io/name=athenz-zts-server \
+  -o jsonpath='{.items[0].metadata.name}')"
+
+kubectl -n athenz logs "${_zts_pod}" \
+  -c athenz-zts-server \
+  --previous \
+  | grep -E 'validateSignedDomain|Unable to initialize storage subsystem|GET /zts/v1/status.* 503'
+```
+
+If Kubernetes reports that no previous terminated container exists, omit `--previous` to inspect the current attempt. The relevant failure looks like:
+
+```text
+validateSignedDomain: ZMS Public Key id=athenz-zms-server-... not available
+ResourceException (500): Unable to initialize storage subsystem
+GET /zts/v1/status HTTP/1.1" 503
+```
+
+This is the evidence that the provider init container is not the failure. The JAR can be copied successfully while ZTS still rejects every signed domain because the active ZMS signing-key ID is unknown. Keep the log filter when sharing output because unfiltered DEBUG logs can include authentication headers.
+
+Print the active ZMS pod name, which is also the pod-derived ZMS signing-key ID in this deployment:
+
+```sh
+_zms_pod="$(kubectl -n athenz get pod \
+  -l app.kubernetes.io/name=athenz-zms-server \
+  -o jsonpath='{.items[0].metadata.name}')"
+
+printf 'active ZMS key id: %s\n' "${_zms_pod}"
+```
+
+List the key IDs currently registered on `sys.auth.zms`:
+
+```sh
+curl -sS \
+  --cacert ./athenz_dist/certs/ca.cert.pem \
+  --cert ./athenz_dist/certs/athenz_admin.cert.pem \
+  --key ./athenz_dist/keys/athenz_admin.private.pem \
+  https://localhost:4443/zms/v1/domain/sys.auth/service/zms \
+  | jq -r '.publicKeys[].id'
+```
+
+Registration is required when the active value printed above is absent from this list. Run this after a custom ZMS rebuild or restart if ZTS does not become ready:
+
+```sh
+_zms_pod="$(kubectl -n athenz get pod \
+  -l app.kubernetes.io/name=athenz-zms-server \
+  -o jsonpath='{.items[0].metadata.name}')"
+
+kubectl -n athenz exec -i deployment/athenz-cli -- \
+  sh -c "cat >/tmp/zms.public.pem && \
+    zms-cli \
+      -z https://athenz-zms-server.athenz:4443/zms/v1 \
+      -key /var/run/athenz/athenz_admin.private.pem \
+      -cert /var/run/athenz/athenz_admin.cert.pem \
+      -d sys.auth \
+      add-public-key zms '${_zms_pod}' /tmp/zms.public.pem" \
+  < athenz_dist/kubernetes/athenz-zms-server/kustomize/keys/zms.public.pem
+```
+
+Confirm the active key ID was registered before restarting ZTS:
+
+```sh
+curl -sS \
+  --cacert ./athenz_dist/certs/ca.cert.pem \
+  --cert ./athenz_dist/certs/athenz_admin.cert.pem \
+  --key ./athenz_dist/keys/athenz_admin.private.pem \
+  https://localhost:4443/zms/v1/domain/sys.auth/service/zms \
+  | jq -e --arg id "${_zms_pod}" '.publicKeys | any(.id == $id)'
+```
+
+Do not restart ZTS unless the command prints `true`. Once it does, restart ZTS so it reloads the signed domains:
+
+```sh
+kubectl -n athenz rollout restart deployment/athenz-zts-server
+kubectl -n athenz rollout status deployment/athenz-zts-server
+```
+
+Finally, confirm that ZTS is ready:
+
+```sh
+kubectl -n athenz get deployment athenz-zts-server
+```
+
+The deployment must report `READY 1/1` and `AVAILABLE 1`.
 
 **Does cleanup delete the personal parent?**
 
@@ -550,7 +750,8 @@ No. Cleanup removes only the child service and child domain created by this test
 
 # Reference
 
-- [Build and Publish the Local Workload Instance Provider](./build-local-workload-instance-provider.md)
+- [Local workload instance provider](../../local_workload_instance_provider/README.md)
+- [Local workload provider publish workflow](../../.github/workflows/publish-local-workload-instance-provider.yml)
 - [Make Keycloak HTTPS for ZTS User Certificates](../make-keycloak-https.md)
 - [`athenzd` README](../../athenzd/README.md)
 - [`athenzd` login command](../../athenzd/cmd/athenzd/login.go)
