@@ -63,8 +63,11 @@ if [[ ! "${username}" =~ ^[a-z0-9][a-z0-9._-]*$ ]]; then
 fi
 
 home_domain="home.${username}"
-service_name="local.athenzd"
-service_id="${home_domain}.${service_name}"
+local_domain_name="local"
+local_domain="${home_domain}.${local_domain_name}"
+service_name="athenzd"
+service_id="${local_domain}.${service_name}"
+testing_admin="user.athenz_admin"
 zms_port=$("${TOOLS_DIR}/port.sh" zms)
 zms_url="${ATHENZ_ZMS_URL:-https://localhost:${zms_port}/zms/v1}"
 ca_file="${ATHENZ_CA_FILE:-${REPO_DIR}/athenz_dist/certs/ca.cert.pem}"
@@ -144,14 +147,76 @@ if [ "${http_code}" != "200" ]; then
   unexpected_response "Home domain verification"
 fi
 
+step "Ensuring local subdomain ${local_domain}"
+zms_request GET "${zms_url}/domain/${local_domain}"
+case "${http_code}" in
+  200)
+    ok "Local subdomain already exists: ${local_domain}"
+    ;;
+  404)
+    subdomain_body=$(jq -nc \
+      --arg parent "${home_domain}" \
+      --arg name "${local_domain_name}" \
+      --arg owner "user.${username}" \
+      --arg testing_admin "${testing_admin}" \
+      '{parent: $parent, name: $name, adminUsers: ([$owner, $testing_admin] | unique)}')
+    zms_request POST "${zms_url}/subdomain/${home_domain}" "${subdomain_body}"
+    case "${http_code}" in
+      2??) ok "Local subdomain created: ${local_domain}" ;;
+      409) ok "Local subdomain already exists: ${local_domain}" ;;
+      *) unexpected_response "Local subdomain creation" ;;
+    esac
+    ;;
+  *)
+    unexpected_response "Local subdomain lookup"
+    ;;
+esac
+
+zms_request GET "${zms_url}/domain/${local_domain}"
+if [ "${http_code}" != "200" ]; then
+  unexpected_response "Local subdomain verification"
+fi
+
+step "Ensuring administrator ${testing_admin} on ${local_domain}"
+zms_request GET "${zms_url}/domain/${local_domain}/role/admin"
+if [ "${http_code}" != "200" ]; then
+  unexpected_response "Local subdomain admin-role lookup"
+fi
+
+if jq -e --arg member "${testing_admin}" '
+  ((.roleMembers // []) | any(.memberName == $member)) or
+  ((.members // []) | any(. == $member))
+' "${response_file}" >/dev/null; then
+  ok "Administrator already present: ${testing_admin}"
+else
+  admin_member_body=$(jq -nc \
+    --arg member "${testing_admin}" \
+    '{memberName: $member, roleName: "admin"}')
+  zms_request PUT \
+    "${zms_url}/domain/${local_domain}/role/admin/member/${testing_admin}" \
+    "${admin_member_body}"
+  case "${http_code}" in
+    2??) ok "Administrator added: ${testing_admin}" ;;
+    *) unexpected_response "Testing administrator addition" ;;
+  esac
+fi
+
+zms_request GET "${zms_url}/domain/${local_domain}/role/admin"
+if [ "${http_code}" != "200" ] || ! jq -e --arg member "${testing_admin}" '
+  ((.roleMembers // []) | any(.memberName == $member)) or
+  ((.members // []) | any(. == $member))
+' "${response_file}" >/dev/null; then
+  unexpected_response "Testing administrator verification"
+fi
+
 step "Ensuring service ${service_id}"
-zms_request GET "${zms_url}/domain/${home_domain}/service/${service_name}"
+zms_request GET "${zms_url}/domain/${local_domain}/service/${service_name}"
 case "${http_code}" in
   200)
     ok "Service already exists: ${service_id}"
     ;;
   404)
-    zms_request PUT "${zms_url}/domain/${home_domain}/service/${service_name}" "{\"name\":\"${service_id}\"}"
+    zms_request PUT "${zms_url}/domain/${local_domain}/service/${service_name}" "{\"name\":\"${service_id}\"}"
     case "${http_code}" in
       2??) ok "Service created: ${service_id}" ;;
       *) unexpected_response "Service creation" ;;
@@ -162,7 +227,7 @@ case "${http_code}" in
     ;;
 esac
 
-zms_request GET "${zms_url}/domain/${home_domain}/service/${service_name}"
+zms_request GET "${zms_url}/domain/${local_domain}/service/${service_name}"
 if [ "${http_code}" != "200" ]; then
   unexpected_response "Service verification"
 fi

@@ -239,7 +239,7 @@ When you finish the local `athenzd` test series, follow [Clean Up the Local `ath
 
 # Reference
 
-- [Ensure the Home Domain and Local `athenzd` Service With an ID Token](./02-ensure-home-domain-and-service-with-id-token.md): configures ZMS OIDC authentication and proves the intended post-login ensure flow.
+- [Ensure the Home Domain, Local Subdomain, and `athenzd` Service With an ID Token](./02-ensure-home-domain-and-service-with-id-token.md): configures ZMS OIDC authentication and proves the intended post-login ensure flow.
 - [Clean Up the Local `athenzd` Test](./99-clean-up.md): removes artifacts created by this guide series.
 - [Make Keycloak HTTPS for ZTS User Certificates](../make-keycloak-https.md): sets up the HTTPS listener and the Athenz-CA-signed cert this guide relies on.
 - [athenzd login (PKCE) implementation](../../athenzd/internal/login/login.go): `idp.ca_file` is loaded into a dedicated HTTP client so the token exchange trusts the tutorial CA.
