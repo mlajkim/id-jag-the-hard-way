@@ -6,14 +6,13 @@ help:
 	@echo "  build             compile and install athenzd to ~/go/bin"
 	@echo "  test              run all unit and e2e tests"
 	@echo "  athenzd           run athenzd without installing  (e.g. make athenzd version)"
-	@echo "  idjag-learner     write project ./.athenzd/config.yaml (prompts before overwrite; FORCE=1 to skip)"
+	@echo "  idjag-learner     write project ./.athenzd/config.yaml (prompts before overwrite)"
 
 build:
 	go install ./cmd/athenzd
 	@echo "Installed: $$(which athenzd)"
 
 test:
-	FORCE=1 ./hack/gen-idjag-learner-config.sh >/dev/null
 	./hack/check-config-test-coverage.sh
 	go test -tags=e2e -coverprofile=coverage.out ./...
 	@# main() calls os.Exit and cannot be unit tested — skip it, require 100% on everything else.

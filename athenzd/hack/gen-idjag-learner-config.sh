@@ -17,9 +17,8 @@ CA="$(cd "$ATHENZD_DIR/.." && pwd)/athenz_dist/certs/ca.cert.pem"
 mkdir -p "$(dirname "$OUT")"
 
 # The project config is what athenzd reads first (./.athenzd/config.yaml). Don't
-# clobber an existing one without consent. FORCE=1 skips the prompt (used by CI
-# and `make test`, which cannot answer an interactive question).
-if [ -f "$OUT" ] && [ "${FORCE:-}" != "1" ]; then
+# clobber an existing one without consent.
+if [ -f "$OUT" ]; then
   printf "Overwrite existing project config %s? [y/N] " "$OUT" >&2
   read -r reply
   case "$reply" in
