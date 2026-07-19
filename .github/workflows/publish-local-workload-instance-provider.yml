@@ -11,7 +11,7 @@ on:
       - "local_workload_instance_provider/**"
       - ".github/workflows/publish-local-workload-instance-provider.yml"
 
-  pull_request_target:
+  pull_request:
     branches: ["main"]
     paths:
       - "local_workload_instance_provider/**"
