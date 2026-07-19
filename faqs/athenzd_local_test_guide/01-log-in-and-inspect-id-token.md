@@ -13,6 +13,15 @@ The goal of this guide is to run `athenzd login` against the local Keycloak IdP 
 
 <!-- /TOC -->
 
+<details>
+<summary>Last verified on 2026-07-19 — ✅ Success</summary>
+
+| # | Date | Status                                              |
+|---|------|-----------------------------------------------------|
+| 1 | 2026-07-19 | ✅ Success — human confirmed this procedure |
+
+</details>
+
 > [!NOTE]
 > This guide only produces and inspects an ID token. It does not fetch an X.509 certificate or exchange the token for an Athenz access token. The ID token is the raw material for the later ID-JAG exchange.
 
