@@ -106,6 +106,39 @@ func TestEnsureDaemonLaunchesAndRecordsState(t *testing.T) {
 	}
 }
 
+func TestEnsureDaemonIsIdempotent(t *testing.T) {
+	running := false
+	launches := 0
+	stateWrites := 0
+	options := DaemonOptions{Port: 65443, UpstreamURL: "http://upstream", InstanceID: "project-1", ConfigPath: "/config", LogPath: "/log", StatePath: "/state"}
+	deps := daemonManagerDeps{
+		probe: func(context.Context, int, string, string) (bool, error) { return running, nil },
+		launch: func(DaemonOptions) (int, error) {
+			launches++
+			running = true
+			return 4321, nil
+		},
+		wait: func(context.Context) error { return nil },
+		writeState: func(string, daemonState) error {
+			stateWrites++
+			return nil
+		},
+		now: nowTime(time.Unix(123, 0)), attempts: 1,
+	}
+
+	first, err := ensureDaemon(context.Background(), options, deps)
+	if err != nil || first.AlreadyRunning || first.PID != 4321 {
+		t.Fatalf("first result=%+v err=%v", first, err)
+	}
+	second, err := ensureDaemon(context.Background(), options, deps)
+	if err != nil || !second.AlreadyRunning {
+		t.Fatalf("second result=%+v err=%v", second, err)
+	}
+	if launches != 1 || stateWrites != 1 {
+		t.Fatalf("launches=%d state writes=%d", launches, stateWrites)
+	}
+}
+
 func TestEnsureDaemonErrors(t *testing.T) {
 	options := DaemonOptions{Port: 65443, LogPath: "/log", StatePath: "/state"}
 	tests := []struct {

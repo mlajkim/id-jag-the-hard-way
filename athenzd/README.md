@@ -367,6 +367,12 @@ athenzd whoami
 
 `config` may also be abbreviated as `cfg`.
 
+# Idempotency
+
+Normal `athenzd` commands are designed to converge safely when repeated. `config` and `whoami` commands are read-only. `athenzd login` ensures missing Athenz resources without duplicating existing ones and reuses the current project's healthy proxy daemon instead of launching another. If the recorded daemon has stopped, the next login starts one replacement and overwrites its stale state. `athenzd set genai-project` refreshes current authorization data but does not rewrite the config when the selected default project is already set.
+
+Credential issuance is the intentional exception: login and project selection may issue fresh ID tokens, certificates, ID-JAGs, or access tokens because those credentials expire. Repetition preserves the same desired configuration while refreshing time-bound credentials. A port owned by another service or project is reported as an error and is never stopped or replaced automatically.
+
 # Current limitations
 
 - IdP endpoint construction currently assumes Keycloak-compatible paths.
