@@ -6,9 +6,12 @@ GENAI_PROXY_URL ?= http://127.0.0.1:$(shell ../tools/port.sh genai-proxy)
 .PHONY: build local
 
 build:
-	npm run build
-
-local:
 	npm install
+	npm run build
+	cp -R public .next/standalone/
+	mkdir -p .next/standalone/.next
+	cp -R .next/static .next/standalone/.next/
+
+local: build
 	if [ "$(OPEN_UI)" = "true" ]; then (../tools/open.sh "http://localhost:$(PORT)" &); fi
-	MCP_HUB_ZTS_URL="$(MCP_HUB_ZTS_URL)" GENAI_PROXY_URL="$(GENAI_PROXY_URL)" npm run dev -- --port $(PORT)
+	PORT="$(PORT)" HOSTNAME="127.0.0.1" MCP_HUB_ZTS_URL="$(MCP_HUB_ZTS_URL)" GENAI_PROXY_URL="$(GENAI_PROXY_URL)" node .next/standalone/server.js
