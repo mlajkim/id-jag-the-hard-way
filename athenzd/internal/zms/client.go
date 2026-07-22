@@ -97,12 +97,10 @@ func ResolveTarget(serviceTemplate, preferredUsername string) (Target, error) {
 	}, nil
 }
 
-// Report records which resources changed. The reserved home top-level domain
-// remains a server bootstrap prerequisite; the user's personal home domain is
-// created through ZMS's dedicated user-domain API when needed.
+// Report records which resources changed. The parent domain is never created;
+// it is a required prerequisite owned outside this workflow.
 type Report struct {
 	Target           Target
-	HomeDomainCreated bool
 	SubdomainCreated bool
 	OptionalAdmins   []AdminResult
 	ServiceCreated   bool
@@ -167,9 +165,8 @@ func newHTTPClient(caFile string) (*http.Client, error) {
 	}, nil
 }
 
-// Ensure idempotently creates the user's personal home domain, its configured
-// child subdomain, optional administrators, and service. It never creates the
-// reserved home top-level domain, which ZMS owns during system bootstrap.
+// Ensure verifies the required personal home domain and idempotently creates
+// only its configured child subdomain, optional administrators, and service.
 func (c *Client) Ensure(ctx context.Context, idToken string, target Target, optionalAdmins []string) (Report, error) {
 	report := Report{Target: target}
 	if strings.TrimSpace(idToken) == "" {
@@ -180,14 +177,20 @@ func (c *Client) Ensure(ctx context.Context, idToken string, target Target, opti
 		return report, err
 	}
 
-	created, err := c.ensureHomeDomain(ctx, idToken, target)
+	status, body, err := c.request(ctx, idToken, http.MethodGet, "/domain/"+escape(target.ParentDomain), nil)
 	if err != nil {
-		return report, err
+		return report, fmt.Errorf("checking required personal home domain: %w", err)
 	}
-	report.HomeDomainCreated = created
+	switch status {
+	case http.StatusOK:
+	case http.StatusNotFound:
+		return report, fmt.Errorf("required personal home domain %q does not exist; athenzd does not create the reserved home TLD or personal home domains", target.ParentDomain)
+	default:
+		return report, unexpectedStatus("checking required personal home domain", status, body)
+	}
 
 	adminUsers := append([]string{target.UserPrincipal}, admins...)
-	created, err = c.ensureSubdomain(ctx, idToken, target, adminUsers)
+	created, err := c.ensureSubdomain(ctx, idToken, target, adminUsers)
 	if err != nil {
 		return report, err
 	}
@@ -208,44 +211,6 @@ func (c *Client) Ensure(ctx context.Context, idToken string, target Target, opti
 	report.ServiceCreated = created
 
 	return report, nil
-}
-
-func (c *Client) ensureHomeDomain(ctx context.Context, token string, target Target) (bool, error) {
-	domainPath := "/domain/" + escape(target.ParentDomain)
-	status, body, err := c.request(ctx, token, http.MethodGet, domainPath, nil)
-	if err != nil {
-		return false, fmt.Errorf("checking personal home domain: %w", err)
-	}
-	if status == http.StatusOK {
-		return false, nil
-	}
-	if status != http.StatusNotFound {
-		return false, unexpectedStatus("checking personal home domain", status, body)
-	}
-
-	// ZMS's user-domain API creates home.<username> and makes the authenticated
-	// user its administrator. It does not create or modify the reserved home TLD.
-	requestBody, _ := json.Marshal(struct {
-		Name string `json:"name"`
-	}{Name: target.PreferredUsername})
-	status, body, err = c.request(ctx, token, http.MethodPost,
-		"/userdomain/"+escape(target.PreferredUsername), requestBody)
-	if err != nil {
-		return false, fmt.Errorf("creating personal home domain: %w", err)
-	}
-	created := status >= 200 && status < 300
-	if !created && status != http.StatusConflict {
-		return false, unexpectedStatus("creating personal home domain", status, body)
-	}
-
-	status, body, err = c.request(ctx, token, http.MethodGet, domainPath, nil)
-	if err != nil {
-		return false, fmt.Errorf("verifying personal home domain: %w", err)
-	}
-	if status != http.StatusOK {
-		return false, unexpectedStatus("verifying personal home domain", status, body)
-	}
-	return created, nil
 }
 
 // EnsureProviderAuthorization applies Athenz's identity_provisioning solution
