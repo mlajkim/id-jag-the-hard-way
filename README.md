@@ -1,3 +1,5 @@
+testing pr
+
 # ID-JAG The Hard Way
 
 *Bootstrap ID-JAG Architecture the hard way in the AI Agent Era. No scripts.*
