@@ -74,26 +74,17 @@ _id_token=$(./tools/keycloak/get-id-token.sh human.idjag-learner.claude-another-
 # {
 #   "alg": "RS256",
 #   "typ": "JWT",
-#   "kid": "jio8OS-7FzKy8UfOCol-zj1946k1y1JyC6Z6D676WKc"
+#   "kid": "<key-id>"
 # }
 # {
-#   "exp": 1783682114,
-#   "iat": 1783667714,
-#   "jti": "c90eea43-4e2a-9ced-fae0-fd2731e2fc23",
 #   "iss": "http://localhost:34443/realms/master",
 #   "aud": "human.idjag-learner.claude-another-name",
-#   "sub": "3b1ebc43-f64d-446f-a388-b0431801fe57",
 #   "typ": "ID",
 #   "azp": "human.idjag-learner.claude-another-name",
-#   "sid": "qRBug3ee0DnyvB629foL4xiB",
-#   "at_hash": "TGR6Yq5ZJt_51kQBzF0MsA",
-#   "acr": "1",
-#   "email_verified": false,
 #   "name": "ID-JAG Learner",
 #   "preferred_username": "idjag-learner",
-#   "given_name": "ID-JAG",
-#   "family_name": "Learner",
-#   "email": "idjag-learner@athenz.io"
+#   "email": "idjag-learner@athenz.io",
+#   ...
 # }
 ```
 
@@ -206,7 +197,12 @@ Re-run the exchange from Step 4. It should now succeed:
 ```
 
 ```sh
-# {"access_token":"eyJ...","token_type":"N_A","expires_in":7200,...}
+# {
+#   "access_token": "...",
+#   "token_type": "N_A",
+#   "expires_in": 7200,
+#   ...
+# }
 ```
 
 ## Clean-up 9. Clean up temporary clientId test state

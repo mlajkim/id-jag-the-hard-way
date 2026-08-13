@@ -6,6 +6,7 @@ The goal of this document is to reproduce each known error response from Athenz 
 
 - [Step 1. Fetch an access token](#step-1-fetch-an-access-token)
 - [Step 2. Collect error cases](#step-2-collect-error-cases)
+- [Clean-up 3. Clear shell variables](#clean-up-3-clear-shell-variables)
 
 <!-- /TOC -->
 
@@ -41,6 +42,14 @@ _at=$(./tools/athenz/fetch-access-token.sh \
 Known errors to document:
 
 - `{"code":400,"message":"Invalid subject token: missing may_act claim"}` — see [260614-no-may-act-error.md](./260614-no-may-act-error.md)
+
+## Clean-up 3. Clear shell variables
+
+This research file only creates a temporary shell token. Clear it when done:
+
+```sh
+unset _at
+```
 
 # Reference
 

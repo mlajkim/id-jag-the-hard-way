@@ -218,7 +218,7 @@ _id_token=$(./tools/keycloak/get-id-token.sh human.idjag-learner.claude "$_clien
 # {
 #   "alg": "RS256",
 #   "typ": "JWT",
-#   ...
+#   "kid": "<key-id>"
 # }
 # {
 #   "iss": "http://localhost:34443/realms/master",
@@ -251,7 +251,7 @@ _id_jag=$(./tools/athenz/fetch-id-jag.sh \
 # {
 #   "typ": "oauth-id-jag+jwt",
 #   "alg": "RS256",
-#   ...
+#   "kid": "<key-id>"
 # }
 # {
 #   "sub": "human.idjag-learner",
@@ -284,7 +284,7 @@ _hub_at=$(./tools/athenz/fetch-access-token-with-id-jag.sh \
 # {
 #   "typ": "at+jwt",
 #   "alg": "RS256",
-#   ...
+#   "kid": "<key-id>"
 # }
 # {
 #   "sub": "human.idjag-learner",
@@ -391,7 +391,7 @@ _mcp_at=$(./tools/athenz/exchange-access-token.sh \
 # {
 #   "typ": "at+jwt",
 #   "alg": "RS256",
-#   ...
+#   "kid": "<key-id>"
 # }
 # {
 #   "sub": "human.idjag-learner",
@@ -442,7 +442,7 @@ _api_scope="api:role.docs-getter"
 # {
 #   "typ": "at+jwt",
 #   "alg": "RS256",
-#   ...
+#   "kid": "<key-id>"
 # }
 # {
 #   "sub": "human.idjag-learner",
