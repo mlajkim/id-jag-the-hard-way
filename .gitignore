@@ -31,6 +31,8 @@ replay_pid*
 ai_client_gateway/certs/
 ai_client_gateway/node_modules/
 
+showcases/mcp_x_idjag/patterns/pattern-3a-remote-return/mop-tls/
+
 api_server/authorization_proxy/target/
 api_server/policies/
 api_server/target/

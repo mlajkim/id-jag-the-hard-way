@@ -70,10 +70,14 @@ for i in $(seq 0 $((SERVICE_COUNT - 1))); do
       "${keys_dir}/${key_local}" \
       "$ca_src" \
       "$cert_k8s" "$key_k8s" "$ca_k8s"
-    info "Restarting deployment ${ns}/${deployment}..."
-    kubectl rollout restart deploy/"$deployment" -n "$ns"
-    kubectl rollout status deploy/"$deployment" -n "$ns"
-    ok "k8s secret and deployment updated"
+    if kubectl get deploy/"$deployment" -n "$ns" >/dev/null 2>&1; then
+      info "Restarting deployment ${ns}/${deployment}..."
+      kubectl rollout restart deploy/"$deployment" -n "$ns"
+      kubectl rollout status deploy/"$deployment" -n "$ns"
+      ok "k8s secret and deployment updated"
+    else
+      info "Deployment ${ns}/${deployment} does not exist yet; it will pick up the secret ${secret} once deployed"
+    fi
   fi
 done
 

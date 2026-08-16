@@ -1,0 +1,298 @@
+GOOGLE_WORKSPACE_CLIENT_ID: unused
+GOOGLE_WORKSPACE_CLIENT_SECRET_KEY: unused
+GEMINI_ENTERPRISE_CLIENT_ID: unused
+FIGMA_CLIENT_ID: unused
+DATADOG_CLIENT_ID: unused
+LINEAR_CLIENT_ID: unused
+WISDOMAI_CLIENT_ID: unused
+quarkus:
+  log:
+    category:
+      "io.quarkus.oidc":
+        level: DEBUG
+      "io.smallrye.config":
+        level: DEBUG
+  http:
+    ssl-port: 8082
+    port: -1
+  oidc:
+    auth-server-url: ${KEYCLOAK_ISSUER_URL:http://localhost:34443/realms/master}
+    discovery-enabled: false
+    authorization-path: ${KEYCLOAK_BROWSER_AUTH_URL:http://localhost:34443/realms/master/protocol/openid-connect/auth}
+    token-path: ${KEYCLOAK_ISSUER_URL:http://localhost:34443/realms/master}/protocol/openid-connect/token
+    jwks-path: ${KEYCLOAK_ISSUER_URL:http://localhost:34443/realms/master}/protocol/openid-connect/certs
+    client-id: ${QUARKUS_OIDC_CLIENT_ID:pattern-3a-mop}
+    credentials:
+      client-secret:
+        provider:
+          key: okta-client-secret
+    authentication:
+      redirect-path: /authorize/callback
+    application-type: web-app
+    embrace:
+      client-id: unused
+    atlassian:
+      client-id: unused
+      credentials:
+        client-secret:
+          provider:
+            key: unused
+    slack:
+      client-id: unused
+    github:
+      client-id: unused
+      credentials:
+        client-secret:
+          provider:
+            key: unused
+    gemini-enterprise:
+      client-id: unused
+    figma:
+      client-id: unused
+    datadog:
+      client-id: unused
+    linear:
+      client-id: unused
+    wisdomai:
+      client-id: unused
+    oracle-epm:
+      client-id: unused
+    airtable:
+      client-id: unused
+    google-drive:
+      client-id: unused
+      credentials:
+        client-secret:
+          provider:
+            key: unused
+    google-cloud-platform:
+      client-id: unused
+      credentials:
+        client-secret:
+          provider:
+            key: unused
+    google-docs:
+      client-id: unused
+      credentials:
+        client-secret:
+          provider:
+            key: unused
+    google-sheets:
+      client-id: unused
+      credentials:
+        client-secret:
+          provider:
+            key: unused
+    google-slides:
+      client-id: unused
+      credentials:
+        client-secret:
+          provider:
+            key: unused
+    google-gmail:
+      client-id: unused
+      credentials:
+        client-secret:
+          provider:
+            key: unused
+    google-calendar:
+      client-id: unused
+      credentials:
+        client-secret:
+          provider:
+            key: unused
+    google-tasks:
+      client-id: unused
+      credentials:
+        client-secret:
+          provider:
+            key: unused
+    google-chat:
+      client-id: unused
+      credentials:
+        client-secret:
+          provider:
+            key: unused
+    google-forms:
+      client-id: unused
+      credentials:
+        client-secret:
+          provider:
+            key: unused
+    google-keep:
+      client-id: unused
+      credentials:
+        client-secret:
+          provider:
+            key: unused
+    google-meet:
+      client-id: unused
+      credentials:
+        client-secret:
+          provider:
+            key: unused
+    looker-maw:
+      auth-server-url: https://unused.example.com
+      client-id: unused
+      authentication:
+        extra-params:
+          resource: unused
+    looker-ouryahoo:
+      auth-server-url: https://unused.example.com
+      client-id: unused
+      authentication:
+        extra-params:
+          resource: unused
+    looker-finance:
+      auth-server-url: https://unused.example.com
+      client-id: unused
+      authentication:
+        extra-params:
+          resource: unused
+    looker-hr:
+      auth-server-url: https://unused.example.com
+      client-id: unused
+      authentication:
+        extra-params:
+          resource: unused
+    looker-search:
+      auth-server-url: https://unused.example.com
+      client-id: unused
+      authentication:
+        extra-params:
+          resource: unused
+    looker-enterprise:
+      auth-server-url: https://unused.example.com
+      client-id: unused
+      authentication:
+        extra-params:
+          resource: unused
+    looker-prism-mail:
+      auth-server-url: https://unused.example.com
+      client-id: unused
+      authentication:
+        extra-params:
+          resource: unused
+
+server:
+  host: ${MOP_PUBLIC_HOST:localhost:8082}
+  athenz:
+    cert-file: ${MOP_ATHENZ_CERT_FILE:/var/run/athenz/tls.crt}
+    key-file: ${MOP_ATHENZ_KEY_FILE:/var/run/athenz/tls.key}
+    truststore-file: ${MOP_ATHENZ_TRUSTSTORE_JKS_FILE:/var/run/athenz-truststore/truststore.jks}
+    zts:
+      endpoint: ${ZTS_URL:https://athenz-zts-server.athenz:4443/zts/v1}
+    user-prefix: unused
+    authorization-domain: unused
+    authorization-action: unused
+    zms:
+      endpoint: unused
+    register:
+      domain: unused
+      role: unused
+  tls:
+    certificate:
+      path: ${MOP_ATHENZ_CERT_FILE:/var/run/athenz/tls.crt}
+    private-key:
+      path: ${MOP_ATHENZ_KEY_FILE:/var/run/athenz/tls.key}
+    truststore:
+      path: ${MOP_ATHENZ_CA_FILE:/var/run/athenz/ca.crt}
+  token-store:
+    implementation: memory
+    aws:
+      dynamodb:
+        table-name: unused
+      kms:
+        key-id: unused
+      sts:
+        role-arn: unused
+  secret:
+    k8s:
+      name: pattern-3a-mop-keycloak
+      namespace: api
+  token-exchange:
+    idp: okta
+    datadog:
+      client-id: unused
+    google-workspace:
+      client-id: unused
+      client-secret-key: unused
+    oracle-epm:
+      client-id: unused
+    airtable:
+      client-id: unused
+    gemini-enterprise:
+      client-id: unused
+    wisdomai:
+      client-id: unused
+    figma:
+      client-id: unused
+    rootly:
+      client-id: unused
+    linear:
+      client-id: unused
+    google-workforce:
+      audience: unused
+      sts-token-url: https://sts.googleapis.com/v1/token
+    oktaServiceTypeApp:
+      audience: unused
+      auth-server-url: https://unused.example.com
+      client-id: unused
+      client-secret-key: unused
+    looker:
+      client-ids:
+        looker-maw: unused
+        looker-ouryahoo: unused
+        looker-finance: unused
+        looker-hr: unused
+        looker-search: unused
+        looker-enterprise: unused
+        looker-prism-mail: unused
+    remote-servers:
+      endpoints:
+        - name: athenz
+          endpoint: ${ZTS_URL:https://athenz-zts-server.athenz:4443/zts/v1}
+          username-claim: preferred_username
+        - name: looker-maw
+          endpoint: https://unused.example.com
+          username-claim: email
+        - name: looker-ouryahoo
+          endpoint: https://unused.example.com
+          username-claim: email
+        - name: looker-finance
+          endpoint: https://unused.example.com
+          username-claim: email
+        - name: looker-hr
+          endpoint: https://unused.example.com
+          username-claim: email
+        - name: looker-search
+          endpoint: https://unused.example.com
+          username-claim: email
+        - name: looker-enterprise
+          endpoint: https://unused.example.com
+          username-claim: email
+        - name: looker-prism-mail
+          endpoint: https://unused.example.com
+          username-claim: email
+        - name: unused
+          endpoint: https://unused.example.com
+          username-claim: email
+        - name: unused
+          endpoint: https://unused.example.com
+          username-claim: email
+        - name: unused
+          endpoint: https://unused.example.com
+          username-claim: email
+  resources:
+    resource-mapping:
+      - uri: ${MCP_RESOURCE_URI:http://localhost:3001/mcp}
+        domain: api
+        scopes:
+          - docs-getter
+          - mcp-accessor
+        token:
+          idp: okta
+          as: athenz
+          jag:
+            enabled: true
+            issuer: athenz

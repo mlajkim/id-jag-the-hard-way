@@ -1,0 +1,4 @@
+# Local go build output (both modules build a binary named after their directory
+# when run without -o, e.g. `go build ./...` from inside mcp-reverse-proxy/).
+mcp-reverse-proxy/mcp-reverse-proxy
+simple-mcp-server/simple-mcp-server
