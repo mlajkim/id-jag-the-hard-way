@@ -29,9 +29,20 @@ kubectl apply -f "${REPO_ROOT}/showcases/mcp_x_idjag/k8s-common/keycloak-deploym
 kubectl rollout status deployment/keycloak -n idp --timeout=300s
 
 _keycloak_port=$(./tools/port.sh keycloak)
-kubectl -n idp port-forward deployment/keycloak "${_keycloak_port}:8080" >/tmp/idthw-keycloak-port-forward.log 2>&1 &
+
+_keycloak_pf_loop() {
+  while true; do
+    kubectl -n idp port-forward deployment/keycloak "${_keycloak_port}:8080" >/tmp/idthw-keycloak-port-forward.log 2>&1 || true
+    sleep 2
+  done
+}
+_keycloak_pf_loop &
 _keycloak_pf_pid=$!
-trap 'kill "${_keycloak_pf_pid}" 2>/dev/null || true' EXIT
+_keycloak_pf_cleanup() {
+  pkill -P "${_keycloak_pf_pid}" 2>/dev/null || true
+  kill "${_keycloak_pf_pid}" 2>/dev/null || true
+}
+trap _keycloak_pf_cleanup EXIT
 
 info "Waiting for Keycloak to accept connections..."
 _keycloak_ready=false
@@ -44,6 +55,6 @@ done
 ./tools/keycloak/create-user.sh idjag-learner idjag-learner@athenz.io ID-JAG Learner || true
 ./tools/keycloak/set-token-lifespan.sh 14400
 
-kill "${_keycloak_pf_pid}" 2>/dev/null || true
+_keycloak_pf_cleanup
 trap - EXIT
 ok "Keycloak ready"

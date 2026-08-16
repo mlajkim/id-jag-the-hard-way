@@ -103,6 +103,6 @@ Run this in the same shell before launching the client. The certificate is gener
 
 1. Run `curl -i http://localhost:3001/mcp` without a token and confirm that it returns `401` and a `WWW-Authenticate` header containing `resource_metadata`.
 2. Run `curl http://localhost:3001/.well-known/oauth-protected-resource` and confirm that `authorization_servers` contains the MoP issuer URL.
-3. Run `/mcp` in Claude Code and complete the Keycloak login. Confirm that the token held by Claude Code is an Athenz-issued JWT rather than an opaque value by checking `aud` and `scp`.
-4. Run `get docs from k8s doc server!` and confirm that it succeeds end to end.
+3. Run `/mcp` in Claude Code and complete the Keycloak login. Confirm that the token held by Claude Code is an Athenz-issued JWT with `aud=api` and `docs-getter` plus `mcp-accessor` in `scp`.
+4. Run `get docs from k8s doc server!` and confirm that it succeeds end to end. The `simple-mcp-server` exchanges the inbound token for a separate `docs-getter` token before calling the backend API.
 5. Confirm that `mcp-reverse-proxy` logs contain `AUTHORIZED` or `REJECTED` and that `simple-mcp-server` logs show a token exchange with ZTS.

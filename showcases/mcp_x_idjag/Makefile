@@ -8,7 +8,6 @@
 	pattern-3a pattern-3a-deploy pattern-3a-register pattern-3a-port-forward pattern-3a-kill-port-forward pattern-3a-clean
 
 REPO_ROOT := $(abspath $(CURDIR)/../..)
-PORT_FORWARD_PID_FILE := $(REPO_ROOT)/tools/.port-forward.pid
 
 # Services created by bootstrap-common's default Pattern 3a invocation. Override
 # CLEAN_SERVICES when bootstrap-common was invoked with a custom SERVICES list.
@@ -48,14 +47,7 @@ bootstrap-common: bootstrap-phase1-kind-cluster bootstrap-phase2-keycloak bootst
 	@echo "Shared setup complete (tutorials 03-14 + Copper Argos infra + MCP server ready)."
 
 bootstrap-common-clean: pattern-3a-clean
-	@echo "Stopping shared Kubernetes port-forwarder..."
-	@if [ -f "$(PORT_FORWARD_PID_FILE)" ]; then \
-		_pid="$$(cat "$(PORT_FORWARD_PID_FILE)" 2>/dev/null || true)"; \
-		if [ -n "$$_pid" ] && ps -p "$$_pid" -o command= 2>/dev/null | grep -q '[k]eep-k8s-port-forward.sh'; then \
-			kill -- "-$$_pid" 2>/dev/null || kill "$$_pid" 2>/dev/null || true; \
-		fi; \
-		rm -f "$(PORT_FORWARD_PID_FILE)"; \
-	fi
+	$(REPO_ROOT)/tools/keep-k8s-port-forward.sh stop
 	@echo "Removing bootstrap-common API and MCP resources..."
 	kubectl delete namespace api --ignore-not-found
 	@echo "Removing bootstrap-common Keycloak resources..."

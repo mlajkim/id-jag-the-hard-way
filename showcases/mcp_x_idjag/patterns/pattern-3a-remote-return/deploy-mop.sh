@@ -45,5 +45,6 @@ fi
 kubectl -n api create secret generic pattern-3a-mop-tls --from-file=tls.crt=mop-tls/localhost.crt --from-file=tls.key=mop-tls/localhost.key --dry-run=client -o yaml | kubectl apply -f -
 
 kubectl apply -f k8s/mop-deployment.yaml
+kubectl -n api rollout restart deploy/pattern-3a-mop
 kubectl -n api rollout status deploy/pattern-3a-mop --timeout=180s
 ok "MoP ready"
