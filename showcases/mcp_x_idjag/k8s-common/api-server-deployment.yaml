@@ -16,6 +16,7 @@ spec:
       containers:
         - name: api-server
           image: ghcr.io/mlajkim/api-server:latest
+          imagePullPolicy: IfNotPresent
           env:
             - name: AT_REQUIRED
               value: "true"

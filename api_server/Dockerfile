@@ -4,11 +4,19 @@ WORKDIR /src
 
 COPY pom.xml .
 
-RUN mvn -B -DskipTests dependency:go-offline
+RUN mvn -B \
+    -Dmaven.resolver.transport=wagon \
+    -Dmaven.wagon.http.ssl.insecure=true \
+    -Dmaven.wagon.http.ssl.allowall=true \
+    -DskipTests dependency:go-offline
 
 COPY src ./src
 
-RUN mvn -B -DskipTests clean compile dependency:copy-dependencies
+RUN mvn -B \
+    -Dmaven.resolver.transport=wagon \
+    -Dmaven.wagon.http.ssl.insecure=true \
+    -Dmaven.wagon.http.ssl.allowall=true \
+    -DskipTests clean compile dependency:copy-dependencies
 
 FROM eclipse-temurin:17-jre
 
