@@ -9,16 +9,20 @@
 
 REPO_ROOT := $(abspath $(CURDIR)/../..)
 
+PATTERN_CONFIG ?= $(CURDIR)/patterns/pattern-3a-remote-return/pattern.env
+include $(PATTERN_CONFIG)
+export PATTERN_NAMESPACE ATHENZ_DOMAIN ATHENZ_PARENT_DOMAIN
+
 # Services created by bootstrap-common's default Pattern 3a invocation. Override
 # CLEAN_SERVICES when bootstrap-common was invoked with a custom SERVICES list.
-CLEAN_SERVICES ?= mcp-sa pattern-3a-mop-sa
+CLEAN_SERVICES ?= mcp-sa pattern-3a-mop-sa pattern-3a-echo-mcp-sa
 
 # When `pattern-3a` is one of the goals on this `make` invocation, default
 # bootstrap-common's own required PERMISSIONS_YAML/SERVICES/AS_ISSUER_URL to
 # Pattern 3a's own values - `?=` still lets an explicit command-line value win.
 ifneq ($(filter pattern-3a,$(MAKECMDGOALS)),)
 PERMISSIONS_YAML ?= $(CURDIR)/patterns/pattern-3a-remote-return/permissions.yaml
-SERVICES ?= mcp-sa pattern-3a-mop-sa
+SERVICES ?= mcp-sa pattern-3a-mop-sa pattern-3a-echo-mcp-sa
 AS_ISSUER_URL ?= https://localhost:8082
 endif
 
@@ -26,7 +30,7 @@ list:
 	@echo "Implemented patterns:"
 	@echo "  pattern-3a-remote-return  (make pattern-3a for a from-scratch setup, or"
 	@echo "                             pattern-3a-deploy / pattern-3a-port-forward once the"
-	@echo "                             cluster already has tutorials 01-16's state)"
+	@echo "                             cluster already has bootstrap-common's Pattern 3a state)"
 	@echo "Placeholders (README only):"
 	@echo "  pattern-1-local-exchange, pattern-2a-remote-return, pattern-2b-remote-forward, pattern-3b-remote-forward"
 	@echo "Shared building block for any pattern's own bootstrap.sh:"
@@ -49,7 +53,7 @@ bootstrap-common: bootstrap-phase1-kind-cluster bootstrap-phase2-keycloak bootst
 bootstrap-common-clean: pattern-3a-clean
 	$(REPO_ROOT)/tools/keep-k8s-port-forward.sh stop
 	@echo "Removing bootstrap-common API and MCP resources..."
-	kubectl delete namespace api --ignore-not-found
+	kubectl delete namespace $(PATTERN_NAMESPACE) --ignore-not-found
 	@echo "Removing bootstrap-common Keycloak resources..."
 	kubectl delete namespace idp --ignore-not-found
 	@echo "Removing Athenz through athenz_dist's standard cleanup..."
@@ -89,10 +93,10 @@ bootstrap-phase7-mcp-server:
 
 # --- pattern-3a -----------------------------------------------------------------
 pattern-3a: bootstrap-common pattern-3a-deploy
-	@echo "Pattern 3a deployed (MoP + MCP server) and ready to test. Use 'make -C showcases/mcp_x_idjag pattern-3a-port-forward' to forward the local ports for MoP and the MCP server."
+	@echo "Pattern 3a deployed (MoP + docs MCP + echo MCP + routing-only Envoy Gateway) and ready to test. Use 'make -C showcases/mcp_x_idjag pattern-3a-port-forward' to forward the local ports."
 
 pattern-3a-deploy:
-	$(MAKE) -C patterns/pattern-3a-remote-return register-mop deploy-mop
+	$(MAKE) -C patterns/pattern-3a-remote-return register-mop deploy-mop deploy-gateway
 
 pattern-3a-port-forward:
 	$(MAKE) -C patterns/pattern-3a-remote-return port-forward

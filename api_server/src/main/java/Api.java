@@ -21,7 +21,11 @@ public class Api {
     """);
 
     static final int PORT = Integer.parseInt(System.getenv().getOrDefault("PORT", "14443"));
-    static final String RESOURCE_NAME = "api:docs";
+    // Keep the tutorial's historical resource name when ATHENZ_DOMAIN is not set.
+    // Pattern-specific deployments can override the domain without requiring a
+    // separate API server implementation or changing existing tutorial steps.
+    static final String ATHENZ_DOMAIN = System.getenv().getOrDefault("ATHENZ_DOMAIN", "api");
+    static final String RESOURCE_NAME = ATHENZ_DOMAIN + ":docs";
 
     static Authorizer authorizer;
     
@@ -144,6 +148,7 @@ public class Api {
         System.out.println("\n=========================================================");
         System.out.println("🚀 API Server listening on http://0.0.0.0:" + PORT);
         System.out.println("🛡️  Athenz Required: " + authorizer.isRequired());
+        System.out.println("🔐 Athenz Resource: " + RESOURCE_NAME);
         if (authorizer.isRequired()) {
             System.out.println("🔑 Athenz ZTS JWK URI: " + jwkUri);
         }

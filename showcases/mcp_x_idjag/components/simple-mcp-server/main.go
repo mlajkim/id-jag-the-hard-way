@@ -37,10 +37,10 @@ type getK8sDocsArgs struct {
 
 func main() {
 	port := getEnv("PORT", "8081")
-	backendAPIURL := getEnv("BACKEND_API_URL", "http://api-server.api:8080")
+	backendAPIURL := getEnv("BACKEND_API_URL", "http://api-server.mcp-pattern-3a:8080")
 	backendAPIPath := getEnv("BACKEND_API_PATH", "/api/docs")
 	ztsURL := getEnv("ZTS_URL", "https://athenz-zts-server.athenz:4443/zts/v1")
-	scope := getEnv("BACKEND_SCOPE", "api:role.docs-getter")
+	scope := getEnv("BACKEND_SCOPE", "mcp.pattern3a:role.docs-getter")
 
 	exchanger, err := newTokenExchanger(ztsURL,
 		getEnv("ATHENZ_CERT_FILE", "/var/run/athenz/service.cert.pem"),
@@ -80,7 +80,7 @@ func main() {
 		}, nil, nil
 	})
 
-	mcpHandler := mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return server }, nil)
+	mcpHandler := newCompatibleStreamableHTTPHandler(server)
 
 	mux := http.NewServeMux()
 	mux.Handle("/mcp", withAuthHeader(mcpHandler))
@@ -89,6 +89,34 @@ func main() {
 	if err := http.ListenAndServe(":"+port, mux); err != nil {
 		log.Fatal(err)
 	}
+}
+
+// newCompatibleStreamableHTTPHandler keeps Pattern 3a compatible with both
+// MCP transport generations. The pre-2026 protocol is stateful and therefore
+// retains Mcp-Session-Id reconnect behavior. Protocol 2026-07-28 removed that
+// session model and is supported by the SDK only in stateless mode.
+func newCompatibleStreamableHTTPHandler(server *mcp.Server) http.Handler {
+	stateful := mcp.NewStreamableHTTPHandler(
+		func(*http.Request) *mcp.Server { return server },
+		// The upstream sees the public Gateway Host after the authenticated
+		// reverse-proxy hop; the reverse proxy is the trust boundary here.
+		&mcp.StreamableHTTPOptions{DisableLocalhostProtection: true},
+	)
+	stateless := mcp.NewStreamableHTTPHandler(
+		func(*http.Request) *mcp.Server { return server },
+		&mcp.StreamableHTTPOptions{
+			Stateless:                  true,
+			DisableLocalhostProtection: true,
+		},
+	)
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("MCP-Protocol-Version") >= "2026-07-28" {
+			stateless.ServeHTTP(w, r)
+			return
+		}
+		stateful.ServeHTTP(w, r)
+	})
 }
 
 func withAuthHeader(next http.Handler) http.Handler {

@@ -37,7 +37,7 @@ func main() {
 	port := getEnv("PORT", "3000")
 	upstreamURL := getEnv("UPSTREAM_MCP_URL", "http://localhost:8081")
 	athenzURL := getEnv("ATHENZ_URL", "https://athenz-zts-server.athenz:4443/zts/v1")
-	athenzDomain := getEnv("ATHENZ_DOMAIN", "api")
+	athenzDomain := getEnv("ATHENZ_DOMAIN", "mcp.pattern3a")
 	mcpResource := getEnv("MCP_RESOURCE", "mcp")
 	mcpAction := getEnv("MCP_ACTION", "access")
 	publicBaseURL := getEnv("PUBLIC_BASE_URL", "http://localhost:"+port)

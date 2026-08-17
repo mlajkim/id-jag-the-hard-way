@@ -1,0 +1,81 @@
+diff --git a/policy/config.yaml b/policy/config.yaml
+--- a/policy/config.yaml
++++ b/policy/config.yaml
+@@ -6,6 +6,7 @@ config:
+         name: ""
+         prefix: ""
+         suffix: ""
++        mappings: {}
+       namespace:
+         trimprefix: ""
+         trimsuffix: ""
+diff --git a/policy/identityprovider.rego b/policy/identityprovider.rego
+--- a/policy/identityprovider.rego
++++ b/policy/identityprovider.rego
+@@ -3,6 +3,7 @@ package identityprovider
+ import data.config.constraints.athenz.domain.name as athenz_domain_name
+ import data.config.constraints.athenz.domain.prefix as athenz_domain_prefix
+ import data.config.constraints.athenz.domain.suffix as athenz_domain_suffix
++import data.config.constraints.athenz.domain.mappings as athenz_domain_mappings
+ import data.config.constraints.athenz.namespace.trimprefix as athenz_namespace_trimprefix
+ import data.config.constraints.athenz.namespace.trimsuffix as athenz_namespace_trimsuffix
+ import data.config.constraints.athenz.identityprovider.service as expected_athenz_provider
+@@ -92,8 +93,19 @@ jwt_kubernetes_claim := extracted_claim {
+     extracted_claim := object.get(verified_jwt[2], "kubernetes.io", {})
+ } else = {}
+ 
+-# first, we are preparing an expected athenz domain for the verification
+-expected_athenz_domain := concat("", [athenz_domain_prefix, athenz_domain_name, athenz_domain_suffix]) {
++# first, we are preparing an expected athenz domain for the verification.
++# A mapping takes precedence over the legacy static/prefix/suffix rules so a
++# shared identityprovider can serve namespaces whose Athenz domains cannot be
++# derived from the Kubernetes namespace name (for example, dots vs hyphens).
++mapped_athenz_domain := mapping {
++    jwt_kubernetes_claim.namespace
++    mapping := object.get(athenz_domain_mappings, jwt_kubernetes_claim.namespace, "")
++    mapping != ""
++}
++
++expected_athenz_domain := mapped_athenz_domain {
++    mapped_athenz_domain != ""
++} else = concat("", [athenz_domain_prefix, athenz_domain_name, athenz_domain_suffix]) {
+     athenz_domain_name != ""
+ } else = concat("", [athenz_domain_prefix, trimed_namespace, athenz_domain_suffix]) {
+     jwt_kubernetes_claim.namespace
+diff --git a/test/identityprovider.rego b/test/identityprovider.rego
+--- a/test/identityprovider.rego
++++ b/test/identityprovider.rego
+@@ -278,5 +278,33 @@ test_instance12 {
+     with data.kubernetes.pods as mock_pods
+ }
+ 
++# with a namespace-specific Athenz domain mapping
++test_instance_namespace_domain_mapping {
++    mock_body := json.patch(mock_jwt.body, [{"op": "replace", "path": "/kubernetes.io/namespace", "value": "mcp-pattern-3a"}])
++    mock_attestation_data := io.jwt.encode_sign_raw(json.marshal(mock_jwt.header), json.marshal(mock_body), mock_jwks_private)
++    patched_mock_pods_tmp := json.patch(mock_pods, [{"op": "add", "path": "/mcp-pattern-3a", "value": mock_pods["athenz"]}])
++    patched_mock_pods := json.patch(patched_mock_pods_tmp, [{"op": "replace", "path": "/mcp-pattern-3a/client-deployment-54488fc988-slcpg/metadata/namespace", "value": "mcp-pattern-3a"}])
++    patched_input := json.patch(mock_input, [{"op": "replace", "path": "/domain", "value": "mcp.pattern3a"}])
++    instance == {
++        "domain": patched_input.domain,
++        "service": patched_input.service,
++        "provider": patched_input.provider,
++        "attributes": {
++            "instanceId": patched_input.attributes.instanceId,
++            "sanIP": patched_input.attributes.sanIP,
++            "clientIP": patched_input.attributes.clientIP,
++            "sanURI": patched_input.attributes.sanURI,
++            "sanDNS": patched_input.attributes.sanDNS,
++            "certExpiryTime": cert_expiry_time_default,
++            "certRefresh": cert_refresh_default
++        }
++    }
++    with input as patched_input
++    with input.attestationData as mock_attestation_data
++    with data.config.constraints.keys.static as mock_jwks_public
++    with data.config.constraints.athenz.domain.mappings as {"mcp-pattern-3a": "mcp.pattern3a"}
++    with data.kubernetes.pods as patched_mock_pods
++}
++
+ # with invalid input.attestationData
+ test_instance13 {

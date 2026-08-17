@@ -2,13 +2,13 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: pattern-3a-mop-sa
-  namespace: api
+  namespace: mcp-pattern-3a
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: pattern-3a-mop-read-keycloak-secret
-  namespace: api
+  namespace: mcp-pattern-3a
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
@@ -19,11 +19,11 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: pattern-3a-mop-read-keycloak-secret
-  namespace: api
+  namespace: mcp-pattern-3a
 subjects:
   - kind: ServiceAccount
     name: pattern-3a-mop-sa
-    namespace: api
+    namespace: mcp-pattern-3a
 roleRef:
   kind: Role
   name: pattern-3a-mop-read-keycloak-secret
@@ -33,7 +33,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: pattern-3a-mop
-  namespace: api
+  namespace: mcp-pattern-3a
   labels:
     app: pattern-3a-mop
 spec:
@@ -189,8 +189,6 @@ spec:
               value: /var/run/athenz/ca.crt
             - name: MOP_ATHENZ_TRUSTSTORE_JKS_FILE
               value: /var/run/athenz-truststore/truststore.jks
-            - name: MCP_RESOURCE_URI
-              value: "http://localhost:3001/mcp"
             - name: AWS_REGION
               value: "us-east-1"
           volumeMounts:
@@ -211,7 +209,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: pattern-3a-mop
-  namespace: api
+  namespace: mcp-pattern-3a
 spec:
   selector:
     app: pattern-3a-mop

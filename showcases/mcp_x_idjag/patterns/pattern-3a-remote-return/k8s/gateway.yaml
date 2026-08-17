@@ -1,0 +1,89 @@
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: pattern-3a-envoy-proxy
+  namespace: mcp-pattern-3a
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyService:
+        type: ClusterIP
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: pattern-3a-envoy-gateway
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+  parametersRef:
+    group: gateway.envoyproxy.io
+    kind: EnvoyProxy
+    name: pattern-3a-envoy-proxy
+    namespace: mcp-pattern-3a
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: pattern-3a-gateway
+  namespace: mcp-pattern-3a
+spec:
+  gatewayClassName: pattern-3a-envoy-gateway
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      hostname: "*.pattern-3a.localhost"
+      allowedRoutes:
+        namespaces:
+          from: Same
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: pattern-3a-docs-mcp
+  namespace: mcp-pattern-3a
+spec:
+  parentRefs:
+    - name: pattern-3a-gateway
+      sectionName: http
+  hostnames:
+    - docs.pattern-3a.localhost
+  rules:
+    - matches:
+        - path:
+            type: Exact
+            value: /mcp
+        - path:
+            type: Exact
+            value: /.well-known/oauth-protected-resource
+      timeouts:
+        request: 0s
+      backendRefs:
+        - name: mcp
+          port: 3000
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: pattern-3a-echo-mcp
+  namespace: mcp-pattern-3a
+spec:
+  parentRefs:
+    - name: pattern-3a-gateway
+      sectionName: http
+  hostnames:
+    - echo.pattern-3a.localhost
+  rules:
+    - matches:
+        - path:
+            type: Exact
+            value: /mcp
+        - path:
+            type: Exact
+            value: /.well-known/oauth-protected-resource
+      timeouts:
+        request: 0s
+      backendRefs:
+        - name: pattern-3a-echo-mcp
+          port: 3000

@@ -50,7 +50,11 @@ In summary, 3a is the only pattern that works with a general-purpose MCP client 
 
 ## Prerequisites
 
-`make pattern-3a` can build the environment from an empty kind cluster. To use only `pattern-3a-deploy`, an existing kind cluster created by tutorials 01–16 is required, including Athenz ZMS/ZTS, Keycloak, `api_server`, `mcp`, and `authorization_proxy`.
+`make pattern-3a` can build the environment from an empty kind cluster. To use only `pattern-3a-deploy`, run `bootstrap-common` first (or use an equivalent environment) so that Athenz ZMS/ZTS, Keycloak, the `mcp-pattern-3a` API/MCP resources, and the identityprovider configuration already exist.
+
+## Pattern boundaries
+
+Pattern 3a deploys its API, MCP, MoP, echo MCP, and Gateway resources in the `mcp-pattern-3a` namespace and uses the `mcp.pattern3a` Athenz domain. The Athenz identity provider remains shared in the `athenz` namespace. Its `instance_provider` configuration continues to use `athenz.identityprovider` with the `svc.cluster.local` DNS suffix, while each pattern's SIA configuration explicitly sets its own Athenz domain. `bootstrap-common/05-athenz-identityprovider.sh` applies the small [`identityprovider-policy.patch`](identityprovider-policy.patch) to the checked-out Athenz policy submodule and registers the namespace-to-domain mapping in the generated policy ConfigMap; the upstream policy source itself is not edited in this repository.
 
 ## Running
 
@@ -77,6 +81,6 @@ Remove the resources created by `bootstrap-common` while keeping the Kind cluste
 make -C showcases/mcp_x_idjag bootstrap-common-clean
 ```
 
-The common cleanup removes the `api` and `idp` namespaces, Keycloak, API/MCP, Athenz, generated service keys, and port-forwards. Athenz cleanup is delegated to `make -C athenz_dist clean-kubernetes-athenz`; the Kind cluster and Docker images are kept.
+The common cleanup removes the Pattern 3a namespace (`mcp-pattern-3a`) and `idp`, Keycloak, API/MCP, Athenz, generated service keys, and port-forwards. Athenz cleanup is delegated to `make -C athenz_dist clean-kubernetes-athenz`; the Kind cluster and Docker images are kept.
 
 When `bootstrap-common` was run with a custom `SERVICES` list, pass the same service names to cleanup, for example `CLEAN_SERVICES="svc1 svc2" make -C showcases/mcp_x_idjag bootstrap-common-clean`.

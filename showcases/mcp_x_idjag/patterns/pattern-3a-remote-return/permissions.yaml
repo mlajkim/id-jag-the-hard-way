@@ -1,11 +1,11 @@
-domain: api
+domain: mcp.pattern3a
 
 services:
   - name: zpu
     key_version: v1
     local_keys_dir: ./keys
     k8s:
-      ns: api
+      ns: mcp-pattern-3a
       deployment: api-server
       secret:
         name: api-zpu-cert
@@ -53,18 +53,18 @@ roles:
       - allow: access
         on: mcp
 
-  # to-api-exchanger: simple-mcp-server => exchange inbound tokens issued for the api domain
+  # to-api-exchanger: simple-mcp-server => exchange inbound tokens issued for the pattern domain
   - name: to-api-exchanger
     members:
-      - api.mcp-sa
+      - mcp.pattern3a.mcp-sa
     policies:
       - allow: zts.token_source_exchange
-        on: api
+        on: mcp.pattern3a
 
   # docs-getter-exchanger: simple-mcp-server => exchange into docs-getter before calling the API server
   - name: docs-getter-exchanger
     members:
-      - api.mcp-sa
+      - mcp.pattern3a.mcp-sa
     policies:
       - allow: zts.token_target_exchange
-        on: api:role.docs-getter
+        on: mcp.pattern3a:role.docs-getter

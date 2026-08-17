@@ -73,21 +73,21 @@ make -C showcases/mcp_x_idjag pattern-3a
 
 This builds the kind cluster, Athenz, api-server, MCP, authorization proxy, and Keycloak, then deploys this pattern. The Athenz setup takes some time.
 
-**If an environment equivalent to tutorials 01–16 already exists**
+**If an environment equivalent to `bootstrap-common` already exists**
 
 ```sh
 make -C showcases/mcp_x_idjag pattern-3a-deploy
 ```
 
-This builds and deploys MoP and the MCP server (`mcp-reverse-proxy` + `simple-mcp-server`).
+This builds and deploys MoP, the existing docs MCP, the backend-free echo MCP, and the routing-only Envoy Gateway.
 
-To access the public endpoint locally, run:
+To access the two public MCP endpoints locally, run:
 
 ```sh
 make -C showcases/mcp_x_idjag pattern-3a-port-forward
 ```
 
-Set `.mcp.json` to `http://localhost:3001/mcp` with `"type": "http"` and no static headers. `pattern-3a-port-forward` uses local port 3001 to avoid conflicting with the tutorials' Athenz UI, which uses local port 3000.
+Set `.mcp.json` to either `http://docs.pattern-3a.localhost:3001/mcp` or `http://echo.pattern-3a.localhost:3001/mcp` with `"type": "http"` and no static headers. `pattern-3a-port-forward` forwards the routing-only Envoy Gateway to local port 3001; the MoP remains on local HTTPS port 8082.
 
 ## Client TLS trust
 
@@ -101,8 +101,9 @@ Run this in the same shell before launching the client. The certificate is gener
 
 ## Verification
 
-1. Run `curl -i http://localhost:3001/mcp` without a token and confirm that it returns `401` and a `WWW-Authenticate` header containing `resource_metadata`.
-2. Run `curl http://localhost:3001/.well-known/oauth-protected-resource` and confirm that `authorization_servers` contains the MoP issuer URL.
-3. Run `/mcp` in Claude Code and complete the Keycloak login. Confirm that the token held by Claude Code is an Athenz-issued JWT with `aud=api` and `docs-getter` plus `mcp-accessor` in `scp`.
+1. Run `curl -i -H 'Host: docs.pattern-3a.localhost' http://localhost:3001/mcp` and the equivalent request with `Host: echo.pattern-3a.localhost`; both should return `401` with a host-specific `resource_metadata` URL.
+2. Fetch both `/.well-known/oauth-protected-resource` documents and confirm that their `resource` values are the matching docs/echo MCP URLs and that `authorization_servers` contains the MoP issuer URL.
+3. Run `/mcp` in Claude Code against the docs URL and complete the Keycloak login. Confirm that the token held by Claude Code is an Athenz-issued JWT with `aud=mcp.pattern3a` and `docs-getter` plus `mcp-accessor` in `scp`.
 4. Run `get docs from k8s doc server!` and confirm that it succeeds end to end. The `simple-mcp-server` exchanges the inbound token for a separate `docs-getter` token before calling the backend API.
-5. Confirm that `mcp-reverse-proxy` logs contain `AUTHORIZED` or `REJECTED` and that `simple-mcp-server` logs show a token exchange with ZTS.
+5. Run `/mcp` against the echo URL and call `echo_pattern_3a`; it should return the fixed response without a backend API call.
+6. Confirm that docs credentials are rejected by echo and echo credentials are rejected by docs, and that the Gateway logs show no token or scope mutation.

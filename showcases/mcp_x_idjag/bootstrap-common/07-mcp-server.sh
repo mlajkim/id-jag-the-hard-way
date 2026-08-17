@@ -20,6 +20,7 @@ command -v jq >/dev/null || fatal "jq is required"
 
 CLUSTER_NAME="${CLUSTER_NAME:-kind}"
 MCP_X_IDJAG_DIR="${REPO_ROOT}/showcases/mcp_x_idjag"
+PATTERN_NAMESPACE="${PATTERN_NAMESPACE:-mcp-pattern-3a}"
 
 step "[7/7] MCP server (mcp-reverse-proxy + simple-mcp-server)"
 
@@ -28,19 +29,19 @@ docker build -t simple-mcp-server:latest "${MCP_X_IDJAG_DIR}/components/simple-m
 kind load docker-image mcp-reverse-proxy:latest --name "${CLUSTER_NAME}"
 kind load docker-image simple-mcp-server:latest --name "${CLUSTER_NAME}"
 
-kubectl create ns api --dry-run=client -o yaml | kubectl apply -f -
+kubectl create ns "${PATTERN_NAMESPACE}" --dry-run=client -o yaml | kubectl apply -f -
 
-kubectl -n api create configmap mcp-sia --from-env-file="${MCP_X_IDJAG_DIR}/k8s-common/mcp-sia.env" --dry-run=client -o yaml | kubectl apply -f -
+kubectl -n "${PATTERN_NAMESPACE}" create configmap mcp-sia --from-env-file="${MCP_X_IDJAG_DIR}/k8s-common/mcp-sia.env" --dry-run=client -o yaml | kubectl apply -f -
 
 kubectl get secret athenz-cacert -n athenz -o json \
   | jq 'del(.metadata.namespace,.metadata.resourceVersion,.metadata.uid,.metadata.creationTimestamp,.metadata.annotations,.metadata.managedFields)' \
-  | kubectl -n api apply -f -
+  | kubectl -n "${PATTERN_NAMESPACE}" apply -f -
 
-kubectl -n api create configmap mcp-reverse-proxy-config \
+kubectl -n "${PATTERN_NAMESPACE}" create configmap mcp-reverse-proxy-config \
   --from-literal=AS_ISSUER_URL="${AS_ISSUER_URL}" \
   --from-literal=PUBLIC_BASE_URL="${PUBLIC_BASE_URL}" \
   --dry-run=client -o yaml | kubectl apply -f -
 
 kubectl apply -f "${MCP_X_IDJAG_DIR}/k8s-common/mcp-deployment.yaml"
-kubectl -n api rollout status deploy/mcp --timeout=180s
+kubectl -n "${PATTERN_NAMESPACE}" rollout status deploy/mcp --timeout=180s
 ok "MCP server ready"

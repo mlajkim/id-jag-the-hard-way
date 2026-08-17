@@ -183,12 +183,12 @@ server:
     zts:
       endpoint: ${ZTS_URL:https://athenz-zts-server.athenz:4443/zts/v1}
     user-prefix: unused
-    authorization-domain: unused
+    authorization-domain: mcp.pattern3a
     authorization-action: unused
     zms:
       endpoint: unused
     register:
-      domain: unused
+      domain: mcp.pattern3a
       role: unused
   tls:
     certificate:
@@ -209,7 +209,7 @@ server:
   secret:
     k8s:
       name: pattern-3a-mop-keycloak
-      namespace: api
+      namespace: mcp-pattern-3a
   token-exchange:
     idp: okta
     datadog:
@@ -285,11 +285,21 @@ server:
           username-claim: email
   resources:
     resource-mapping:
-      - uri: ${MCP_RESOURCE_URI:http://localhost:3001/mcp}
-        domain: api
+      - uri: http://docs.pattern-3a.localhost:3001/mcp
+        domain: mcp.pattern3a
         scopes:
           - docs-getter
           - mcp-accessor
+        token:
+          idp: okta
+          as: athenz
+          jag:
+            enabled: true
+            issuer: athenz
+      - uri: http://echo.pattern-3a.localhost:3001/mcp
+        domain: mcp.pattern3a
+        scopes:
+          - echo-mcp-accessor
         token:
           idp: okta
           as: athenz
