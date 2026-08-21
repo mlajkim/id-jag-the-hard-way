@@ -34,21 +34,62 @@ else
   fatal "identityprovider-policy.patch does not match the checked-out policy submodule"
 fi
 
-step "[5/6] athenz-identityprovider (k8s-athenz-sia infra)"
-make -C athenz_dist deploy-kubernetes-athenz-identityprovider
+step "Pattern Athenz identities + identityprovider mapping"
 
+# The identityprovider is shared by all patterns.  Re-applying the upstream
+# kustomization for every pattern would recreate identityprovider-policy from
+# the checked-out source and discard mappings registered by earlier patterns.
+# Keep the live policy config so an upgrade can restore those mappings too.
 _policy_config="$(mktemp)"
-trap 'rm -f "${_policy_config}"' EXIT
+_policy_configmap="$(mktemp)"
+_existing_policy_config="$(mktemp)"
+trap 'rm -f "${_policy_config}" "${_policy_configmap}" "${_existing_policy_config}"' EXIT
+
+if kubectl -n athenz get configmap identityprovider-policy -o json \
+  >"${_policy_configmap}" 2>/dev/null; then
+  jq -r '.data["config.yaml"] // empty' "${_policy_configmap}" \
+    >"${_existing_policy_config}"
+fi
+
+_identityprovider_needs_deploy=0
+if ! kubectl -n athenz get deployment/identityprovider-deployment \
+  >/dev/null 2>&1; then
+  _identityprovider_needs_deploy=1
+elif [ ! -s "${_policy_configmap}" ] || ! jq -e \
+  '(.data["identityprovider.rego"] // "") | contains("athenz_domain_mappings")' \
+  "${_policy_configmap}" >/dev/null; then
+  # This also upgrades an identityprovider installed before the namespace
+  # mapping patch was introduced.
+  _identityprovider_needs_deploy=1
+fi
+
+if [ "${_identityprovider_needs_deploy}" -eq 1 ]; then
+  make -C athenz_dist deploy-kubernetes-athenz-identityprovider
+fi
+
 kubectl -n athenz get configmap identityprovider-policy \
   -o jsonpath='{.data.config\.yaml}' >"${_policy_config}"
-yq -i \
-  ".config.constraints.athenz.domain.mappings[\"${PATTERN_NAMESPACE}\"] = \"${ATHENZ_DOMAIN}\"" \
+
+if [ -s "${_existing_policy_config}" ]; then
+  EXISTING_POLICY_CONFIG="${_existing_policy_config}" yq -i \
+    '.config.constraints.athenz.domain.mappings =
+      ((.config.constraints.athenz.domain.mappings // {}) *
+       (load(strenv(EXISTING_POLICY_CONFIG)).config.constraints.athenz.domain.mappings // {}))' \
+    "${_policy_config}"
+fi
+
+PATTERN_NAMESPACE="${PATTERN_NAMESPACE}" ATHENZ_DOMAIN="${ATHENZ_DOMAIN}" yq -i \
+  '.config.constraints.athenz.domain.mappings[strenv(PATTERN_NAMESPACE)] = strenv(ATHENZ_DOMAIN)' \
   "${_policy_config}"
+
 _policy_config_json="$(jq -Rs . <"${_policy_config}")"
-kubectl -n athenz patch configmap identityprovider-policy --type=merge \
-  --patch "{\"data\":{\"config.yaml\":${_policy_config_json}}}"
-kubectl -n athenz rollout restart deployment/identityprovider-deployment
-kubectl -n athenz rollout status deployment/identityprovider-deployment --timeout=120s
+if ! cmp -s "${_policy_config}" <(kubectl -n athenz get configmap identityprovider-policy \
+  -o jsonpath='{.data.config\.yaml}'); then
+  kubectl -n athenz patch configmap identityprovider-policy --type=merge \
+    --patch "{\"data\":{\"config.yaml\":${_policy_config_json}}}"
+  kubectl -n athenz rollout restart deployment/identityprovider-deployment
+  kubectl -n athenz rollout status deployment/identityprovider-deployment --timeout=120s
+fi
 
 ./tools/athenz/set-domain-template.sh sys.auth instance_provider \
   provider=athenz.identityprovider dnssuffix=svc.cluster.local

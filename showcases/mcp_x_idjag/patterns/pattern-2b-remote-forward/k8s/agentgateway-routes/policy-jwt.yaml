@@ -1,0 +1,28 @@
+# jwtAuthentication redacts the Authorization header after validating it (see
+# policy-exchange-mcp.yaml's jwt.rawToken.unredacted() CEL, which restores it).
+apiVersion: agentgateway.dev/v1alpha1
+kind: AgentgatewayPolicy
+metadata:
+  name: pattern-2b-jwt
+  namespace: ${PATTERN_NAMESPACE}
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: mcp
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: echo-mcp
+  traffic:
+    jwtAuthentication:
+      providers:
+        - issuer: "${KEYCLOAK_ISSUER}"
+          audiences:
+            - "${KEYCLOAK_CLIENT_ID}"
+          jwks:
+            remote:
+              backendRef:
+                name: keycloak
+                namespace: idp
+                port: 8080
+              jwksPath: /realms/master/protocol/openid-connect/certs

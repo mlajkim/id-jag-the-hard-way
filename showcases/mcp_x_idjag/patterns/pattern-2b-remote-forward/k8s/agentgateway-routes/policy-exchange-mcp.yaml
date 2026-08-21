@@ -1,0 +1,49 @@
+# mcp-accessor AND docs-getter must be requested here together, not just
+# mcp-accessor, because simple-mcp-server's later token_target_exchange
+# (mcp-server -> api-server) can only re-scope a token to a role it already
+# carries, never escalate to one it wasn't granted at exchange time.
+apiVersion: agentgateway.dev/v1alpha1
+kind: AgentgatewayPolicy
+metadata:
+  name: pattern-2b-exchange-mcp
+  namespace: ${PATTERN_NAMESPACE}
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: mcp
+  backend:
+    auth:
+      crossAppAccess:
+        # jwtAuth (policy-jwt.yaml) redacts the validated Authorization
+        # header; read the original Keycloak id_token back out for the
+        # exchange subject.
+        subjectToken:
+          source:
+            expression: "jwt.rawToken.unredacted()"
+        identityProvider:
+          backendRef:
+            group: agentgateway.dev
+            kind: AgentgatewayBackend
+            name: athenz-zts
+          path: /zts/v1/oauth2/token
+          clientAuth:
+            # ZTS authenticates this call via mTLS only
+            # (policy-athenz-zts-tls.yaml) and ignores clientAuth entirely;
+            # ClientSecretPost with no secretRef is the only method the CRD
+            # allows without provisioning a dummy secret.
+            clientId: pattern-2b-gateway
+            method: ClientSecretPost
+        resourceAuthorizationServer:
+          backendRef:
+            group: agentgateway.dev
+            kind: AgentgatewayBackend
+            name: athenz-zts
+          path: /zts/v1/oauth2/token
+          clientAuth:
+            clientId: pattern-2b-gateway
+            method: ClientSecretPost
+        audience: "https://athenz-zts-server.athenz:4443/zts/v1"
+        scopes:
+          - "${ATHENZ_DOMAIN}:role.mcp-accessor"
+          - "${ATHENZ_DOMAIN}:role.docs-getter"

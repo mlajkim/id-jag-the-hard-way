@@ -50,3 +50,5 @@ tools/.port-forward.pid
 genai_proxy/.env.local
 
 venv/
+
+showcases/mcp_x_idjag/patterns/pattern-2b-remote-forward/client/node_modules/

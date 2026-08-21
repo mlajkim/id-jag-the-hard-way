@@ -18,7 +18,7 @@ Combinations where the Client performs the ID-JAG exchange without possessing th
 |---|---|---|---|---|---|
 | [pattern-1-local-exchange](./patterns/pattern-1-local-exchange) | local | local | (degenerate / indistinguishable) | Yes | Placeholder (not implemented) |
 | [pattern-2a-remote-return](./patterns/pattern-2a-remote-return) | local | remote | Return to Client | Yes | Placeholder (not implemented) |
-| [pattern-2b-remote-forward](./patterns/pattern-2b-remote-forward) | local | remote | Forward directly to MCP | No | Existing `ai_client_gateway` is a close example |
+| [pattern-2b-remote-forward](./patterns/pattern-2b-remote-forward) | local | remote | Forward directly to MCP | No | **Implemented** (using agentgateway's native `crossAppAccess`) |
 | [pattern-3a-remote-return](./patterns/pattern-3a-remote-return) | remote | remote | Return to Client | Yes | **Implemented** (using mcp-oauth-proxy) |
 | [pattern-3b-remote-forward](./patterns/pattern-3b-remote-forward) | remote | remote | Forward directly to MCP | No (session identifier only) | Existing `ai_client_gateway` is a close example |
 
@@ -50,37 +50,41 @@ In summary, 3a is the only pattern that works with a general-purpose MCP client 
 
 ## Prerequisites
 
-`make pattern-3a` can build the environment from an empty kind cluster. To use only `pattern-3a-deploy`, run `bootstrap-common` first (or use an equivalent environment) so that Athenz ZMS/ZTS, Keycloak, the `mcp-pattern-3a` API/MCP resources, and the identityprovider configuration already exist.
+Run `bootstrap-common` explicitly before deploying a pattern. It provides only the shared Kind, Keycloak, and Athenz ZMS/ZTS infrastructure; each pattern target then creates its own Athenz permissions, identity-provider mapping, API server, and MCP server in its own namespace and domain. To deploy several patterns together while bootstrapping the shared infrastructure only once, pass the goals explicitly: `make bootstrap-common pattern-2b pattern-3a`.
 
 ## Pattern boundaries
 
-Pattern 3a deploys its API, MCP, MoP, echo MCP, and Gateway resources in the `mcp-pattern-3a` namespace and uses the `mcp.pattern3a` Athenz domain. The Athenz identity provider remains shared in the `athenz` namespace. Its `instance_provider` configuration continues to use `athenz.identityprovider` with the `svc.cluster.local` DNS suffix, while each pattern's SIA configuration explicitly sets its own Athenz domain. `bootstrap-common/05-athenz-identityprovider.sh` applies the small [`identityprovider-policy.patch`](identityprovider-policy.patch) to the checked-out Athenz policy submodule and registers the namespace-to-domain mapping in the generated policy ConfigMap; the upstream policy source itself is not edited in this repository.
+Each implemented pattern deploys into its own namespace and Athenz domain, so Pattern 3a and Pattern 2b can be deployed side by side in the same cluster without interfering with each other: Pattern 3a uses the `mcp-pattern-3a` namespace and `mcp.pattern3a` Athenz domain (API, docs MCP, MoP, echo MCP, routing-only Envoy Gateway); Pattern 2b uses the `mcp-pattern-2b` namespace and `mcp.pattern2b` Athenz domain (API, docs MCP, echo MCP, agentgateway, dpop-verifier). The Athenz identity provider remains shared in the `athenz` namespace. Its `instance_provider` configuration continues to use `athenz.identityprovider` with the `svc.cluster.local` DNS suffix, while each pattern's SIA configuration explicitly sets its own Athenz domain. `bootstrap-common/05-athenz-identityprovider.sh` applies the small [`identityprovider-policy.patch`](identityprovider-policy.patch) to the checked-out Athenz policy submodule and registers the namespace-to-domain mapping in the generated policy ConfigMap (additively, so multiple patterns' mappings coexist); the upstream policy source itself is not edited in this repository.
 
 ## Running
 
 ```sh
-# Build the kind cluster and deploy Pattern 3a
-make -C showcases/mcp_x_idjag pattern-3a
+# Build shared infrastructure once, then deploy both patterns independently
+make -C showcases/mcp_x_idjag bootstrap-common pattern-2b pattern-3a
 
-# Deploy Pattern 3a to an existing kind cluster
-make -C showcases/mcp_x_idjag pattern-3a-deploy
-make -C showcases/mcp_x_idjag pattern-3a-port-forward   # forward the mcp-reverse-proxy port locally (separate terminal)
+make -C showcases/mcp_x_idjag pattern-3a-port-forward   # separate terminal
+make -C showcases/mcp_x_idjag pattern-2b-port-forward   # forward the agentgateway port locally (separate terminal)
+
+# For a single pattern, use the same explicit shared-bootstrap sequence:
+make -C showcases/mcp_x_idjag bootstrap-common pattern-3a
+make -C showcases/mcp_x_idjag pattern-3a-port-forward   # separate terminal
 ```
 
 ## Cleanup
 
-Remove only Pattern 3a resources with:
+Remove only Pattern 3a or Pattern 2b resources, including their pattern namespace and gateway resources, with:
 
 ```sh
 make -C showcases/mcp_x_idjag pattern-3a-clean
+make -C showcases/mcp_x_idjag pattern-2b-clean
 ```
 
-Remove the resources created by `bootstrap-common` while keeping the Kind cluster with:
+Remove the full showcase environment while keeping the Kind cluster with:
 
 ```sh
 make -C showcases/mcp_x_idjag bootstrap-common-clean
 ```
 
-The common cleanup removes the Pattern 3a namespace (`mcp-pattern-3a`) and `idp`, Keycloak, API/MCP, Athenz, generated service keys, and port-forwards. Athenz cleanup is delegated to `make -C athenz_dist clean-kubernetes-athenz`; the Kind cluster and Docker images are kept.
+The common cleanup removes both Pattern 3a and Pattern 2b resources and namespaces, plus the shared `idp`, Keycloak, and Athenz resources, generated service keys, and port-forwards. Athenz cleanup is delegated to `make -C athenz_dist clean-kubernetes-athenz`; the Kind cluster and Docker images are kept. Because this also tears down the *shared* Athenz/Keycloak infrastructure, use the pattern-specific `*-clean` target instead when you want to keep the other pattern running.
 
-When `bootstrap-common` was run with a custom `SERVICES` list, pass the same service names to cleanup, for example `CLEAN_SERVICES="svc1 svc2" make -C showcases/mcp_x_idjag bootstrap-common-clean`.
+When using custom pattern service names, pass the same names to cleanup, for example `CLEAN_SERVICES="svc1 svc2" make -C showcases/mcp_x_idjag bootstrap-common-clean`.

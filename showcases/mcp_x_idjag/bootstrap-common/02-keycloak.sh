@@ -14,7 +14,7 @@ docker info >/dev/null 2>&1 || fatal "Docker daemon is not running"
 
 CLUSTER_NAME="${CLUSTER_NAME:-kind}"
 
-step "[2/6] Keycloak"
+step "[2/3] Keycloak"
 docker pull quay.io/keycloak/keycloak:latest
 kind load docker-image quay.io/keycloak/keycloak:latest --name "${CLUSTER_NAME}"
 kubectl create ns idp --dry-run=client -o yaml | kubectl apply -f -

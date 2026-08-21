@@ -30,16 +30,17 @@ port-forward:
 kill-port-forward:
 	npx kill-port 3001 8082
 
+# Pattern 3a owns its namespace and the Envoy Gateway installation used by
+# its routing-only Gateway.
 clean:
 	$(MAKE) kill-port-forward
 	./cleanup-echo-athenz.sh
 	kubectl -n $(PATTERN_NAMESPACE) delete -f k8s/gateway.yaml --ignore-not-found
+	kubectl delete gatewayclass pattern-3a-envoy-gateway --ignore-not-found
 	kubectl -n $(PATTERN_NAMESPACE) delete -f k8s/echo-mcp-deployment.yaml --ignore-not-found
 	kubectl -n $(PATTERN_NAMESPACE) delete -f k8s/mop-deployment.yaml --ignore-not-found
 	kubectl -n $(PATTERN_NAMESPACE) delete configmap pattern-3a-mop-sia pattern-3a-mop-config --ignore-not-found
 	kubectl -n $(PATTERN_NAMESPACE) delete secret pattern-3a-mop-tls --ignore-not-found
-	kubectl -n $(PATTERN_NAMESPACE) create configmap mcp-reverse-proxy-config \
-		--from-literal=AS_ISSUER_URL=http://localhost:8082 \
-		--from-literal=PUBLIC_BASE_URL=http://localhost:3001 \
-		--dry-run=client -o yaml | kubectl apply -f -
+	kubectl delete namespace $(PATTERN_NAMESPACE) --ignore-not-found
+	kubectl delete namespace envoy-gateway-system --ignore-not-found
 	rm -rf mop-tls

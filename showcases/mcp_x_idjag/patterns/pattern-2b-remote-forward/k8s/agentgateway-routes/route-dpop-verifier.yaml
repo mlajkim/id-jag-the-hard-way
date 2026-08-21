@@ -1,0 +1,25 @@
+# Exposes dpop-verifier's plain HTTP /register endpoint on the same
+# pattern-2b-gateway every other *.pattern-2b.localhost route uses (RFC 6761
+# resolves *.localhost to 127.0.0.1 with no /etc/hosts entry needed).
+# Deliberately NOT targeted by policy-jwt.yaml or policy-dpop-extauth.yaml:
+# /register authenticates the caller's id_token itself (see
+# dpop-verifier/src/register.js), so it must not require an already-
+# registered DPoP key to reach it in the first place.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: dpop-verifier
+  namespace: ${PATTERN_NAMESPACE}
+spec:
+  parentRefs:
+    - name: pattern-2b-gateway
+  hostnames:
+    - "dpop-verifier.pattern-2b.localhost"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: dpop-verifier
+          port: 8090

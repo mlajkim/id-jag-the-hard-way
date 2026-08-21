@@ -1,6 +1,6 @@
-// Command echo-mcp is the backend-free MCP used by Pattern 3a's multi-MCP
-// routing example. Authentication and Athenz authorization are deliberately
-// provided by the mcp-reverse-proxy sidecar, not by this process.
+// Command echo-mcp is the backend-free MCP used by the multi-MCP routing
+// examples. Authentication and Athenz authorization are deliberately provided
+// by the mcp-reverse-proxy sidecar, not by this process.
 package main
 
 import (
@@ -12,21 +12,25 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-type echoPattern3aArgs struct{}
+type echoArgs struct{}
 
 func main() {
 	port := getEnv("PORT", "8081")
+	pattern := getEnv("ECHO_PATTERN", "3a")
+	toolName := "echo_pattern_" + pattern
+	serverName := "echo-mcp-pattern-" + pattern
+	responseText := toolName + ": fixed response from Pattern " + pattern
 
 	server := mcp.NewServer(&mcp.Implementation{
-		Name:    "echo-mcp-pattern-3a",
+		Name:    serverName,
 		Version: "0.1.0",
 	}, nil)
 	mcp.AddTool(server, &mcp.Tool{
-		Name:        "echo_pattern_3a",
-		Description: "Return the fixed response from Pattern 3a's backend-free echo MCP.",
-	}, func(context.Context, *mcp.CallToolRequest, echoPattern3aArgs) (*mcp.CallToolResult, any, error) {
+		Name:        toolName,
+		Description: "Return the fixed response from Pattern " + pattern + "'s backend-free echo MCP.",
+	}, func(context.Context, *mcp.CallToolRequest, echoArgs) (*mcp.CallToolResult, any, error) {
 		return &mcp.CallToolResult{
-			Content: []mcp.Content{&mcp.TextContent{Text: "echo_pattern_3a: fixed response from Pattern 3a"}},
+			Content: []mcp.Content{&mcp.TextContent{Text: responseText}},
 		}, nil, nil
 	})
 

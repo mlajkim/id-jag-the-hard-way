@@ -1,0 +1,19 @@
+# Gateway API requires an explicit ReferenceGrant for any cross-namespace
+# object reference (Gateway-route attachment is the one exception). The
+# pattern-2b-jwt AgentgatewayPolicy (namespace ${PATTERN_NAMESPACE})
+# references the Keycloak Service in namespace idp as its JWKS backendRef -
+# without this grant, that reference is rejected.
+apiVersion: gateway.networking.k8s.io/v1
+kind: ReferenceGrant
+metadata:
+  name: pattern-2b-jwt-to-keycloak
+  namespace: idp
+spec:
+  from:
+    - group: agentgateway.dev
+      kind: AgentgatewayPolicy
+      namespace: ${PATTERN_NAMESPACE}
+  to:
+    - group: ""
+      kind: Service
+      name: keycloak

@@ -12,7 +12,7 @@ command -v jq >/dev/null || fatal "jq is required"
 command -v docker >/dev/null || fatal "docker is required and must be running"
 docker info >/dev/null 2>&1 || fatal "Docker daemon is not running"
 
-step "[3/6] Athenz ZMS/ZTS (+ Keycloak trust)"
+step "[3/3] Athenz ZMS/ZTS (+ Keycloak trust)"
 make -C athenz_dist clean-kubernetes-athenz deploy-kubernetes-athenz
 
 cat <<EOF | kubectl apply -f -

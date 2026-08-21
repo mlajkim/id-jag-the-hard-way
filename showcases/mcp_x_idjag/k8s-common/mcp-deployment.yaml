@@ -2,13 +2,13 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: mcp-sa
-  namespace: mcp-pattern-3a
+  namespace: ${PATTERN_NAMESPACE}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mcp
-  namespace: mcp-pattern-3a
+  namespace: ${PATTERN_NAMESPACE}
   labels:
     app: mcp
 spec:
@@ -107,13 +107,13 @@ spec:
             - name: PORT
               value: "8081"
             - name: BACKEND_API_URL
-              value: "http://api-server.mcp-pattern-3a:8080"
+              value: "http://api-server.${PATTERN_NAMESPACE}:8080"
             - name: BACKEND_API_PATH
               value: "/api/docs"
             - name: ZTS_URL
               value: "https://athenz-zts-server.athenz:4443/zts/v1"
             - name: BACKEND_SCOPE
-              value: "mcp.pattern3a:role.docs-getter"
+              value: "${ATHENZ_DOMAIN}:role.docs-getter"
             - name: ATHENZ_CERT_FILE
               value: "/var/run/athenz/tls.crt"
             - name: ATHENZ_KEY_FILE
@@ -138,7 +138,7 @@ spec:
             - name: ATHENZ_URL
               value: "https://athenz-zts-server.athenz:4443/zts/v1"
             - name: ATHENZ_DOMAIN
-              value: "mcp.pattern3a"
+              value: "${ATHENZ_DOMAIN}"
             - name: MCP_RESOURCE
               value: "mcp"
             - name: MCP_ACTION
@@ -164,7 +164,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mcp
-  namespace: mcp-pattern-3a
+  namespace: ${PATTERN_NAMESPACE}
 spec:
   selector:
     app: mcp
