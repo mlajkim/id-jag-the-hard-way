@@ -35,8 +35,26 @@ kill-port-forward:
 clean:
 	$(MAKE) kill-port-forward
 	./cleanup-echo-athenz.sh
-	kubectl -n $(PATTERN_NAMESPACE) delete -f k8s/gateway.yaml --ignore-not-found
-	kubectl delete gatewayclass pattern-3a-envoy-gateway --ignore-not-found
+	@if kubectl get crd httproutes.gateway.networking.k8s.io >/dev/null 2>&1; then \
+		kubectl -n $(PATTERN_NAMESPACE) delete httproute pattern-3a-docs-mcp pattern-3a-echo-mcp --ignore-not-found; \
+	else \
+		echo "HTTPRoute CRD is absent; skipping Pattern 3a HTTPRoute cleanup"; \
+	fi
+	@if kubectl get crd gateways.gateway.networking.k8s.io >/dev/null 2>&1; then \
+		kubectl -n $(PATTERN_NAMESPACE) delete gateway pattern-3a-gateway --ignore-not-found; \
+	else \
+		echo "Gateway CRD is absent; skipping Pattern 3a Gateway cleanup"; \
+	fi
+	@if kubectl get crd gatewayclasses.gateway.networking.k8s.io >/dev/null 2>&1; then \
+		kubectl delete gatewayclass pattern-3a-envoy-gateway --ignore-not-found; \
+	else \
+		echo "GatewayClass CRD is absent; skipping Pattern 3a GatewayClass cleanup"; \
+	fi
+	@if kubectl get crd envoyproxies.gateway.envoyproxy.io >/dev/null 2>&1; then \
+		kubectl -n $(PATTERN_NAMESPACE) delete envoyproxy pattern-3a-envoy-proxy --ignore-not-found; \
+	else \
+		echo "EnvoyProxy CRD is absent; skipping Pattern 3a EnvoyProxy cleanup"; \
+	fi
 	kubectl -n $(PATTERN_NAMESPACE) delete -f k8s/echo-mcp-deployment.yaml --ignore-not-found
 	kubectl -n $(PATTERN_NAMESPACE) delete -f k8s/mop-deployment.yaml --ignore-not-found
 	kubectl -n $(PATTERN_NAMESPACE) delete configmap pattern-3a-mop-sia pattern-3a-mop-config --ignore-not-found

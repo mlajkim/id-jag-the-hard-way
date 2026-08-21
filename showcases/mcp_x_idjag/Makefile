@@ -29,10 +29,6 @@ PATTERN_2B_PUBLIC_BASE_URL ?= http://localhost:3002
 PATTERN_3A_MAKE_VARS = PATTERN_NAMESPACE="$(PATTERN_3A_NAMESPACE)" ATHENZ_DOMAIN="$(PATTERN_3A_ATHENZ_DOMAIN)" ATHENZ_PARENT_DOMAIN="$(PATTERN_3A_ATHENZ_PARENT_DOMAIN)"
 PATTERN_2B_MAKE_VARS = PATTERN_NAMESPACE="$(PATTERN_2B_NAMESPACE)" ATHENZ_DOMAIN="$(PATTERN_2B_ATHENZ_DOMAIN)" ATHENZ_PARENT_DOMAIN="$(PATTERN_2B_ATHENZ_PARENT_DOMAIN)"
 
-# Services created by bootstrap-common's default invocations. Override
-# CLEAN_SERVICES when bootstrap-common was invoked with a custom SERVICES list.
-CLEAN_SERVICES ?= mcp-sa pattern-3a-mop-sa pattern-3a-echo-mcp-sa pattern-2b-gateway pattern-2b-echo-mcp-sa
-
 list:
 	@echo "Implemented patterns:"
 	@echo "  pattern-3a-remote-return  (run bootstrap-common first, then pattern-3a or"
@@ -50,7 +46,7 @@ list:
 	@echo "Cleanup:"
 	@echo "  pattern-3a-clean          (remove Pattern 3a resources and local TLS files)"
 	@echo "  pattern-2b-clean          (remove Pattern 2b resources and local key files)"
-	@echo "  bootstrap-common-clean   (remove both patterns + shared infrastructure; keep Kind)"
+	@echo "  bootstrap-common-clean   (remove shared infrastructure only; keep Kind and patterns)"
 	@echo "Build from an empty machine:"
 	@echo "  bootstrap-common pattern-3a  (shared bootstrap, then Pattern 3a)"
 	@echo "  bootstrap-common pattern-2b  (shared bootstrap, then Pattern 2b)"
@@ -63,24 +59,13 @@ bootstrap-common:
 	./bootstrap-common/03-athenz.sh
 	@echo "Shared infrastructure ready (Kind + Keycloak + Athenz ZMS/ZTS)."
 
-bootstrap-common-clean: pattern-3a-clean pattern-2b-clean
+bootstrap-common-clean:
 	$(REPO_ROOT)/tools/keep-k8s-port-forward.sh stop
-	@echo "Removing Pattern API and MCP resources..."
-	@for _namespace in mcp-pattern-3a mcp-pattern-2b; do \
-		kubectl delete namespace "$$_namespace" --ignore-not-found; \
-	done
 	@echo "Removing bootstrap-common Keycloak resources..."
 	kubectl delete namespace idp --ignore-not-found
 	@echo "Removing Athenz through athenz_dist's standard cleanup..."
 	$(MAKE) -C $(REPO_ROOT)/athenz_dist clean-kubernetes-athenz
-	@echo "Removing bootstrap-common service keys..."
-	@for _service in $(CLEAN_SERVICES); do \
-		rm -f "$(REPO_ROOT)/keys/$${_service}.key" \
-			"$(REPO_ROOT)/keys/$${_service}.public.key" \
-			"$(REPO_ROOT)/keys/$${_service}.crt" \
-			"$(REPO_ROOT)/keys/$${_service}.jwt"; \
-	done
-	@echo "Full showcase cleanup complete (Kind cluster was kept)."
+	@echo "Shared showcase cleanup complete (Kind cluster and pattern resources were kept)."
 
 # --- pattern-3a -----------------------------------------------------------------
 pattern-3a:

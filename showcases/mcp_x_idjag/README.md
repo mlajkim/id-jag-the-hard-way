@@ -72,19 +72,20 @@ make -C showcases/mcp_x_idjag pattern-3a-port-forward   # separate terminal
 
 ## Cleanup
 
-Remove only Pattern 3a or Pattern 2b resources, including their pattern namespace and gateway resources, with:
+Remove only one pattern's resources, including its pattern namespace and gateway resources, with the corresponding target:
+
+```sh
+make -C showcases/mcp_x_idjag pattern-3a-clean
+# or
+make -C showcases/mcp_x_idjag pattern-2b-clean
+```
+
+To remove both patterns and then the shared showcase infrastructure while keeping the Kind cluster, run the targets in this order:
 
 ```sh
 make -C showcases/mcp_x_idjag pattern-3a-clean
 make -C showcases/mcp_x_idjag pattern-2b-clean
-```
-
-Remove the full showcase environment while keeping the Kind cluster with:
-
-```sh
 make -C showcases/mcp_x_idjag bootstrap-common-clean
 ```
 
-The common cleanup removes both Pattern 3a and Pattern 2b resources and namespaces, plus the shared `idp`, Keycloak, and Athenz resources, generated service keys, and port-forwards. Athenz cleanup is delegated to `make -C athenz_dist clean-kubernetes-athenz`; the Kind cluster and Docker images are kept. Because this also tears down the *shared* Athenz/Keycloak infrastructure, use the pattern-specific `*-clean` target instead when you want to keep the other pattern running.
-
-When using custom pattern service names, pass the same names to cleanup, for example `CLEAN_SERVICES="svc1 svc2" make -C showcases/mcp_x_idjag bootstrap-common-clean`.
+`bootstrap-common-clean` removes only the shared `idp`, Keycloak, and Athenz resources and port-forwards. Athenz cleanup is delegated to `make -C athenz_dist clean-kubernetes-athenz`; the Kind cluster and Docker images are kept. It does not invoke either pattern cleanup, delete pattern namespaces, or remove pattern-specific keys. Run the pattern-specific `*-clean` target explicitly for each deployed pattern before this shared cleanup.
