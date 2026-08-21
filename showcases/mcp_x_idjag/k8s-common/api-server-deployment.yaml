@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: api-server
-  namespace: mcp-pattern-3a
+  namespace: ${PATTERN_NAMESPACE}
 spec:
   replicas: 1
   selector:
@@ -21,7 +21,7 @@ spec:
             - name: AT_REQUIRED
               value: "true"
             - name: ATHENZ_DOMAIN
-              value: "mcp.pattern3a"
+              value: "${ATHENZ_DOMAIN}"
           volumeMounts:
             - name: api-server-policies
               mountPath: /app/policies
@@ -31,7 +31,7 @@ spec:
           imagePullPolicy: Always
           env:
             - name: ZPU_DOMAIN
-              value: "mcp.pattern3a"
+              value: "${ATHENZ_DOMAIN}"
             - name: ZTS_URL
               value: "https://athenz-zts-server.athenz:4443/zts/v1"
             - name: ZPU_INTERVAL_SECONDS
@@ -54,7 +54,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: api-server
-  namespace: mcp-pattern-3a
+  namespace: ${PATTERN_NAMESPACE}
 spec:
   selector:
     app: api-server

@@ -1,0 +1,40 @@
+# The echo route gets its own exchange policy so an echo request receives
+# only the echo-mcp-accessor role rather than the docs-getter role required by
+# the docs MCP route.
+apiVersion: agentgateway.dev/v1alpha1
+kind: AgentgatewayPolicy
+metadata:
+  name: pattern-2b-exchange-echo-mcp
+  namespace: ${PATTERN_NAMESPACE}
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: echo-mcp
+  backend:
+    auth:
+      crossAppAccess:
+        subjectToken:
+          source:
+            expression: "jwt.rawToken.unredacted()"
+        identityProvider:
+          backendRef:
+            group: agentgateway.dev
+            kind: AgentgatewayBackend
+            name: athenz-zts
+          path: /zts/v1/oauth2/token
+          clientAuth:
+            clientId: pattern-2b-gateway
+            method: ClientSecretPost
+        resourceAuthorizationServer:
+          backendRef:
+            group: agentgateway.dev
+            kind: AgentgatewayBackend
+            name: athenz-zts
+          path: /zts/v1/oauth2/token
+          clientAuth:
+            clientId: pattern-2b-gateway
+            method: ClientSecretPost
+        audience: "https://athenz-zts-server.athenz:4443/zts/v1"
+        scopes:
+          - "${ATHENZ_DOMAIN}:role.echo-mcp-accessor"

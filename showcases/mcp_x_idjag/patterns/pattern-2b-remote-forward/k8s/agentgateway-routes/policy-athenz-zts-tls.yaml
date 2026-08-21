@@ -1,0 +1,23 @@
+# mTLS to Athenz ZTS for the athenz-zts AgentgatewayBackend - applies to any
+# traffic to that backend, including the crossAppAccess token-exchange calls
+# in policy-exchange-mcp.yaml (a mismatched CA/cert here surfaces as an
+# UpstreamFailure on the route, not a silent no-op).
+apiVersion: agentgateway.dev/v1alpha1
+kind: AgentgatewayPolicy
+metadata:
+  name: pattern-2b-athenz-zts-tls
+  namespace: ${PATTERN_NAMESPACE}
+spec:
+  targetRefs:
+    - group: agentgateway.dev
+      kind: AgentgatewayBackend
+      name: athenz-zts
+  backend:
+    tls:
+      mtlsCertificateRef:
+        - name: pattern-2b-gateway-mtls
+      # caCertificateRefs only accepts the ConfigMap default - a
+      # `kind: Secret` entry here is rejected by the CRD, so `kind` must be
+      # omitted even though the CA data is a plain PEM file, not a Secret.
+      caCertificateRefs:
+        - name: athenz-ca

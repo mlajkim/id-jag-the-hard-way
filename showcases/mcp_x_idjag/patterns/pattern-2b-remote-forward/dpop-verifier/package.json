@@ -1,0 +1,16 @@
+{
+  "name": "pattern-2b-dpop-verifier",
+  "version": "1.0.0",
+  "description": "agentgateway ext_authz service: verifies DPoP proofs (RFC 9449) presented alongside a client's id_token and pins each user's DPoP public key on first use (TOFU)",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "jose": "^5.9.6",
+    "@grpc/grpc-js": "^1.12.2",
+    "@grpc/proto-loader": "^0.7.13"
+  }
+}

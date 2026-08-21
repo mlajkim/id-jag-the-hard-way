@@ -1,0 +1,36 @@
+# Runs after policy-jwt.yaml's jwtAuthentication and before
+# policy-exchange-mcp.yaml's crossAppAccess (agentgateway's policy execution
+# order within a route is fixed: jwtAuthentication always runs before
+# extAuth). By the time this runs, the Authorization/id_token header has
+# already been validated and stripped - dpop-verifier never sees the id_token
+# itself, only the already-validated `sub` claim (via the automatic
+# envoy.filters.http.jwt_authn jwt_payload metadata agentgateway injects when
+# grpc.requestMetadata/context is left unset - do NOT add an explicit (even
+# empty) requestMetadata key here, it suppresses that auto-injection) and the
+# client's DPoP header (forwarded by default for gRPC ext_authz). See
+# MCP_ID_JAG_PATTERNS.md's pattern 2b for why this proof-of-possession check
+# is required before the id_token is trusted for the STS exchange
+# crossAppAccess performs next.
+apiVersion: agentgateway.dev/v1alpha1
+kind: AgentgatewayPolicy
+metadata:
+  name: pattern-2b-dpop-extauth
+  namespace: ${PATTERN_NAMESPACE}
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: mcp
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: echo-mcp
+  traffic:
+    extAuth:
+      backendRef:
+        name: dpop-verifier
+        port: 50051
+      grpc: {}
+      # DPoP is a hard security requirement (see pattern doc) - an
+      # unreachable verifier must block traffic, not silently let bare
+      # id_tokens through.
+      failureMode: FailClosed

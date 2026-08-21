@@ -8,6 +8,8 @@ cd "${SCRIPT_DIR}"
 source "${REPO_ROOT}/tools/color.sh"
 
 command -v kubectl >/dev/null || fatal "kubectl is required"
+command -v curl >/dev/null || fatal "curl is required"
+command -v yq >/dev/null || fatal "yq is required: brew install yq"
 PATTERN_NAMESPACE="${PATTERN_NAMESPACE:-mcp-pattern-3a}"
 
 ENVOY_GATEWAY_VERSION="${ENVOY_GATEWAY_VERSION:-v1.3.2}"
@@ -15,7 +17,13 @@ ENVOY_GATEWAY_INSTALL_URL="${ENVOY_GATEWAY_INSTALL_URL:-https://github.com/envoy
 
 step "Installing or verifying Envoy Gateway ${ENVOY_GATEWAY_VERSION}"
 if ! kubectl -n envoy-gateway-system get deployment/envoy-gateway >/dev/null 2>&1; then
-  kubectl apply --server-side -f "${ENVOY_GATEWAY_INSTALL_URL}"
+  if kubectl get crd gatewayclasses.gateway.networking.k8s.io >/dev/null 2>&1; then
+    curl -fsSL "${ENVOY_GATEWAY_INSTALL_URL}" \
+      | yq 'select(.kind != "CustomResourceDefinition" or ((.metadata.name | test("\\.gateway\\.networking\\.k8s\\.io$")) | not))' \
+      | kubectl apply --server-side -f -
+  else
+    kubectl apply --server-side -f "${ENVOY_GATEWAY_INSTALL_URL}"
+  fi
 fi
 
 kubectl wait --for=condition=Available deployment/envoy-gateway \

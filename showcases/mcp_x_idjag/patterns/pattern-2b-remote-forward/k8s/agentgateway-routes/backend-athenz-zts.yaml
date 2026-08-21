@@ -1,0 +1,13 @@
+# Static backend for Athenz ZTS, used as the token endpoint for both
+# crossAppAccess legs (policy-exchange-mcp.yaml). Host must match one of ZTS's
+# certificate SANs (athenz-zts-server[.athenz]) - the .svc.cluster.local FQDN
+# is not a SAN and fails TLS hostname verification.
+apiVersion: agentgateway.dev/v1alpha1
+kind: AgentgatewayBackend
+metadata:
+  name: athenz-zts
+  namespace: ${PATTERN_NAMESPACE}
+spec:
+  static:
+    host: athenz-zts-server.athenz
+    port: 4443

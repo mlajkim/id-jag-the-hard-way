@@ -16,7 +16,7 @@ CLUSTER_NAME="${CLUSTER_NAME:-kind}"
 
 git submodule update --init --recursive
 
-step "[1/6] Kubernetes cluster"
+step "[1/3] Kubernetes cluster"
 if kind get clusters 2>/dev/null | grep -qx "${CLUSTER_NAME}"; then
   ok "kind cluster '${CLUSTER_NAME}' already exists"
 else

@@ -8,6 +8,11 @@ cd "${REPO_ROOT}"
 source "${REPO_ROOT}/tools/color.sh"
 ATHENZ_DOMAIN="${ATHENZ_DOMAIN:-mcp.pattern3a}"
 
+if ! kubectl get namespace athenz >/dev/null 2>&1; then
+  info "Athenz namespace is absent; skipping Pattern 3a echo Athenz cleanup"
+  exit 0
+fi
+
 # Delete only the resources introduced for the backend-free echo MCP. The
 # existing docs MCP roles and the shared mcp-sa identity are intentionally
 # left alone.
