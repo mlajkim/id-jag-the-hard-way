@@ -1,0 +1,24 @@
+# Substitute for inbound mTLS: restricts which pods may reach agentgateway's
+# Gateway pod to only mcp-bff-gateway's pod (identified by its Deployment's
+# "app: pattern-3b-bff-gateway" label), in the same namespace.
+#
+# Caveat: NetworkPolicy enforcement depends on the cluster's CNI. `kind`'s
+# default CNI (kindnet) does not enforce NetworkPolicy, so on an unmodified
+# `kind` cluster this resource is applied but not actually enforced - see the
+# "Deviations from the ideal design" section of ../README.md.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: pattern-3b-agentgateway-ingress
+  namespace: ${PATTERN_NAMESPACE}
+spec:
+  podSelector:
+    matchLabels:
+      gateway.networking.k8s.io/gateway-name: pattern-3b-agentgateway
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: pattern-3b-bff-gateway

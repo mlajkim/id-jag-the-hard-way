@@ -18,6 +18,7 @@ const ANNOTATION_PATTERN = "mcp.idthw.dev/pattern"
 const ANNOTATION_AUTH_MODE = "mcp.idthw.dev/auth-mode"
 const ANNOTATION_ACCESS_SCOPE = "mcp.idthw.dev/access-scope"
 const ANNOTATION_CONNECTOR_COMMAND = "mcp.idthw.dev/connector-command"
+const ANNOTATION_CLIENT_PREREQUISITE = "mcp.idthw.dev/client-prerequisite"
 const LEGACY_ANNOTATION_SERVER = "mcp.idthw.dev/server"
 const LABEL_PROJECT = "mcp.idthw.dev/project"
 const LABEL_ALIAS = "mcp.idthw.dev/alias"
@@ -115,6 +116,7 @@ function deploymentToMcpServer(deployment: Deployment): McpServer | null {
     authMode: authMode === "dpop-connector" || authMode === "oauth" ? authMode : undefined,
     accessScope: annotations[ANNOTATION_ACCESS_SCOPE],
     connectorCommand: annotations[ANNOTATION_CONNECTOR_COMMAND],
+    clientPrerequisite: annotations[ANNOTATION_CLIENT_PREREQUISITE],
     totalToolCalls: "N/A",
     iconSrc: annotations[ANNOTATION_ICON] ?? iconForServer(displayName),
     logoText: initialsFor(displayName),

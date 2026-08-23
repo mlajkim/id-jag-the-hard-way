@@ -20,7 +20,7 @@ Combinations where the Client performs the ID-JAG exchange without possessing th
 | [pattern-2a-remote-return](./patterns/pattern-2a-remote-return) | local | remote | Return to Client | Yes | Placeholder (not implemented) |
 | [pattern-2b-remote-forward](./patterns/pattern-2b-remote-forward) | local | remote | Forward directly to MCP | No | **Implemented** (using agentgateway's native `crossAppAccess`) |
 | [pattern-3a-remote-return](./patterns/pattern-3a-remote-return) | remote | remote | Return to Client | Yes | **Implemented** (using mcp-oauth-proxy) |
-| [pattern-3b-remote-forward](./patterns/pattern-3b-remote-forward) | remote | remote | Forward directly to MCP | No (session identifier only) | Existing `ai_client_gateway` is a close example |
+| [pattern-3b-remote-forward](./patterns/pattern-3b-remote-forward) | remote | remote | Forward directly to MCP | No (session identifier only) | **Implemented** (using `mcp-bff-gateway` + Pattern 2b's `agentgateway`; no DPoP - a NetworkPolicy plus JWT audience checks stand in for it) |
 
 See the README linked from each row for detailed explanations, architecture diagrams, and sequence diagrams.
 
@@ -44,9 +44,9 @@ The following assumes a general-purpose MCP client such as Claude Code or Codex 
 | 2a | No | Custom Exchanger API, DPoP (RFC 9449) proof, and key pinning | **No**. A helper is required |
 | 2b | No | The non-standard elements from 2a, plus forwarding MCP requests to the Exchanger | **No**. A helper such as a local proxy is required |
 | 3a | **Yes** | None (if the AS does not support DCR (RFC 7591), the client_id must be pre-registered) | **Yes** |
-| 3b | Depends on the AS design | Cookie-based sessions require a cookie jar and CSRF protection; opaque reference tokens require no additional client-side mechanism | **Conditionally** |
+| 3b | **Yes** (implemented as an opaque bearer reference token, not a cookie) | None from the Client's point of view; the AS/BFF-to-Exchanger leg is protected by a NetworkPolicy and JWT audience restriction instead of a cookie jar | **Yes** |
 
-In summary, 3a is the only pattern that works with a general-purpose MCP client alone. Pattern 3b can also work depending on the AS session design; Patterns 1, 2a, and 2b require a helper.
+In summary, 3a and 3b both work with a general-purpose MCP client alone. Patterns 1, 2a, and 2b require a helper.
 
 ## Prerequisites
 
@@ -54,18 +54,19 @@ Run `bootstrap-common` explicitly before deploying a pattern. It provides the sh
 
 ## Pattern boundaries
 
-Each implemented pattern deploys into its own namespace and Athenz domain, so Pattern 3a and Pattern 2b can be deployed side by side in the same cluster without interfering with each other: Pattern 3a uses the `mcp-pattern-3a` namespace and `mcp.pattern3a` Athenz domain (API, docs MCP, MoP, echo MCP, routing-only Envoy Gateway); Pattern 2b uses the `mcp-pattern-2b` namespace and `mcp.pattern2b` Athenz domain (API, docs MCP, echo MCP, agentgateway, dpop-verifier). The Athenz identity provider remains shared in the `athenz` namespace. Its `instance_provider` configuration continues to use `athenz.identityprovider` with the `svc.cluster.local` DNS suffix, while each pattern's SIA configuration explicitly sets its own Athenz domain. `bootstrap-common/05-athenz-identityprovider.sh` applies the small [`identityprovider-policy.patch`](identityprovider-policy.patch) to the checked-out Athenz policy submodule and registers the namespace-to-domain mapping in the generated policy ConfigMap (additively, so multiple patterns' mappings coexist); the upstream policy source itself is not edited in this repository.
+Each implemented pattern deploys into its own namespace and Athenz domain, so Pattern 3a, Pattern 2b, and Pattern 3b can be deployed side by side in the same cluster without interfering with each other: Pattern 3a uses the `mcp-pattern-3a` namespace and `mcp.pattern3a` Athenz domain (API, docs MCP, MoP, echo MCP, routing-only Envoy Gateway); Pattern 2b uses the `mcp-pattern-2b` namespace and `mcp.pattern2b` Athenz domain (API, docs MCP, echo MCP, agentgateway, dpop-verifier); Pattern 3b uses the `mcp-pattern-3b` namespace and `mcp.pattern3b` Athenz domain (API, docs MCP, echo MCP, agentgateway, `mcp-bff-gateway`). The Athenz identity provider remains shared in the `athenz` namespace. Its `instance_provider` configuration continues to use `athenz.identityprovider` with the `svc.cluster.local` DNS suffix, while each pattern's SIA configuration explicitly sets its own Athenz domain. `bootstrap-common/05-athenz-identityprovider.sh` applies the small [`identityprovider-policy.patch`](identityprovider-policy.patch) to the checked-out Athenz policy submodule and registers the namespace-to-domain mapping in the generated policy ConfigMap (additively, so multiple patterns' mappings coexist); the upstream policy source itself is not edited in this repository.
 
 ## Running
 
 ```sh
-# Build shared infrastructure and MCP Hub once, then deploy both patterns independently
-make -C showcases/mcp_x_idjag bootstrap-common pattern-2b pattern-3a
+# Build shared infrastructure and MCP Hub once, then deploy patterns independently
+make -C showcases/mcp_x_idjag bootstrap-common pattern-2b pattern-3a pattern-3b
 
 # MCP Hub is exposed at http://localhost:3102 by bootstrap-common
 
 make -C showcases/mcp_x_idjag pattern-3a-port-forward   # separate terminal
 make -C showcases/mcp_x_idjag pattern-2b-port-forward   # forward the agentgateway port locally (separate terminal)
+make -C showcases/mcp_x_idjag pattern-3b-port-forward   # forward the mcp-bff-gateway port locally (separate terminal)
 
 # For a single pattern, use the same explicit shared-bootstrap sequence:
 make -C showcases/mcp_x_idjag bootstrap-common pattern-3a
@@ -80,13 +81,16 @@ Remove only one pattern's resources, including its pattern namespace and gateway
 make -C showcases/mcp_x_idjag pattern-3a-clean
 # or
 make -C showcases/mcp_x_idjag pattern-2b-clean
+# or
+make -C showcases/mcp_x_idjag pattern-3b-clean
 ```
 
-To remove both patterns and then the shared showcase infrastructure while keeping the Kind cluster, run the targets in this order:
+To remove all patterns and then the shared showcase infrastructure while keeping the Kind cluster, run the targets in this order:
 
 ```sh
 make -C showcases/mcp_x_idjag pattern-3a-clean
 make -C showcases/mcp_x_idjag pattern-2b-clean
+make -C showcases/mcp_x_idjag pattern-3b-clean
 make -C showcases/mcp_x_idjag bootstrap-common-clean
 ```
 

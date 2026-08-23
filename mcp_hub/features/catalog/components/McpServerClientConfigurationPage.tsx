@@ -129,8 +129,39 @@ export function McpServerUrlSection({ mcpServerUrl }: { mcpServerUrl: string }) 
   )
 }
 
+// Annotations author the command with a literal "${REPO_ROOT}" placeholder
+// (see register-mcp-hub-metadata.sh) instead of "$PWD", because this text is
+// copied into an arbitrary terminal, not run from the repository root the
+// way the tutorial's own documented commands are - "$PWD" would silently
+// resolve to whatever directory the user happened to be in when they pasted
+// it. This mirrors how ClientConfiguration.tsx's connector paths are
+// resolved through MCP_HUB_CONNECTOR_REPOSITORY_ROOT.
+function resolveClientPrerequisite(command: string, repositoryRoot: string | undefined) {
+  if (!repositoryRoot?.trim()) return command
+  return command.replaceAll("${REPO_ROOT}", repositoryRoot.trim().replace(/[\\/]+$/, ""))
+}
+
+function ClientPrerequisiteNotice({ command }: { command: string }) {
+  return (
+    <div className="connector-prerequisite">
+      <div>
+        <span className="config-eyebrow">Prerequisite</span>
+        <strong>Run this before connecting</strong>
+      </div>
+      <div className="connector-prerequisite-command">
+        <code>{command}</code>
+        <CopyButton value={command} label="Copy prerequisite command" />
+      </div>
+    </div>
+  )
+}
+
 export function JsonConfigurationSection({ server }: { server: McpServer }) {
   const mcpServerUrl = resolveMcpDisplayUrl(server)
+  const repositoryRoot = process.env.MCP_HUB_CONNECTOR_REPOSITORY_ROOT
+  const prerequisite = server.clientPrerequisite
+    ? resolveClientPrerequisite(server.clientPrerequisite, repositoryRoot)
+    : undefined
 
   if (server.authMode === "dpop-connector") {
     return (
@@ -139,11 +170,12 @@ export function JsonConfigurationSection({ server }: { server: McpServer }) {
         <p className="section-copy">
           This MCP endpoint uses the local DPoP connector. Choose your MCP client below to generate the matching stdio configuration.
         </p>
+        {prerequisite && <ClientPrerequisiteNotice command={prerequisite} />}
         <ClientConfiguration
           serverName={server.name}
           mcpServerUrl={mcpServerUrl}
           connectorCommand={server.connectorCommand ?? `node ${server.name}/client/src/index.js`}
-          connectorRepositoryRoot={process.env.MCP_HUB_CONNECTOR_REPOSITORY_ROOT}
+          connectorRepositoryRoot={repositoryRoot}
         />
       </section>
     )
@@ -155,6 +187,7 @@ export function JsonConfigurationSection({ server }: { server: McpServer }) {
         Client configuration
       </h2>
       <p className="section-copy">Add this configuration to your MCP client settings.</p>
+      {prerequisite && <ClientPrerequisiteNotice command={prerequisite} />}
 
       <ClientConfiguration serverName={server.name} mcpServerUrl={mcpServerUrl} />
     </section>

@@ -1,0 +1,57 @@
+# No Athenz identity/SIA sidecar here: mcp-bff-gateway never talks to ZTS or
+# agentgateway over mTLS (agentgateway does not support inbound/frontend mTLS
+# client-certificate validation on a Gateway listener). The "app" label below
+# is what agentgateway-networkpolicy.yaml selects to allow this pod's traffic
+# through to agentgateway.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pattern-3b-bff-gateway
+  namespace: ${PATTERN_NAMESPACE}
+  labels:
+    app: pattern-3b-bff-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pattern-3b-bff-gateway
+  template:
+    metadata:
+      labels:
+        app: pattern-3b-bff-gateway
+    spec:
+      containers:
+        - name: bff-gateway
+          image: pattern-3b-bff-gateway:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3101
+          env:
+            - name: PORT
+              value: "3101"
+            - name: PUBLIC_BASE_URL
+              value: "${PUBLIC_BASE_URL}"
+            - name: AGENTGATEWAY_BASE_URL
+              value: "${AGENTGATEWAY_BASE_URL}"
+            - name: KEYCLOAK_URL
+              value: "http://keycloak.idp:8080"
+            - name: KEYCLOAK_PUBLIC_URL
+              value: "http://localhost:34443"
+            - name: KEYCLOAK_REALM
+              value: "master"
+            - name: KEYCLOAK_CLIENT_ID
+              value: "human.idjag-learner.pattern3b-gateway"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pattern-3b-bff-gateway
+  namespace: ${PATTERN_NAMESPACE}
+spec:
+  selector:
+    app: pattern-3b-bff-gateway
+  ports:
+    - name: http
+      port: 3101
+      targetPort: http

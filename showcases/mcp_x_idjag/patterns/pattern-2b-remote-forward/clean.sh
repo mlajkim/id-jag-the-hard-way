@@ -38,16 +38,32 @@ else
   info "Pattern 2b namespace is absent; skipping namespaced Pattern 2b cleanup"
 fi
 
-# agentgateway is installed by deploy-gateway.sh and is not part of the
-# Pattern 2b Gateway manifest. Remove its Helm releases and controller
-# namespace, while leaving the shared Gateway API CRDs intact.
-if command -v helm >/dev/null 2>&1; then
-  helm uninstall agentgateway --namespace agent-gateway --ignore-not-found || true
-  helm uninstall agentgateway-crds --namespace agent-gateway --ignore-not-found || true
+# agentgateway is installed by deploy-gateway.sh and is shared control-plane
+# infrastructure, not owned by any single pattern - Pattern 3b's own Gateway
+# also uses the "agentgateway" GatewayClass. Only tear down the shared Helm
+# releases/GatewayClass/namespace if no other pattern still has a Gateway
+# using it (this pattern's own Gateway was already deleted above), otherwise
+# cleaning up one pattern would break the other.
+if command -v kubectl >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
+  remaining_agentgateways=$(kubectl get gateway -A -o json 2>/dev/null \
+    | jq -r '.items[] | select(.spec.gatewayClassName=="agentgateway") | "\(.metadata.namespace)/\(.metadata.name)"')
 else
-  info "helm is absent; skipping agentgateway Helm release cleanup"
+  remaining_agentgateways=""
 fi
-kubectl delete gatewayclass agentgateway --ignore-not-found
-kubectl delete namespace agent-gateway --ignore-not-found
+
+if [ -n "${remaining_agentgateways}" ]; then
+  info "Other pattern(s) still use the shared agentgateway control plane; leaving it in place:"
+  echo "${remaining_agentgateways}" | sed 's/^/    /' >&2
+else
+  step "No remaining Gateways use agentgateway; removing the shared control plane"
+  if command -v helm >/dev/null 2>&1; then
+    helm uninstall agentgateway --namespace agent-gateway --ignore-not-found || true
+    helm uninstall agentgateway-crds --namespace agent-gateway --ignore-not-found || true
+  else
+    info "helm is absent; skipping agentgateway Helm release cleanup"
+  fi
+  kubectl delete gatewayclass agentgateway --ignore-not-found
+  kubectl delete namespace agent-gateway --ignore-not-found
+fi
 rm -f "${REPO_ROOT}/keys/pattern-2b-gateway.key" "${REPO_ROOT}/keys/pattern-2b-gateway.public.key" "${REPO_ROOT}/keys/pattern-2b-gateway.crt"
 ok "Pattern 2b resources removed"

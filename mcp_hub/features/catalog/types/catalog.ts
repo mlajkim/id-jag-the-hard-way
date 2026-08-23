@@ -11,6 +11,7 @@ export type McpServer = {
   authMode?: "oauth" | "dpop-connector"
   accessScope?: string
   connectorCommand?: string
+  clientPrerequisite?: string
   totalToolCalls: string
   iconSrc?: string
   logoText: string
