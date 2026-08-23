@@ -50,7 +50,7 @@ In summary, 3a is the only pattern that works with a general-purpose MCP client 
 
 ## Prerequisites
 
-Run `bootstrap-common` explicitly before deploying a pattern. It provides only the shared Kind, Keycloak, and Athenz ZMS/ZTS infrastructure; each pattern target then creates its own Athenz permissions, identity-provider mapping, API server, and MCP server in its own namespace and domain. To deploy several patterns together while bootstrapping the shared infrastructure only once, pass the goals explicitly: `make bootstrap-common pattern-2b pattern-3a`.
+Run `bootstrap-common` explicitly before deploying a pattern. It provides the shared Kind, Keycloak, Athenz ZMS/ZTS infrastructure, and the MCP Hub deployment. Each pattern target then creates its own Athenz permissions, identity-provider mapping, API server, and MCP server in its own namespace and domain. To deploy several patterns together while bootstrapping the shared infrastructure only once, pass the goals explicitly: `make bootstrap-common pattern-2b pattern-3a`.
 
 ## Pattern boundaries
 
@@ -59,8 +59,10 @@ Each implemented pattern deploys into its own namespace and Athenz domain, so Pa
 ## Running
 
 ```sh
-# Build shared infrastructure once, then deploy both patterns independently
+# Build shared infrastructure and MCP Hub once, then deploy both patterns independently
 make -C showcases/mcp_x_idjag bootstrap-common pattern-2b pattern-3a
+
+# MCP Hub is exposed at http://localhost:3102 by bootstrap-common
 
 make -C showcases/mcp_x_idjag pattern-3a-port-forward   # separate terminal
 make -C showcases/mcp_x_idjag pattern-2b-port-forward   # forward the agentgateway port locally (separate terminal)
@@ -88,4 +90,4 @@ make -C showcases/mcp_x_idjag pattern-2b-clean
 make -C showcases/mcp_x_idjag bootstrap-common-clean
 ```
 
-`bootstrap-common-clean` removes only the shared `idp`, Keycloak, and Athenz resources and port-forwards. Athenz cleanup is delegated to `make -C athenz_dist clean-kubernetes-athenz`; the Kind cluster and Docker images are kept. It does not invoke either pattern cleanup, delete pattern namespaces, or remove pattern-specific keys. Run the pattern-specific `*-clean` target explicitly for each deployed pattern before this shared cleanup.
+`bootstrap-common-clean` removes the shared `idp`, Keycloak, Athenz, and MCP Hub resources and port-forwards. Athenz cleanup is delegated to `make -C athenz_dist clean-kubernetes-athenz`; the Kind cluster and Docker images are kept. It does not invoke either pattern cleanup, delete pattern namespaces, or remove pattern-specific keys. Run the pattern-specific `*-clean` target explicitly for each deployed pattern before this shared cleanup.

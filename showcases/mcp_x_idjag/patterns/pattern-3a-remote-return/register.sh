@@ -31,6 +31,7 @@ step "Pattern 3a Keycloak client + Athenz role membership"
 ./tools/athenz/add-policy.sh "${ATHENZ_DOMAIN}" "mcp-accessor-jag-exchanger" "zts.jag_exchange" "role.mcp-accessor"
 ./tools/athenz/add-role-member.sh "${ATHENZ_DOMAIN}" "mcp-accessor-jag-exchanger" "human.idjag-learner"
 ./tools/athenz/add-role-member.sh "${ATHENZ_DOMAIN}" "mcp-accessor-jag-exchanger" "${ATHENZ_DOMAIN}.pattern-3a-mop-sa"
+./tools/athenz/add-role-member.sh "${ATHENZ_DOMAIN}" "mcp-accessor-jag-exchanger" "mcp-hub.hub-ui"
 
 step "Registering the echo MCP Athenz identity and roles"
 _echo_service="pattern-3a-echo-mcp-sa"
@@ -48,4 +49,5 @@ fi
 ./tools/athenz/add-policy.sh "${ATHENZ_DOMAIN}" "echo-mcp-accessor-jag-exchanger" "zts.jag_exchange" "role.echo-mcp-accessor"
 ./tools/athenz/add-role-member.sh "${ATHENZ_DOMAIN}" "echo-mcp-accessor-jag-exchanger" "human.idjag-learner"
 ./tools/athenz/add-role-member.sh "${ATHENZ_DOMAIN}" "echo-mcp-accessor-jag-exchanger" "${ATHENZ_DOMAIN}.pattern-3a-mop-sa"
+./tools/athenz/add-role-member.sh "${ATHENZ_DOMAIN}" "echo-mcp-accessor-jag-exchanger" "mcp-hub.hub-ui"
 ok "Pattern 3a identity registered"

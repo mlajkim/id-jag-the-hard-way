@@ -94,9 +94,12 @@ fi
 ./tools/athenz/set-domain-template.sh sys.auth instance_provider \
   provider=athenz.identityprovider dnssuffix=svc.cluster.local
 
-./tools/athenz/create-tld.sh "${ATHENZ_PARENT_DOMAIN}"
 if [[ "${ATHENZ_DOMAIN}" == "${ATHENZ_PARENT_DOMAIN}."* ]]; then
+  ./tools/athenz/create-tld.sh "${ATHENZ_PARENT_DOMAIN}"
   ./tools/athenz/create-subdomain.sh "${ATHENZ_PARENT_DOMAIN}" "${ATHENZ_DOMAIN#${ATHENZ_PARENT_DOMAIN}.}"
+else
+  # A top-level domain such as mcp-hub has no parent subdomain to create.
+  ./tools/athenz/create-tld.sh "${ATHENZ_DOMAIN}"
 fi
 for _svc in "${SERVICES[@]}"; do
   ./tools/athenz/create-private-key.sh "./keys/${_svc}"

@@ -127,20 +127,26 @@ To access the gateway locally, run the following in a separate terminal:
 make -C showcases/mcp_x_idjag pattern-2b-port-forward
 ```
 
+### Using it from MCP Hub
+
+After the Pattern 2b deployment is registered in MCP Hub, open the endpoint's `Client configuration` page. The page generates the local stdio connector configuration for GitHub Copilot, Claude Code, OpenCode, Codex, Cline, Cursor, and Gemini, including absolute paths for both the connector script and its dependency installation command. Set `MCP_HUB_CONNECTOR_REPOSITORY_ROOT` before deploying MCP Hub when the checkout is in a different location, install the dependencies shown on the page, copy the configuration for the desired client and scope, and keep the Pattern 2b gateway port-forward running.
+
 ### Using it from Claude Code
 
 Claude Code's built-in remote-MCP support only drives standard `authorization_code`+PKCE against the MCP server itself (RFC 9728 PRM + RFC 8414 AS Metadata discovery, then presenting the returned `access_token` as a Bearer credential). Pattern 2b never returns an Access Token to the Client at all - the Client instead presents an `id_token` plus a DPoP proof to the gateway - so Claude Code **cannot** be pointed directly at the gateway URL as a remote MCP server (see the Feasibility table in the [showcase README](../../README.md)).
 
-Use the included local connector as a stdio MCP server for each remote MCP endpoint. It bridges Claude Code's stdio transport to the gateway's HTTP endpoint and handles the PKCE login, DPoP key management, and `id_token`/DPoP headers itself. Run the following from the repository root, while the gateway port-forward remains active in another terminal:
+Use the included local connector as a stdio MCP server for each remote MCP endpoint. It bridges Claude Code's stdio transport to the gateway's HTTP endpoint and handles the PKCE login, DPoP key management, and `id_token`/DPoP headers itself. Set `REPOSITORY_ROOT` to the absolute checkout path and run the following from any directory while the gateway port-forward remains active in another terminal:
 
 ```sh
-npm --prefix showcases/mcp_x_idjag/patterns/pattern-2b-remote-forward/client install
-claude mcp add --scope local pattern-2b-docs -- \
-  node "$PWD/showcases/mcp_x_idjag/patterns/pattern-2b-remote-forward/client/src/index.js"
+REPOSITORY_ROOT="/absolute/path/to/id-jag-the-hard-way"
+npm --prefix "$REPOSITORY_ROOT/showcases/mcp_x_idjag/patterns/pattern-2b-remote-forward/client" install
+claude mcp add --scope local pattern-2b-docs \
+  -e PATTERN_2B_MCP_URL=http://mcp.pattern-2b.localhost:3002/mcp \
+  -- node "$REPOSITORY_ROOT/showcases/mcp_x_idjag/patterns/pattern-2b-remote-forward/client/src/index.js"
 
 claude mcp add --scope local pattern-2b-echo \
   -e PATTERN_2B_MCP_URL=http://echo.pattern-2b.localhost:3002/mcp \
-  -- node "$PWD/showcases/mcp_x_idjag/patterns/pattern-2b-remote-forward/client/src/index.js"
+  -- node "$REPOSITORY_ROOT/showcases/mcp_x_idjag/patterns/pattern-2b-remote-forward/client/src/index.js"
 
 claude mcp list
 claude
@@ -158,15 +164,17 @@ Keycloak issuer:    http://localhost:34443/realms/master
 Callback:           http://127.0.0.1:8765/callback
 ```
 
+`PATTERN_2B_DPOP_REGISTER_URL` is optional. The connector already defaults it to the DPoP verifier URL above; set it only when the verifier is exposed at a different URL. `PATTERN_2B_MCP_URL` is explicit in each client configuration: the docs endpoint uses the connector's default, while the echo endpoint must override it because the connector default points to docs.
+
 When using different forwarded hostnames or ports, pass the values to the corresponding Claude Code stdio server configuration. The docs connector uses `PATTERN_2B_MCP_URL`; the echo connector uses `PATTERN_2B_ECHO_MCP_URL` only in the test runner, and uses `PATTERN_2B_MCP_URL` when started by Claude Code:
 
 ```sh
 claude mcp add --scope local pattern-2b-docs \
   -e PATTERN_2B_MCP_URL=http://mcp.example.test:3002/mcp \
-  -- node "$PWD/showcases/mcp_x_idjag/patterns/pattern-2b-remote-forward/client/src/index.js"
+  -- node "$REPOSITORY_ROOT/showcases/mcp_x_idjag/patterns/pattern-2b-remote-forward/client/src/index.js"
 
 claude mcp add --scope local pattern-2b-echo \
   -e PATTERN_2B_MCP_URL=http://echo.example.test:3002/mcp \
   -e PATTERN_2B_DPOP_REGISTER_URL=http://dpop-verifier.example.test:3002/register \
-  -- node "$PWD/showcases/mcp_x_idjag/patterns/pattern-2b-remote-forward/client/src/index.js"
+  -- node "$REPOSITORY_ROOT/showcases/mcp_x_idjag/patterns/pattern-2b-remote-forward/client/src/index.js"
 ```

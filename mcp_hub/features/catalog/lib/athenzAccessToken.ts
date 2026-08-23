@@ -22,8 +22,8 @@ type CachedToken = {
 
 const cachedTokens = new Map<string, CachedToken>()
 
-export async function getMcpAccessToken(): Promise<string | null> {
-  const scope = (process.env.MCP_HUB_MCP_ACCESS_SCOPE ?? "").trim()
+export async function getMcpAccessToken(scopeOverride?: string): Promise<string | null> {
+  const scope = (scopeOverride ?? process.env.MCP_HUB_MCP_ACCESS_SCOPE ?? "").trim()
   if (!scope) return null
 
   const session = await auth()

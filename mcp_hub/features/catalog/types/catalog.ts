@@ -6,6 +6,11 @@ export type McpServer = {
   description: string
   project: string
   publicUrl?: string
+  discoveryUrl?: string
+  pattern?: string
+  authMode?: "oauth" | "dpop-connector"
+  accessScope?: string
+  connectorCommand?: string
   totalToolCalls: string
   iconSrc?: string
   logoText: string

@@ -107,6 +107,7 @@ export function CatalogTable({ servers, project, product }: { servers: McpServer
               </span>
             </th>
             <th>Description</th>
+            <th>Pattern</th>
             <th>Namespace</th>
             <th>Project</th>
             <th>
@@ -138,6 +139,7 @@ export function CatalogTable({ servers, project, product }: { servers: McpServer
                   </div>
                 </td>
                 <td>{server.description}</td>
+                <td>{server.pattern ?? "—"}</td>
                 <td>{server.namespace}</td>
                 <td>{server.project}</td>
                 <td>{server.totalToolCalls}</td>
@@ -150,7 +152,7 @@ export function CatalogTable({ servers, project, product }: { servers: McpServer
             ))
           ) : (
             <tr>
-              <td className="empty-cell" colSpan={6}>
+              <td className="empty-cell" colSpan={7}>
                 No MCP server deployments found.
               </td>
             </tr>

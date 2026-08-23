@@ -200,6 +200,7 @@ const oidcProvider: OIDCConfig<HubIdpProfile> = {
   issuer: idpConfig.issuer,
   wellKnown: idpConfig.wellKnown,
   authorization: idpConfig.authorizationEndpoint,
+  token: idpConfig.tokenEndpoint,
   clientId: idpConfig.clientId,
   clientSecret: idpConfig.clientSecret,
 }

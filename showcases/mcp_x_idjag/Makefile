@@ -2,10 +2,15 @@
 .PHONY: list \
 	bootstrap-common \
 	bootstrap-common-clean \
+	mcp-hub-deploy mcp-hub-port-forward mcp-hub-kill-port-forward mcp-hub-clean \
 	pattern-3a pattern-3a-port-forward pattern-3a-kill-port-forward pattern-3a-clean \
 	pattern-2b pattern-2b-port-forward pattern-2b-kill-port-forward pattern-2b-clean
 
 REPO_ROOT := $(abspath $(CURDIR)/../..)
+
+MCP_HUB_NAMESPACE ?= mcp-hub
+MCP_HUB_ATHENZ_DOMAIN ?= mcp-hub
+MCP_HUB_PORT ?= 3102
 
 # Pattern-specific bootstrap inputs. These are deliberately separate so
 # `make bootstrap-common pattern-2b pattern-3a` configures each pattern with
@@ -39,7 +44,7 @@ list:
 	@echo "Placeholders (README only):"
 	@echo "  pattern-1-local-exchange, pattern-2a-remote-return, pattern-3b-remote-forward"
 	@echo "Shared infrastructure:"
-	@echo "  bootstrap-common           (Kind + Keycloak + Athenz ZMS/ZTS only)"
+	@echo "  bootstrap-common           (Kind + Keycloak + Athenz ZMS/ZTS + MCP Hub)"
 	@echo "Pattern-specific bootstrap:"
 	@echo "  pattern-3a                 (Pattern 3a bootstrap, register, and deploy)"
 	@echo "  pattern-2b                 (Pattern 2b bootstrap, register, and deploy)"
@@ -57,15 +62,35 @@ bootstrap-common:
 	./bootstrap-common/01-kind-cluster.sh
 	./bootstrap-common/02-keycloak.sh
 	./bootstrap-common/03-athenz.sh
-	@echo "Shared infrastructure ready (Kind + Keycloak + Athenz ZMS/ZTS)."
+	PATTERN_NAMESPACE="$(MCP_HUB_NAMESPACE)" ATHENZ_DOMAIN="$(MCP_HUB_ATHENZ_DOMAIN)" ATHENZ_PARENT_DOMAIN="mcp" \
+		./bootstrap-common/05-athenz-identityprovider.sh hub-ui
+	$(MAKE) mcp-hub-deploy
+	@echo "Shared infrastructure ready (Kind + Keycloak + Athenz ZMS/ZTS + MCP Hub)."
 
 bootstrap-common-clean:
 	$(REPO_ROOT)/tools/keep-k8s-port-forward.sh stop
+	$(MAKE) mcp-hub-clean
 	@echo "Removing bootstrap-common Keycloak resources..."
 	kubectl delete namespace idp --ignore-not-found
 	@echo "Removing Athenz through athenz_dist's standard cleanup..."
 	$(MAKE) -C $(REPO_ROOT)/athenz_dist clean-kubernetes-athenz
 	@echo "Shared showcase cleanup complete (Kind cluster and pattern resources were kept)."
+
+mcp-hub-deploy:
+	MCP_HUB_NAMESPACE="$(MCP_HUB_NAMESPACE)" MCP_HUB_ATHENZ_DOMAIN="$(MCP_HUB_ATHENZ_DOMAIN)" \
+		MCP_HUB_PORT="$(MCP_HUB_PORT)" ./bootstrap-common/08-mcp-hub.sh
+
+mcp-hub-port-forward:
+	kubectl -n "$(MCP_HUB_NAMESPACE)" port-forward service/mcp-hub "$(MCP_HUB_PORT):3102"
+
+mcp-hub-kill-port-forward:
+	npx kill-port "$(MCP_HUB_PORT)"
+
+mcp-hub-clean:
+	$(MAKE) mcp-hub-kill-port-forward >/dev/null 2>&1 || true
+	MCP_HUB_NAMESPACE="$(MCP_HUB_NAMESPACE)" envsubst '$$MCP_HUB_NAMESPACE' \
+		< k8s-common/mcp-hub-deployment.yaml | kubectl delete -f - --ignore-not-found
+	kubectl delete namespace "$(MCP_HUB_NAMESPACE)" --ignore-not-found
 
 # --- pattern-3a -----------------------------------------------------------------
 pattern-3a:
@@ -75,6 +100,7 @@ pattern-3a:
 	$(PATTERN_3A_MAKE_VARS) ./bootstrap-common/06-api-server.sh
 	$(PATTERN_3A_MAKE_VARS) ./bootstrap-common/07-mcp-server.sh "$(PATTERN_3A_AS_ISSUER_URL)" "$(PATTERN_3A_PUBLIC_BASE_URL)"
 	$(MAKE) -C patterns/pattern-3a-remote-return $(PATTERN_3A_MAKE_VARS) register-mop deploy-mop deploy-gateway
+	PATTERN_NAMESPACE="$(PATTERN_3A_NAMESPACE)" ./register-mcp-hub-metadata.sh pattern-3a-remote-return oauth
 	@echo "Pattern 3a deployed (MoP + docs MCP + echo MCP + routing-only Envoy Gateway) and ready to test. Use 'make -C showcases/mcp_x_idjag pattern-3a-port-forward' to forward the local ports."
 
 pattern-3a-port-forward:
@@ -94,6 +120,7 @@ pattern-2b:
 	$(PATTERN_2B_MAKE_VARS) ./bootstrap-common/06-api-server.sh
 	$(PATTERN_2B_MAKE_VARS) ./bootstrap-common/07-mcp-server.sh "$(PATTERN_2B_AS_ISSUER_URL)" "$(PATTERN_2B_PUBLIC_BASE_URL)"
 	$(MAKE) -C patterns/pattern-2b-remote-forward $(PATTERN_2B_MAKE_VARS) register-gateway deploy-gateway deploy-dpop-verifier deploy-echo-mcp deploy-routes
+	PATTERN_NAMESPACE="$(PATTERN_2B_NAMESPACE)" ./register-mcp-hub-metadata.sh pattern-2b-remote-forward dpop-connector
 	@echo "Pattern 2b deployed (agentgateway + dpop-verifier + docs MCP + echo MCP) and ready to test. Use 'make -C showcases/mcp_x_idjag pattern-2b-port-forward' to forward the local ports, then 'make -C showcases/mcp_x_idjag/patterns/pattern-2b-remote-forward test'."
 
 pattern-2b-port-forward:

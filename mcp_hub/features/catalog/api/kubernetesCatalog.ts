@@ -13,6 +13,11 @@ const ANNOTATION_ICON = "mcp.idthw.dev/icon"
 const ANNOTATION_PROJECT = "mcp.idthw.dev/project"
 const ANNOTATION_ALIAS = "mcp.idthw.dev/alias"
 const ANNOTATION_PUBLIC_URL = "mcp.idthw.dev/public-url"
+const ANNOTATION_DISCOVERY_URL = "mcp.idthw.dev/discovery-url"
+const ANNOTATION_PATTERN = "mcp.idthw.dev/pattern"
+const ANNOTATION_AUTH_MODE = "mcp.idthw.dev/auth-mode"
+const ANNOTATION_ACCESS_SCOPE = "mcp.idthw.dev/access-scope"
+const ANNOTATION_CONNECTOR_COMMAND = "mcp.idthw.dev/connector-command"
 const LEGACY_ANNOTATION_SERVER = "mcp.idthw.dev/server"
 const LABEL_PROJECT = "mcp.idthw.dev/project"
 const LABEL_ALIAS = "mcp.idthw.dev/alias"
@@ -95,6 +100,8 @@ function deploymentToMcpServer(deployment: Deployment): McpServer | null {
   const project = annotations[ANNOTATION_PROJECT] ?? labels[LABEL_PROJECT]
   if (!project) return null
 
+  const authMode = annotations[ANNOTATION_AUTH_MODE]
+
   return {
     id: `${namespace}:${name}`,
     name,
@@ -103,6 +110,11 @@ function deploymentToMcpServer(deployment: Deployment): McpServer | null {
     description: annotations[ANNOTATION_DESCRIPTION] ?? `The MCP server for ${displayName}`,
     project,
     publicUrl: annotations[ANNOTATION_PUBLIC_URL],
+    discoveryUrl: annotations[ANNOTATION_DISCOVERY_URL],
+    pattern: annotations[ANNOTATION_PATTERN],
+    authMode: authMode === "dpop-connector" || authMode === "oauth" ? authMode : undefined,
+    accessScope: annotations[ANNOTATION_ACCESS_SCOPE],
+    connectorCommand: annotations[ANNOTATION_CONNECTOR_COMMAND],
     totalToolCalls: "N/A",
     iconSrc: annotations[ANNOTATION_ICON] ?? iconForServer(displayName),
     logoText: initialsFor(displayName),

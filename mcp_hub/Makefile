@@ -24,6 +24,7 @@ KUBECONFIG_PATH ?= $(HOME)/.kube/config
 CONTAINER_KUBECONFIG_PATH ?= /root/.kube/config
 MCP_HUB_KUBECTL_SERVER ?= $(shell kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}' 2>/dev/null | sed -E 's\#://(127\.0\.0\.1|localhost)(:|/)\#://host.docker.internal\2\#')
 MCP_HUB_KUBECTL_TLS_SERVER_NAME ?= $(shell kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}' 2>/dev/null | sed -E 's\#https?://([^:/]+).*\#\1\#')
+MCP_HUB_CONNECTOR_REPOSITORY_ROOT ?= $(abspath ..)
 
 .PHONY: build build-image local register-idp-client
 
@@ -85,6 +86,7 @@ local:
 		--env "MCP_HUB_LOCAL_MCP_URL=$(MCP_HUB_LOCAL_MCP_URL)" \
 		--env "GENAI_PROXY_URL=$(GENAI_PROXY_URL)" \
 		--env MCP_HUB_CERT_DIR=$(CONTAINER_CERT_DIR) \
+		--env "MCP_HUB_CONNECTOR_REPOSITORY_ROOT=$(MCP_HUB_CONNECTOR_REPOSITORY_ROOT)" \
 		--env KUBECONFIG=$(CONTAINER_KUBECONFIG_PATH) \
 		--env "MCP_HUB_KUBECTL_SERVER=$(MCP_HUB_KUBECTL_SERVER)" \
 		--env "MCP_HUB_KUBECTL_TLS_SERVER_NAME=$(MCP_HUB_KUBECTL_TLS_SERVER_NAME)" \

@@ -14,6 +14,16 @@ make local
 
 For host-side development with hot reload, run `npm install` followed by `npm run dev -- --port 3102`.
 
+## Kubernetes showcase deployment
+
+The `mcp_x_idjag` showcase deploys MCP Hub into the `mcp-hub` namespace as part of shared bootstrap:
+
+```sh
+make -C showcases/mcp_x_idjag bootstrap-common
+```
+
+The showcase builds `mcp-hub:local`, loads it into Kind, creates the `mcp-hub.hub-ui` Athenz workload identity, and deploys the Hub with read-only access to MCP server Deployments and Services. The shared Kubernetes port-forwarder exposes it at `http://localhost:3102`.
+
 ## Authentication and Multiple Users
 
 MCP Hub requires OpenID Connect login before rendering the console. The default local IdP is Keycloak, but the provider is configured with environment variables:
@@ -145,6 +155,21 @@ When MCP Hub runs in-cluster, the default endpoint is derived from the selected 
 ```text
 http://{server}.{namespace}:8081/mcp
 ```
+
+Showcase MCP deployments can provide pattern-specific metadata:
+
+```yaml
+mcp.idthw.dev/pattern: "Pattern 3a: remote return"
+mcp.idthw.dev/auth-mode: "oauth"
+mcp.idthw.dev/discovery-url: "http://mcp.mcp-pattern-3a.svc.cluster.local:3000/mcp"
+mcp.idthw.dev/access-scope: "mcp.pattern3a:role.mcp-accessor"
+```
+
+`public-url` is used for client configuration. `discovery-url` is used by the Hub Pod to load live tools when the public URL is reachable through a local port-forward. Pattern 2b uses `auth-mode: dpop-connector` and may provide `mcp.idthw.dev/connector-command` for its local connector setup.
+
+For `dpop-connector` servers, the client configuration page provides the same client tabs as OAuth servers and generates local stdio connector settings for GitHub Copilot, Claude Code, OpenCode, Codex, Cline, Cursor, and Gemini. The page also displays the connector dependency installation command when it is present in the metadata.
+
+The `MCP_HUB_CONNECTOR_REPOSITORY_ROOT` environment variable supplies the absolute path used in generated connector settings and the connector dependency installation command. The value is initialized from the repository root by the Kubernetes bootstrap and local Makefile; set it before starting or deploying MCP Hub when the client will use a different checkout location.
 
 ## Required Label
 
