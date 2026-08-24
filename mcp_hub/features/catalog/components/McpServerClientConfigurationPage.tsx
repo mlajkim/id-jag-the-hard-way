@@ -4,6 +4,7 @@ import { CopyButton } from "@/components/atoms/CopyButton"
 import { ServerLogo } from "@/components/atoms/ServerLogo"
 import { catalogServerSuffix, consoleHref, displayProduct } from "@/components/navigation/consoleRoute"
 import { ClientConfiguration } from "@/components/molecules/ClientConfiguration"
+import { resolveMcpDisplayUrl } from "@/features/catalog/lib/mcpTools"
 import type { McpServer } from "@/features/catalog/types/catalog"
 
 export function McpServerDetailBreadcrumb({
@@ -60,6 +61,14 @@ export function McpServerDetailHeader({
         <h1 className="detail-title">{displayName}</h1>
         <span className="status-badge">Active</span>
       </div>
+
+      {(server.pattern || server.authMode) && (
+        <p className="section-copy">
+          {server.pattern ? `Pattern: ${server.pattern}` : ""}
+          {server.pattern && server.authMode ? " · " : ""}
+          {server.authMode ? `Authentication: ${server.authMode === "dpop-connector" ? "DPoP connector" : "OAuth"}` : ""}
+        </p>
+      )}
 
       <div className="actions">
         <button className="button" type="button" disabled>
@@ -120,15 +129,67 @@ export function McpServerUrlSection({ mcpServerUrl }: { mcpServerUrl: string }) 
   )
 }
 
-export function JsonConfigurationSection({ serverName, mcpServerUrl }: { serverName: string; mcpServerUrl: string }) {
+// Annotations author the command with a literal "${REPO_ROOT}" placeholder
+// (see register-mcp-hub-metadata.sh) instead of "$PWD", because this text is
+// copied into an arbitrary terminal, not run from the repository root the
+// way the tutorial's own documented commands are - "$PWD" would silently
+// resolve to whatever directory the user happened to be in when they pasted
+// it. This mirrors how ClientConfiguration.tsx's connector paths are
+// resolved through MCP_HUB_CONNECTOR_REPOSITORY_ROOT.
+function resolveClientPrerequisite(command: string, repositoryRoot: string | undefined) {
+  if (!repositoryRoot?.trim()) return command
+  return command.replaceAll("${REPO_ROOT}", repositoryRoot.trim().replace(/[\\/]+$/, ""))
+}
+
+function ClientPrerequisiteNotice({ command }: { command: string }) {
+  return (
+    <div className="connector-prerequisite">
+      <div>
+        <span className="config-eyebrow">Prerequisite</span>
+        <strong>Run this before connecting</strong>
+      </div>
+      <div className="connector-prerequisite-command">
+        <code>{command}</code>
+        <CopyButton value={command} label="Copy prerequisite command" />
+      </div>
+    </div>
+  )
+}
+
+export function JsonConfigurationSection({ server }: { server: McpServer }) {
+  const mcpServerUrl = resolveMcpDisplayUrl(server)
+  const repositoryRoot = process.env.MCP_HUB_CONNECTOR_REPOSITORY_ROOT
+  const prerequisite = server.clientPrerequisite
+    ? resolveClientPrerequisite(server.clientPrerequisite, repositoryRoot)
+    : undefined
+
+  if (server.authMode === "dpop-connector") {
+    return (
+      <section className="detail-section config-section" aria-labelledby="connector-config-heading">
+        <h2 id="connector-config-heading" className="section-title">Connector configuration</h2>
+        <p className="section-copy">
+          This MCP endpoint uses the local DPoP connector. Choose your MCP client below to generate the matching stdio configuration.
+        </p>
+        {prerequisite && <ClientPrerequisiteNotice command={prerequisite} />}
+        <ClientConfiguration
+          serverName={server.name}
+          mcpServerUrl={mcpServerUrl}
+          connectorCommand={server.connectorCommand ?? `node ${server.name}/client/src/index.js`}
+          connectorRepositoryRoot={repositoryRoot}
+        />
+      </section>
+    )
+  }
+
   return (
     <section className="detail-section config-section" aria-labelledby="json-config-heading">
       <h2 id="json-config-heading" className="section-title">
         Client configuration
       </h2>
       <p className="section-copy">Add this configuration to your MCP client settings.</p>
+      {prerequisite && <ClientPrerequisiteNotice command={prerequisite} />}
 
-      <ClientConfiguration serverName={serverName} mcpServerUrl={mcpServerUrl} />
+      <ClientConfiguration serverName={server.name} mcpServerUrl={mcpServerUrl} />
     </section>
   )
 }

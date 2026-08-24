@@ -3,3 +3,7 @@
 	url = https://github.com/athenz-community/athenz-distribution.git
 	branch = main
 	ignore = all
+[submodule "showcases/mcp_x_idjag/patterns/pattern-3a-remote-return/mcp-oauth-proxy"]
+	path = showcases/mcp_x_idjag/patterns/pattern-3a-remote-return/mcp-oauth-proxy
+	url = https://github.com/fsul7o/mcp-oauth-proxy.git
+	branch = main

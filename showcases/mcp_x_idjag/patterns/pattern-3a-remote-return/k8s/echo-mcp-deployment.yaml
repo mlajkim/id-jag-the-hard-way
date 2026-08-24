@@ -1,0 +1,147 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pattern-3a-echo-mcp-sa
+  namespace: mcp-pattern-3a
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pattern-3a-echo-mcp
+  namespace: mcp-pattern-3a
+  labels:
+    app: pattern-3a-echo-mcp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pattern-3a-echo-mcp
+  template:
+    metadata:
+      labels:
+        app: pattern-3a-echo-mcp
+    spec:
+      serviceAccountName: pattern-3a-echo-mcp-sa
+      securityContext:
+        fsGroup: 1000
+      volumes:
+        - name: attestation-data
+          projected:
+            sources:
+              - serviceAccountToken:
+                  audience: https://kubernetes.default.svc
+                  expirationSeconds: 3600
+                  path: token
+        - name: athenz-tls-certs
+          emptyDir: {}
+        - name: athenz-cacert
+          secret:
+            secretName: athenz-cacert
+            defaultMode: 0555
+            items:
+              - key: ca.cert.pem
+                path: ca-certificates.crt
+      initContainers:
+        - name: sia-init
+          image: ghcr.io/ctyano/k8s-athenz-sia:latest
+          imagePullPolicy: IfNotPresent
+          args:
+            - --mode=init
+            - --delay-jitter-seconds=5
+          envFrom:
+            - configMapRef:
+                name: mcp-sia
+          env: &sia-env
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
+            - name: SERVICEACCOUNT
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.serviceAccountName
+            - name: POD_UID
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.uid
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.podIP
+          volumeMounts: &sia-volume-mounts
+            - name: attestation-data
+              mountPath: /var/run/secrets/kubernetes.io/bound-serviceaccount
+              readOnly: true
+            - name: athenz-tls-certs
+              mountPath: /var/run/athenz
+            - name: athenz-cacert
+              mountPath: /etc/ssl/certs/ca-certificates.crt
+              subPath: ca-certificates.crt
+              readOnly: true
+      containers:
+        - name: sia
+          image: ghcr.io/ctyano/k8s-athenz-sia:latest
+          imagePullPolicy: IfNotPresent
+          args:
+            - --mode=refresh
+          envFrom:
+            - configMapRef:
+                name: mcp-sia
+          env: *sia-env
+          volumeMounts: *sia-volume-mounts
+          resources:
+            limits:
+              cpu: 50m
+              memory: 64Mi
+        - name: echo-mcp
+          image: pattern-3a-echo-mcp:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: mcp
+              containerPort: 8081
+        - name: mcp-reverse-proxy
+          image: mcp-reverse-proxy:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: public
+              containerPort: 3000
+          env:
+            - name: PORT
+              value: "3000"
+            - name: UPSTREAM_MCP_URL
+              value: "http://localhost:8081"
+            - name: ATHENZ_URL
+              value: "https://athenz-zts-server.athenz:4443/zts/v1"
+            - name: ATHENZ_DOMAIN
+              value: "mcp.pattern3a"
+            - name: MCP_RESOURCE
+              value: "echo-mcp"
+            - name: MCP_ACTION
+              value: "access"
+            - name: PUBLIC_BASE_URL
+              value: "http://echo.pattern-3a.localhost:3001"
+            - name: AS_ISSUER_URL
+              value: "https://localhost:8082"
+            - name: ATHENZ_CA_FILE
+              value: "/var/run/athenz/ca.crt"
+          volumeMounts:
+            - name: athenz-tls-certs
+              mountPath: /var/run/athenz
+              readOnly: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pattern-3a-echo-mcp
+  namespace: mcp-pattern-3a
+spec:
+  selector:
+    app: pattern-3a-echo-mcp
+  ports:
+    - name: public
+      port: 3000
+      targetPort: public

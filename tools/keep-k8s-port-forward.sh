@@ -36,6 +36,32 @@ is_port_in_use() {
   fi
 }
 
+
+PORT_NAMES=(zms zts athenz-ui api-server core-mcp-proxy mcp confluence-mcp mcp-hub \
+  keycloak keycloak-https agentgateway agentgateway-admin \
+  ai-client-gateway ai-client-gateway-codex open-webui)
+
+stop_port_forwarding() {
+  step "Stopping Kubernetes port-forwarder"
+  pkill -f "tools/keep-k8s-port-forward.sh" 2>/dev/null || true
+
+  local _name _port _pid
+  for _name in "${PORT_NAMES[@]}"; do
+    _port=$(get_port "$_name")
+    for _pid in $(lsof -tiTCP:"${_port}" -sTCP:LISTEN 2>/dev/null || true); do
+      ps -p "${_pid}" -o command= 2>/dev/null | grep -q '[k]ubectl' && kill "${_pid}" 2>/dev/null || true
+    done
+  done
+
+  rm -f "$PID_FILE"
+  ok "Port-forwarder stopped"
+}
+
+if [ "${1:-}" = "stop" ]; then
+  stop_port_forwarding
+  exit 0
+fi
+
 # Singleton check
 if [ -f "$PID_FILE" ]; then
   old_pid=$(cat "$PID_FILE")
@@ -63,11 +89,12 @@ trap 'rm -f "$PID_FILE"; kill -- -$$ 2>/dev/null || kill $(jobs -p) 2>/dev/null 
 # Resolve a port: if in use, prompt for a replacement and save it
 resolve_port() {
   local key="$1"
-  local port _waited=0
+  local port _waited=0 _new_port="" _kill=""
   port=$(get_port "$key")
   while is_port_in_use "$port"; do
     warn "Port $port (for $key) is already in use."
-    read -rp "  Enter a different port (or press Enter to wait and retry): " _new_port </dev/tty || true
+    _new_port=""
+    read -rp "  Enter a different port (or press Enter to wait and retry): " _new_port </dev/tty 2>/dev/null || true
     if [ -n "$_new_port" ]; then
       port="$_new_port"
       save_port "$key" "$port"
@@ -77,7 +104,8 @@ resolve_port() {
       if [ "$_waited" -eq 1 ] && is_port_in_use "$port"; then
         local _holder
         _holder=$(lsof -iTCP:"$port" -sTCP:LISTEN -t 2>/dev/null | head -1 || echo "")
-        read -rp "  Still in use${_holder:+ (PID $_holder)}. Kill it? [y/N]: " _kill </dev/tty || true
+        _kill=""
+        read -rp "  Still in use${_holder:+ (PID $_holder)}. Kill it? [y/N]: " _kill </dev/tty 2>/dev/null || true
         case "$_kill" in
           [yY]*) kill "$_holder" 2>/dev/null || true; sleep 1 ;;
         esac
@@ -95,6 +123,7 @@ _api_port=$(resolve_port api-server)
 _core_mcp_proxy_port=$(resolve_port core-mcp-proxy)
 _mcp_port=$(resolve_port mcp)
 _confluence_mcp_port=$(resolve_port confluence-mcp)
+_mcp_hub_port=$(resolve_port mcp-hub)
 _idp_port=$(resolve_port keycloak)
 _idp_https_port=$(resolve_port keycloak-https)
 _agentgateway_port=$(resolve_port agentgateway)
@@ -122,6 +151,7 @@ _pf api     deployment/api-server         "${_api_port}"               8080 &
 _pf mcp-hub service/core-mcp-proxy        "${_core_mcp_proxy_port}"    8080 &
 _pf api     service/mcp                   "${_mcp_port}"               8081 &
 _pf mcp-hub service/confluence-mcp        "${_confluence_mcp_port}"    9000 &
+_pf mcp-hub service/mcp-hub               "${_mcp_hub_port}"            3102 &
 _pf idp     deployment/keycloak           "${_idp_port}"               8080 &
 _pf idp     deployment/keycloak           "${_idp_https_port}"         8443 &
 _pf agent-gateway deployment/agentgateway-proxy "${_agentgateway_port}"       80 &

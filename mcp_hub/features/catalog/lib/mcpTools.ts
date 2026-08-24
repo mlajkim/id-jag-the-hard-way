@@ -15,11 +15,13 @@ type JsonRpcToolsListResponse = {
   }
 }
 
+const MCP_PROTOCOL_VERSION = "2025-06-18"
+
 export async function listLiveMcpTools(server: McpServer): Promise<McpToolsResult> {
   const endpoint = resolveMcpToolsEndpoint(server)
 
   try {
-    const accessToken = await getMcpAccessToken()
+    const accessToken = await getMcpAccessToken(server.accessScope)
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       Accept: "application/json, text/event-stream",
@@ -28,28 +30,55 @@ export async function listLiveMcpTools(server: McpServer): Promise<McpToolsResul
       headers.Authorization = `Bearer ${accessToken}`
     }
 
-    const response = await fetch(endpoint, {
-      method: "POST",
-      cache: "no-store",
-      headers,
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: 1,
-        method: "tools/list",
-        params: {},
-      }),
+    const initializeResponse = await postMcpJsonRpc(endpoint, headers, {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "initialize",
+      params: {
+        protocolVersion: MCP_PROTOCOL_VERSION,
+        capabilities: {},
+        clientInfo: {
+          name: "mcp-hub",
+          version: "0.1.0",
+        },
+      },
     })
 
-    if (!response.ok) {
-      return { endpoint, tools: [], error: `MCP server returned ${response.status}` }
+    // A few older MCP HTTP endpoints predate initialize. Keep those endpoints
+    // usable while using a real session for Streamable HTTP servers.
+    if (!initializeResponse.ok && isInitializeUnsupportedStatus(initializeResponse.status)) {
+      return requestToolsList(endpoint, headers)
     }
 
-    const payload = await parseMcpJsonRpcResponse(response)
-    if (payload.error) {
-      return { endpoint, tools: [], error: payload.error.message ?? "MCP tools/list returned an error" }
+    if (!initializeResponse.ok) {
+      return { endpoint, tools: [], error: `MCP server returned ${initializeResponse.status}` }
     }
 
-    return { endpoint, tools: payload.result?.tools ?? [] }
+    const initializePayload = await parseMcpJsonRpcResponse(initializeResponse)
+    if (initializePayload.error) {
+      if (isMethodUnavailable(initializePayload.error.message)) {
+        return requestToolsList(endpoint, headers)
+      }
+      return {
+        endpoint,
+        tools: [],
+        error: initializePayload.error.message ?? "MCP initialize returned an error",
+      }
+    }
+
+    const sessionId = initializeResponse.headers.get("mcp-session-id")
+    const sessionHeaders = sessionId ? { ...headers, "Mcp-Session-Id": sessionId } : headers
+
+    const initializedResponse = await postMcpJsonRpc(endpoint, sessionHeaders, {
+      jsonrpc: "2.0",
+      method: "notifications/initialized",
+      params: {},
+    })
+    if (!initializedResponse.ok) {
+      return { endpoint, tools: [], error: `MCP server returned ${initializedResponse.status}` }
+    }
+
+    return requestToolsList(endpoint, sessionHeaders)
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to call MCP tools/list"
     return { endpoint, tools: [], error: message }
@@ -70,7 +99,7 @@ function resolveMcpToolsEndpoint(server: McpServer) {
   }
 
   if (server.publicUrl) {
-    return normalizeMcpEndpoint(server.publicUrl)
+    return normalizeMcpEndpoint(server.discoveryUrl ?? server.publicUrl)
   }
 
   if (process.env.MCP_HUB_PUBLIC_MCP_URL) {
@@ -97,6 +126,51 @@ function normalizeMcpEndpoint(value: string) {
   } catch {
     return raw
   }
+}
+
+async function postMcpJsonRpc(endpoint: string, headers: Record<string, string>, body: Record<string, unknown>) {
+  return fetch(endpoint, {
+    method: "POST",
+    cache: "no-store",
+    headers: {
+      ...headers,
+      "MCP-Protocol-Version": MCP_PROTOCOL_VERSION,
+    },
+    body: JSON.stringify(body),
+  })
+}
+
+async function requestToolsList(endpoint: string, headers: Record<string, string>): Promise<McpToolsResult> {
+  const response = await postMcpJsonRpc(endpoint, headers, {
+    jsonrpc: "2.0",
+    id: 2,
+    method: "tools/list",
+    params: {},
+  })
+
+  if (!response.ok) {
+    return { endpoint, tools: [], error: `MCP server returned ${response.status}` }
+  }
+
+  const payload = await parseMcpJsonRpcResponse(response)
+  if (payload.error) {
+    return { endpoint, tools: [], error: payload.error.message ?? "MCP tools/list returned an error" }
+  }
+
+  return { endpoint, tools: payload.result?.tools ?? [] }
+}
+
+function isInitializeUnsupportedStatus(status: number) {
+  return status === 404 || status === 405
+}
+
+function isMethodUnavailable(message?: string) {
+  if (!message) {
+    return false
+  }
+
+  const normalized = message.toLowerCase()
+  return normalized.includes("method not found") || normalized.includes("method is invalid")
 }
 
 async function parseMcpJsonRpcResponse(response: Response): Promise<JsonRpcToolsListResponse> {

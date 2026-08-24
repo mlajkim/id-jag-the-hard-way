@@ -1,0 +1,219 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pattern-3a-mop-sa
+  namespace: mcp-pattern-3a
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pattern-3a-mop-read-keycloak-secret
+  namespace: mcp-pattern-3a
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: ["pattern-3a-mop-keycloak"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pattern-3a-mop-read-keycloak-secret
+  namespace: mcp-pattern-3a
+subjects:
+  - kind: ServiceAccount
+    name: pattern-3a-mop-sa
+    namespace: mcp-pattern-3a
+roleRef:
+  kind: Role
+  name: pattern-3a-mop-read-keycloak-secret
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pattern-3a-mop
+  namespace: mcp-pattern-3a
+  labels:
+    app: pattern-3a-mop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pattern-3a-mop
+  template:
+    metadata:
+      labels:
+        app: pattern-3a-mop
+    spec:
+      serviceAccountName: pattern-3a-mop-sa
+      securityContext:
+        fsGroup: 1000
+      volumes:
+        - name: attestation-data
+          projected:
+            sources:
+              - serviceAccountToken:
+                  audience: https://kubernetes.default.svc
+                  expirationSeconds: 3600
+                  path: token
+        - name: athenz-tls-certs
+          emptyDir: {}
+        - name: athenz-cacert
+          secret:
+            secretName: athenz-cacert
+            defaultMode: 0555
+            items:
+              - key: ca.cert.pem
+                path: ca-certificates.crt
+        - name: mop-config
+          configMap:
+            name: pattern-3a-mop-config
+        - name: mop-tls
+          secret:
+            secretName: pattern-3a-mop-tls
+        - name: athenz-truststore
+          emptyDir: {}
+      initContainers:
+        - name: sia-init
+          image: ghcr.io/ctyano/k8s-athenz-sia:latest
+          imagePullPolicy: IfNotPresent
+          args:
+            - --mode=init
+            - --delay-jitter-seconds=5
+          envFrom:
+            - configMapRef:
+                name: pattern-3a-mop-sia
+          env: &sia-env
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
+            - name: SERVICEACCOUNT
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.serviceAccountName
+            - name: POD_UID
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.uid
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.podIP
+          volumeMounts: &sia-volumeMounts
+            - name: attestation-data
+              mountPath: /var/run/secrets/kubernetes.io/bound-serviceaccount
+              readOnly: true
+            - name: athenz-tls-certs
+              mountPath: /var/run/athenz
+            - name: athenz-cacert
+              mountPath: /etc/ssl/certs/ca-certificates.crt
+              subPath: ca-certificates.crt
+              readOnly: true
+        - name: mop-truststore-init
+          image: eclipse-temurin:21-jre
+          imagePullPolicy: IfNotPresent
+          command:
+            - keytool
+            - -importcert
+            - -noprompt
+            - -alias
+            - athenzca
+            - -file
+            - /var/run/athenz/ca.crt
+            - -keystore
+            - /var/run/athenz-truststore/truststore.jks
+            - -storepass
+            - changeit
+          volumeMounts:
+            - name: athenz-tls-certs
+              mountPath: /var/run/athenz
+              readOnly: true
+            - name: athenz-truststore
+              mountPath: /var/run/athenz-truststore
+      containers:
+        - name: sia
+          image: ghcr.io/ctyano/k8s-athenz-sia:latest
+          imagePullPolicy: IfNotPresent
+          args:
+            - --mode=refresh
+          envFrom:
+            - configMapRef:
+                name: pattern-3a-mop-sia
+          env: *sia-env
+          volumeMounts: *sia-volumeMounts
+          resources:
+            limits:
+              cpu: 50m
+              memory: 64Mi
+        - name: mop
+          image: pattern-3a-mop:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: https
+              containerPort: 8082
+          env:
+            - name: QUARKUS_HTTP_PORT
+              value: "-1"
+            - name: QUARKUS_HTTP_SSL_PORT
+              value: "8082"
+            - name: QUARKUS_HTTP_SSL_CERTIFICATE_FILES
+              value: /var/run/mop-tls/tls.crt
+            - name: QUARKUS_HTTP_SSL_CERTIFICATE_KEY_FILES
+              value: /var/run/mop-tls/tls.key
+            - name: QUARKUS_CONFIG_LOCATIONS
+              value: /deployments/config/application-local.yaml
+            - name: QUARKUS_OIDC_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: pattern-3a-mop-keycloak
+                  key: client-id
+            - name: MOP_PUBLIC_HOST
+              value: "localhost:8082"
+            - name: KEYCLOAK_ISSUER_URL
+              value: "http://keycloak.idp:8080/realms/master"
+            - name: KEYCLOAK_BROWSER_AUTH_URL
+              value: "http://localhost:34443/realms/master/protocol/openid-connect/auth"
+            - name: ZTS_URL
+              value: "https://athenz-zts-server.athenz:4443/zts/v1"
+            - name: MOP_ATHENZ_CERT_FILE
+              value: /var/run/athenz/tls.crt
+            - name: MOP_ATHENZ_KEY_FILE
+              value: /var/run/athenz/tls.key
+            - name: MOP_ATHENZ_CA_FILE
+              value: /var/run/athenz/ca.crt
+            - name: MOP_ATHENZ_TRUSTSTORE_JKS_FILE
+              value: /var/run/athenz-truststore/truststore.jks
+            - name: AWS_REGION
+              value: "us-east-1"
+          volumeMounts:
+            - name: athenz-tls-certs
+              mountPath: /var/run/athenz
+              readOnly: true
+            - name: mop-config
+              mountPath: /deployments/config
+              readOnly: true
+            - name: mop-tls
+              mountPath: /var/run/mop-tls
+              readOnly: true
+            - name: athenz-truststore
+              mountPath: /var/run/athenz-truststore
+              readOnly: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pattern-3a-mop
+  namespace: mcp-pattern-3a
+spec:
+  selector:
+    app: pattern-3a-mop
+  ports:
+    - name: https
+      port: 8082
+      targetPort: https

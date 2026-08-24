@@ -1,0 +1,54 @@
+domain: mcp.pattern3b
+
+services:
+  - name: zpu
+    key_version: v1
+    local_keys_dir: ./keys
+    k8s:
+      ns: mcp-pattern-3b
+      deployment: api-server
+      secret:
+        name: api-zpu-cert
+        files:
+          cert:
+            k8s_name: cert
+            local_name: zpu.crt
+          key:
+            k8s_name: key
+            local_name: zpu.key
+          ca:
+            k8s_name: ca
+            import_from: ./athenz_dist/certs/ca.cert.pem
+
+roles:
+  # docs-getter: human user => GET /docs on the API server
+  - name: docs-getter
+    members:
+      - human.idjag-learner
+    policies:
+      - allow: get
+        on: docs
+
+  # mcp-accessor: human user => access checked by mcp-reverse-proxy
+  - name: mcp-accessor
+    members:
+      - human.idjag-learner
+    policies:
+      - allow: access
+        on: mcp
+
+  # to-api-exchanger: simple-mcp-server => exchange inbound tokens issued for the pattern domain
+  - name: to-api-exchanger
+    members:
+      - mcp.pattern3b.mcp-sa
+    policies:
+      - allow: zts.token_source_exchange
+        on: mcp.pattern3b
+
+  # docs-getter-exchanger: simple-mcp-server => exchange into docs-getter before calling the API server
+  - name: docs-getter-exchanger
+    members:
+      - mcp.pattern3b.mcp-sa
+    policies:
+      - allow: zts.token_target_exchange
+        on: mcp.pattern3b:role.docs-getter

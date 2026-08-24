@@ -965,6 +965,44 @@ input:disabled {
   color: #6aa3ff;
 }
 
+.connector-prerequisite {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.35fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  margin-top: 14px;
+  border: 1px solid #d9e3f2;
+  border-radius: 8px;
+  padding: 12px 14px;
+  background: #f8fafc;
+}
+
+.connector-prerequisite strong {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.connector-prerequisite-command {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  border: 1px solid #dfe4ec;
+  border-radius: 5px;
+  padding: 8px 10px;
+  background: #fff;
+}
+
+.connector-prerequisite-command code {
+  overflow-wrap: anywhere;
+  color: var(--text-secondary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 11px;
+  font-weight: 700;
+}
+
 .manual-config {
   margin-top: 22px;
 }
@@ -2442,6 +2480,10 @@ input:disabled {
   .setup-summary {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .connector-prerequisite {
+    grid-template-columns: 1fr;
   }
 
   .install-button {

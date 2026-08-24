@@ -25,10 +25,28 @@ info "Config:   ${CONFIG}"
 info "Domain:   ${DOMAIN}"
 info "Services: ${SERVICE_COUNT}  Roles: ${ROLE_COUNT}"
 
+create_domain_hierarchy() {
+  local domain_name="$1"
+  local -a domain_parts
+  local current_domain
+  local parent_domain
+  local part
+
+  IFS='.' read -r -a domain_parts <<< "${domain_name}"
+  current_domain="${domain_parts[0]}"
+  "$TOOLS/create-tld.sh" "${current_domain}"
+
+  for part in "${domain_parts[@]:1}"; do
+    parent_domain="${current_domain}"
+    current_domain="${current_domain}.${part}"
+    "$TOOLS/create-subdomain.sh" "${parent_domain}" "${part}"
+  done
+}
+
 # ── 1. Reset domain ───────────────────────────────────────────────────────────
 step "[1/6] Reset domain: ${DOMAIN}"
 "$TOOLS/delete-domain.sh" "$DOMAIN"
-"$TOOLS/create-tld.sh" "$DOMAIN"
+create_domain_hierarchy "$DOMAIN"
 ok "Domain ${DOMAIN} ready"
 
 # ── 2. Service identities ─────────────────────────────────────────────────────
@@ -70,10 +88,14 @@ for i in $(seq 0 $((SERVICE_COUNT - 1))); do
       "${keys_dir}/${key_local}" \
       "$ca_src" \
       "$cert_k8s" "$key_k8s" "$ca_k8s"
-    info "Restarting deployment ${ns}/${deployment}..."
-    kubectl rollout restart deploy/"$deployment" -n "$ns"
-    kubectl rollout status deploy/"$deployment" -n "$ns"
-    ok "k8s secret and deployment updated"
+    if kubectl get deploy/"$deployment" -n "$ns" >/dev/null 2>&1; then
+      info "Restarting deployment ${ns}/${deployment}..."
+      kubectl rollout restart deploy/"$deployment" -n "$ns"
+      kubectl rollout status deploy/"$deployment" -n "$ns"
+      ok "k8s secret and deployment updated"
+    else
+      info "Deployment ${ns}/${deployment} does not exist yet; it will pick up the secret ${secret} once deployed"
+    fi
   fi
 done
 

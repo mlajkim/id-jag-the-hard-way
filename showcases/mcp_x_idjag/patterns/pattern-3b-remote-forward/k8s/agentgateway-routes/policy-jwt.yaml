@@ -1,0 +1,31 @@
+# jwtAuthentication redacts the Authorization header after validating it (see
+# policy-exchange-mcp.yaml's jwt.rawToken.unredacted() CEL, which restores
+# it). The audience is mcp-bff-gateway's own Keycloak client id - it is the
+# one presenting the id_token here, not a local developer-machine client
+# (unlike Pattern 2b).
+apiVersion: agentgateway.dev/v1alpha1
+kind: AgentgatewayPolicy
+metadata:
+  name: pattern-3b-jwt
+  namespace: ${PATTERN_NAMESPACE}
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: mcp
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: echo-mcp
+  traffic:
+    jwtAuthentication:
+      providers:
+        - issuer: "${KEYCLOAK_ISSUER}"
+          audiences:
+            - "${KEYCLOAK_CLIENT_ID}"
+          jwks:
+            remote:
+              backendRef:
+                name: keycloak
+                namespace: idp
+                port: 8080
+              jwksPath: /realms/master/protocol/openid-connect/certs

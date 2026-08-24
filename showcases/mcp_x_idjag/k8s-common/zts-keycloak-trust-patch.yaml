@@ -1,0 +1,25 @@
+spec:
+  template:
+    spec:
+      volumes:
+      - name: temp-plugin-volume
+        emptyDir: {}
+      - name: providers-json-vol
+        configMap:
+          name: zts-providers-config
+      initContainers:
+      - name: fetch-keycloak-plugin
+        image: ghcr.io/mlajkim/keycloak-token-exchange-provider:latest
+        imagePullPolicy: Always
+        volumeMounts:
+        - name: temp-plugin-volume
+          mountPath: /export
+      containers:
+      - name: athenz-zts-server
+        volumeMounts:
+        - name: temp-plugin-volume
+          mountPath: /opt/athenz/zts/lib/jars/keycloak-token-provider.jar
+          subPath: keycloak-token-provider.jar
+        - name: providers-json-vol
+          mountPath: /opt/athenz/zts/conf/providers.json
+          subPath: providers.json

@@ -1,0 +1,16 @@
+# Backend for the Pattern 2b backend-free echo MCP. The echo service is still
+# protected by mcp-reverse-proxy, but it does not call the backend API.
+apiVersion: agentgateway.dev/v1alpha1
+kind: AgentgatewayBackend
+metadata:
+  name: echo-mcp
+  namespace: ${PATTERN_NAMESPACE}
+spec:
+  mcp:
+    targets:
+      - name: echo
+        static:
+          host: pattern-2b-echo-mcp.${PATTERN_NAMESPACE}.svc.cluster.local
+          port: 3000
+          path: /mcp
+          protocol: StreamableHTTP
