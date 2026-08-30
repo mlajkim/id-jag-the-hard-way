@@ -3,6 +3,8 @@
 import { Play } from "lucide-react"
 import { useState } from "react"
 import { CopyButton } from "@/components/atoms/CopyButton"
+import { McpAccessConfigurator } from "@/features/catalog/components/McpAccessConfigurator"
+import type { McpTool } from "@/features/catalog/types/tools"
 
 type ClientKey = "github-copilot" | "claude-code" | "opencode" | "codex" | "cline" | "cursor" | "gemini"
 type ScopeKey = "project" | "global"
@@ -239,7 +241,19 @@ function brokerArgs(mcpServerUrl: string) {
   return args
 }
 
-export function ClientConfiguration({ serverName, mcpServerUrl }: { serverName: string; mcpServerUrl: string }) {
+export function ClientConfiguration({
+  serverName,
+  mcpServerUrl,
+  tools,
+  toolsError,
+  username,
+}: {
+  serverName: string
+  mcpServerUrl: string
+  tools: McpTool[]
+  toolsError?: string
+  username: string
+}) {
   const [clientKey, setClientKey] = useState<ClientKey>("codex")
   const [scope, setScope] = useState<ScopeKey>("project")
   const client = CLIENTS.find((item) => item.key === clientKey) ?? CLIENTS[0]
@@ -351,6 +365,13 @@ export function ClientConfiguration({ serverName, mcpServerUrl }: { serverName: 
               </pre>
             </div>
           </div>
+
+          <McpAccessConfigurator
+            serverName={serverName}
+            tools={tools}
+            toolsError={toolsError}
+            username={username}
+          />
 
           <aside className="broker-session-note" aria-label="Sign out of the shared MCP Gateway session">
             <div>

@@ -5,6 +5,7 @@ import { ServerLogo } from "@/components/atoms/ServerLogo"
 import { catalogServerSuffix, consoleHref, displayProduct } from "@/components/navigation/consoleRoute"
 import { ClientConfiguration } from "@/components/molecules/ClientConfiguration"
 import type { McpServer } from "@/features/catalog/types/catalog"
+import type { McpTool } from "@/features/catalog/types/tools"
 
 export function McpServerDetailBreadcrumb({
   project,
@@ -120,7 +121,19 @@ export function McpServerUrlSection({ mcpServerUrl }: { mcpServerUrl: string }) 
   )
 }
 
-export function JsonConfigurationSection({ serverName, mcpServerUrl }: { serverName: string; mcpServerUrl: string }) {
+export function JsonConfigurationSection({
+  serverName,
+  mcpServerUrl,
+  tools,
+  toolsError,
+  username,
+}: {
+  serverName: string
+  mcpServerUrl: string
+  tools: McpTool[]
+  toolsError?: string
+  username: string
+}) {
   return (
     <section className="detail-section config-section" aria-labelledby="json-config-heading">
       <h2 id="json-config-heading" className="section-title">
@@ -128,7 +141,13 @@ export function JsonConfigurationSection({ serverName, mcpServerUrl }: { serverN
       </h2>
       <p className="section-copy">Add this configuration to your MCP client settings.</p>
 
-      <ClientConfiguration serverName={serverName} mcpServerUrl={mcpServerUrl} />
+      <ClientConfiguration
+        serverName={serverName}
+        mcpServerUrl={mcpServerUrl}
+        tools={tools}
+        toolsError={toolsError}
+        username={username}
+      />
     </section>
   )
 }
