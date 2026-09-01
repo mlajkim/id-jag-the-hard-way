@@ -1,13 +1,13 @@
 -include .env.local
 
-PORT ?= $(shell ../tools/port.sh genai-proxy)
+PORT ?= $(shell ../../tools/port.sh genai-proxy)
 HOST ?= 0.0.0.0
-ATHENZ_PUBLIC_KEY_PATH ?= ../athenz_dist/keys/zts.public.pem
+ATHENZ_PUBLIC_KEY_PATH ?= ../../athenz_dist/keys/zts.public.pem
 IMAGE ?= genai-proxy:local
 CONTAINER_NAME ?= genai-proxy-local
 CONTAINER_PORT ?= 8080
 CONTAINER_ATHENZ_PUBLIC_KEY_PATH ?= /run/secrets/zts.public.pem
-DATA_DIR ?= ../athenzd/.athenzd/genai-proxy-data
+DATA_DIR ?= ../../athenzd/.athenzd/genai-proxy-data
 CONTAINER_DATA_DIR ?= /var/lib/genai-proxy
 
 export GENAI_UPSTREAM_BASE_URL
@@ -20,7 +20,7 @@ local:
 		exit 1; \
 	fi
 	@if [ -z "$${GENAI_UPSTREAM_BASE_URL:-}" ]; then \
-		echo "GENAI_UPSTREAM_BASE_URL must be set in the environment or genai_proxy/.env.local." >&2; \
+		echo "GENAI_UPSTREAM_BASE_URL must be set in the environment or components/genai_proxy/.env.local." >&2; \
 		exit 1; \
 	fi
 	@if docker container inspect "$(CONTAINER_NAME)" >/dev/null 2>&1; then \

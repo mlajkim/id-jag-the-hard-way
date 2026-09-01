@@ -28,7 +28,7 @@ The repository contains these runtime components and supporting plugins:
 
 7. **`zpu/`** — Bash script + Dockerfile for the Athenz ZPU (policy updater) service.
 
-8. **`genai_proxy/`** — Minimal locally run Node.js proxy that validates Athenz Bearer tokens with the ZTS public key, requires a `gen-ai.services.<project>` audience and `gen-ai-users` scope, replaces that token with `OPENAI_CODEX_API_KEY`, and forwards OpenAI-compatible `/v1/*` requests to the gateway configured by `GENAI_UPSTREAM_BASE_URL`. It meters both Chat Completions and Responses API token fields, keeps daily JST per-project, per-user and per-model counters with a JST `last_usage` time in `HH:mm:ss` format, owns and enforces per-service-code daily spending limits with HTTP 429 responses, persists counters under the gitignored `athenzd/.athenzd/` directory for `make local`, and exposes user-specific projects, limits, spend, and costs at unauthenticated `GET /api/users/{user}`.
+8. **`components/genai_proxy/`** — Minimal locally run Node.js proxy that validates Athenz Bearer tokens with the ZTS public key, requires a `gen-ai.services.<project>` audience and `gen-ai-users` scope, replaces that token with `OPENAI_CODEX_API_KEY`, and forwards OpenAI-compatible `/v1/*` requests to the gateway configured by `GENAI_UPSTREAM_BASE_URL`. It meters both Chat Completions and Responses API token fields, keeps daily JST per-project, per-user and per-model counters with a JST `last_usage` time in `HH:mm:ss` format, owns and enforces per-service-code daily spending limits with HTTP 429 responses, persists counters under the gitignored `athenzd/.athenzd/` directory for `make local`, and exposes user-specific projects, limits, spend, and costs at unauthenticated `GET /api/users/{user}`.
 
 **Default ports** — local (`make local`) vs. Kubernetes port-forward (`keep-k8s-port-forward.sh`):
 
@@ -90,7 +90,7 @@ make -C keycloak_token_exchange_provider build
 make -C local_workload_instance_provider build
 
 # Local GenAI proxy (port 64443 → configured OpenAI-compatible gateway)
-OPENAI_CODEX_API_KEY='<upstream API key>' make -C genai_proxy local
+OPENAI_CODEX_API_KEY='<upstream API key>' make -C components/genai_proxy local
 ```
 
 The existing Express-based Node.js components use `npx tsx` and install their dependencies as part of `make local`. The dependency-free local GenAI proxy runs TypeScript directly with Node.js type stripping.
@@ -115,7 +115,7 @@ The provider Dockerfiles are export-only — they copy their built JARs into a m
 | `ai_client_gateway`                | TypeScript | Node.js 22, Express                     |
 | `keycloak_token_exchange_provider` | Java 11    | Maven, Keycloak SPI                     |
 | `local_workload_instance_provider` | Java 17    | Maven, Athenz InstanceProvider SPI      |
-| `genai_proxy`                       | TypeScript | Node.js 22 built-in HTTP/fetch APIs     |
+| `components/genai_proxy`            | TypeScript | Node.js 22 built-in HTTP/fetch APIs     |
 
 ## Key Architectural Concepts
 
@@ -179,4 +179,4 @@ rm -rf ~/id_jag_the_hard_way_workspace
 
 ## Test Suites
 
-Most tutorial components are validated manually by following the tutorials. `athenzd` has a Go test and coverage gate (`make -C athenzd test`), and the local GenAI proxy has focused Node.js checks (`make -C genai_proxy test`). Some older `package.json` test scripts still exit with an error by design.
+Most tutorial components are validated manually by following the tutorials. `athenzd` has a Go test and coverage gate (`make -C athenzd test`), and the local GenAI proxy has focused Node.js checks (`make -C components/genai_proxy test`). Some older `package.json` test scripts still exit with an error by design.

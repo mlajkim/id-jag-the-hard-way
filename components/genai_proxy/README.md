@@ -10,15 +10,15 @@ Before forwarding a metered generation request, the proxy totals the service cod
 
 ## Run locally
 
-Set the upstream URL in the gitignored `genai_proxy/.env.local`, export its API key, and make sure the local Athenz distribution provides the ZTS public key at `athenz_dist/keys/zts.public.pem`:
+Set the upstream URL in the gitignored `components/genai_proxy/.env.local`, export its API key, and make sure the local Athenz distribution provides the ZTS public key at `athenz_dist/keys/zts.public.pem`:
 
 ```sh
-printf 'GENAI_UPSTREAM_BASE_URL=https://gateway.example.com/v1\n' > genai_proxy/.env.local
+printf 'GENAI_UPSTREAM_BASE_URL=https://gateway.example.com/v1\n' > components/genai_proxy/.env.local
 export OPENAI_CODEX_API_KEY='<upstream API key>'
 make genai
 ```
 
-The parent context workspace provides the `make genai` convenience target. In a standalone `id-jag-the-hard-way` checkout, run `make -C genai_proxy local` instead. Both commands build `genai-proxy:local` and start it as the detached `genai-proxy-local` Docker container. The key is passed from the invoking environment into the running container; it is not stored in the image. Runtime logs are not attached to the terminal. The local `athenzd/.athenzd/genai-proxy-data` directory is mounted into the container for persistent usage data.
+The parent context workspace provides the `make genai` convenience target. In a standalone `id-jag-the-hard-way` checkout, run `make -C components/genai_proxy local` instead. Both commands build `genai-proxy:local` and start it as the detached `genai-proxy-local` Docker container. The key is passed from the invoking environment into the running container; it is not stored in the image. Runtime logs are not attached to the terminal. The local `athenzd/.athenzd/genai-proxy-data` directory is mounted into the container for persistent usage data.
 
 If that container already exists, `make local` asks before deleting and replacing it. Press Enter or answer `Y` to replace it; answer `n` to keep it and cancel the command.
 
@@ -34,25 +34,25 @@ The service binds to every host interface for local container access. Run it onl
 Override the port or locally configured upstream when needed:
 
 ```sh
-make -C genai_proxy local PORT=65000 GENAI_UPSTREAM_BASE_URL=https://example.test/v1
+make -C components/genai_proxy local PORT=65000 GENAI_UPSTREAM_BASE_URL=https://example.test/v1
 ```
 
 Override the ZTS public key when needed:
 
 ```sh
-make -C genai_proxy local ATHENZ_PUBLIC_KEY_PATH=/path/to/zts.public.pem
+make -C components/genai_proxy local ATHENZ_PUBLIC_KEY_PATH=/path/to/zts.public.pem
 ```
 
 Override the persistent data directory when needed:
 
 ```sh
-make -C genai_proxy local DATA_DIR=/path/to/genai-proxy-data
+make -C components/genai_proxy local DATA_DIR=/path/to/genai-proxy-data
 ```
 
 To restrict the proxy to host-only clients instead, override the bind address:
 
 ```sh
-make -C genai_proxy local HOST=127.0.0.1
+make -C components/genai_proxy local HOST=127.0.0.1
 ```
 
 Stop the detached proxy with:
@@ -165,6 +165,6 @@ unset _athenz_at _genai_proxy_port
 ## Validate
 
 ```sh
-make -C genai_proxy check
-make -C genai_proxy test
+make -C components/genai_proxy check
+make -C components/genai_proxy test
 ```
