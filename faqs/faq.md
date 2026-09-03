@@ -7,6 +7,7 @@
 
 - [FAQs for ID-JAG](#faqs-for-id-jag)
 - [Setup Tutorials](#setup-tutorials)
+  - [Athenz UI with Keycloak Login](#athenz-ui-with-keycloak-login)
   - [Run MCP Hub](#run-mcp-hub)
   - [Confluence Vendor MCP Server](#confluence-vendor-mcp-server)
   - [Setup Core MCP Proxy](#setup-core-mcp-proxy)
@@ -73,6 +74,10 @@
 <!-- /TOC -->
 
 # Setup Tutorials
+
+## Athenz UI with Keycloak Login
+
+See [Sign in to the Athenz UI with the IDTHW Keycloak IdP](./athenz/keycloak-login.md).
 
 ## Run MCP Hub
 
