@@ -22,6 +22,7 @@ import {
 } from "@/features/permissions/lib/zmsPolicy"
 import type {
   PermissionCheckStatus,
+  PermissionPreset,
   PermissionReadiness,
   PermissionReadinessGroup,
 } from "@/features/permissions/types/permissions"
@@ -47,15 +48,19 @@ type ZmsCredentials = {
   servername?: string
 }
 
-export async function fetchPermissionReadiness(
+export type PermissionDefinition = PermissionPreset | {
+  message: string
+  status: "configuration-error"
+}
+
+export async function fetchPermissionDefinition(
   serverId: string,
   username: string,
   routeAccessScope?: string,
   routeAccessAudience?: string,
   toolPermissionOverrides?: unknown,
   servicePrincipal?: string,
-): Promise<PermissionReadiness | null> {
-  let preset
+): Promise<PermissionDefinition | null> {
   try {
     const configuredPreset = await readPermissionPresetConfigMap()
     const signedInPrincipal = signedInAthenzPrincipal(username)
@@ -64,7 +69,7 @@ export async function fetchPermissionReadiness(
       ? undefined
       : parseToolPermissionSettings(toolPermissionOverrides)
     const settings = mergeToolPermissionSettings(configuredSettings, overrideSettings)
-    preset = settings
+    let preset = settings
       ? permissionPresetFromToolSettings(settings, serverId, signedInPrincipal, {
         gatewayPrincipal: process.env.MCP_HUB_GATEWAY_PRINCIPAL ?? "mcp-hub.mcp-gateway",
         servicePrincipal,
@@ -78,15 +83,33 @@ export async function fetchPermissionReadiness(
       process.env.MCP_HUB_GATEWAY_PRINCIPAL ?? "mcp-hub.mcp-gateway",
       servicePrincipal,
     )
-    preset = withExpectedExchangePolicies(preset, routeAccessAudience)
+    return withExpectedExchangePolicies(preset, routeAccessAudience) ?? null
   } catch (error) {
     return {
       status: "configuration-error",
       message: error instanceof Error ? error.message : "Permission preset could not be loaded",
     }
   }
+}
 
-  if (!preset) return null
+export async function fetchPermissionReadiness(
+  serverId: string,
+  username: string,
+  routeAccessScope?: string,
+  routeAccessAudience?: string,
+  toolPermissionOverrides?: unknown,
+  servicePrincipal?: string,
+): Promise<PermissionReadiness | null> {
+  const definition = await fetchPermissionDefinition(
+    serverId,
+    username,
+    routeAccessScope,
+    routeAccessAudience,
+    toolPermissionOverrides,
+    servicePrincipal,
+  )
+  if (!definition || "status" in definition) return definition
+  const preset = definition
 
   const zmsUrl = (process.env.MCP_HUB_ZMS_URL ?? DEFAULT_ZMS_URL).replace(/\/+$/, "")
   const athenzUiUrl = (process.env.MCP_HUB_ATHENZ_UI_URL ?? DEFAULT_ATHENZ_UI_URL).replace(/\/+$/, "")

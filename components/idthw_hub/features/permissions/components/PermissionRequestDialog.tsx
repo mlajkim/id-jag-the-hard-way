@@ -67,6 +67,7 @@ export function PermissionRequestDialog({
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [dialogOpenGeneration, setDialogOpenGeneration] = useState(0)
   const toolRequirements = requirements.filter(({ source }) => source !== "managed")
   const configuredToolRequirements = requirements.filter(({ source }) => source === "tool")
   const configuredHelperRequirements = requirements.filter(({ source }) => source === "helper")
@@ -102,6 +103,7 @@ export function PermissionRequestDialog({
 
     setIsEditing(false)
     setSaveError(null)
+    setDialogOpenGeneration((generation) => generation + 1)
     setDraftRequirements(editableRequirements(
       configuredToolRequirements,
       configuredHelperRequirements,
@@ -257,6 +259,7 @@ export function PermissionRequestDialog({
             defaultExpanded={managedDefaultsMissing}
             description="Default server-access roles generated from this MCP server's Hub-managed access configuration."
             eyebrow="Managed defaults"
+            key={`managed-defaults:${dialogOpenGeneration}:${managedDefaultsMissing}`}
             title="MCP access"
           >
             {managedRequirements.length > 0 ? (

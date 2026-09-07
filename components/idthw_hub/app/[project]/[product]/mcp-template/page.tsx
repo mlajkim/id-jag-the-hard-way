@@ -73,7 +73,17 @@ export default async function McpTemplateRoute({
                       iconSrc={resolveMcpIconSrc(template.iconId, iconOptions)}
                       logoText={templateInitials(template.name)}
                     />
-                    <span>{template.name}</span>
+                    <Link
+                      className="server-name"
+                      href={consoleHref({
+                        project,
+                        product,
+                        section: "mcp-template",
+                        suffix: encodeURIComponent(template.key),
+                      })}
+                    >
+                      {template.name}
+                    </Link>
                   </div>
                 </td>
                 <td><code>{template.key}</code></td>

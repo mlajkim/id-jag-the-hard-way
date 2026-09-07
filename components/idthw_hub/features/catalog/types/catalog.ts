@@ -15,11 +15,21 @@ export type McpServer = {
   accessAudience?: string
   accessScope?: string
   serviceAccount?: string
+  containerImage?: string
+  containerPort?: number
+  creationMethod?: "direct" | "template"
+  createdAt?: string
+  desiredReplicas?: number
+  path?: string
+  readyReplicas?: number
   status: McpServerStatus
   statusMessage: string
+  templateKey?: string
   toolPermissionOverrides?: unknown
   toolScopes?: Record<string, string>
+  transport?: string
   totalToolCalls: string
+  visibility?: "personal" | "project"
   iconSrc?: string
   logoText: string
   logoBg: string
