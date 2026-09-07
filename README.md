@@ -82,6 +82,8 @@ The name and concept of this tutorial series is inspired by [kelseyhightower/kub
 
 ID-JAG The Hard Way is listed on the [OAuth.net Cross-App Access (XAA) page](https://oauth.net/cross-app-access/) as a test tool for learning ID-JAG
 
+![OAuth.net Cross-App Access test tools listing ID-JAG The Hard Way](assets/oauth-net-xaa-recognition.png)
+
 ## Community Mentions
 
 > [!NOTE]
