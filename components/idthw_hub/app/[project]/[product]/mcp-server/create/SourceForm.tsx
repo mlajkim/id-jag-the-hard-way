@@ -2,6 +2,8 @@
 
 import Link from "next/link"
 import { useCallback, useEffect, useRef, useState } from "react"
+import type { McpIconOption } from "@/features/mcp-servers/lib/mcpIcons"
+import { McpTemplateSelect } from "@/features/mcp-templates/components/McpTemplateSelect"
 import type { McpTemplateDetailResponse, McpTemplateSummary } from "@/features/mcp-templates/types"
 import { toolPermissionDraftFromSettings } from "@/features/permissions/lib/toolPermissionDraft"
 import { ContainerArgumentsField } from "@/features/registration/components/ContainerArgumentsField"
@@ -11,6 +13,7 @@ import { useMcpCreateDraft } from "./McpCreateDraftContext"
 export function SourceForm({
   project,
   templates,
+  iconOptions,
   templateListError,
   initialTemplateKey,
   cancelHref,
@@ -18,6 +21,7 @@ export function SourceForm({
 }: {
   project: string
   templates: McpTemplateSummary[]
+  iconOptions: McpIconOption[]
   templateListError?: string
   initialTemplateKey?: string
   cancelHref: string
@@ -163,22 +167,15 @@ export function SourceForm({
       {usesTemplate ? (
         <>
           <div className="mcp-create-field">
-            <label htmlFor="mcp-template">MCP template name <span aria-label="required">*</span></label>
+            <label id="mcp-template-label">MCP template name <span aria-label="required">*</span></label>
             <p>Select a project template to create an MCP server.</p>
-            <select
-              id="mcp-template"
-              className="filter-select"
+            <McpTemplateSelect
+              iconOptions={iconOptions}
               value={draft.selectedTemplateKey}
               disabled={templateLoading}
-              onChange={(event) => selectTemplate(event.target.value)}
-            >
-              <option value="">
-                {templates.length === 0 ? "No MCP templates found" : "Select an MCP template"}
-              </option>
-              {templates.map((template) => (
-                <option value={template.key} key={template.key}>{template.name}</option>
-              ))}
-            </select>
+              templates={templates}
+              onChange={selectTemplate}
+            />
             {templateLoading ? <p className="mcp-create-field-status" role="status">Loading template...</p> : null}
             {templateError ? <p className="mcp-create-service-warning" role="alert">{templateError}</p> : null}
             {draft.selectedTemplate ? (

@@ -13,6 +13,7 @@ import {
   useState,
   useTransition,
 } from "react"
+import { SelectMenu } from "@/components/atoms/SelectMenu"
 import {
   configuredRequirementsFromDraft,
   emptyEditablePermissionRequirement,
@@ -542,12 +543,17 @@ export function PermissionEditor({
                 onChange={(event) => update(requirementIndex, { label: event.target.value })}
               />
             </label>
-            <label className="permission-editor-field">
+            <div className="permission-editor-field">
               <span>Member type</span>
-              <select
+              <SelectMenu
+                ariaLabel="Member type"
                 value={requirement.memberType}
-                onChange={(event) => {
-                  const memberType = event.target.value as EditableRequirement["memberType"]
+                options={[
+                  { value: "signed-in-user", label: "Signed-in user" },
+                  { value: "service", label: "Static service account" },
+                ]}
+                onChange={(value) => {
+                  const memberType = value as EditableRequirement["memberType"]
                   update(requirementIndex, {
                     exchangeHelpersCustomized: false,
                     helperRequirements: [],
@@ -555,11 +561,8 @@ export function PermissionEditor({
                     memberType,
                   })
                 }}
-              >
-                <option value="signed-in-user">Signed-in user</option>
-                <option value="service">Static service account</option>
-              </select>
-            </label>
+              />
+            </div>
             <label className="permission-editor-field">
               <span>Member</span>
               {requirement.memberType === "signed-in-user" ? (
@@ -751,23 +754,25 @@ function ExchangeHelperEditor({
                     onChange={(event) => updateHelper(helperIndex, { label: event.target.value })}
                   />
                 </label>
-                <label className="permission-editor-field">
+                <div className="permission-editor-field">
                   <span>Member type</span>
-                  <select
+                  <SelectMenu
+                    ariaLabel="Helper member type"
                     value={helper.memberType}
-                    onChange={(event) => {
-                      const memberType = event.target.value as EditableExchangeHelperRequirement["memberType"]
+                    options={[
+                      { value: "gateway", label: "MCP Gateway service" },
+                      { value: "mcp-service", label: "MCP IAM account" },
+                      { value: "custom", label: "Custom service account" },
+                    ]}
+                    onChange={(value) => {
+                      const memberType = value as EditableExchangeHelperRequirement["memberType"]
                       updateHelper(helperIndex, {
                         member: helperMember(memberType, effectiveServicePrincipal),
                         memberType,
                       })
                     }}
-                  >
-                    <option value="gateway">MCP Gateway service</option>
-                    <option value="mcp-service">MCP IAM account</option>
-                    <option value="custom">Custom service account</option>
-                  </select>
-                </label>
+                  />
+                </div>
                 <label className="permission-editor-field">
                   <span>Member</span>
                   <input
@@ -804,18 +809,20 @@ function ExchangeHelperEditor({
               {helper.policies.map((policy, policyIndex) => (
                 <div className="permission-helper-policy-row" key={policyIndex}>
                   <span className="permission-helper-row-label">Policy</span>
-                  <label className="permission-editor-field permission-helper-effect-field">
+                  <div className="permission-editor-field permission-helper-effect-field">
                     <span>Effect</span>
-                    <select
+                    <SelectMenu
+                      ariaLabel="Policy effect"
                       value={policy.effect}
-                      onChange={(event) => updateHelperPolicy(helperIndex, policyIndex, {
-                        effect: event.target.value as EditableExchangePolicyRule["effect"],
+                      options={[
+                        { value: "ALLOW", label: "Allow" },
+                        { value: "DENY", label: "Deny" },
+                      ]}
+                      onChange={(value) => updateHelperPolicy(helperIndex, policyIndex, {
+                        effect: value as EditableExchangePolicyRule["effect"],
                       })}
-                    >
-                      <option value="ALLOW">Allow</option>
-                      <option value="DENY">Deny</option>
-                    </select>
-                  </label>
+                    />
+                  </div>
                   <label className="permission-editor-field">
                     <span>Action</span>
                     <input
