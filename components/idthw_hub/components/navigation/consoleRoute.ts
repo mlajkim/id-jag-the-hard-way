@@ -52,7 +52,7 @@ export function consoleHref({
   return suffix ? `${base}/${suffix.replace(/^\/+/, "")}` : base
 }
 
-export function catalogServerSuffix(serverId: string, view: "client-configuration" | "tools") {
+export function catalogServerSuffix(serverId: string, view: "overview" | "client-configuration" | "tools") {
   return `${encodeURIComponent(serverId)}/${view}`
 }
 

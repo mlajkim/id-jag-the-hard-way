@@ -21,9 +21,14 @@ const ANNOTATION_ALIAS = "mcp.idthw.dev/alias"
 const ANNOTATION_ACCESS_MANAGEMENT = "mcp.idthw.dev/access-management"
 const ANNOTATION_ACCESS_AUDIENCE = "mcp.idthw.dev/access-audience"
 const ANNOTATION_ACCESS_SCOPE = "mcp.idthw.dev/access-scope"
+const ANNOTATION_CREATION_METHOD = "mcp.idthw.dev/creation-method"
 const ANNOTATION_IAM_SERVICE_ACCOUNT = "mcp.idthw.dev/iam-service-account"
+const ANNOTATION_PATH = "mcp.idthw.dev/path"
 const ANNOTATION_PUBLIC_URL = "mcp.idthw.dev/public-url"
+const ANNOTATION_TEMPLATE_KEY = "mcp.idthw.dev/template-key"
 const ANNOTATION_TOOL_PERMISSIONS = "mcp.idthw.dev/tool-permissions"
+const ANNOTATION_TRANSPORT = "mcp.idthw.dev/transport"
+const ANNOTATION_VISIBILITY = "mcp.idthw.dev/visibility"
 const LEGACY_ANNOTATION_SERVER = "mcp.idthw.dev/server"
 const LABEL_PROJECT = "mcp.idthw.dev/project"
 const LABEL_ALIAS = "mcp.idthw.dev/alias"
@@ -38,11 +43,21 @@ type Deployment = {
     generation?: number
     name?: string
     namespace?: string
+    creationTimestamp?: string
     labels?: Record<string, string>
     annotations?: Record<string, string>
   }
   spec?: {
     replicas?: number
+    template?: {
+      spec?: {
+        containers?: Array<{
+          image?: string
+          name?: string
+          ports?: Array<{ containerPort?: number }>
+        }>
+      }
+    }
   }
   status?: {
     availableReplicas?: number
@@ -139,6 +154,10 @@ function deploymentToMcpServer(
       ? "hub"
       : "server"
   const runtimeStatus = deploymentRuntimeStatus(deployment)
+  const containers = deployment.spec?.template?.spec?.containers ?? []
+  const container = containers.find(({ name: containerName }) => containerName === name)
+    ?? containers.find(({ name: containerName }) => containerName !== "mcp-runtime-proxy")
+  const creationMethod = annotations[ANNOTATION_CREATION_METHOD] === "template" ? "template" : "direct"
 
   return {
     id: `${namespace}:${name}`,
@@ -156,10 +175,20 @@ function deploymentToMcpServer(
       || firstScopeDomain(accessScope),
     accessScope,
     serviceAccount,
+    containerImage: container?.image,
+    containerPort: container?.ports?.[0]?.containerPort,
+    creationMethod,
+    createdAt: metadata.creationTimestamp,
+    desiredReplicas: deployment.spec?.replicas ?? 1,
+    path: annotations[ANNOTATION_PATH] ?? "/mcp",
+    readyReplicas: deployment.status?.readyReplicas ?? 0,
     status: runtimeStatus.status,
     statusMessage: runtimeStatus.message,
+    templateKey: creationMethod === "template" ? annotations[ANNOTATION_TEMPLATE_KEY] : undefined,
     toolPermissionOverrides: parseJsonAnnotation(annotations[ANNOTATION_TOOL_PERMISSIONS]),
+    transport: annotations[ANNOTATION_TRANSPORT] ?? "streamable-http",
     totalToolCalls: "N/A",
+    visibility: annotations[ANNOTATION_VISIBILITY] === "project" ? "project" : "personal",
     iconSrc: resolveMcpIconSrc(annotations[ANNOTATION_ICON], iconOptions),
     logoText: initialsFor(displayName),
     logoBg: "#ffffff",

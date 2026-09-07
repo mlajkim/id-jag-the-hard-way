@@ -82,7 +82,7 @@ export function McpServerDetailTabs({
   project: string
   product: string
   serverId: string
-  active: "client-configuration" | "tools"
+  active: "overview" | "client-configuration" | "tools"
 }) {
   return (
     <div className="tabs detail-tabs" aria-label="MCP server detail views">
@@ -92,9 +92,12 @@ export function McpServerDetailTabs({
       >
         Client configuration
       </Link>
-      <button className="tab" type="button" disabled>
+      <Link
+        className={`tab ${active === "overview" ? "active" : ""}`}
+        href={consoleHref({ project, product, section: "catalog", suffix: catalogServerSuffix(serverId, "overview") })}
+      >
         Overview
-      </button>
+      </Link>
       <Link
         className={`tab ${active === "tools" ? "active" : ""}`}
         href={consoleHref({ project, product, section: "catalog", suffix: catalogServerSuffix(serverId, "tools") })}
