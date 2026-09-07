@@ -813,6 +813,281 @@ input:disabled {
   width: fit-content;
 }
 
+.mcp-template-select {
+  position: relative;
+  width: 100%;
+}
+
+.mcp-template-select > summary {
+  min-height: 58px;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 11px;
+  border: 1px solid #b9c2cf;
+  border-radius: 7px;
+  padding: 8px 12px;
+  background: #ffffff;
+  color: var(--text);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 5%);
+  cursor: pointer;
+  list-style: none;
+  transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+
+.mcp-template-select > summary::-webkit-details-marker {
+  display: none;
+}
+
+.mcp-template-select > summary:hover {
+  border-color: #789dd2;
+  background: #fbfdff;
+}
+
+.mcp-template-select[open] > summary {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgb(2 96 234 / 11%);
+}
+
+.mcp-template-select.disabled > summary {
+  border-color: var(--line-strong);
+  background: #f6f7f9;
+  color: #969ba5;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.mcp-template-select-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  text-align: left;
+}
+
+.mcp-template-select-copy strong,
+.mcp-template-select-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mcp-template-select-copy strong {
+  color: inherit;
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.mcp-template-select-copy small {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.mcp-template-select-placeholder-icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #d8dee7;
+  border-radius: 7px;
+  background: #f3f6fa;
+  color: #607086;
+}
+
+.mcp-template-select .mcp-icon-preview {
+  width: 36px;
+  height: 36px;
+  border-radius: 7px;
+}
+
+.mcp-template-select .mcp-icon-preview img {
+  width: 30px;
+  height: 30px;
+}
+
+.mcp-template-select-chevron {
+  color: #6c7480;
+  transition: transform 140ms ease;
+}
+
+.mcp-template-select[open] .mcp-template-select-chevron {
+  transform: rotate(180deg);
+}
+
+.mcp-template-select-menu {
+  position: absolute;
+  z-index: 15;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 100%;
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #d3d9e2;
+  border-radius: 8px;
+  padding: 6px;
+  background: #ffffff;
+  box-shadow: 0 18px 40px rgb(15 23 42 / 17%);
+}
+
+.mcp-template-select-option {
+  width: 100%;
+  min-height: 54px;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 20px;
+  align-items: center;
+  gap: 11px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 7px 9px;
+  background: transparent;
+  color: var(--text);
+}
+
+.mcp-template-select-option:hover,
+.mcp-template-select-option:focus-visible {
+  outline: 0;
+  border-color: #d5e2f5;
+  background: #f4f8fe;
+}
+
+.mcp-template-select-option.selected {
+  background: #edf5ff;
+  color: #0758c7;
+}
+
+.mcp-template-select-option > svg {
+  justify-self: center;
+  color: var(--blue);
+}
+
+.select-menu {
+  position: relative;
+  min-width: 0;
+}
+
+.select-menu.open {
+  z-index: 60;
+}
+
+.select-menu-trigger {
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid #b9c2cf;
+  border-radius: 6px;
+  padding: 0 10px 0 12px;
+  background: #ffffff;
+  color: var(--text);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 4%);
+  font-size: 13px;
+  font-weight: 750;
+  text-align: left;
+  transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+
+.select-menu-trigger:hover {
+  border-color: #789dd2;
+  background: #fbfdff;
+}
+
+.select-menu-trigger:focus-visible,
+.select-menu.open .select-menu-trigger {
+  border-color: var(--blue);
+  outline: 0;
+  box-shadow: 0 0 0 3px rgb(2 96 234 / 11%);
+}
+
+.select-menu.disabled .select-menu-trigger {
+  border-color: var(--line-strong);
+  background: #f4f5f7;
+  color: #969ba5;
+  box-shadow: none;
+}
+
+.select-menu-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.select-menu-value.placeholder {
+  color: #7c8490;
+  font-weight: 650;
+}
+
+.select-menu-chevron {
+  color: #687384;
+  transition: transform 140ms ease;
+}
+
+.select-menu.open .select-menu-chevron {
+  transform: rotate(180deg);
+}
+
+.select-menu-options {
+  position: absolute;
+  z-index: 70;
+  top: calc(100% + 5px);
+  left: 0;
+  width: 100%;
+  min-width: 180px;
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid #d3d9e2;
+  border-radius: 7px;
+  padding: 5px;
+  background: #ffffff;
+  box-shadow: 0 16px 34px rgb(15 23 42 / 16%);
+}
+
+.select-menu-option {
+  width: 100%;
+  min-height: 38px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  padding: 7px 9px;
+  background: transparent;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.select-menu-option > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.select-menu-option:hover,
+.select-menu-option:focus-visible {
+  outline: 0;
+  border-color: #d5e2f5;
+  background: #f4f8fe;
+}
+
+.select-menu-option.selected {
+  background: #edf5ff;
+  color: #0758c7;
+}
+
+.select-menu-option > svg {
+  justify-self: center;
+  color: var(--blue);
+}
+
+.mcp-create-inline-fields > .select-menu {
+  width: 210px;
+}
+
 .mcp-create-additional {
   margin-top: 4px;
   border-top: 1px solid var(--line);
@@ -2582,6 +2857,44 @@ body:has(.permission-request-dialog[open]) {
 .permission-editor-field input:disabled {
   background: #f1f3f6;
   color: #6a7380;
+}
+
+.permission-editor-field .select-menu,
+.permission-editor-field .select-menu-trigger {
+  width: 100%;
+}
+
+.permission-editor-field .select-menu-trigger {
+  height: 32px;
+  min-height: 32px;
+  border-radius: 4px;
+  padding: 0 7px 0 9px;
+  box-shadow: none;
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.permission-editor-field .select-menu-options {
+  min-width: 190px;
+  max-height: 190px;
+  padding: 4px;
+}
+
+.permission-editor-field .select-menu-option {
+  min-height: 32px;
+  padding: 6px 7px;
+  font-size: 10px;
+}
+
+.permission-dialog-card:has(.select-menu.open),
+.permission-helper-settings[open]:has(.select-menu.open),
+.permission-helper-preview-row:has(.select-menu.open) {
+  overflow: visible;
+}
+
+.permission-helper-preview-row:has(.select-menu.open) {
+  position: relative;
+  z-index: 50;
 }
 
 .permission-editor-remove {

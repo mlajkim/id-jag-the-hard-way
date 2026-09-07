@@ -3,6 +3,7 @@
 import { ExternalLink, Plus, RefreshCw, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { useCallback, useEffect, useRef, useState } from "react"
+import { SelectMenu } from "@/components/atoms/SelectMenu"
 import { McpIconPicker } from "@/features/mcp-servers/components/McpIconPicker"
 import type { McpIconOption } from "@/features/mcp-servers/lib/mcpIcons"
 import { ToolPermissionAuthoring } from "@/features/permissions/components/ToolPermissionAuthoring"
@@ -328,22 +329,18 @@ export function ConfigurationForm({
       <fieldset className="mcp-create-fieldset">
         <legend>VPC network</legend>
         <div className="mcp-create-inline-fields">
-          <select
-            className="filter-select"
-            aria-label="VPC"
+          <SelectMenu
+            ariaLabel="VPC"
             value={draft.vpc}
-            onChange={(event) => setDraft((currentDraft) => ({ ...currentDraft, vpc: event.target.value }))}
-          >
-            <option value="default-vpc">default-vpc</option>
-          </select>
-          <select
-            className="filter-select"
-            aria-label="VPC network"
+            options={[{ value: "default-vpc", label: "default-vpc" }]}
+            onChange={(value) => setDraft((currentDraft) => ({ ...currentDraft, vpc: value }))}
+          />
+          <SelectMenu
+            ariaLabel="VPC network"
             value={draft.vpcNetwork}
-            onChange={(event) => setDraft((currentDraft) => ({ ...currentDraft, vpcNetwork: event.target.value }))}
-          >
-            <option value="default-vpc-network">default-vpc-network</option>
-          </select>
+            options={[{ value: "default-vpc-network", label: "default-vpc-network" }]}
+            onChange={(value) => setDraft((currentDraft) => ({ ...currentDraft, vpcNetwork: value }))}
+          />
         </div>
       </fieldset>
 
@@ -396,27 +393,26 @@ export function ConfigurationForm({
           </Link>.
         </p>
         <div className="mcp-create-inline-fields">
-          <select
-            className="filter-select mcp-create-service-account"
+          <SelectMenu
+            ariaLabel="IAM service account"
+            className="mcp-create-service-account"
             value={draft.hubServiceAccountName}
-            aria-label="IAM service account"
-            onChange={(event) => setDraft((currentDraft) => ({ ...currentDraft, hubServiceAccountName: event.target.value }))}
-          >
-            <option value="">
-              {serviceAccountsLoading
-                ? "Loading service accounts..."
-                : serviceAccountError
-                  ? "Unable to load service accounts"
-                  : serviceAccounts.length === 0
-                    ? "No service accounts found"
-                    : "Select a service account"}
-            </option>
-            {(draft.hubServiceAccountName && !serviceAccounts.includes(draft.hubServiceAccountName)
+            disabled={serviceAccountsLoading}
+            placeholder={serviceAccountsLoading
+              ? "Loading service accounts..."
+              : serviceAccountError
+                ? "Unable to load service accounts"
+                : serviceAccounts.length === 0
+                  ? "No service accounts found"
+                  : "Select a service account"}
+            options={(draft.hubServiceAccountName && !serviceAccounts.includes(draft.hubServiceAccountName)
               ? [draft.hubServiceAccountName, ...serviceAccounts]
-              : serviceAccounts).map((serviceAccount) => (
-              <option value={serviceAccount} key={serviceAccount}>{athenzServiceName(serviceAccount)}</option>
-            ))}
-          </select>
+              : serviceAccounts).map((serviceAccount) => ({
+              value: serviceAccount,
+              label: athenzServiceName(serviceAccount),
+            }))}
+            onChange={(value) => setDraft((currentDraft) => ({ ...currentDraft, hubServiceAccountName: value }))}
+          />
           <button className="button" type="button" disabled={serviceAccountsLoading} onClick={refreshServiceAccounts}>
             <RefreshCw size={14} />
             {serviceAccountsLoading ? "Refreshing..." : "Refresh"}
