@@ -93,7 +93,7 @@ ID-JAG The Hard Way is listed on the [OAuth.net Cross-App Access (XAA) page](htt
 | 2 | Jul 28, 2026 | [Authorization Challenges in the AI Agent Era: What Is ID-JAG and Why?][260728-community] — DEV Community |
 | 1 | Jul 23, 2026 | [[學習心得][Golang] AI Agent 時代的授權難題：ID-JAG 是什麼？為什麼我用 Go 重新實作了一次][260723-community] |
 
-https://github.com/dorsha/awesome-cross-app-access
+[260829-community]: https://github.com/dorsha/awesome-cross-app-access
 [260723-community]: https://www.evanlin.com/id-jag-mcp-go/
 [260728-community]: https://dev.to/gde/learning-notesgolang-authorization-challenges-in-the-ai-agent-era-what-is-id-jag-and-why-i-jfb
 
