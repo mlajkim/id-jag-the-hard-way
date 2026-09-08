@@ -217,9 +217,15 @@ export default async function McpTemplateOverviewRoute({
                     {permissionRows.map((row) => (
                       <tr key={row.toolName}>
                         <td><code>{row.toolName}</code></td>
-                        <td>{row.directRoles || "—"}</td>
-                        <td>{row.helperRoles || "—"}</td>
-                        <td>{row.policies || "—"}</td>
+                        {row.noAdditionalPermission ? (
+                          <td colSpan={3}>No additional permission required</td>
+                        ) : (
+                          <>
+                            <td>{row.directRoles || "—"}</td>
+                            <td>{row.helperRoles || "—"}</td>
+                            <td>{row.policies || "—"}</td>
+                          </>
+                        )}
                       </tr>
                     ))}
                   </tbody>
@@ -248,7 +254,7 @@ export default async function McpTemplateOverviewRoute({
             </div>
             <dl>
               <div><dt>Template key</dt><dd><code>{template.templateKey}</code></dd></div>
-              <div><dt>Project</dt><dd><code>{template.project}</code></dd></div>
+              <div><dt>Project (K8s namespace)</dt><dd><code>{template.project}</code></dd></div>
               <div><dt>Visibility</dt><dd>Project</dd></div>
             </dl>
           </section>
@@ -304,7 +310,13 @@ function permissionSummaryRows(settings?: ToolPermissionSettings) {
         policies += 2
       }
     }
-    return { directRoles: tool.requirements.length, helperRoles, policies, toolName }
+    return {
+      directRoles: tool.requirements.length,
+      helperRoles,
+      noAdditionalPermission: tool.requirements.length === 0,
+      policies,
+      toolName,
+    }
   })
 }
 

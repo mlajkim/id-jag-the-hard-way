@@ -2,6 +2,7 @@
 
 import { Plus, Trash2 } from "lucide-react"
 import type { Dispatch, SetStateAction } from "react"
+import { AdditionalToolAccessField } from "./AdditionalToolAccessField"
 import { PermissionEditor } from "./PermissionRequestDialog"
 import {
   emptyEditablePermissionRequirement,
@@ -45,12 +46,12 @@ export function ToolPermissionAuthoring({
 
   return (
     <fieldset className="mcp-create-fieldset mcp-tool-permission-authoring">
-      <legend>Tool permissions (optional)</legend>
+      <legend>Known tools and permissions (optional)</legend>
       <p className="mcp-create-field-copy">{description}</p>
       {tools.length === 0 ? (
         <div className="permission-dialog-empty neutral mcp-tool-permission-empty">
-          <strong>No tool permissions configured</strong>
-          <p>Add a tool now only when you already know its MCP tool name and downstream Athenz role.</p>
+          <strong>No tools configured</strong>
+          <p>Add a tool when you know its MCP tool name, then choose whether it requires additional access.</p>
         </div>
       ) : (
         <div className="mcp-tool-permission-list">
@@ -67,6 +68,11 @@ export function ToolPermissionAuthoring({
                     onChange={(event) => updateTool(tool.id, { toolName: event.target.value })}
                   />
                 </label>
+                <AdditionalToolAccessField
+                  compact
+                  requirements={tool.requirements}
+                  setRequirements={permissionSetter(tool, updateTool)}
+                />
                 <button
                   className="permission-editor-remove"
                   type="button"
@@ -76,13 +82,15 @@ export function ToolPermissionAuthoring({
                   <Trash2 size={15} aria-hidden="true" />
                 </button>
               </div>
-              <PermissionEditor
-                accessAudience={accessAudience}
-                helperPreviewServicePrincipal={TEMPLATE_MCP_IAM_MEMBER}
-                requirements={tool.requirements}
-                servicePrincipal={servicePrincipal}
-                setRequirements={permissionSetter(tool, updateTool)}
-              />
+              {tool.requirements.length > 0 ? (
+                <PermissionEditor
+                  accessAudience={accessAudience}
+                  helperPreviewServicePrincipal={TEMPLATE_MCP_IAM_MEMBER}
+                  requirements={tool.requirements}
+                  servicePrincipal={servicePrincipal}
+                  setRequirements={permissionSetter(tool, updateTool)}
+                />
+              ) : null}
             </section>
           ))}
         </div>
@@ -90,7 +98,7 @@ export function ToolPermissionAuthoring({
       {validationError ? <p className="mcp-create-service-warning" role="alert">{validationError}</p> : null}
       <button className="button" type="button" disabled={tools.length >= 100} onClick={addTool}>
         <Plus size={14} aria-hidden="true" />
-        Add tool permission
+        Add tool
       </button>
     </fieldset>
   )

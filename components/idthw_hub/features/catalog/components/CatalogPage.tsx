@@ -121,8 +121,7 @@ export function CatalogTable({
               </span>
             </th>
             <th>Description</th>
-            <th>Namespace</th>
-            <th>Project</th>
+            <th>Project (K8s namespace)</th>
             <th>
               <span className="sortable-heading">
                 Total tool calls <ChevronsUpDown size={12} aria-hidden="true" />
@@ -159,7 +158,6 @@ export function CatalogTable({
                   </div>
                 </td>
                 <td>{server.description}</td>
-                <td>{server.namespace}</td>
                 <td>{server.project}</td>
                 <td>{server.totalToolCalls}</td>
                 <td>
@@ -185,7 +183,7 @@ export function CatalogTable({
             ))
           ) : (
             <tr>
-              <td className="empty-cell" colSpan={6}>
+              <td className="empty-cell" colSpan={5}>
                 No MCP server deployments found.
               </td>
             </tr>

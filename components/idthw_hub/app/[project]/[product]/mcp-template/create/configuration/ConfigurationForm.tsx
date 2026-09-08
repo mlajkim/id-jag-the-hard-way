@@ -184,7 +184,7 @@ export function ConfigurationForm({
 
       <ToolPermissionAuthoring
         accessAudience={hubServiceDomain}
-        description="Define required Athenz roles as template defaults when you already know the MCP tool names. This stores requirements; it does not grant downstream role membership. Providers can review them during server creation and modify them later after live tool discovery."
+        description="Define known MCP tools as template defaults. Explicitly mark tools that need no additional permission, or define their required Athenz roles. Providers can review them during server creation and modify them later after live tool discovery."
         tools={draft.toolPermissions}
         validationError={toolPermissionValidation.ok ? undefined : toolPermissionValidation.error}
         onChange={(toolPermissions) => setDraft((currentDraft) => ({ ...currentDraft, toolPermissions }))}

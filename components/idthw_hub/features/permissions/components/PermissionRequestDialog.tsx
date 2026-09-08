@@ -14,6 +14,7 @@ import {
   useTransition,
 } from "react"
 import { SelectMenu } from "@/components/atoms/SelectMenu"
+import { AdditionalToolAccessField } from "@/features/permissions/components/AdditionalToolAccessField"
 import {
   configuredRequirementsFromDraft,
   emptyEditablePermissionRequirement,
@@ -74,6 +75,9 @@ export function PermissionRequestDialog({
   const managedRequirements = requirements.filter(({ source }) => source === "managed")
   const toolPolicies = policies.filter(({ source }) => source === "helper")
   const managedPolicies = policies.filter(({ source }) => source === "managed")
+  const noAdditionalPermissionConfigured = !configurationMissing
+    && toolRequirements.length === 0
+    && toolPolicies.length === 0
   const [draftRequirements, setDraftRequirements] = useState<EditableRequirement[]>(
     () => editableRequirements(
       configuredToolRequirements,
@@ -82,8 +86,10 @@ export function PermissionRequestDialog({
       servicePrincipal,
     ),
   )
-  const permissionsReady = requirements.length > 0
+  const permissionsReady = noAdditionalPermissionConfigured || (
+    requirements.length > 0
     && [...requirements, ...policies].every(({ status }) => status === "ready")
+  )
   const managedDefaultsMissing = [...managedRequirements, ...managedPolicies]
     .some(({ status }) => status === "missing")
 
@@ -141,7 +147,11 @@ export function PermissionRequestDialog({
       toolPolicies,
       servicePrincipal,
     )
-    setDraftRequirements(configured.length > 0 ? configured : [emptyEditablePermissionRequirement()])
+    setDraftRequirements(
+      configured.length > 0 || noAdditionalPermissionConfigured
+        ? configured
+        : [emptyEditablePermissionRequirement()],
+    )
     setIsEditing(true)
   }
 
@@ -237,18 +247,28 @@ export function PermissionRequestDialog({
             title="Tool permissions"
           >
             {isEditing ? (
-              <PermissionEditor
-                accessAudience={accessAudience}
-                requirements={draftRequirements}
-                servicePrincipal={servicePrincipal}
-                setRequirements={setDraftRequirements}
-              />
+              <>
+                <AdditionalToolAccessField
+                  requirements={draftRequirements}
+                  setRequirements={setDraftRequirements}
+                />
+                {draftRequirements.length > 0 ? (
+                  <PermissionEditor
+                    accessAudience={accessAudience}
+                    requirements={draftRequirements}
+                    servicePrincipal={servicePrincipal}
+                    setRequirements={setDraftRequirements}
+                  />
+                ) : null}
+              </>
             ) : toolRequirements.length > 0 || toolPolicies.length > 0 ? (
               <PermissionTable policies={toolPolicies} requirements={toolRequirements} />
             ) : (
               <div className="permission-dialog-empty neutral">
-                <strong>No tool permissions configured</strong>
-                <p>Add the downstream user or service-account roles required by this tool.</p>
+                <strong>{configurationMissing ? "No tool permissions configured" : "No additional permission required"}</strong>
+                <p>{configurationMissing
+                  ? "Choose whether this tool requires additional downstream access."
+                  : "This tool only uses the standard MCP server access."}</p>
               </div>
             )}
             {saveError ? <p className="permission-dialog-save-error" role="alert">{saveError}</p> : null}

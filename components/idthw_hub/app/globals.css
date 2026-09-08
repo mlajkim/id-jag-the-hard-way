@@ -2770,12 +2770,58 @@ body:has(.permission-request-dialog[open]) {
 }
 
 .mcp-tool-permission-head {
-  width: min(100%, 560px);
+  width: min(100%, 820px);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 32px;
+  grid-template-columns: minmax(180px, 1fr) minmax(175px, 210px) 32px;
   align-items: end;
   gap: 8px;
   margin-bottom: 10px;
+}
+
+.mcp-tool-permission-head:last-child {
+  margin-bottom: 0;
+}
+
+.additional-tool-access-compact .select-menu,
+.additional-tool-access-compact .select-menu-trigger {
+  width: 100%;
+}
+
+.additional-tool-access {
+  width: min(100%, 760px);
+  display: grid;
+  grid-template-columns: minmax(230px, 320px) minmax(0, 1fr);
+  align-items: end;
+  gap: 12px;
+  margin-bottom: 10px;
+  border: 1px solid #dfe4eb;
+  border-radius: 6px;
+  padding: 10px;
+  background: #fff;
+}
+
+.additional-tool-access .select-menu,
+.additional-tool-access .select-menu-trigger {
+  width: 100%;
+}
+
+.additional-tool-access-copy {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  color: #536071;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.additional-tool-access[data-mode="none"] .additional-tool-access-copy {
+  color: #22734f;
+}
+
+.additional-tool-access-copy svg {
+  flex: 0 0 auto;
 }
 
 .mcp-tool-permission-group > .permission-editor {
@@ -3127,6 +3173,11 @@ body:has(.permission-request-dialog[open]) {
 }
 
 @container tool-permission (max-width: 700px) {
+  .additional-tool-access {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
   .mcp-tool-permission-group > .permission-editor {
     margin-left: 12px;
     padding-left: 10px;
@@ -3135,6 +3186,22 @@ body:has(.permission-request-dialog[open]) {
   .mcp-tool-permission-group > .permission-editor::before {
     left: -12px;
     width: 10px;
+  }
+}
+
+@container tool-permission (max-width: 500px) {
+  .mcp-tool-permission-head {
+    grid-template-columns: minmax(0, 1fr) 32px;
+  }
+
+  .additional-tool-access-compact {
+    grid-column: 1 / 2;
+    grid-row: 2;
+  }
+
+  .mcp-tool-permission-head > .permission-editor-remove {
+    grid-column: 2;
+    grid-row: 1;
   }
 }
 
