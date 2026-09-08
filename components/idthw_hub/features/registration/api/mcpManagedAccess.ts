@@ -423,8 +423,8 @@ export async function createZmsRequest(
   if (zmsUrl.protocol !== "https:") throw new Error(`Unsupported ZMS protocol ${zmsUrl.protocol}`)
 
   const [cert, key, ca] = await Promise.all([
-    readFile(/* turbopackIgnore: true */ certFilePath("MCP_HUB_ATHENZ_CERT_PATH", "mcp-hub-ui.crt")),
-    readFile(/* turbopackIgnore: true */ certFilePath("MCP_HUB_ATHENZ_KEY_PATH", "mcp-hub-ui.key")),
+    readFile(/* turbopackIgnore: true */ certFilePath("MCP_HUB_ATHENZ_CERT_PATH", "idthw-hub-central-controller.crt")),
+    readFile(/* turbopackIgnore: true */ certFilePath("MCP_HUB_ATHENZ_KEY_PATH", "idthw-hub-central-controller.key")),
     readFile(/* turbopackIgnore: true */ certFilePath("MCP_HUB_ATHENZ_CA_PATH", "ca.crt")),
   ])
   const servername = process.env.MCP_HUB_ZMS_TLS_SERVER_NAME

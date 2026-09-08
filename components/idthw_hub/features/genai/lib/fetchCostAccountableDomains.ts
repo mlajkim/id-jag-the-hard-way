@@ -177,8 +177,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 async function loadZmsCredentials() {
   const [cert, key, ca] = await Promise.all([
-    readFile(/* turbopackIgnore: true */ certFilePath("MCP_HUB_ATHENZ_CERT_PATH", "mcp-hub-ui.crt")),
-    readFile(/* turbopackIgnore: true */ certFilePath("MCP_HUB_ATHENZ_KEY_PATH", "mcp-hub-ui.key")),
+    readFile(/* turbopackIgnore: true */ certFilePath("MCP_HUB_ATHENZ_CERT_PATH", "idthw-hub-central-controller.crt")),
+    readFile(/* turbopackIgnore: true */ certFilePath("MCP_HUB_ATHENZ_KEY_PATH", "idthw-hub-central-controller.key")),
     readFile(/* turbopackIgnore: true */ certFilePath("MCP_HUB_ATHENZ_CA_PATH", "ca.crt")),
   ])
   return {
