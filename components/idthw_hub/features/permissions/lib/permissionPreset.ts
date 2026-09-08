@@ -6,6 +6,7 @@ import type {
   PermissionPresetGroup,
   PermissionPolicyRequirement,
   PermissionRequirement,
+  ToolPermissionDefault,
   ToolPermissionSettings,
 } from "../types/permissions"
 
@@ -53,16 +54,21 @@ export function toolPermissionSettingsForServer(
   }
 
   const server = requireRecord(configuredServer, `permission preset for ${serverId}`)
-  assertOnlyKeys(server, ["tools"], `permission preset for ${serverId}`)
-  return parseToolPermissionSettings({ version: PERMISSION_PRESET_VERSION, tools: server.tools })
+  assertOnlyKeys(server, ["defaultPermission", "tools"], `permission preset for ${serverId}`)
+  return parseToolPermissionSettings({
+    defaultPermission: server.defaultPermission,
+    version: PERMISSION_PRESET_VERSION,
+    tools: server.tools,
+  })
 }
 
 export function parseToolPermissionSettings(value: unknown): ToolPermissionSettings {
   const root = requireRecord(value, "tool permission settings")
-  assertOnlyKeys(root, ["version", "tools"], "tool permission settings")
+  assertOnlyKeys(root, ["defaultPermission", "version", "tools"], "tool permission settings")
   if (root.version !== PERMISSION_PRESET_VERSION) {
     throw new Error(`Tool permission settings version must be ${PERMISSION_PRESET_VERSION}`)
   }
+  const defaultPermission = parseToolPermissionDefault(root.defaultPermission)
 
   const configuredTools = requireRecord(root.tools, "tool permission settings tools")
   const tools: ToolPermissionSettings["tools"] = {}
@@ -119,11 +125,15 @@ export function parseToolPermissionSettings(value: unknown): ToolPermissionSetti
     }
   }
 
-  if (Object.keys(tools).length === 0) {
+  if (Object.keys(tools).length === 0 && defaultPermission === undefined) {
     throw new Error("Tool permission settings must define at least one tool")
   }
 
-  return { version: PERMISSION_PRESET_VERSION, tools }
+  return {
+    ...(defaultPermission ? { defaultPermission } : {}),
+    version: PERMISSION_PRESET_VERSION,
+    tools,
+  }
 }
 
 export function permissionPresetFromToolSettings(
@@ -189,7 +199,11 @@ export function permissionPresetFromToolSettings(
     })
   }
 
-  return { groups, serverId }
+  return {
+    ...(settings.defaultPermission ? { defaultPermission: settings.defaultPermission } : {}),
+    groups,
+    serverId,
+  }
 }
 
 export function mergeToolPermissionSettings(
@@ -198,7 +212,9 @@ export function mergeToolPermissionSettings(
 ): ToolPermissionSettings | undefined {
   if (!base) return overrides
   if (!overrides) return base
+  const defaultPermission = overrides.defaultPermission ?? base.defaultPermission
   return {
+    ...(defaultPermission ? { defaultPermission } : {}),
     version: PERMISSION_PRESET_VERSION,
     tools: { ...base.tools, ...overrides.tools },
   }
@@ -434,13 +450,28 @@ export function withManagedAccessRequirements(
     }
   }
 
+  const groups = preset.groups.map((group) => ({
+    ...group,
+    requirements: mergeRequirements(group.requirements, requirements),
+  }))
+  if (groups.length === 0 || preset.defaultPermission === "none") {
+    groups.push({
+      kind: "tool",
+      label: "Default MCP tool access",
+      requirements,
+    })
+  }
+
   return {
     ...preset,
-    groups: preset.groups.map((group) => ({
-      ...group,
-      requirements: mergeRequirements(group.requirements, requirements),
-    })),
+    groups,
   }
+}
+
+function parseToolPermissionDefault(value: unknown): ToolPermissionDefault | undefined {
+  if (value === undefined) return undefined
+  if (value === "none" || value === "not-defined") return value
+  throw new Error('Tool permission default must be "none" or "not-defined"')
 }
 
 function parseAccessScope(value: string | undefined) {

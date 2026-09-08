@@ -150,7 +150,10 @@ function accessScopeForRequest(request: Request, route: ResolvedMcpRoute, fallba
   if (!route.toolScopes) return routeScope
 
   const toolScope = Object.hasOwn(route.toolScopes, toolName) ? route.toolScopes[toolName] : undefined
-  if (!toolScope) throw new ToolScopeNotConfiguredError(toolName)
+  if (!toolScope) {
+    if (route.defaultToolPermission === "none") return routeScope
+    throw new ToolScopeNotConfiguredError(toolName)
+  }
   return toolScope
 }
 

@@ -39,6 +39,7 @@ export function PermissionReadinessSection({
       .map((group) => [group.toolName as string, group]) ?? [],
   )
   const sharedGroup = evaluatedReadiness?.groups.find((group) => !group.toolName)
+  const defaultGroup = evaluatedReadiness?.defaultPermission === "none" ? sharedGroup : undefined
   const hasManagedAccess = evaluatedReadiness?.groups.some((group) => (
     group.requirements.some(({ source }) => source === "managed")
   )) ?? false
@@ -46,7 +47,9 @@ export function PermissionReadinessSection({
     group.requirements.some(({ source }) => source === "tool" || source === "helper")
     || group.policies.some(({ source }) => source === "helper")
   )) ?? false
-  const simplePermissionStep = hasManagedAccess && !hasCustomToolAccess
+  const simplePermissionStep = hasManagedAccess
+    && evaluatedReadiness?.defaultPermission === "none"
+    && !hasCustomToolAccess
 
   return (
     <div className="permission-readiness-section" aria-labelledby="permission-readiness-heading">
@@ -90,7 +93,7 @@ export function PermissionReadinessSection({
               mcpKeyName={mcpKeyName}
               project={project}
               servicePrincipal={servicePrincipal}
-              sharedGroup={sharedGroup}
+              sharedGroup={defaultGroup}
               toolGroups={toolGroups}
               tools={toolsExpanded ? toolsResult.tools : toolsResult.tools.slice(0, COLLAPSED_TOOL_COUNT)}
             />
@@ -112,7 +115,7 @@ export function PermissionReadinessSection({
             mcpKeyName={mcpKeyName}
             project={project}
             servicePrincipal={servicePrincipal}
-            sharedGroup={sharedGroup}
+            sharedGroup={defaultGroup}
             toolGroups={toolGroups}
             tools={toolsResult.tools}
           />

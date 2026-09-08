@@ -209,6 +209,14 @@ export default async function McpTemplateOverviewRoute({
                 </span>
               ) : null}
             </div>
+            <dl className="resource-overview-details">
+              <Detail
+                label="Default for unlisted tools"
+                value={template.toolPermissions?.defaultPermission === "none"
+                  ? "No additional permission"
+                  : "Not defined"}
+              />
+            </dl>
             {permissionRows.length > 0 ? (
               <div className="resource-overview-table-wrap">
                 <table className="resource-overview-table permission-summary-table">
@@ -231,7 +239,9 @@ export default async function McpTemplateOverviewRoute({
                   </tbody>
                 </table>
               </div>
-            ) : <p className="resource-overview-empty">No tool permission defaults are configured.</p>}
+            ) : <p className="resource-overview-empty">{template.toolPermissions?.defaultPermission === "none"
+              ? "No per-tool overrides. Every tool uses the no-additional-permission default."
+              : "No tool permission defaults are configured."}</p>}
           </section>
         </main>
 

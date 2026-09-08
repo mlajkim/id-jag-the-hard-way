@@ -7,6 +7,7 @@ import type {
   EditableExchangeHelperRequirement,
   ConfiguredPermissionRequirement,
   EditablePermissionRequirement,
+  ToolPermissionDefault,
   ToolPermissionDraft,
   ToolPermissionSettings,
 } from "../types/permissions.ts"
@@ -22,8 +23,9 @@ export function validateToolPermissionDraft(
   tools: ToolPermissionDraft[],
   includeExchangeHelpers: boolean,
   mcpServicePrincipal?: string,
+  defaultPermission?: ToolPermissionDefault,
 ): ToolPermissionDraftResult {
-  if (tools.length === 0) return { ok: true, settings: undefined }
+  if (tools.length === 0 && defaultPermission === undefined) return { ok: true, settings: undefined }
 
   const configuredTools: ToolPermissionSettings["tools"] = {}
   for (const [index, tool] of tools.entries()) {
@@ -44,7 +46,11 @@ export function validateToolPermissionDraft(
   try {
     return {
       ok: true,
-      settings: parseToolPermissionSettings({ version: 1, tools: configuredTools }),
+      settings: parseToolPermissionSettings({
+        ...(defaultPermission ? { defaultPermission } : {}),
+        version: 1,
+        tools: configuredTools,
+      }),
     }
   } catch (error) {
     return {
@@ -52,6 +58,12 @@ export function validateToolPermissionDraft(
       error: error instanceof Error ? error.message : "Tool permissions are invalid",
     }
   }
+}
+
+export function toolPermissionDefaultFromSettings(
+  settings: ToolPermissionSettings | undefined,
+): ToolPermissionDefault {
+  return settings?.defaultPermission ?? "not-defined"
 }
 
 export function toolPermissionDraftFromSettings(
@@ -187,7 +199,10 @@ export function generatedExchangeHelperDraftsForRequirement(
 
 export function toolPermissionSettingsText(settings: ToolPermissionSettings | undefined) {
   if (!settings) return "Not configured"
-  return Object.entries(settings.tools)
+  const defaultPermission = settings.defaultPermission === "none"
+    ? "No additional permission for unlisted tools"
+    : "Not defined for unlisted tools"
+  const configuredTools = Object.entries(settings.tools)
     .map(([toolName, tool]) => {
       const requirements = tool.requirements.flatMap((requirement) => {
         const direct = `Direct: ${requirement.member} → ${requirement.role}`
@@ -205,6 +220,9 @@ export function toolPermissionSettingsText(settings: ToolPermissionSettings | un
       return `${toolName}\n${requirements.join("\n") || "No additional permission required"}`
     })
     .join("\n\n")
+  return configuredTools
+    ? `Default: ${defaultPermission}\n\n${configuredTools}`
+    : `Default: ${defaultPermission}`
 }
 
 export function toolPermissionSettingsFingerprint(settings: ToolPermissionSettings | undefined) {

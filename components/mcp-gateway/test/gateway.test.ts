@@ -5,7 +5,10 @@ import { afterEach, describe, it } from "node:test"
 import { createApp } from "../src/app.js"
 import { ATHENZ_ZTS_AUDIENCE, GATEWAY_SESSION_TTL_SECONDS } from "../src/config/env.js"
 import type { InternalRouterDependencies } from "../src/routes/internal.js"
-import type { ProtectedRouterDependencies } from "../src/routes/protected.js"
+import {
+  MCP_DOWNSTREAM_SCOPE_HEADER,
+  type ProtectedRouterDependencies,
+} from "../src/routes/protected.js"
 import {
   AthenzAccessTokenManager,
   AthenzInsufficientScopeError,
@@ -549,6 +552,52 @@ describe("MCP Gateway", () => {
     assert.equal(accessTokenRequests, 0)
   })
 
+  it("uses only managed MCP access for an unlisted tool when the default has no additional permission", async () => {
+    let receivedDownstreamScope = "not-observed"
+    await withHttpServer((request, response) => {
+      receivedDownstreamScope = String(request.headers[MCP_DOWNSTREAM_SCOPE_HEADER] ?? "")
+      response.setHeader("content-type", "application/json")
+      response.end(JSON.stringify({ jsonrpc: "2.0", id: 1, result: { content: [] } }))
+    }, async (coreMcpProxyUrl) => {
+      const sessionToken = sessionStore.create({
+        idToken: "stored-id-token",
+        idTokenExpiresAt: Math.floor(Date.now() / 1000) + 300,
+        subject: "keycloak-subject",
+        username: "idjag-learner",
+        expiresAt: Math.floor(Date.now() / 1000) + 300,
+      })
+      const requestedScopes: string[] = []
+
+      await withServer(async (baseUrl) => {
+        const response = await fetch(`${baseUrl}/mcp/confluence`, {
+          method: "POST",
+          headers: { authorization: `Bearer ${sessionToken}`, "content-type": "application/json" },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: 1,
+            method: "tools/call",
+            params: { name: "search", arguments: {} },
+          }),
+        })
+        assert.equal(response.status, 200)
+      }, {
+        resolveRoute: async () => ({
+          proxyUrl: `${coreMcpProxyUrl}/mcp/confluence`,
+          accessScope: "mcp-hub.mcps.idthw-demo:role.confluence-accessor",
+          defaultToolPermission: "none",
+          toolScopes: {},
+        }),
+        getAccessToken: async (_session, scope) => {
+          requestedScopes.push(scope)
+          return "managed-mcp-access-token"
+        },
+      })
+
+      assert.deepEqual(requestedScopes, ["mcp-hub.mcps.idthw-demo:role.confluence-accessor"])
+      assert.equal(receivedDownstreamScope, "")
+    })
+  })
+
   it("caches actual token grants and reuses ID-JAG after the ID token expires", async () => {
     let now = 2_000_000_000_000
     const requestedScope = "api:role.docs-getter api:role.mcp-accessor"
@@ -795,6 +844,7 @@ describe("MCP Gateway", () => {
           proxyUrl: "http://core-mcp-proxy.mcp-hub:8080/mcp/k8s-docs-server",
           accessAudience: "api",
           accessScope: "api:role.mcp-accessor api:role.docs-getter",
+          defaultToolPermission: "none",
           toolScopes: {
             get_k8s_docs: "api:role.docs-getter api:role.mcp-accessor",
             post_k8s_doc: "api:role.docs-poster api:role.mcp-accessor",
@@ -810,6 +860,7 @@ describe("MCP Gateway", () => {
         proxyUrl: "http://core-mcp-proxy.mcp-hub:8080/mcp/k8s-docs-server",
         accessAudience: "api",
         accessScope: "api:role.mcp-accessor api:role.docs-getter",
+        defaultToolPermission: "none",
         toolScopes: {
           get_k8s_docs: "api:role.docs-getter api:role.mcp-accessor",
           post_k8s_doc: "api:role.docs-poster api:role.mcp-accessor",

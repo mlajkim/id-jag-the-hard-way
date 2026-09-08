@@ -2,6 +2,7 @@
 
 import { Plus, Trash2 } from "lucide-react"
 import type { Dispatch, SetStateAction } from "react"
+import { SelectMenu } from "@/components/atoms/SelectMenu"
 import { AdditionalToolAccessField } from "./AdditionalToolAccessField"
 import { PermissionEditor } from "./PermissionRequestDialog"
 import {
@@ -10,22 +11,27 @@ import {
 } from "../lib/toolPermissionDraft"
 import type {
   EditablePermissionRequirement,
+  ToolPermissionDefault,
   ToolPermissionDraft,
 } from "../types/permissions"
 
 export function ToolPermissionAuthoring({
   accessAudience,
   description,
+  defaultPermission,
   servicePrincipal,
   tools,
   validationError,
+  onDefaultPermissionChange,
   onChange,
 }: {
   accessAudience?: string
   description: string
+  defaultPermission: ToolPermissionDefault
   servicePrincipal?: string
   tools: ToolPermissionDraft[]
   validationError?: string
+  onDefaultPermissionChange: (defaultPermission: ToolPermissionDefault) => void
   onChange: (tools: ToolPermissionDraft[]) => void
 }) {
   const updateTool = (id: number, values: Partial<ToolPermissionDraft>) => {
@@ -48,10 +54,29 @@ export function ToolPermissionAuthoring({
     <fieldset className="mcp-create-fieldset mcp-tool-permission-authoring">
       <legend>Known tools and permissions (optional)</legend>
       <p className="mcp-create-field-copy">{description}</p>
+      <div className="mcp-tool-permission-default" data-mode={defaultPermission}>
+        <div className="permission-editor-field">
+          <span>Default for tools without an override</span>
+          <SelectMenu
+            ariaLabel="Default tool permission"
+            value={defaultPermission}
+            options={[
+              { value: "not-defined", label: "Not defined" },
+              { value: "none", label: "No additional permission" },
+            ]}
+            onChange={(value) => onDefaultPermissionChange(value as ToolPermissionDefault)}
+          />
+        </div>
+        <p>{defaultPermission === "none"
+          ? "Every unlisted tool uses only the standard MCP server access. Add overrides for tools that need downstream access."
+          : "Unlisted tools have no permission decision yet and remain visibly unconfigured."}</p>
+      </div>
       {tools.length === 0 ? (
         <div className="permission-dialog-empty neutral mcp-tool-permission-empty">
-          <strong>No tools configured</strong>
-          <p>Add a tool when you know its MCP tool name, then choose whether it requires additional access.</p>
+          <strong>{defaultPermission === "none" ? "No per-tool overrides" : "No tools configured"}</strong>
+          <p>{defaultPermission === "none"
+            ? "All discovered tools currently use the no-additional-permission default."
+            : "Add a tool when you know its MCP tool name, then choose whether it requires additional access."}</p>
         </div>
       ) : (
         <div className="mcp-tool-permission-list">

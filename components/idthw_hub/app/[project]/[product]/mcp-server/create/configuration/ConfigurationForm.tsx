@@ -39,6 +39,7 @@ export function ConfigurationForm({
     draft.toolPermissions,
     requiresServiceAccount,
     draft.hubServiceAccountName || undefined,
+    requiresServiceAccount ? draft.toolPermissionDefault : undefined,
   )
   const templateRequirementsReady = !usesTemplateValues || (
     Boolean(draft.selectedTemplate)
@@ -435,9 +436,14 @@ export function ConfigurationForm({
           description={usesTemplate
             ? "Review the template defaults or define known MCP tools now. Explicitly mark tools that need no additional permission, or define their required Athenz roles. You can modify them later after the Hub discovers the live tools."
             : "Define known MCP tools now. Explicitly mark tools that need no additional permission, or define their required Athenz roles. You can add or modify them later after the Hub discovers the live tools."}
+          defaultPermission={draft.toolPermissionDefault}
           servicePrincipal={draft.hubServiceAccountName || undefined}
           tools={draft.toolPermissions}
           validationError={toolPermissionValidation.ok ? undefined : toolPermissionValidation.error}
+          onDefaultPermissionChange={(toolPermissionDefault) => setDraft((currentDraft) => ({
+            ...currentDraft,
+            toolPermissionDefault,
+          }))}
           onChange={(toolPermissions) => setDraft((currentDraft) => ({ ...currentDraft, toolPermissions }))}
         />
       ) : null}

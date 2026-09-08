@@ -9,6 +9,7 @@ type RegistryServer = {
   proxyUrl?: unknown
   accessAudience?: unknown
   accessScope?: unknown
+  defaultToolPermission?: unknown
   toolScopes?: unknown
 }
 
@@ -16,6 +17,7 @@ export type ResolvedMcpRoute = {
   proxyUrl: string
   accessAudience?: string
   accessScope?: string
+  defaultToolPermission?: "none" | "not-defined"
   toolScopes?: Record<string, string>
 }
 
@@ -64,10 +66,12 @@ export class McpRegistryClient {
       if (typeof server.routeId !== "string" || typeof server.proxyUrl !== "string") continue
       const proxyUrl = new URL(server.proxyUrl)
       if (proxyUrl.protocol !== "http:" && proxyUrl.protocol !== "https:") continue
+      const defaultToolPermission = parseDefaultToolPermission(server.defaultToolPermission, server.routeId)
       routes.set(server.routeId, {
         proxyUrl: proxyUrl.toString(),
         accessAudience: parseAccessAudience(server.accessAudience, server.accessScope, server.routeId),
         accessScope: typeof server.accessScope === "string" && server.accessScope.trim() ? server.accessScope.trim() : undefined,
+        ...(defaultToolPermission ? { defaultToolPermission } : {}),
         toolScopes: parseToolScopes(server.toolScopes, server.routeId),
       })
     }
@@ -92,6 +96,12 @@ function firstScopeDomain(value: unknown) {
   const marker = ":role."
   const markerIndex = firstScope?.indexOf(marker) ?? -1
   return markerIndex > 0 ? firstScope?.slice(0, markerIndex) : undefined
+}
+
+function parseDefaultToolPermission(value: unknown, serverId: string) {
+  if (value === undefined) return undefined
+  if (value === "none" || value === "not-defined") return value
+  throw new Error(`MCP Hub registry returned invalid defaultToolPermission for ${serverId}`)
 }
 
 function parseToolScopes(value: unknown, serverId: string) {

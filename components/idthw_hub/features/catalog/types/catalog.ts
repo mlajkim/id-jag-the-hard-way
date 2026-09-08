@@ -19,6 +19,7 @@ export type McpServer = {
   containerPort?: number
   creationMethod?: "direct" | "template"
   createdAt?: string
+  defaultToolPermission?: "none" | "not-defined"
   desiredReplicas?: number
   path?: string
   readyReplicas?: number

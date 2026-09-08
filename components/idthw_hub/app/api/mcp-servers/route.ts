@@ -61,6 +61,7 @@ export async function GET(request: NextRequest) {
       const settings = mergeToolPermissionSettings(configuredSettings, overrideSettings)
       return {
         ...server,
+        defaultToolPermission: settings?.defaultPermission,
         toolScopes: settings
           ? toolAccessScopesFromSettings(settings, server.routeId, server.accessScope)
           : undefined,

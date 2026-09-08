@@ -331,6 +331,7 @@ export async function updateMcpToolPermissions(
   }
   const current = storedToolPermissionSettings(deployment.metadata?.annotations?.[ANNOTATION_TOOL_PERMISSIONS])
   const settings = parseToolPermissionSettings({
+    ...(current?.defaultPermission ? { defaultPermission: current.defaultPermission } : {}),
     version: 1,
     tools: {
       ...current?.tools,
