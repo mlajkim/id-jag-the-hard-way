@@ -1,8 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@/features/auth/lib/auth"
-import { requestToolPermissionAccess } from "@/features/permissions/api/requestToolPermissionAccess"
 import { fetchPermissionReadiness } from "@/features/permissions/lib/fetchPermissionReadiness"
-import { createZmsRequest } from "@/features/registration/api/mcpManagedAccess"
+import { SIGNED_IN_USER_MEMBER } from "@/features/permissions/lib/permissionPreset"
 import {
   getMcpServerConfiguration,
   McpResourceNotFoundError,
@@ -11,6 +10,11 @@ import {
   managedMcpAccessDomain,
   managedMcpAccessScope,
 } from "@/features/registration/lib/kubernetesManifest"
+import { createPermissionWorkflowRequest } from "@/features/workflow/api/permissionWorkflowRequests"
+import type {
+  PermissionWorkflowPolicy,
+  PermissionWorkflowRequirement,
+} from "@/features/workflow/types"
 
 export const dynamic = "force-dynamic"
 
@@ -95,14 +99,57 @@ export async function POST(
       )
     }
 
-    const report = await requestToolPermissionAccess(
-      group,
-      await createZmsRequest("MCP Hub tool permission request"),
-    )
+    const requirements: PermissionWorkflowRequirement[] = group.requirements
+      .filter(({ source, status }) => source !== "managed" && status === "missing")
+      .map(({ label, member, role, source }) => ({
+        label,
+        member,
+        role,
+        source: source as PermissionWorkflowRequirement["source"],
+      }))
+    const policies: PermissionWorkflowPolicy[] = group.policies
+      .filter(({ source, status }) => source === "helper" && status === "missing")
+      .map(({ action, effect, label, resource, role }) => ({
+        action,
+        effect,
+        label,
+        resource,
+        role,
+        source: "helper",
+      }))
+    if (requirements.length === 0 && policies.length === 0) {
+      return NextResponse.json({
+        approved: true,
+        changed: false,
+        checksCompleted: 10,
+        toolName,
+      }, { headers: NO_STORE_HEADERS })
+    }
+
+    const requesterPrincipal = group.requirements.find(({ configuredMember }) => (
+      configuredMember === SIGNED_IN_USER_MEMBER
+    ))?.member
+    if (!requesterPrincipal) throw new Error("Unable to resolve the signed-in Athenz principal")
+
+    const result = await createPermissionWorkflowRequest({
+      mcpKeyName,
+      policies,
+      project,
+      requesterPrincipal,
+      requesterUsername: session.user.username,
+      requirements,
+      serverDisplayName: configuration.serverName,
+      toolName,
+    })
     return NextResponse.json({
-      approved: true,
       checksCompleted: 10,
-      ...report,
+      created: result.created,
+      request: {
+        id: result.request.id,
+        status: result.request.status,
+        toolName: result.request.toolName,
+      },
+      submitted: true,
       toolName,
     }, { headers: NO_STORE_HEADERS })
   } catch (error) {

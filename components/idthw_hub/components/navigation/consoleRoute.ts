@@ -2,6 +2,7 @@ export const DEFAULT_PROJECT = "idthw-demo"
 export const DEFAULT_PRODUCT = "mcp-hub"
 export const DEFAULT_SECTION = "catalog"
 export const GENAI_PRODUCT = "gen-ai"
+export const WORKFLOW_PRODUCT = "workflow-platform"
 
 export type ConsoleSection =
   | "catalog"
@@ -10,6 +11,7 @@ export type ConsoleSection =
   | "playground"
   | "approval"
   | "monitoring"
+  | "requests"
 
 export type ConsoleRoute = {
   project: string
@@ -24,6 +26,7 @@ const SECTION_SLUGS = new Set<ConsoleSection>([
   "playground",
   "approval",
   "monitoring",
+  "requests",
 ])
 
 export function parseConsoleRoute(pathname: string): ConsoleRoute {
@@ -67,6 +70,7 @@ export function decodeRouteParam(value: string) {
 export function displayProduct(product: string) {
   if (product === "mcp-hub") return "MCP hub"
   if (product === GENAI_PRODUCT) return "Gen AI"
+  if (product === WORKFLOW_PRODUCT) return "Workflow Platform"
   return product
     .split("-")
     .map((part) => part[0]?.toUpperCase() + part.slice(1))
@@ -77,6 +81,8 @@ export function productHref(project: string, product: string) {
   return consoleHref({
     project,
     product,
-    section: product === GENAI_PRODUCT ? "monitoring" : "catalog",
+    section: product === GENAI_PRODUCT
+      ? "monitoring"
+      : product === WORKFLOW_PRODUCT ? "requests" : "catalog",
   })
 }

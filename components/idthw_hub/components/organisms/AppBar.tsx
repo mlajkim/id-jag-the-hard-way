@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowUpRight, Bell, Boxes, BrainCircuit, Check, ChevronDown, Grip, LogIn, LogOut, Sparkles, TerminalSquare } from "lucide-react"
+import { ArrowUpRight, Bell, Boxes, BrainCircuit, Check, ChevronDown, Grip, ListChecks, LogIn, LogOut, Sparkles, TerminalSquare } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -11,6 +11,7 @@ import {
   GENAI_PRODUCT,
   parseConsoleRoute,
   productHref,
+  WORKFLOW_PRODUCT,
 } from "@/components/navigation/consoleRoute"
 import { signInAsDifferentUser, signOutFromIdp, switchIdpUser } from "@/features/auth/actions/idp"
 import type { HubAccountSummary } from "@/features/auth/types/accounts"
@@ -30,6 +31,13 @@ const PRODUCTS = [
     icon: BrainCircuit,
     accent: "genai",
   },
+  {
+    id: WORKFLOW_PRODUCT,
+    label: "Workflow Platform",
+    description: "Review and approve MCP permission requests.",
+    icon: ListChecks,
+    accent: "workflow",
+  },
 ]
 
 type AppBarUser = {
@@ -48,7 +56,15 @@ function initials(value: string) {
     .join("") || "U"
 }
 
-export function AppBar({ user, accounts }: { user: AppBarUser; accounts: HubAccountSummary[] }) {
+export function AppBar({
+  accounts,
+  serviceMode = false,
+  user,
+}: {
+  accounts: HubAccountSummary[]
+  serviceMode?: boolean
+  user: AppBarUser
+}) {
   const pathname = usePathname()
   const route = parseConsoleRoute(pathname)
   const productSwitcher = useRef<HTMLDetailsElement>(null)
@@ -136,7 +152,7 @@ export function AppBar({ user, accounts }: { user: AppBarUser; accounts: HubAcco
             </div>
             <div className="product-switcher-footer">
               <Sparkles size={13} aria-hidden="true" />
-              Two products, one local IDTHW workspace
+              Three products, one local IDTHW workspace
             </div>
           </div>
         </details>
@@ -156,7 +172,12 @@ export function AppBar({ user, accounts }: { user: AppBarUser; accounts: HubAcco
         <button className="icon-button" aria-label="Notifications" type="button" disabled>
           <Bell size={16} aria-hidden="true" />
         </button>
-        <details className="user-menu" ref={userMenu}>
+        {serviceMode ? (
+          <div className="current-user workflow-open-mode" aria-label="Open workflow access">
+            <div className="avatar" aria-hidden="true">WF</div>
+            <span>Open workflow access</span>
+          </div>
+        ) : <details className="user-menu" ref={userMenu}>
           <summary className="current-user" aria-label={`Current user ${user.username}`}>
             <div className="avatar" aria-hidden="true">{initials(user.username)}</div>
             <span>{user.username}</span>
@@ -201,7 +222,7 @@ export function AppBar({ user, accounts }: { user: AppBarUser; accounts: HubAcco
               </form>
             </div>
           </div>
-        </details>
+        </details>}
         <button className="icon-button" aria-label="App menu" type="button" disabled>
           <Grip size={16} aria-hidden="true" />
         </button>

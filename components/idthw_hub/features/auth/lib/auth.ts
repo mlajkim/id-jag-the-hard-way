@@ -3,6 +3,7 @@ import type { Account, Profile } from "next-auth"
 import { getToken } from "next-auth/jwt"
 import type { NextRequest } from "next/server"
 import type { OIDCConfig } from "next-auth/providers"
+import { WORKFLOW_PRODUCT } from "@/components/navigation/consoleRoute"
 import { idpConfig, IDP_PROVIDER_ID } from "@/features/auth/config/idp"
 import type { CachedHubAccount, HubAccountSummary } from "@/features/auth/types/accounts"
 
@@ -215,6 +216,8 @@ export const { handlers, auth, signIn, signOut, unstable_update: updateSession }
     callbacks: {
       async authorized({ auth: session, request: authorizedRequest }) {
         if (authorizedRequest.nextUrl.pathname === "/") return true
+        const routeParts = authorizedRequest.nextUrl.pathname.split("/").filter(Boolean)
+        if (routeParts[1] === WORKFLOW_PRODUCT) return true
         return Boolean(session?.user)
       },
       async signIn({ profile }) {
