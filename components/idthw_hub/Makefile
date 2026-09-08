@@ -9,7 +9,7 @@ MCP_HUB_IDP_ISSUER ?= https://keycloak.idp:$(shell ../../tools/port.sh keycloak-
 MCP_HUB_IDP_PUBLIC_ISSUER ?= $(MCP_HUB_IDP_ISSUER)
 MCP_HUB_IDP_WELL_KNOWN ?= $(MCP_HUB_IDP_ISSUER)/.well-known/openid-configuration
 MCP_HUB_IDP_TOKEN_ENDPOINT ?= $(MCP_HUB_IDP_ISSUER)/protocol/openid-connect/token
-MCP_HUB_IDP_CLIENT_ID ?= mcp-hub.hub-ui
+MCP_HUB_IDP_CLIENT_ID ?= idthw-hub.ui
 MCP_HUB_IDP_CLIENT_SECRET ?= mcp-hub-local-secret
 MCP_HUB_ATHENZ_UI_URL ?= http://localhost:$(shell ../../tools/port.sh athenz-ui)
 MCP_HUB_ZMS_URL ?= https://host.docker.internal:$(shell ../../tools/port.sh zms)/zms/v1
@@ -35,11 +35,14 @@ MCP_HUB_PERMISSION_CONFIG_MAP_NAME ?= mcp-hub-permission-presets
 MCP_HUB_PERMISSION_CONFIG_MAP_KEY ?= permission-presets.yaml
 MCP_HUB_PERMISSION_SIGNED_IN_USER_DOMAIN ?= human
 MCP_HUB_PERMISSION_PRESETS_FILE ?= config/permission-presets.yaml
-MCP_HUB_CERT_KEY ?= certs/mcp-hub-ui.key
-MCP_HUB_CERT ?= certs/mcp-hub-ui.crt
+IDTHW_HUB_CONTROLLER_DOMAIN ?= idthw-hub
+IDTHW_HUB_CONTROLLER_SERVICE ?= central-controller
+MCP_HUB_CERT_KEY ?= certs/idthw-hub-central-controller.key
+MCP_HUB_CERT_PUBLIC_KEY ?= certs/idthw-hub-central-controller.public.key
+MCP_HUB_CERT ?= certs/idthw-hub-central-controller.crt
 MCP_HUB_CERT_KEY_VERSION ?= v1
 
-.PHONY: apply-permission-presets build build-image local register-idp-client renew-cert restart
+.PHONY: apply-permission-presets build build-image local register-idp-client renew-cert restart setup-controller
 
 apply-permission-presets:
 	kubectl create configmap "$(MCP_HUB_PERMISSION_CONFIG_MAP_NAME)" \
@@ -71,10 +74,27 @@ register-idp-client:
 		"http://localhost:$(PORT)" \
 		confidential
 
+setup-controller:
+	cd ../.. && ./tools/athenz/create-tld.sh "$(IDTHW_HUB_CONTROLLER_DOMAIN)"
+	@if [ ! -f "$(MCP_HUB_CERT_KEY)" ] && [ ! -f "$(MCP_HUB_CERT_PUBLIC_KEY)" ]; then \
+		../../tools/athenz/create-private-key.sh "$(MCP_HUB_CERT_KEY:.key=)"; \
+	elif [ ! -f "$(MCP_HUB_CERT_KEY)" ] || [ ! -f "$(MCP_HUB_CERT_PUBLIC_KEY)" ]; then \
+		echo "Controller keypair is incomplete; refusing to overwrite it." >&2; \
+		exit 1; \
+	fi
+	cd ../.. && ./tools/athenz/create-service.sh \
+		"$(IDTHW_HUB_CONTROLLER_DOMAIN)" \
+		"$(IDTHW_HUB_CONTROLLER_SERVICE)" \
+		"components/idthw_hub/$(MCP_HUB_CERT_PUBLIC_KEY)"
+	cd ../.. && ./tools/athenz/enable-cert-provider.sh \
+		"$(IDTHW_HUB_CONTROLLER_DOMAIN)" \
+		"$(IDTHW_HUB_CONTROLLER_SERVICE)"
+	$(MAKE) renew-cert
+
 renew-cert:
 	../../tools/athenz/fetch-cert.sh \
-		mcp-hub \
-		hub-ui \
+		"$(IDTHW_HUB_CONTROLLER_DOMAIN)" \
+		"$(IDTHW_HUB_CONTROLLER_SERVICE)" \
 		"$(MCP_HUB_CERT_KEY)" \
 		"$(MCP_HUB_CERT_KEY_VERSION)" \
 		--output "$(MCP_HUB_CERT)"

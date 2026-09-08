@@ -1,0 +1,57 @@
+{
+  "templates": {
+    "mcp_exchange_helpers": {
+      "metadata": {
+        "latestVersion": 1,
+        "timestamp": "2026-09-09T00:00:00.000Z",
+        "description": "MCP downstream token-exchange helper roles",
+        "keywordsToReplace": "_target_role_,_source_domain_,_source_service_",
+        "autoUpdate": false
+      },
+      "roles": [
+        {
+          "name": "_domain_:_target_role_-exchanger",
+          "modified": "1970-01-01T00:00:00.000Z",
+          "roleMembers": [
+            {
+              "memberName": "_source_domain_._source_service_"
+            }
+          ]
+        },
+        {
+          "name": "_domain_:_target_role_-jag-exchanger",
+          "modified": "1970-01-01T00:00:00.000Z",
+          "roleMembers": [
+            {
+              "memberName": "mcp-hub.mcp-gateway"
+            }
+          ]
+        }
+      ],
+      "policies": [
+        {
+          "name": "_domain_:policy._target_role_-exchanger",
+          "modified": "1970-01-01T00:00:00.000Z",
+          "assertions": [
+            {
+              "action": "zts.token_target_exchange",
+              "resource": "_domain_:_source_domain_:_target_role_",
+              "role": "_domain_:_target_role_-exchanger"
+            }
+          ]
+        },
+        {
+          "name": "_domain_:policy._target_role_-jag-exchanger",
+          "modified": "1970-01-01T00:00:00.000Z",
+          "assertions": [
+            {
+              "action": "zts.jag_exchange",
+              "resource": "_domain_:_target_role_",
+              "role": "_domain_:_target_role_-jag-exchanger"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

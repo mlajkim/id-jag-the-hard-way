@@ -13,7 +13,7 @@ export const idpConfig = {
   publicIssuer,
   wellKnown: process.env.MCP_HUB_IDP_WELL_KNOWN,
   authorizationEndpoint,
-  clientId: process.env.MCP_HUB_IDP_CLIENT_ID ?? "mcp-hub.hub-ui",
+  clientId: process.env.MCP_HUB_IDP_CLIENT_ID ?? "idthw-hub.ui",
   clientSecret: process.env.MCP_HUB_IDP_CLIENT_SECRET ?? "mcp-hub-local-secret",
   tokenEndpoint: process.env.MCP_HUB_IDP_TOKEN_ENDPOINT
     ?? `${issuer.replace(/\/$/, "")}/protocol/openid-connect/token`,

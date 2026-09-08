@@ -949,22 +949,10 @@ curl -sS \
 Registration is required when the active value printed above is absent from this list. Run this after a custom ZMS rebuild or restart if ZTS does not become ready:
 
 ```sh
-_zms_pod="$(kubectl -n athenz get pod \
-  -l app.kubernetes.io/name=athenz-zms-server \
-  -o jsonpath='{.items[0].metadata.name}')"
-
-kubectl -n athenz exec -i deployment/athenz-cli -- \
-  sh -c "cat >/tmp/zms.public.pem && \
-    zms-cli \
-      -z https://athenz-zms-server.athenz:4443/zms/v1 \
-      -key /var/run/athenz/athenz_admin.private.pem \
-      -cert /var/run/athenz/athenz_admin.cert.pem \
-      -d sys.auth \
-      add-public-key zms '${_zms_pod}' /tmp/zms.public.pem" \
-  < athenz_dist/kubernetes/athenz-zms-server/kustomize/keys/zms.public.pem
+make fix-zts-key-id
 ```
 
-Confirm the active key ID was registered before restarting ZTS:
+The target registers the active key ID and restarts ZTS only when registration succeeds. Confirm the active key ID was registered:
 
 ```sh
 curl -sS \
@@ -975,14 +963,7 @@ curl -sS \
   | jq -e --arg id "${_zms_pod}" '.publicKeys | any(.id == $id)'
 ```
 
-Do not restart ZTS unless the command prints `true`. Once it does, restart ZTS so it reloads the signed domains:
-
-```sh
-kubectl -n athenz rollout restart deployment/athenz-zts-server
-kubectl -n athenz rollout status deployment/athenz-zts-server
-```
-
-Finally, confirm that ZTS is ready:
+The command should print `true`. Finally, confirm that ZTS is ready:
 
 ```sh
 kubectl -n athenz get deployment athenz-zts-server

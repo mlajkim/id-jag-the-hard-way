@@ -5,7 +5,7 @@ The goal of this FAQ is to run IDTHW Hub locally and use its MCP Hub product.
 <!-- TOC depthFrom:2 depthTo:3 -->
 
 - [Step 1. Configure IdP Login](#step-1-configure-idp-login)
-- [Step 2. Setup X.509 Cert for the UI](#step-2-setup-x509-cert-for-the-ui)
+- [Step 2. Setup X.509 Cert for the Central Controller](#step-2-setup-x509-cert-for-the-central-controller)
 - [Step 3. Grant Access for Protected Tool Calls](#step-3-grant-access-for-protected-tool-calls)
 - [Step 4. Run IDTHW Hub](#step-4-run-idthw-hub)
 - [Step 5. Import K8s API Docs Server](#step-5-import-k8s-api-docs-server)
@@ -32,7 +32,7 @@ The goal of this FAQ is to run IDTHW Hub locally and use its MCP Hub product.
 
 ## Step 1. Configure IdP Login
 
-Register IDTHW Hub as a confidential client in the tutorial Keycloak realm. The existing client identity remains `mcp-hub.hub-ui` because MCP Hub is the first protected product inside IDTHW Hub:
+Register IDTHW Hub as the `idthw-hub.ui` confidential client in the tutorial Keycloak realm:
 
 ```sh
 make -C components/idthw_hub register-idp-client PORT=3102
@@ -54,41 +54,26 @@ IDTHW Hub accepts any Keycloak user that has a non-empty `preferred_username` cl
 
 After the first login, use **Sign in as a different user** to add another Keycloak account. The top-bar user menu then keeps the sessioned users in an encrypted browser cache and switches between them without another login prompt. The default cache limit is five users; set `MCP_HUB_ACCOUNT_CACHE_SIZE` from `1` to `8` to override it.
 
-## Step 2. Setup X.509 Cert for the UI
+## Step 2. Setup X.509 Cert for the Central Controller
 
-The IDTHW Hub server needs its own Athenz workload certificate to read permission membership from ZMS. This certificate and private key remain server-side; they are not stored in the browser session. IDTHW Hub does not use the certificate to mint a user-scoped access token for MCP Hub tool discovery.
+The IDTHW Hub backend uses the `idthw-hub.central-controller` Athenz workload identity to read permission membership from ZMS and perform control-plane provisioning. This identity is separate from the `idthw-hub.ui` Keycloak client used for browser login. The certificate and private key remain server-side; they are not stored in the browser session. IDTHW Hub does not use the certificate to mint a user-scoped access token for MCP Hub tool discovery.
 
 ```sh
-./tools/athenz/create-tld.sh "mcp-hub"
-./tools/athenz/create-private-key.sh "./keys/mcp-hub-ui"
-./tools/athenz/create-service.sh "mcp-hub" "hub-ui" "./keys/mcp-hub-ui.public.key"
-./tools/athenz/enable-cert-provider.sh "mcp-hub" "hub-ui"
-./tools/athenz/fetch-cert.sh "mcp-hub" "hub-ui" "./keys/mcp-hub-ui.key" "v1"
+make -C components/idthw_hub setup-controller
 ```
 
-Copy the certificate and its key for the local development:
+The target creates the `idthw-hub` TLD and `central-controller` service idempotently, generates the local keypair only when neither key file exists, enables certificate issuance, and fetches the X.509 certificate. It refuses to overwrite an incomplete keypair.
+
+Install the local Athenz CA certificate if it is not already present:
 
 ```sh
-mkdir -p "components/idthw_hub/certs"
-cp "./keys/mcp-hub-ui.key" "components/idthw_hub/certs/"
-cp "./keys/mcp-hub-ui.crt" "components/idthw_hub/certs/"
 cp ./athenz_dist/certs/ca.cert.pem ./components/idthw_hub/certs/ca.crt
-ls -al components/idthw_hub/certs/
-```
-
-```sh
-# total 16
-# drwxr-xr-x@  4 mlajkim  staff   128 Jul  7 08:16 .
-# drwxr-xr-x  21 mlajkim  staff   672 Jul  7 08:15 ..
-# -rw-r--r--   1 mlajkim  staff  1834 Jul  7 08:16 ca.crt
-# -rw-------   1 mlajkim  staff  1720 Jul  7 08:16 mcp-hub-ui.crt
-# -rw-------   1 mlajkim  staff  1679 Jul  7 08:16 mcp-hub-ui.key
 ```
 
 By default, IDTHW Hub reads these files:
 
-- `components/idthw_hub/certs/mcp-hub-ui.crt`
-- `components/idthw_hub/certs/mcp-hub-ui.key`
+- `components/idthw_hub/certs/idthw-hub-central-controller.crt`
+- `components/idthw_hub/certs/idthw-hub-central-controller.key`
 - `components/idthw_hub/certs/ca.crt`
 
 ## Step 3. Grant Access for Protected Tool Calls
@@ -136,8 +121,8 @@ env \
   MCP_HUB_MCP_GATEWAY_URL="http://mcp-gateway.idthw.org:$(./tools/port.sh mcp-gateway)" \
   MCP_HUB_CORE_PROXY_URL="http://host.docker.internal:$(./tools/port.sh core-mcp-proxy)" \
   MCP_HUB_REGISTRY_TOKEN="idthw-local-mcp-registry-token" \
-  MCP_HUB_ATHENZ_CERT_PATH="./certs/mcp-hub-ui.crt" \
-  MCP_HUB_ATHENZ_KEY_PATH="./certs/mcp-hub-ui.key" \
+  MCP_HUB_ATHENZ_CERT_PATH="./certs/idthw-hub-central-controller.crt" \
+  MCP_HUB_ATHENZ_KEY_PATH="./certs/idthw-hub-central-controller.key" \
   MCP_HUB_ATHENZ_CA_PATH="./certs/ca.crt" \
   make -C components/idthw_hub local PORT=3102 OPEN_UI=true
 ```
