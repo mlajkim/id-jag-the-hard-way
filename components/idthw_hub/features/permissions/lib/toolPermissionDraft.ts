@@ -34,6 +34,15 @@ export function validateToolPermissionDraft(
     if (configuredTools[toolName]) {
       return { ok: false, error: `Tool names must be unique: ${toolName}` }
     }
+    const incompleteRequirement = tool.requirements.find((requirement) => (
+      !requirement.audience.trim() || !requirement.role.trim()
+    ))
+    if (incompleteRequirement) {
+      return {
+        ok: false,
+        error: `Enter both an audience and required role for ${toolName}`,
+      }
+    }
     configuredTools[toolName] = {
       requirements: configuredRequirementsFromDraft(
         tool.requirements,

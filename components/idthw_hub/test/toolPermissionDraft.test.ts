@@ -84,6 +84,17 @@ test("validates tool names and extracts unique signed-in-user audiences", () => 
   assert.deepEqual(signedInUserPermissionAudiences(settings), ["api"])
 })
 
+test("explains incomplete additional tool permissions without exposing a malformed Athenz role", () => {
+  assert.deepEqual(validateToolPermissionDraft([{
+    id: 1,
+    requirements: [emptyEditablePermissionRequirement()],
+    toolName: "get_k8s_docs",
+  }], true), {
+    ok: false,
+    error: "Enter both an audience and required role for get_k8s_docs",
+  })
+})
+
 test("fingerprints permission metadata omitted from the confirmation display", () => {
   const updatedSettings = {
     ...settings,

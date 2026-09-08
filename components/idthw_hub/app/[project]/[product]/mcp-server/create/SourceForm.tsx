@@ -196,19 +196,20 @@ export function SourceForm({
           </div>
 
           {draft.selectedTemplate ? (
-            <div className="mcp-template-source-preview">
-              <fieldset className="mcp-create-fieldset">
-                <legend>Source</legend>
-                <div className="mcp-create-choice-list">
-                  <label className="mcp-create-choice source-choice disabled">
-                    <input type="radio" checked disabled readOnly />
-                    <span>
-                      <strong>Container registry</strong>
-                      <small>Defined by the selected MCP template.</small>
-                    </span>
-                  </label>
-                </div>
-              </fieldset>
+            <details
+              className="mcp-create-additional mcp-template-source-preview"
+              key={draft.selectedTemplate.templateKey}
+            >
+              <summary>Template details</summary>
+              <div className="mcp-create-choice-list mcp-template-source-choice-list">
+                <label className="mcp-create-choice source-choice disabled">
+                  <input type="radio" checked disabled readOnly />
+                  <span>
+                    <strong>Container registry</strong>
+                    <small>Defined by the selected MCP template.</small>
+                  </span>
+                </label>
+              </div>
 
               <div className="mcp-create-field">
                 <label htmlFor="mcp-template-image">Container image URL</label>
@@ -281,7 +282,7 @@ export function SourceForm({
                   />
                 </div>
               </details>
-            </div>
+            </details>
           ) : null}
         </>
       ) : (

@@ -1,13 +1,10 @@
 "use client"
 
 import { Plus, Trash2 } from "lucide-react"
-import type { Dispatch, SetStateAction } from "react"
 import { SelectMenu } from "@/components/atoms/SelectMenu"
-import { AdditionalToolAccessField } from "./AdditionalToolAccessField"
-import { PermissionEditor } from "./PermissionRequestDialog"
 import {
   emptyEditablePermissionRequirement,
-  TEMPLATE_MCP_IAM_MEMBER,
+  SIGNED_IN_USER_MEMBER,
 } from "../lib/toolPermissionDraft"
 import type {
   EditablePermissionRequirement,
@@ -16,19 +13,15 @@ import type {
 } from "../types/permissions"
 
 export function ToolPermissionAuthoring({
-  accessAudience,
   description,
   defaultPermission,
-  servicePrincipal,
   tools,
   validationError,
   onDefaultPermissionChange,
   onChange,
 }: {
-  accessAudience?: string
   description: string
   defaultPermission: ToolPermissionDefault
-  servicePrincipal?: string
   tools: ToolPermissionDraft[]
   validationError?: string
   onDefaultPermissionChange: (defaultPermission: ToolPermissionDefault) => void
@@ -44,11 +37,17 @@ export function ToolPermissionAuthoring({
       ...tools,
       {
         id: Math.max(0, ...tools.map(({ id }) => id)) + 1,
-        requirements: [emptyEditablePermissionRequirement()],
+        requirements: [],
         toolName: "",
       },
     ])
   }
+  const hasIncompleteFields = tools.some((tool) => (
+    !tool.toolName.trim()
+    || tool.requirements.some((requirement) => (
+      !requirement.audience.trim() || !requirement.role.trim()
+    ))
+  ))
 
   return (
     <fieldset className="mcp-create-fieldset mcp-tool-permission-authoring">
@@ -71,6 +70,9 @@ export function ToolPermissionAuthoring({
           ? "Every unlisted tool uses only the standard MCP server access. Add overrides for tools that need downstream access."
           : "Unlisted tools have no permission decision yet and remain visibly unconfigured."}</p>
       </div>
+      <p className="mcp-tool-permission-guidance">
+        Leave the <strong>permission switch</strong> off to explicitly record that a named tool requires no additional permission. Turn it on only when an audience and role are required.
+      </p>
       {tools.length === 0 ? (
         <div className="permission-dialog-empty neutral mcp-tool-permission-empty">
           <strong>{defaultPermission === "none" ? "No per-tool overrides" : "No tools configured"}</strong>
@@ -81,23 +83,62 @@ export function ToolPermissionAuthoring({
       ) : (
         <div className="mcp-tool-permission-list">
           {tools.map((tool, index) => (
-            <section className="mcp-tool-permission-group" key={tool.id}>
+            <section
+              className="mcp-tool-permission-group"
+              data-mode={tool.requirements.length > 0 ? "required" : "none"}
+              key={tool.id}
+            >
               <div className="mcp-tool-permission-head">
-                <label className="permission-editor-field">
-                  <span>MCP tool name</span>
+                <div className="mcp-tool-permission-identity">
+                  <label className="permission-editor-field">
+                    <span>MCP tool name</span>
+                    <input
+                      required
+                      autoComplete="off"
+                      placeholder="get_k8s_docs"
+                      value={tool.toolName}
+                      onChange={(event) => updateTool(tool.id, { toolName: event.target.value })}
+                    />
+                  </label>
+                  <div className="mcp-tool-role-switch">
+                    <button
+                      className="mcp-tool-role-switch-button"
+                      type="button"
+                      role="switch"
+                      aria-label="Role required"
+                      aria-checked={tool.requirements.length > 0}
+                      onClick={() => toggleAdditionalPermission(tool, updateTool, tool.requirements.length === 0)}
+                    >
+                      <span className="mcp-tool-role-switch-slider" />
+                    </button>
+                  </div>
+                </div>
+                <label className="permission-editor-field mcp-tool-permission-requirement-field">
+                  <span>Audience (Athenz domain)</span>
                   <input
-                    required
+                    required={tool.requirements.length > 0}
+                    disabled={tool.requirements.length === 0}
                     autoComplete="off"
-                    placeholder="get_k8s_docs"
-                    value={tool.toolName}
-                    onChange={(event) => updateTool(tool.id, { toolName: event.target.value })}
+                    placeholder={tool.requirements.length > 0 ? "api" : "Not required"}
+                    value={tool.requirements[0]?.audience ?? ""}
+                    onChange={(event) => updatePrimaryRequirement(tool, updateTool, {
+                      audience: event.target.value,
+                    })}
                   />
                 </label>
-                <AdditionalToolAccessField
-                  compact
-                  requirements={tool.requirements}
-                  setRequirements={permissionSetter(tool, updateTool)}
-                />
+                <label className="permission-editor-field mcp-tool-permission-requirement-field">
+                  <span>Required role</span>
+                  <input
+                    required={tool.requirements.length > 0}
+                    disabled={tool.requirements.length === 0}
+                    autoComplete="off"
+                    placeholder={tool.requirements.length > 0 ? "docs-getter" : "Not required"}
+                    value={tool.requirements[0]?.role ?? ""}
+                    onChange={(event) => updatePrimaryRequirement(tool, updateTool, {
+                      role: event.target.value,
+                    })}
+                  />
+                </label>
                 <button
                   className="permission-editor-remove"
                   type="button"
@@ -107,20 +148,13 @@ export function ToolPermissionAuthoring({
                   <Trash2 size={15} aria-hidden="true" />
                 </button>
               </div>
-              {tool.requirements.length > 0 ? (
-                <PermissionEditor
-                  accessAudience={accessAudience}
-                  helperPreviewServicePrincipal={TEMPLATE_MCP_IAM_MEMBER}
-                  requirements={tool.requirements}
-                  servicePrincipal={servicePrincipal}
-                  setRequirements={permissionSetter(tool, updateTool)}
-                />
-              ) : null}
             </section>
           ))}
         </div>
       )}
-      {validationError ? <p className="mcp-create-service-warning" role="alert">{validationError}</p> : null}
+      {validationError && !hasIncompleteFields ? (
+        <p className="mcp-create-service-warning" role="alert">{validationError}</p>
+      ) : null}
       <button className="button" type="button" disabled={tools.length >= 100} onClick={addTool}>
         <Plus size={14} aria-hidden="true" />
         Add tool
@@ -129,12 +163,55 @@ export function ToolPermissionAuthoring({
   )
 }
 
-function permissionSetter(
+function toggleAdditionalPermission(
   tool: ToolPermissionDraft,
   updateTool: (id: number, values: Partial<ToolPermissionDraft>) => void,
-): Dispatch<SetStateAction<EditablePermissionRequirement[]>> {
-  return (value) => {
-    const requirements = typeof value === "function" ? value(tool.requirements) : value
-    updateTool(tool.id, { requirements })
+  checked: boolean,
+) {
+  if (checked) {
+    const requirement = fixedRequirement(
+      tool.cachedRequirement ?? tool.requirements[0] ?? emptyEditablePermissionRequirement(),
+    )
+    updateTool(tool.id, {
+      cachedRequirement: requirement,
+      requirements: [requirement],
+    })
+    return
+  }
+
+  const cachedRequirement = tool.requirements[0]
+    ? fixedRequirement(tool.requirements[0])
+    : tool.cachedRequirement
+  updateTool(tool.id, {
+    ...(cachedRequirement ? { cachedRequirement } : {}),
+    requirements: [],
+  })
+}
+
+function updatePrimaryRequirement(
+  tool: ToolPermissionDraft,
+  updateTool: (id: number, values: Partial<ToolPermissionDraft>) => void,
+  values: Pick<Partial<EditablePermissionRequirement>, "audience" | "role">,
+) {
+  const requirement = fixedRequirement({
+    ...(tool.requirements[0] ?? tool.cachedRequirement ?? emptyEditablePermissionRequirement()),
+    ...values,
+  })
+  updateTool(tool.id, {
+    cachedRequirement: requirement,
+    requirements: [requirement],
+  })
+}
+
+function fixedRequirement(
+  requirement: EditablePermissionRequirement,
+): EditablePermissionRequirement {
+  return {
+    ...requirement,
+    exchangeHelpersCustomized: false,
+    helperRequirements: [],
+    label: "",
+    member: SIGNED_IN_USER_MEMBER,
+    memberType: "signed-in-user",
   }
 }
