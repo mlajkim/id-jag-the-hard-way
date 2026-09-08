@@ -37,6 +37,25 @@ test("round-trips tool permission settings through the creation draft", () => {
   if (result.ok) assert.deepEqual(result.settings, settings)
 })
 
+test("round-trips a known tool that explicitly requires no additional permission", () => {
+  const noAdditionalPermission = {
+    version: 1 as const,
+    tools: {
+      ping: { requirements: [] },
+    },
+  }
+  const draft = toolPermissionDraftFromSettings(noAdditionalPermission)
+
+  assert.equal(draft[0].toolName, "ping")
+  assert.deepEqual(draft[0].requirements, [])
+
+  const result = validateToolPermissionDraft(draft, true)
+  assert.equal(result.ok, true)
+  if (!result.ok) return
+  assert.deepEqual(result.settings, noAdditionalPermission)
+  assert.match(toolPermissionSettingsText(result.settings), /No additional permission required/)
+})
+
 test("validates tool names and extracts unique signed-in-user audiences", () => {
   const draft = toolPermissionDraftFromSettings(settings)
   assert.deepEqual(validateToolPermissionDraft([

@@ -15,6 +15,7 @@ const COLLAPSED_TOOL_COUNT = 5
 export function PermissionReadinessSection({
   accessAudience,
   mcpKeyName,
+  serverDisplayName,
   project,
   servicePrincipal,
   stepNumber = 1,
@@ -23,6 +24,7 @@ export function PermissionReadinessSection({
 }: {
   accessAudience?: string
   mcpKeyName: string
+  serverDisplayName: string
   project: string
   servicePrincipal?: string
   stepNumber?: number
@@ -37,12 +39,25 @@ export function PermissionReadinessSection({
       .map((group) => [group.toolName as string, group]) ?? [],
   )
   const sharedGroup = evaluatedReadiness?.groups.find((group) => !group.toolName)
+  const hasManagedAccess = evaluatedReadiness?.groups.some((group) => (
+    group.requirements.some(({ source }) => source === "managed")
+  )) ?? false
+  const hasCustomToolAccess = evaluatedReadiness?.groups.some((group) => (
+    group.requirements.some(({ source }) => source === "tool" || source === "helper")
+    || group.policies.some(({ source }) => source === "helper")
+  )) ?? false
+  const simplePermissionStep = hasManagedAccess && !hasCustomToolAccess
 
   return (
     <div className="permission-readiness-section" aria-labelledby="permission-readiness-heading">
-      <PermissionHeading stepNumber={stepNumber} />
+      <PermissionHeading
+        copy={simplePermissionStep
+          ? `There are no additional permissions to review for ${serverDisplayName}. You can continue to the next step.`
+          : undefined}
+        stepNumber={stepNumber}
+      />
 
-      {readiness?.status === "configuration-error" ? (
+      {!simplePermissionStep && readiness?.status === "configuration-error" ? (
         <div className="permission-config-error" role="alert">
           <TriangleAlert size={18} aria-hidden="true" />
           <div>
@@ -52,7 +67,7 @@ export function PermissionReadinessSection({
         </div>
       ) : null}
 
-      <div className="permission-tools-panel">
+      {!simplePermissionStep ? <div className="permission-tools-panel">
         <div className="permission-tools-heading">
           <div>
             <span>Available tools</span>
@@ -104,7 +119,7 @@ export function PermissionReadinessSection({
         ) : toolsResult.error ? null : (
           <div className="permission-tools-empty">This MCP server returned no tools.</div>
         )}
-      </div>
+      </div> : null}
     </div>
   )
 }
@@ -180,6 +195,8 @@ function ToolPermissionRow({
   }
 
   const status = groupStatus(group)
+  const noAdditionalPermission = group.requirements.every(({ source }) => source === "managed")
+    && group.policies.every(({ source }) => source === "managed")
   return (
     <div className="permission-tool-row" data-status={status}>
       <PermissionStatusIcon status={status} />
@@ -193,7 +210,9 @@ function ToolPermissionRow({
         requirements={group.requirements}
         subject={`Tool: ${tool.name}`}
         toolName={tool.name}
-        triggerLabel={status === "ready" ? "View permissions" : status === "missing" ? "Request permission" : "View requirements"}
+        triggerLabel={noAdditionalPermission
+          ? "No additional permission"
+          : status === "ready" ? "View permissions" : status === "missing" ? "Request permission" : "View requirements"}
       />
     </div>
   )
@@ -219,7 +238,7 @@ function PermissionStatusIcon({ status }: { status: PermissionCheckStatus }) {
   )
 }
 
-function PermissionHeading({ stepNumber }: { stepNumber: number }) {
+function PermissionHeading({ copy, stepNumber }: { copy?: string; stepNumber: number }) {
   return (
     <div className="permission-readiness-heading">
       <div className="permission-heading-step">
@@ -229,7 +248,7 @@ function PermissionHeading({ stepNumber }: { stepNumber: number }) {
             Check your permissions
           </h3>
           <p className="section-copy">
-            All tools are visible. Checkmarks show which protected calls you can make; for other tools, open Request permission to view the required access.
+            {copy ?? "All tools are visible. Checkmarks show which protected calls you can make; for other tools, open Request permission to view the required access."}
           </p>
         </div>
       </div>

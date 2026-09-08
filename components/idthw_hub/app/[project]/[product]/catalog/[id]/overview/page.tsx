@@ -163,7 +163,7 @@ export default async function McpServerOverviewRoute({
               </div>
             </div>
             <dl className="resource-overview-details">
-              <Detail label="Namespace" value={server.namespace} mono />
+              <Detail label="Project (K8s namespace)" value={server.project} mono />
               <Detail label="Deployment" value={server.name} mono />
               <Detail label="Container image" value={server.containerImage} mono wide />
               <Detail label="Container port" value={server.containerPort?.toString()} mono />

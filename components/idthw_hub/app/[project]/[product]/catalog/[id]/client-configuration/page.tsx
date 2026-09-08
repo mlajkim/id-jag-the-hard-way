@@ -50,6 +50,7 @@ export default async function McpServerClientConfigurationRoute({
       accessAudience={server.accessAudience}
       mcpKeyName={server.name}
       project={server.namespace}
+      serverDisplayName={displayName}
       servicePrincipal={server.serviceAccount}
       stepNumber={usesHubManagedAccess ? 2 : 1}
       readiness={permissionReadiness}

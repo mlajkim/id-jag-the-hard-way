@@ -91,7 +91,7 @@ export function AppBar({ user, accounts }: { user: AppBarUser; accounts: HubAcco
           <ChevronDown size={12} aria-hidden="true" />
         </button>
         <button className="context-select" type="button" disabled>
-          <span className="select-type">Project</span>
+          <span className="select-type">Project (K8s namespace)</span>
           <span className="select-name">
             {route.project}
             <ChevronDown size={12} aria-hidden="true" />

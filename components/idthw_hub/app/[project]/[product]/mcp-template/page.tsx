@@ -60,7 +60,7 @@ export default async function McpTemplateRoute({
               <th>Template key</th>
               <th>Source</th>
               <th>Visibility</th>
-              <th>Project</th>
+              <th>Project (K8s namespace)</th>
               <th>Action</th>
             </tr>
           </thead>

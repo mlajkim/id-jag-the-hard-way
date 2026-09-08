@@ -433,8 +433,8 @@ export function ConfigurationForm({
         <ToolPermissionAuthoring
           accessAudience={hubServiceDomain}
           description={usesTemplate
-            ? "Review the template defaults or define required Athenz roles now when you already know the MCP tool names. The Hub stores the requirements but does not grant downstream role membership. You can modify them later after the Hub discovers the live tools."
-            : "Define required Athenz roles now when you already know the MCP tool names. The Hub stores the requirements but does not grant downstream role membership. You can add or modify them later after the Hub discovers the live tools."}
+            ? "Review the template defaults or define known MCP tools now. Explicitly mark tools that need no additional permission, or define their required Athenz roles. You can modify them later after the Hub discovers the live tools."
+            : "Define known MCP tools now. Explicitly mark tools that need no additional permission, or define their required Athenz roles. You can add or modify them later after the Hub discovers the live tools."}
           servicePrincipal={draft.hubServiceAccountName || undefined}
           tools={draft.toolPermissions}
           validationError={toolPermissionValidation.ok ? undefined : toolPermissionValidation.error}

@@ -202,7 +202,7 @@ export function toolPermissionSettingsText(settings: ToolPermissionSettings | un
           : []
         return [direct, ...helpers, ...generatedHelpers]
       })
-      return `${toolName}\n${requirements.join("\n") || "No direct permissions"}`
+      return `${toolName}\n${requirements.join("\n") || "No additional permission required"}`
     })
     .join("\n\n")
 }
