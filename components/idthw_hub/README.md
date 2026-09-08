@@ -205,6 +205,10 @@ The catalog reader supports two execution modes:
 
 For the current local workflow, no additional IDTHW Hub RBAC setup is required beyond your own `kubectl` access.
 
+## Projects
+
+The product-level **Projects** page and top-bar project selector read Kubernetes Namespaces directly as their source of truth. Active namespaces can be selected to open the current product in that project context. Reserved infrastructure namespaces are omitted: `default`, every name beginning with `kube-`, `local-path-storage`, the central `mcp-hub` namespace, and the `agent-gateway`, `ai`, `athenz`, `human`, and `idp` platform namespaces. The shared namespace-name predicate is also the validation contract for a future create-project flow; project creation is not exposed yet.
+
 ## Live Tool Discovery
 
 The Tools page discovers tools from the running MCP server with public JSON-RPC `tools/list`. MCP Hub does not send an `Authorization` header for this request. Deployment annotations can provide the endpoint URL, but the tool definitions come from the live MCP server.

@@ -1,12 +1,16 @@
 import type { ReactNode } from "react"
 import { AppBar } from "@/components/organisms/AppBar"
 import { SideBar } from "@/components/organisms/SideBar"
+import { fetchProjectNamespaces } from "@/features/projects/api/projectNamespaces"
 
-export function WorkflowConsoleTemplate({ children }: { children: ReactNode }) {
+export async function WorkflowConsoleTemplate({ children }: { children: ReactNode }) {
+  const projectResponse = await fetchProjectNamespaces()
+
   return (
     <main className="console-shell">
       <AppBar
         accounts={[]}
+        projects={projectResponse.projects}
         serviceMode
         user={{ username: "workflow-platform" }}
       />

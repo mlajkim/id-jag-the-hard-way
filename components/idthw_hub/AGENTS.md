@@ -36,6 +36,7 @@ Registration is a real product goal. Users/providers should eventually be able t
 - The app is standalone under `components/idthw_hub/`.
 - It uses Next.js 16, TypeScript, Tailwind CSS imports, and mostly hand-written CSS in `app/globals.css`.
 - `make local` runs the app on port `3102`.
+- Projects are read directly from Kubernetes Namespaces and are selectable from the top bar or the product-level **Projects** page. The shared project-name predicate excludes `default`, every `kube-*` namespace, the Hub control namespace, local storage infrastructure, and the `agent-gateway`, `ai`, `athenz`, `human`, and `idp` platform namespaces; reuse that predicate when project creation is added. There is no create-project flow yet.
 - The catalog page fetches MCP server rows from the local Next API route `/api/mcp-servers`.
 - `/api/mcp-servers` reads Kubernetes Deployments with MCP Hub labels and maps labels/annotations into the catalog model.
 - `/api/mcp-servers` is also the service-authenticated registry contract used by MCP Gateway; it returns each stable route ID and Core MCP Proxy URL.
