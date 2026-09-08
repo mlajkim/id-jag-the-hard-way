@@ -1,11 +1,6 @@
 import { createHash } from "node:crypto"
 import { parseAthenzRole } from "../lib/permissionPreset.ts"
 import { parseZmsPolicy, policyAssertionKey } from "../lib/zmsPolicy.ts"
-import type {
-  PermissionPolicyRequirementCheck,
-  PermissionReadinessGroup,
-  PermissionRequirementCheck,
-} from "../types/permissions.ts"
 import type { ZmsRequest } from "../../registration/api/mcpManagedAccess.ts"
 
 const MAX_POLICY_NAME_LENGTH = 192
@@ -16,8 +11,25 @@ export type ToolPermissionAccessReport = {
   policiesUpdated: number
 }
 
+export type ToolPermissionAccessInput = {
+  policies: Array<{
+    action: string
+    effect: "ALLOW" | "DENY"
+    resource: string
+    role: string
+    source: "helper" | "managed"
+    status: "missing" | "ready" | "unavailable"
+  }>
+  requirements: Array<{
+    member: string
+    role: string
+    source: "helper" | "managed" | "tool"
+    status: "missing" | "ready" | "unavailable"
+  }>
+}
+
 export async function requestToolPermissionAccess(
-  group: PermissionReadinessGroup,
+  group: ToolPermissionAccessInput,
   requestZms: ZmsRequest,
 ): Promise<ToolPermissionAccessReport> {
   const requirements = group.requirements.filter(({ source }) => source !== "managed")
@@ -44,7 +56,7 @@ export async function requestToolPermissionAccess(
 
 async function ensureRoleMember(
   requestZms: ZmsRequest,
-  requirement: PermissionRequirementCheck,
+  requirement: ToolPermissionAccessInput["requirements"][number],
 ) {
   const { domain, role } = parseAthenzRole(requirement.role)
   const rolePath = `/domain/${encodeURIComponent(domain)}/role/${encodeURIComponent(role)}`
@@ -71,7 +83,7 @@ async function ensureRoleMember(
 
 async function ensurePolicyAssertion(
   requestZms: ZmsRequest,
-  policy: PermissionPolicyRequirementCheck,
+  policy: ToolPermissionAccessInput["policies"][number],
 ) {
   const { domain, role } = parseAthenzRole(policy.role)
   const rolePath = `/domain/${encodeURIComponent(domain)}/role/${encodeURIComponent(role)}`
