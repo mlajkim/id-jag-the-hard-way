@@ -32,7 +32,7 @@ The goal of this FAQ is to run IDTHW Hub locally and use its MCP Hub product.
 
 ## Step 1. Configure IdP Login
 
-Register IDTHW Hub as a confidential client in the tutorial Keycloak realm. The existing client identity remains `mcp-hub.hub-ui` because MCP Hub is the first protected product inside IDTHW Hub:
+Register IDTHW Hub as the `idthw-hub.ui` confidential client in the tutorial Keycloak realm:
 
 ```sh
 make -C components/idthw_hub register-idp-client PORT=3102
@@ -56,7 +56,7 @@ After the first login, use **Sign in as a different user** to add another Keyclo
 
 ## Step 2. Setup X.509 Cert for the Central Controller
 
-The IDTHW Hub backend uses the `idthw-hub.central-controller` Athenz workload identity to read permission membership from ZMS and perform control-plane provisioning. This identity is separate from the `mcp-hub.hub-ui` Keycloak client used for browser login. The certificate and private key remain server-side; they are not stored in the browser session. IDTHW Hub does not use the certificate to mint a user-scoped access token for MCP Hub tool discovery.
+The IDTHW Hub backend uses the `idthw-hub.central-controller` Athenz workload identity to read permission membership from ZMS and perform control-plane provisioning. This identity is separate from the `idthw-hub.ui` Keycloak client used for browser login. The certificate and private key remain server-side; they are not stored in the browser session. IDTHW Hub does not use the certificate to mint a user-scoped access token for MCP Hub tool discovery.
 
 ```sh
 make -C components/idthw_hub setup-controller
