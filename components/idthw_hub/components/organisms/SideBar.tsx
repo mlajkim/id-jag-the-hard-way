@@ -1,6 +1,6 @@
 "use client"
 
-import { BarChart3, ClipboardList, HelpCircle, ListChecks, Sparkles } from "lucide-react"
+import { BarChart3, ClipboardList, FolderKanban, HelpCircle, ListChecks, Sparkles } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -13,6 +13,7 @@ import {
 } from "@/components/navigation/consoleRoute"
 
 const NAV_ITEMS: Array<{ section: ConsoleSection; label: string; enabled: boolean }> = [
+  { section: "projects", label: "Projects", enabled: true },
   { section: "catalog", label: "Catalog", enabled: true },
   { section: "mcp-server", label: "MCP server", enabled: true },
   { section: "mcp-template", label: "MCP template", enabled: true },
@@ -21,10 +22,12 @@ const NAV_ITEMS: Array<{ section: ConsoleSection; label: string; enabled: boolea
 ]
 
 const GENAI_NAV_ITEMS: Array<{ section: ConsoleSection; label: string; icon: typeof BarChart3 }> = [
+  { section: "projects", label: "Projects", icon: FolderKanban },
   { section: "monitoring", label: "Monitoring Dashboard", icon: BarChart3 },
 ]
 
 const WORKFLOW_NAV_ITEMS: Array<{ section: ConsoleSection; label: string; icon: typeof ListChecks }> = [
+  { section: "projects", label: "Projects", icon: FolderKanban },
   { section: "requests", label: "Permission requests", icon: ListChecks },
 ]
 

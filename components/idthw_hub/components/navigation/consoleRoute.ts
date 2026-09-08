@@ -5,6 +5,7 @@ export const GENAI_PRODUCT = "gen-ai"
 export const WORKFLOW_PRODUCT = "workflow-platform"
 
 export type ConsoleSection =
+  | "projects"
   | "catalog"
   | "mcp-server"
   | "mcp-template"
@@ -20,6 +21,7 @@ export type ConsoleRoute = {
 }
 
 const SECTION_SLUGS = new Set<ConsoleSection>([
+  "projects",
   "catalog",
   "mcp-server",
   "mcp-template",
