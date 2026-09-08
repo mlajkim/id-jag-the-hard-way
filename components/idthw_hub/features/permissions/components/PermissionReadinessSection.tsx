@@ -4,6 +4,10 @@ import { CheckCircle2, ChevronDown, ChevronRight, CircleX, TriangleAlert } from 
 import { useState } from "react"
 import type { McpTool, McpToolsResult } from "@/features/catalog/types/tools"
 import { PermissionRequestDialog } from "@/features/permissions/components/PermissionRequestDialog"
+import {
+  ToolPermissionAccessButton,
+  type ToolPermissionRequestStatus,
+} from "@/features/permissions/components/ToolPermissionAccessButton"
 import type {
   PermissionCheckStatus,
   PermissionReadiness,
@@ -180,7 +184,15 @@ function ToolPermissionRow({
     return (
       <div className="permission-tool-row" data-status="unconfigured">
         <span className="permission-status-icon" aria-hidden="true"><TriangleAlert size={19} /></span>
-        <ToolIdentity tool={tool} />
+        <div className="permission-tool-main">
+          <ToolIdentity tool={tool} />
+          <ToolPermissionAccessButton
+            mcpKeyName={mcpKeyName}
+            project={project}
+            status="unconfigured"
+            toolName={tool.name}
+          />
+        </div>
         <PermissionRequestDialog
           accessAudience={accessAudience}
           configurationMissing
@@ -191,19 +203,26 @@ function ToolPermissionRow({
           requirements={[]}
           subject={`Tool: ${tool.name}`}
           toolName={tool.name}
-          triggerLabel="No configuration"
+          triggerLabel="View permissions"
         />
       </div>
     )
   }
 
   const status = groupStatus(group)
-  const noAdditionalPermission = group.requirements.every(({ source }) => source === "managed")
-    && group.policies.every(({ source }) => source === "managed")
+  const requestStatus = customPermissionRequestStatus(group)
   return (
     <div className="permission-tool-row" data-status={status}>
       <PermissionStatusIcon status={status} />
-      <ToolIdentity tool={tool} />
+      <div className="permission-tool-main">
+        <ToolIdentity tool={tool} />
+        <ToolPermissionAccessButton
+          mcpKeyName={mcpKeyName}
+          project={project}
+          status={requestStatus}
+          toolName={tool.name}
+        />
+      </div>
       <PermissionRequestDialog
         accessAudience={accessAudience}
         mcpKeyName={mcpKeyName}
@@ -213,9 +232,7 @@ function ToolPermissionRow({
         requirements={group.requirements}
         subject={`Tool: ${tool.name}`}
         toolName={tool.name}
-        triggerLabel={noAdditionalPermission
-          ? "No additional permission"
-          : status === "ready" ? "View permissions" : status === "missing" ? "Request permission" : "View requirements"}
+        triggerLabel="View permissions"
       />
     </div>
   )
@@ -251,7 +268,7 @@ function PermissionHeading({ copy, stepNumber }: { copy?: string; stepNumber: nu
             Check your permissions
           </h3>
           <p className="section-copy">
-            {copy ?? "All tools are visible. Checkmarks show which protected calls you can make; for other tools, open Request permission to view the required access."}
+            {copy ?? "All tools are visible. Request missing access beside a tool, or open View permissions to inspect its requirements."}
           </p>
         </div>
       </div>
@@ -266,5 +283,18 @@ function groupStatus(group: PermissionReadinessGroup): PermissionCheckStatus {
   ]
   if (statuses.includes("unavailable")) return "unavailable"
   if (statuses.includes("missing")) return "missing"
+  return "ready"
+}
+
+function customPermissionRequestStatus(
+  group: PermissionReadinessGroup,
+): ToolPermissionRequestStatus {
+  const checks = [
+    ...group.requirements.filter(({ source }) => source !== "managed"),
+    ...group.policies.filter(({ source }) => source === "helper"),
+  ]
+  if (checks.length === 0) return "not-required"
+  if (checks.some(({ status }) => status === "unavailable")) return "unavailable"
+  if (checks.some(({ status }) => status === "missing")) return "missing"
   return "ready"
 }
