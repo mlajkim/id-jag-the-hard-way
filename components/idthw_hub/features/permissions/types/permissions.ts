@@ -56,6 +56,7 @@ export type EditableExchangePolicyRule = {
 }
 
 export type ToolPermissionDraft = {
+  cachedRequirement?: EditablePermissionRequirement
   id: number
   requirements: EditablePermissionRequirement[]
   toolName: string

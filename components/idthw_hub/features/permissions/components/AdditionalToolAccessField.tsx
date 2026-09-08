@@ -7,24 +7,13 @@ import { emptyEditablePermissionRequirement } from "@/features/permissions/lib/t
 import type { EditablePermissionRequirement } from "@/features/permissions/types/permissions"
 
 export function AdditionalToolAccessField({
-  compact = false,
   requirements,
   setRequirements,
 }: {
-  compact?: boolean
   requirements: EditablePermissionRequirement[]
   setRequirements: Dispatch<SetStateAction<EditablePermissionRequirement[]>>
 }) {
   const accessMode = requirements.length === 0 ? "none" : "required"
-  const options = compact
-    ? [
-        { value: "required", label: "Additional permission" },
-        { value: "none", label: "No additional permission" },
-      ]
-    : [
-        { value: "required", label: "Additional permission required" },
-        { value: "none", label: "No additional permission required" },
-      ]
   const changeAccessMode = (value: string) => {
     if (value === "none") {
       setRequirements([])
@@ -35,19 +24,10 @@ export function AdditionalToolAccessField({
     ))
   }
 
-  if (compact) {
-    return (
-      <div className="permission-editor-field additional-tool-access-compact">
-        <span>Tool access</span>
-        <SelectMenu
-          ariaLabel="Additional tool access"
-          value={accessMode}
-          options={options}
-          onChange={changeAccessMode}
-        />
-      </div>
-    )
-  }
+  const options = [
+    { value: "required", label: "Additional permission required" },
+    { value: "none", label: "No additional permission required" },
+  ]
 
   return (
     <div className="additional-tool-access" data-mode={accessMode}>

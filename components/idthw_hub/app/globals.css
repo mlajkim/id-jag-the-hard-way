@@ -1102,6 +1102,18 @@ input:disabled {
   cursor: pointer;
 }
 
+.mcp-template-source-preview {
+  margin-bottom: 28px;
+}
+
+.mcp-template-source-preview:not([open]) > summary {
+  margin-bottom: 0;
+}
+
+.mcp-template-source-choice-list {
+  margin-bottom: 28px;
+}
+
 .mcp-template-env-table-wrap {
   max-width: 100%;
 }
@@ -2827,6 +2839,51 @@ body:has(.permission-request-dialog[open]) {
   padding-top: 22px;
 }
 
+.mcp-tool-permission-heading {
+  display: grid;
+  gap: 2px;
+  margin: 0 0 12px;
+}
+
+.mcp-tool-permission-heading h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 22px;
+}
+
+.mcp-tool-permission-heading p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.mcp-tool-permission-default {
+  width: fit-content;
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 12px;
+  padding: 7px 9px;
+  border: 1px solid #e2e7ee;
+  border-radius: 7px;
+  background: #fafbfd;
+  color: #4b5563;
+  font-size: 12px;
+  line-height: 18px;
+  cursor: pointer;
+}
+
+.mcp-tool-permission-default input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: var(--blue);
+}
+
 .mcp-tool-permission-empty {
   width: min(100%, 760px);
   margin-bottom: 10px;
@@ -2834,37 +2891,9 @@ body:has(.permission-request-dialog[open]) {
 
 .mcp-tool-permission-list {
   display: grid;
-  gap: 14px;
+  gap: 8px;
   margin-bottom: 10px;
   padding-bottom: 4px;
-}
-
-.mcp-tool-permission-default {
-  width: min(100%, 760px);
-  display: grid;
-  grid-template-columns: minmax(210px, 260px) minmax(0, 1fr);
-  align-items: end;
-  gap: 12px;
-  margin: 10px 0;
-}
-
-.mcp-tool-permission-default .select-menu,
-.mcp-tool-permission-default .select-menu-trigger {
-  width: 100%;
-}
-
-.mcp-tool-permission-default > p {
-  min-height: 32px;
-  display: flex;
-  align-items: center;
-  margin: 0;
-  color: #667181;
-  font-size: 11px;
-  line-height: 1.4;
-}
-
-.mcp-tool-permission-default[data-mode="none"] > p {
-  color: #22734f;
 }
 
 .mcp-tool-permission-group {
@@ -2873,26 +2902,103 @@ body:has(.permission-request-dialog[open]) {
   container: tool-permission / inline-size;
   border: 1px solid #d8dfe8;
   border-radius: 7px;
-  padding: 12px;
+  padding: 10px;
   background: #fbfcfe;
 }
 
 .mcp-tool-permission-head {
-  width: min(100%, 820px);
+  width: 100%;
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) minmax(175px, 210px) 32px;
+  grid-template-columns:
+    minmax(260px, 1.45fr)
+    minmax(145px, 1fr)
+    minmax(145px, 1fr)
+    32px;
   align-items: end;
   gap: 8px;
-  margin-bottom: 10px;
+  margin: 0;
+}
+
+.mcp-tool-permission-identity {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) 44px;
+  align-items: end;
+  gap: 6px;
 }
 
 .mcp-tool-permission-head:last-child {
   margin-bottom: 0;
 }
 
-.additional-tool-access-compact .select-menu,
-.additional-tool-access-compact .select-menu-trigger {
-  width: 100%;
+.mcp-tool-role-switch {
+  width: 44px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mcp-tool-role-switch-button {
+  display: inline-block;
+  flex: 0 0 auto;
+  border: 0;
+  padding: 2px 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.mcp-tool-role-switch-button:hover {
+  opacity: 0.7;
+}
+
+.mcp-tool-role-switch-button:active {
+  opacity: 0.5;
+}
+
+.mcp-tool-role-switch-button:focus-visible {
+  border-radius: 999px;
+  outline: 2px solid rgb(49 116 211 / 28%);
+  outline-offset: 2px;
+}
+
+.mcp-tool-role-switch-slider {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  border-radius: 100px;
+  background: #dfdfdf;
+  vertical-align: top;
+  transition: background-color 0.3s ease-out;
+}
+
+.mcp-tool-role-switch-slider::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: calc(50% - 2px);
+  height: calc(100% - 4px);
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.3s ease-out;
+}
+
+.mcp-tool-role-switch-button[aria-checked="true"] .mcp-tool-role-switch-slider {
+  background: var(--blue);
+}
+
+.mcp-tool-role-switch-button[aria-checked="true"] .mcp-tool-role-switch-slider::after {
+  transform: translate3d(100%, 0, 0);
+}
+
+.mcp-tool-permission-group[data-mode="none"] .mcp-tool-permission-requirement-field {
+  opacity: 0.52;
+}
+
+.mcp-tool-permission-requirement-field {
+  transition: opacity 0.16s ease;
 }
 
 .additional-tool-access {
@@ -3295,6 +3401,30 @@ body:has(.permission-request-dialog[open]) {
     left: -12px;
     width: 10px;
   }
+
+  .mcp-tool-permission-head {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 32px;
+  }
+
+  .mcp-tool-permission-head > :nth-child(1) {
+    grid-column: 1 / 3;
+    grid-row: 1;
+  }
+
+  .mcp-tool-permission-head > :nth-child(2) {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .mcp-tool-permission-head > :nth-child(3) {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .mcp-tool-permission-head > .permission-editor-remove {
+    grid-column: 3;
+    grid-row: 1;
+  }
 }
 
 @container tool-permission (max-width: 500px) {
@@ -3302,9 +3432,19 @@ body:has(.permission-request-dialog[open]) {
     grid-template-columns: minmax(0, 1fr) 32px;
   }
 
-  .additional-tool-access-compact {
-    grid-column: 1 / 2;
+  .mcp-tool-permission-head > :nth-child(1) {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .mcp-tool-permission-head > :nth-child(2) {
+    grid-column: 1 / 3;
     grid-row: 2;
+  }
+
+  .mcp-tool-permission-head > :nth-child(3) {
+    grid-column: 1 / 3;
+    grid-row: 3;
   }
 
   .mcp-tool-permission-head > .permission-editor-remove {

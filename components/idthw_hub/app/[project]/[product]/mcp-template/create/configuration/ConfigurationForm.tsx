@@ -13,14 +13,12 @@ import { useMcpTemplateDraft } from "../McpTemplateDraftContext"
 import { McpTemplateIdentityFields } from "./McpTemplateIdentityFields"
 
 export function ConfigurationForm({
-  project,
   cancelHref,
   sourceHref,
   referenceHref,
   iconOptions,
   templateKeyReadOnly = false,
 }: {
-  project: string
   cancelHref: string
   sourceHref: string
   referenceHref: string
@@ -28,7 +26,6 @@ export function ConfigurationForm({
   templateKeyReadOnly?: boolean
 }) {
   const { draft, setDraft, resetDraft } = useMcpTemplateDraft()
-  const hubServiceDomain = `mcp-hub.mcps.${project}`
   const toolPermissionValidation = validateToolPermissionDraft(
     draft.toolPermissions,
     true,
@@ -184,8 +181,7 @@ export function ConfigurationForm({
       </fieldset>
 
       <ToolPermissionAuthoring
-        accessAudience={hubServiceDomain}
-        description="Define known MCP tools as template defaults. Explicitly mark tools that need no additional permission, or define their required Athenz roles. Providers can review them during server creation and modify them later after live tool discovery."
+        description="Add known MCP tools as template defaults. Choose no additional permission or enter the audience and required role for each tool."
         defaultPermission={draft.toolPermissionDefault}
         tools={draft.toolPermissions}
         validationError={toolPermissionValidation.ok ? undefined : toolPermissionValidation.error}

@@ -48,7 +48,6 @@ export default async function ConfigureMcpTemplateRoute({
           referenceHref={referenceHref}
         />
         <ConfigurationForm
-          project={project}
           cancelHref={templateHref}
           sourceHref={createHref}
           referenceHref={referenceHref}

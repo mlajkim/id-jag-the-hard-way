@@ -432,12 +432,10 @@ export function ConfigurationForm({
 
       {requiresServiceAccount ? (
         <ToolPermissionAuthoring
-          accessAudience={hubServiceDomain}
           description={usesTemplate
-            ? "Review the template defaults or define known MCP tools now. Explicitly mark tools that need no additional permission, or define their required Athenz roles. You can modify them later after the Hub discovers the live tools."
-            : "Define known MCP tools now. Explicitly mark tools that need no additional permission, or define their required Athenz roles. You can add or modify them later after the Hub discovers the live tools."}
+            ? "Review the template defaults. For each known tool, choose no additional permission or enter its audience and required role. You can update these after live tool discovery."
+            : "Add any known MCP tools. Choose no additional permission or enter the audience and required role for each tool. You can update these after live tool discovery."}
           defaultPermission={draft.toolPermissionDefault}
-          servicePrincipal={draft.hubServiceAccountName || undefined}
           tools={draft.toolPermissions}
           validationError={toolPermissionValidation.ok ? undefined : toolPermissionValidation.error}
           onDefaultPermissionChange={(toolPermissionDefault) => setDraft((currentDraft) => ({
