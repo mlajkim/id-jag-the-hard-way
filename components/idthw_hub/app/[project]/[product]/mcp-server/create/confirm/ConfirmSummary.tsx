@@ -41,11 +41,13 @@ function changedServerFields(before: McpCreateDraft, after: McpCreateDraft) {
     before.toolPermissions,
     before.accessManagement === "hub",
     before.hubServiceAccountName || undefined,
+    before.accessManagement === "hub" ? before.toolPermissionDefault : undefined,
   )
   const afterToolPermissions = validateToolPermissionDraft(
     after.toolPermissions,
     after.accessManagement === "hub",
     after.hubServiceAccountName || undefined,
+    after.accessManagement === "hub" ? after.toolPermissionDefault : undefined,
   )
   const fields = [
     ["Container image URL", before.image, after.image],
@@ -128,6 +130,7 @@ export function ConfirmSummary({
     draft.toolPermissions,
     draft.accessManagement === "hub",
     draft.hubServiceAccountName || undefined,
+    draft.accessManagement === "hub" ? draft.toolPermissionDefault : undefined,
   )
   const toolPermissions = draft.accessManagement === "hub" && toolPermissionValidation.ok
     ? toolPermissionValidation.settings

@@ -6,6 +6,7 @@ import {
   generatedExchangeHelperDraftsForRequirement,
   TEMPLATE_MCP_IAM_MEMBER,
   signedInUserPermissionAudiences,
+  toolPermissionDefaultFromSettings,
   toolPermissionDraftFromSettings,
   toolPermissionSettingsFingerprint,
   toolPermissionSettingsText,
@@ -54,6 +55,21 @@ test("round-trips a known tool that explicitly requires no additional permission
   if (!result.ok) return
   assert.deepEqual(result.settings, noAdditionalPermission)
   assert.match(toolPermissionSettingsText(result.settings), /No additional permission required/)
+})
+
+test("stores a no-additional-permission default separately from an undefined default", () => {
+  const result = validateToolPermissionDraft([], true, undefined, "none")
+
+  assert.equal(result.ok, true)
+  if (!result.ok) return
+  assert.deepEqual(result.settings, {
+    defaultPermission: "none",
+    version: 1,
+    tools: {},
+  })
+  assert.equal(toolPermissionDefaultFromSettings(result.settings), "none")
+  assert.equal(toolPermissionDefaultFromSettings(undefined), "not-defined")
+  assert.match(toolPermissionSettingsText(result.settings), /No additional permission for unlisted tools/)
 })
 
 test("validates tool names and extracts unique signed-in-user audiences", () => {

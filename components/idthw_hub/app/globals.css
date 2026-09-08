@@ -2759,6 +2759,34 @@ body:has(.permission-request-dialog[open]) {
   padding-bottom: 4px;
 }
 
+.mcp-tool-permission-default {
+  width: min(100%, 760px);
+  display: grid;
+  grid-template-columns: minmax(210px, 260px) minmax(0, 1fr);
+  align-items: end;
+  gap: 12px;
+  margin: 10px 0;
+}
+
+.mcp-tool-permission-default .select-menu,
+.mcp-tool-permission-default .select-menu-trigger {
+  width: 100%;
+}
+
+.mcp-tool-permission-default > p {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  margin: 0;
+  color: #667181;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.mcp-tool-permission-default[data-mode="none"] > p {
+  color: #22734f;
+}
+
 .mcp-tool-permission-group {
   width: 100%;
   min-width: 0;
@@ -5779,6 +5807,11 @@ body:has(.permission-request-dialog[open]) {
 }
 
 @media (max-width: 640px) {
+  .mcp-tool-permission-default {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
   .resource-overview-sidebar,
   .resource-overview-details {
     grid-template-columns: 1fr;

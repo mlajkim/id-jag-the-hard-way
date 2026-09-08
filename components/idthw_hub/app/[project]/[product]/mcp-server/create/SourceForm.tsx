@@ -5,7 +5,10 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import type { McpIconOption } from "@/features/mcp-servers/lib/mcpIcons"
 import { McpTemplateSelect } from "@/features/mcp-templates/components/McpTemplateSelect"
 import type { McpTemplateDetailResponse, McpTemplateSummary } from "@/features/mcp-templates/types"
-import { toolPermissionDraftFromSettings } from "@/features/permissions/lib/toolPermissionDraft"
+import {
+  toolPermissionDefaultFromSettings,
+  toolPermissionDraftFromSettings,
+} from "@/features/permissions/lib/toolPermissionDraft"
 import { ContainerArgumentsField } from "@/features/registration/components/ContainerArgumentsField"
 import { ContainerImageField } from "./ContainerImageField"
 import { useMcpCreateDraft } from "./McpCreateDraftContext"
@@ -54,6 +57,7 @@ export function SourceForm({
           ...currentDraft,
           iconId: template.iconId,
           selectedTemplate: template,
+          toolPermissionDefault: toolPermissionDefaultFromSettings(template.toolPermissions),
           toolPermissions: toolPermissionDraftFromSettings(
             template.toolPermissions,
             currentDraft.hubServiceAccountName,
@@ -77,6 +81,7 @@ export function SourceForm({
             selectedTemplateKey: "",
             selectedTemplate: null,
             templateEnvironmentVariables: [],
+            toolPermissionDefault: "not-defined",
             toolPermissions: [],
           }
         : currentDraft)
@@ -96,6 +101,7 @@ export function SourceForm({
       selectedTemplateKey: initialTemplateKey,
       selectedTemplate: null,
       templateEnvironmentVariables: [],
+      toolPermissionDefault: "not-defined",
       toolPermissions: [],
     }))
     void loadTemplate(initialTemplateKey)
@@ -106,6 +112,7 @@ export function SourceForm({
     setDraft((currentDraft) => ({
       ...currentDraft,
       creationMethod,
+      toolPermissionDefault: creationMethod === "direct" ? "not-defined" : currentDraft.toolPermissionDefault,
       toolPermissions: creationMethod === "direct" ? [] : currentDraft.toolPermissions,
       visibility: creationMethod === "direct" ? "personal" : currentDraft.visibility,
     }))
@@ -118,6 +125,7 @@ export function SourceForm({
       selectedTemplateKey: templateKey,
       selectedTemplate: null,
       templateEnvironmentVariables: [],
+      toolPermissionDefault: "not-defined",
       toolPermissions: [],
     }))
     if (templateKey) void loadTemplate(templateKey)

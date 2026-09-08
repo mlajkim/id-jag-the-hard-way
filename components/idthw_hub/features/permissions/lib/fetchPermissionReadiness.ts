@@ -131,6 +131,7 @@ export async function fetchPermissionReadiness(
           status: "unavailable",
         })),
       })),
+      ...(preset.defaultPermission ? { defaultPermission: preset.defaultPermission } : {}),
       status: "unavailable",
     }
   }
@@ -194,7 +195,11 @@ export async function fetchPermissionReadiness(
       ? "missing"
       : "ready"
 
-  return { groups, status }
+  return {
+    ...(preset.defaultPermission ? { defaultPermission: preset.defaultPermission } : {}),
+    groups,
+    status,
+  }
 }
 
 export async function readPermissionPresetConfigMap() {

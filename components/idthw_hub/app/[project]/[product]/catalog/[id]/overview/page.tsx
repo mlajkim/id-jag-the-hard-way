@@ -196,6 +196,10 @@ export default async function McpServerOverviewRoute({
               <dl className="resource-overview-details">
                 <Detail label="Management" value={server.accessManagement === "hub" ? "MCP Hub managed" : "MCP server managed"} />
                 <Detail label="Audience" value={server.accessAudience} mono wide />
+                <Detail
+                  label="Default for unlisted tools"
+                  value={server.defaultToolPermission === "none" ? "No additional permission" : "Not defined"}
+                />
               </dl>
               {server.accessManagement === "hub" ? (
                 <ManagedAccessPermissions definition={permissionDefinition} details={managedAccess} />

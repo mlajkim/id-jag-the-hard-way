@@ -49,11 +49,13 @@ function changedTemplateFields(before: McpTemplateDraft, after: McpTemplateDraft
     before.toolPermissions,
     true,
     TEMPLATE_MCP_IAM_MEMBER,
+    before.toolPermissionDefault,
   )
   const afterToolPermissions = validateToolPermissionDraft(
     after.toolPermissions,
     true,
     TEMPLATE_MCP_IAM_MEMBER,
+    after.toolPermissionDefault,
   )
   const fields = [
     ["Container image URL", before.image, after.image],
@@ -119,6 +121,7 @@ export function ConfirmSummary({
     draft.toolPermissions,
     true,
     TEMPLATE_MCP_IAM_MEMBER,
+    draft.toolPermissionDefault,
   )
   const toolPermissions = toolPermissionValidation.ok
     ? toolPermissionValidation.settings

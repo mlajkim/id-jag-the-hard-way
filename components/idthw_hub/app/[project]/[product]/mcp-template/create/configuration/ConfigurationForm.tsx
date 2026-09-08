@@ -33,6 +33,7 @@ export function ConfigurationForm({
     draft.toolPermissions,
     true,
     TEMPLATE_MCP_IAM_MEMBER,
+    draft.toolPermissionDefault,
   )
 
   function updateEnvironmentVariable(
@@ -185,8 +186,13 @@ export function ConfigurationForm({
       <ToolPermissionAuthoring
         accessAudience={hubServiceDomain}
         description="Define known MCP tools as template defaults. Explicitly mark tools that need no additional permission, or define their required Athenz roles. Providers can review them during server creation and modify them later after live tool discovery."
+        defaultPermission={draft.toolPermissionDefault}
         tools={draft.toolPermissions}
         validationError={toolPermissionValidation.ok ? undefined : toolPermissionValidation.error}
+        onDefaultPermissionChange={(toolPermissionDefault) => setDraft((currentDraft) => ({
+          ...currentDraft,
+          toolPermissionDefault,
+        }))}
         onChange={(toolPermissions) => setDraft((currentDraft) => ({ ...currentDraft, toolPermissions }))}
       />
 

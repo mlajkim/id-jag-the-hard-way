@@ -11,6 +11,7 @@ import {
   parseToolAccessScopesForServer,
   permissionPresetFromToolSettings,
   SIGNED_IN_USER_MEMBER,
+  toolAccessScopesFromSettings,
   withManagedAccessRequirements,
   withExpectedExchangePolicies,
 } from "../features/permissions/lib/permissionPreset.ts"
@@ -616,6 +617,45 @@ test("allows an empty override to clear a tool's custom permissions", () => {
 
   const merged = mergeToolPermissionSettings(base, overrides)
   assert.deepEqual(merged?.tools.read.requirements, [])
+})
+
+test("distinguishes a default with no additional permission from an undefined default", () => {
+  const noAdditionalPermission = parseToolPermissionSettings({
+    defaultPermission: "none",
+    version: 1,
+    tools: {},
+  })
+  const notDefined = parseToolPermissionSettings({
+    defaultPermission: "not-defined",
+    version: 1,
+    tools: {},
+  })
+
+  assert.equal(noAdditionalPermission.defaultPermission, "none")
+  assert.equal(notDefined.defaultPermission, "not-defined")
+  assert.deepEqual(
+    toolAccessScopesFromSettings(
+      noAdditionalPermission,
+      "confluence",
+      "mcp-hub.mcps.idthw-demo:role.confluence-accessor",
+    ),
+    {},
+  )
+})
+
+test("lets an explicit server override replace an inherited tool-permission default", () => {
+  const base = parseToolPermissionSettings({
+    defaultPermission: "none",
+    version: 1,
+    tools: {},
+  })
+  const overrides = parseToolPermissionSettings({
+    defaultPermission: "not-defined",
+    version: 1,
+    tools: {},
+  })
+
+  assert.equal(mergeToolPermissionSettings(base, overrides)?.defaultPermission, "not-defined")
 })
 
 test("allows a static service-only tool when the managed MCP scope is present", () => {

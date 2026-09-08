@@ -22,11 +22,14 @@ export type ConfiguredExchangePolicyRule = {
 }
 
 export type ToolPermissionSettings = {
+  defaultPermission?: ToolPermissionDefault
   version: 1
   tools: Record<string, {
     requirements: ConfiguredPermissionRequirement[]
   }>
 }
+
+export type ToolPermissionDefault = "none" | "not-defined"
 
 export type EditablePermissionRequirement = {
   audience: string
@@ -90,6 +93,7 @@ export type PermissionPresetGroup = {
 }
 
 export type PermissionPreset = {
+  defaultPermission?: ToolPermissionDefault
   groups: PermissionPresetGroup[]
   serverId: string
 }
@@ -117,6 +121,7 @@ export type PermissionReadiness =
       status: "configuration-error"
     }
   | {
+      defaultPermission?: ToolPermissionDefault
       groups: PermissionReadinessGroup[]
       status: PermissionCheckStatus
     }

@@ -1,5 +1,8 @@
 version: 1
 servers:
+  confluence:
+    defaultPermission: none
+    tools: {}
   k8s-docs-server:
     tools:
       get_k8s_docs:

@@ -2,8 +2,11 @@
 
 import { createContext, type Dispatch, type ReactNode, type SetStateAction, useContext, useState } from "react"
 import type { McpTemplateInput } from "@/features/mcp-templates/types"
-import { toolPermissionDraftFromSettings } from "@/features/permissions/lib/toolPermissionDraft"
-import type { ToolPermissionDraft } from "@/features/permissions/types/permissions"
+import {
+  toolPermissionDefaultFromSettings,
+  toolPermissionDraftFromSettings,
+} from "@/features/permissions/lib/toolPermissionDraft"
+import type { ToolPermissionDefault, ToolPermissionDraft } from "@/features/permissions/types/permissions"
 import type { McpServerConfiguration } from "@/features/registration/api/mcpResources"
 
 type McpCreateEnvironmentVariable = {
@@ -45,6 +48,7 @@ export type McpCreateDraft = {
   vpcNetwork: string
   accessManagement: "hub" | "server"
   hubServiceAccountName: string
+  toolPermissionDefault: ToolPermissionDefault
   toolPermissions: ToolPermissionDraft[]
 }
 
@@ -70,6 +74,7 @@ const INITIAL_DRAFT: McpCreateDraft = {
   vpcNetwork: "default-vpc-network",
   accessManagement: "hub",
   hubServiceAccountName: "",
+  toolPermissionDefault: "not-defined",
   toolPermissions: [],
 }
 
@@ -106,6 +111,7 @@ function draftFromServer(server: McpServerConfiguration): McpCreateDraft {
     vpcNetwork: "default-vpc-network",
     accessManagement: server.accessManagement,
     hubServiceAccountName: server.serviceAccount,
+    toolPermissionDefault: toolPermissionDefaultFromSettings(server.toolPermissions),
     toolPermissions: toolPermissionDraftFromSettings(server.toolPermissions, server.serviceAccount),
   }
 }

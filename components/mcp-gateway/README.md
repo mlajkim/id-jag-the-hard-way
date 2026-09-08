@@ -48,7 +48,7 @@ http://mcp-gateway.idthw.org/mcp/k8s-docs-server
 
 Use `components/mcp-credential-broker` as the stdio command for every route. The MCP client still sees separate entries such as `confluence`, `jira`, and `slack`, while all broker processes share one opaque session for this Gateway issuer. The first process opens Keycloak login automatically and the others wait for that session; no client-specific `mcp login` command is needed.
 
-The shared session contains human authentication, not a union of tool permissions. Every `/mcp/{id}` request still resolves its own Kubernetes-backed route metadata. Each `tools/call` obtains only the scopes mapped to `params.name`; clients can initialize and enumerate tools without that access permission. When a server publishes a tool map, an unknown tool fails closed instead of receiving the route-wide fallback scope.
+The shared session contains human authentication, not a union of tool permissions. Every `/mcp/{id}` request still resolves its own Kubernetes-backed route metadata. Each `tools/call` obtains only the scopes mapped to `params.name`; clients can initialize and enumerate tools without that access permission. When a server publishes a tool map, an unknown tool uses only managed MCP access if `defaultToolPermission` is `none`, and fails closed if the default is `not-defined`.
 
 The opaque Gateway session has its own bounded lifetime, configured by `GATEWAY_SESSION_TTL_SECONDS` (eight hours by default), so a valid cached ID-JAG can renew an access token after the shorter Keycloak ID token expires. If another scope needs a new ID-JAG after that ID token expires, the Gateway invalidates the opaque session and returns `401 reauth_required`; the credential broker then opens browser login and retries once.
 
@@ -102,7 +102,7 @@ kubectl -n mcp-hub create secret generic mcp-hub-registry \
   | kubectl apply -f -
 ```
 
-The registry response supplies `routeId`, `proxyUrl`, the optional core `accessAudience`, the optional shared route `accessScope`, and optional `toolScopes` keyed by MCP tool name. For a Hub-managed server, MCP Hub publishes `mcp-hub.mcps.<project>` as the core audience and `mcp-hub.mcps.<project>:role.accessor` as the shared scope. When custom tool requirements add another domain, MCP Gateway explicitly supplies the core audience to ZTS while requesting the multi-domain token. MCP Hub combines the shared role with each tool's `<signed_in_user>` roles in `toolScopes`. Older routes without `accessAudience` default to the first domain in `accessScope`. For Kubernetes, configure MCP Hub's `MCP_HUB_CORE_PROXY_URL` as:
+The registry response supplies `routeId`, `proxyUrl`, the optional core `accessAudience`, the optional shared route `accessScope`, `defaultToolPermission`, and optional `toolScopes` keyed by MCP tool name. For a Hub-managed server, MCP Hub publishes `mcp-hub.mcps.<project>` as the core audience and the server-specific accessor role as the shared scope. When custom tool requirements add another domain, MCP Gateway explicitly supplies the core audience to ZTS while requesting the multi-domain token. MCP Hub combines the shared role with each tool's `<signed_in_user>` roles in `toolScopes`. Older routes without `accessAudience` default to the first domain in `accessScope`. For Kubernetes, configure MCP Hub's `MCP_HUB_CORE_PROXY_URL` as:
 
 ```text
 http://core-mcp-proxy.mcp-hub:8080
