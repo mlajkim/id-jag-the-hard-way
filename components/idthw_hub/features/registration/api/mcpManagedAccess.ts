@@ -416,7 +416,9 @@ function policyContains(body: string, role: string, resource: string, action: st
     && value.action === action)
 }
 
-export async function createZmsRequest(): Promise<ZmsRequest> {
+export async function createZmsRequest(
+  auditRef = "MCP Hub managed access provisioning",
+): Promise<ZmsRequest> {
   const zmsUrl = new URL((process.env.MCP_HUB_ZMS_URL ?? DEFAULT_ZMS_URL).replace(/\/+$/, ""))
   if (zmsUrl.protocol !== "https:") throw new Error(`Unsupported ZMS protocol ${zmsUrl.protocol}`)
 
@@ -432,7 +434,7 @@ export async function createZmsRequest(): Promise<ZmsRequest> {
     const encodedBody = requestBody === undefined ? undefined : JSON.stringify(requestBody)
     const headers: Record<string, string | number> = {
       Accept: "application/json",
-      "Y-Audit-Ref": "MCP Hub managed access provisioning",
+      "Y-Audit-Ref": auditRef,
     }
     if (encodedBody !== undefined) {
       headers["Content-Type"] = "application/json"
