@@ -1,7 +1,6 @@
 "use client"
 
 import { Plus, Trash2 } from "lucide-react"
-import { SelectMenu } from "@/components/atoms/SelectMenu"
 import {
   emptyEditablePermissionRequirement,
   SIGNED_IN_USER_MEMBER,
@@ -50,35 +49,26 @@ export function ToolPermissionAuthoring({
   ))
 
   return (
-    <fieldset className="mcp-create-fieldset mcp-tool-permission-authoring">
-      <legend>Known tools and permissions (optional)</legend>
-      <p className="mcp-create-field-copy">{description}</p>
-      <div className="mcp-tool-permission-default" data-mode={defaultPermission}>
-        <div className="permission-editor-field">
-          <span>Default for tools without an override</span>
-          <SelectMenu
-            ariaLabel="Default tool permission"
-            value={defaultPermission}
-            options={[
-              { value: "not-defined", label: "Not defined" },
-              { value: "none", label: "No additional permission" },
-            ]}
-            onChange={(value) => onDefaultPermissionChange(value as ToolPermissionDefault)}
-          />
-        </div>
-        <p>{defaultPermission === "none"
-          ? "Every unlisted tool uses only the standard MCP server access. Add overrides for tools that need downstream access."
-          : "Unlisted tools have no permission decision yet and remain visibly unconfigured."}</p>
+    <section
+      className="mcp-create-fieldset mcp-tool-permission-authoring"
+      aria-labelledby="known-tool-permissions-title"
+    >
+      <div className="mcp-tool-permission-heading">
+        <h2 id="known-tool-permissions-title">Known tools and permissions (optional)</h2>
+        <p>{description}</p>
       </div>
-      <p className="mcp-tool-permission-guidance">
-        Leave the <strong>permission switch</strong> off to explicitly record that a named tool requires no additional permission. Turn it on only when an audience and role are required.
-      </p>
+      <label className="mcp-tool-permission-default">
+        <input
+          type="checkbox"
+          checked={defaultPermission === "none"}
+          onChange={(event) => onDefaultPermissionChange(event.target.checked ? "none" : "not-defined")}
+        />
+        No additional permission for unspecified tools
+      </label>
       {tools.length === 0 ? (
         <div className="permission-dialog-empty neutral mcp-tool-permission-empty">
-          <strong>{defaultPermission === "none" ? "No per-tool overrides" : "No tools configured"}</strong>
-          <p>{defaultPermission === "none"
-            ? "All discovered tools currently use the no-additional-permission default."
-            : "Add a tool when you know its MCP tool name, then choose whether it requires additional access."}</p>
+          <strong>No tools configured</strong>
+          <p>Add a tool when you know its MCP tool name, then choose whether it requires additional access.</p>
         </div>
       ) : (
         <div className="mcp-tool-permission-list">
@@ -159,7 +149,7 @@ export function ToolPermissionAuthoring({
         <Plus size={14} aria-hidden="true" />
         Add tool
       </button>
-    </fieldset>
+    </section>
   )
 }
 

@@ -2839,13 +2839,49 @@ body:has(.permission-request-dialog[open]) {
   padding-top: 22px;
 }
 
-.mcp-tool-permission-authoring > legend {
-  margin: 0 0 2px;
-  padding: 0;
+.mcp-tool-permission-heading {
+  display: grid;
+  gap: 2px;
+  margin: 0 0 12px;
 }
 
-.mcp-tool-permission-authoring > .mcp-create-field-copy {
-  margin-left: 0;
+.mcp-tool-permission-heading h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 22px;
+}
+
+.mcp-tool-permission-heading p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.mcp-tool-permission-default {
+  width: fit-content;
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 12px;
+  padding: 7px 9px;
+  border: 1px solid #e2e7ee;
+  border-radius: 7px;
+  background: #fafbfd;
+  color: #4b5563;
+  font-size: 12px;
+  line-height: 18px;
+  cursor: pointer;
+}
+
+.mcp-tool-permission-default input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: var(--blue);
 }
 
 .mcp-tool-permission-empty {
@@ -2858,46 +2894,6 @@ body:has(.permission-request-dialog[open]) {
   gap: 8px;
   margin-bottom: 10px;
   padding-bottom: 4px;
-}
-
-.mcp-tool-permission-default {
-  width: min(100%, 760px);
-  display: grid;
-  grid-template-columns: minmax(210px, 260px) minmax(0, 1fr);
-  align-items: end;
-  gap: 12px;
-  margin: 10px 0;
-}
-
-.mcp-tool-permission-default .select-menu,
-.mcp-tool-permission-default .select-menu-trigger {
-  width: 100%;
-}
-
-.mcp-tool-permission-default > p {
-  min-height: 32px;
-  display: flex;
-  align-items: center;
-  margin: 0;
-  color: #667181;
-  font-size: 11px;
-  line-height: 1.4;
-}
-
-.mcp-tool-permission-default[data-mode="none"] > p {
-  color: #22734f;
-}
-
-.mcp-tool-permission-guidance {
-  width: min(100%, 880px);
-  margin: 0 0 10px;
-  color: #536071;
-  font-size: 11px;
-  line-height: 1.45;
-}
-
-.mcp-tool-permission-guidance strong {
-  color: #354052;
 }
 
 .mcp-tool-permission-group {
