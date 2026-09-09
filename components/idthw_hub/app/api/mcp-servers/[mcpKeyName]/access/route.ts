@@ -13,11 +13,18 @@ import {
   ensureMcpSourceExchangeAccess,
 } from "@/features/registration/api/mcpManagedAccess"
 import {
+  applyMcpExchangeHelperSolutionTemplates,
+  applyMcpHubManagedAccessSolutionTemplate,
+} from "@/features/registration/api/mcpSolutionTemplates"
+import {
   getMcpServerConfiguration,
   McpResourceNotFoundError,
   reconcileMcpManagedAccessConfiguration,
 } from "@/features/registration/api/mcpResources"
-import { managedMcpAccessScope } from "@/features/registration/lib/kubernetesManifest"
+import {
+  managedMcpAccessDomain,
+  managedMcpAccessScope,
+} from "@/features/registration/lib/kubernetesManifest"
 
 export const dynamic = "force-dynamic"
 
@@ -62,9 +69,21 @@ export async function POST(
     )
     const sourceExchangeAudiences = signedInUserPermissionAudiences(toolPermissions)
     const requestZms = await createZmsRequest()
+    await applyMcpHubManagedAccessSolutionTemplate(
+      project,
+      mcpKeyName,
+      configuration.serviceAccount,
+      requestZms,
+    )
     const managedReport = await ensureMcpManagedAccess(
       project,
       mcpKeyName,
+      configuration.serviceAccount,
+      requestZms,
+    )
+    await applyMcpExchangeHelperSolutionTemplates(
+      toolPermissions,
+      managedMcpAccessDomain(project),
       configuration.serviceAccount,
       requestZms,
     )

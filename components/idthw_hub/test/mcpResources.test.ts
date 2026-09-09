@@ -300,7 +300,55 @@ test("stores per-tool permission overrides on the MCP deployment without restart
     return { stdout: "", stderr: "" }
   }
   let sourcePolicy: unknown
+  let exchangeHelpersApplied = false
   const requestZms: ZmsRequest = async (method, requestPath, body) => {
+    if (requestPath === "/domain/api/template" && method === "PUT") {
+      exchangeHelpersApplied = true
+      return { status: 204, body: "" }
+    }
+    if (requestPath === "/domain/api/role/docs-getter") {
+      return { status: 200, body: "{}" }
+    }
+    if (requestPath === "/domain/api/role/docs-getter-exchanger") {
+      return {
+        status: exchangeHelpersApplied ? 200 : 404,
+        body: JSON.stringify({
+          roleMembers: [{ memberName: "mcp-hub.mcps.k8s-docs-server.runtime" }],
+        }),
+      }
+    }
+    if (requestPath === "/domain/api/role/docs-getter-jag-exchanger") {
+      return {
+        status: exchangeHelpersApplied ? 200 : 404,
+        body: JSON.stringify({
+          roleMembers: [{ memberName: "mcp-hub.mcp-gateway" }],
+        }),
+      }
+    }
+    if (requestPath === "/domain/api/policy/docs-getter-exchanger") {
+      return {
+        status: exchangeHelpersApplied ? 200 : 404,
+        body: JSON.stringify({
+          assertions: [{
+            action: "zts.token_target_exchange",
+            resource: "api:mcp-hub.mcps.k8s-docs-server:role.docs-getter",
+            role: "api:role.docs-getter-exchanger",
+          }],
+        }),
+      }
+    }
+    if (requestPath === "/domain/api/policy/docs-getter-jag-exchanger") {
+      return {
+        status: exchangeHelpersApplied ? 200 : 404,
+        body: JSON.stringify({
+          assertions: [{
+            action: "zts.jag_exchange",
+            resource: "api:role.docs-getter",
+            role: "api:role.docs-getter-jag-exchanger",
+          }],
+        }),
+      }
+    }
     if (requestPath.endsWith("/role/docs-mcp-accessor-source-exchanger")) {
       return {
         status: 200,
@@ -334,6 +382,7 @@ test("stores per-tool permission overrides on the MCP deployment without restart
 
   assert.equal(settings.tools.get_k8s_docs.requirements.length, 1)
   assert.equal(settings.tools.get_k8s_docs.requirements[0].includeExchangeHelpers, true)
+  assert.equal(exchangeHelpersApplied, true)
   assert.equal(calls.filter((args) => args.includes("patch")).length, 2)
   const metadata = patches[1].metadata as { annotations: Record<string, string> }
   const stored = JSON.parse(metadata.annotations["mcp.idthw.dev/tool-permissions"]) as {

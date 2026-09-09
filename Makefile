@@ -1,9 +1,10 @@
-.PHONY: help fix-zts-key-id kid
+.PHONY: help fix-zts-key-id kid mcp-solution-templates
 
 help:
 	@echo "Usage: make <target>"
 	@echo ""
 	@echo "  fix-zts-key-id (alias: kid) register the current ZMS pod key ID, then restart ZTS"
+	@echo "  mcp-solution-templates       load MCP Hub custom solution templates, then restart ZMS"
 
 fix-zts-key-id:
 	@_zms_pod="$$(kubectl -n athenz get pod -l app.kubernetes.io/name=athenz-zms-server -o jsonpath='{.items[0].metadata.name}')" && \
@@ -13,3 +14,6 @@ fix-zts-key-id:
 	kubectl -n athenz rollout status deployment/athenz-zts-server
 
 kid: fix-zts-key-id
+
+mcp-solution-templates:
+	@./tools/athenz/apply-mcp-solution-templates.sh

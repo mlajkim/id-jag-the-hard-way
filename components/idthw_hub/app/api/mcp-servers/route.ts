@@ -19,6 +19,10 @@ import {
   ensureMcpManagedAccess,
   ensureMcpSourceExchangeAccess,
 } from "@/features/registration/api/mcpManagedAccess"
+import {
+  applyMcpExchangeHelperSolutionTemplates,
+  applyMcpHubManagedAccessSolutionTemplate,
+} from "@/features/registration/api/mcpSolutionTemplates"
 import { signedInUserPermissionAudiences } from "@/features/permissions/lib/toolPermissionDraft"
 import { ensureMcpRuntimeProxyTrust } from "@/features/registration/api/mcpRuntimeProxy"
 import {
@@ -26,6 +30,7 @@ import {
   registerMcpServicePublicKey,
 } from "@/features/registration/api/mcpServiceIdentity"
 import { validateMcpRegistration } from "@/features/registration/lib/registrationInput"
+import { managedMcpAccessDomain } from "@/features/registration/lib/kubernetesManifest"
 import {
   getMcpTemplate,
   McpTemplateNotFoundError,
@@ -159,9 +164,21 @@ export async function POST(request: NextRequest) {
         ? async (identity) => {
             if (!identity) throw new Error("Generated MCP service identity is missing")
             const requestZms = await createZmsRequest()
+            await applyMcpHubManagedAccessSolutionTemplate(
+              validation.input.project,
+              validation.input.mcpKeyName,
+              validation.input.serviceAccount,
+              requestZms,
+            )
             await ensureMcpManagedAccess(
               validation.input.project,
               validation.input.mcpKeyName,
+              validation.input.serviceAccount,
+              requestZms,
+            )
+            await applyMcpExchangeHelperSolutionTemplates(
+              validation.input.toolPermissions,
+              managedMcpAccessDomain(validation.input.project),
               validation.input.serviceAccount,
               requestZms,
             )

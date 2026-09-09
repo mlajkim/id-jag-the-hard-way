@@ -26,9 +26,11 @@ import type {
 } from "../../permissions/types/permissions.ts"
 import { runtimeProxyResourceOptions } from "./mcpRuntimeProxy.ts"
 import {
+  createZmsRequest,
   ensureMcpSourceExchangeAccess,
   type ZmsRequest,
 } from "./mcpManagedAccess.ts"
+import { applyMcpExchangeHelperSolutionTemplates } from "./mcpSolutionTemplates.ts"
 
 const ANNOTATION_ACCESS_MANAGEMENT = "mcp.idthw.dev/access-management"
 const ANNOTATION_ACCESS_AUDIENCE = "mcp.idthw.dev/access-audience"
@@ -325,12 +327,22 @@ export async function updateMcpToolPermissions(
   }
   const directAudienceRequirements = requirements.filter(({ member }) => member === "<signed_in_user>")
   if (directAudienceRequirements.length > 0 && serviceAccount && configuration.accessManagement === "hub") {
+    const requestZms = configuredZmsRequest ?? await createZmsRequest()
+    await applyMcpExchangeHelperSolutionTemplates(
+      {
+        version: 1,
+        tools: { [toolName]: { requirements } },
+      },
+      managedMcpAccessDomain(project),
+      serviceAccount,
+      requestZms,
+    )
     await ensureMcpSourceExchangeAccess(
       project,
       mcpKeyName,
       serviceAccount,
       directAudienceRequirements.map(({ role }) => parseAthenzRole(role).domain),
-      configuredZmsRequest,
+      requestZms,
     )
   }
   const current = storedToolPermissionSettings(deployment.metadata?.annotations?.[ANNOTATION_TOOL_PERMISSIONS])

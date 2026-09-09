@@ -12,9 +12,14 @@ import {
   ensureMcpManagedAccess,
   ensureMcpSourceExchangeAccess,
 } from "@/features/registration/api/mcpManagedAccess"
+import {
+  applyMcpExchangeHelperSolutionTemplates,
+  applyMcpHubManagedAccessSolutionTemplate,
+} from "@/features/registration/api/mcpSolutionTemplates"
 import { ensureMcpRuntimeProxyTrust } from "@/features/registration/api/mcpRuntimeProxy"
 import { validateMcpUpdate } from "@/features/registration/lib/registrationInput"
 import { signedInUserPermissionAudiences } from "@/features/permissions/lib/toolPermissionDraft"
+import { managedMcpAccessDomain } from "@/features/registration/lib/kubernetesManifest"
 
 export const dynamic = "force-dynamic"
 
@@ -163,9 +168,21 @@ export async function PUT(
 
     if (validation.input.accessManagement === "hub") {
       const requestZms = await createZmsRequest()
+      await applyMcpHubManagedAccessSolutionTemplate(
+        validation.input.project,
+        validation.input.mcpKeyName,
+        validation.input.serviceAccount,
+        requestZms,
+      )
       await ensureMcpManagedAccess(
         validation.input.project,
         validation.input.mcpKeyName,
+        validation.input.serviceAccount,
+        requestZms,
+      )
+      await applyMcpExchangeHelperSolutionTemplates(
+        validation.input.toolPermissions,
+        managedMcpAccessDomain(validation.input.project),
         validation.input.serviceAccount,
         requestZms,
       )
