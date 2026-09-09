@@ -23,6 +23,8 @@ const deployment = {
       "mcp.idthw.dev/id": "docs-mcp",
       "mcp.idthw.dev/alias": "Docs MCP",
       "mcp.idthw.dev/path": "/mcp",
+      "mcp.idthw.dev/permission-guide-label": "Docs access guide",
+      "mcp.idthw.dev/permission-guide-url": "https://example.test/docs/permissions",
       "mcp.idthw.dev/access-management": "hub",
       "mcp.idthw.dev/creation-method": "template",
       "mcp.idthw.dev/visibility": "project",
@@ -64,6 +66,8 @@ test("loads editable deployment fields without loading secret values", () => {
   assert.equal(configuration.creationMethod, "template")
   assert.equal(configuration.templateKey, "docs-template")
   assert.equal(configuration.iconId, "confluence.png")
+  assert.equal(configuration.permissionGuideLabel, "Docs access guide")
+  assert.equal(configuration.permissionGuideUrl, "https://example.test/docs/permissions")
   assert.deepEqual(configuration.environmentVariables[0], {
     key: "API_TOKEN",
     value: "",

@@ -14,16 +14,24 @@ import type {
 export function ToolPermissionAuthoring({
   description,
   defaultPermission,
+  permissionGuideError,
+  permissionGuideLabel,
+  permissionGuideUrl,
   tools,
   validationError,
   onDefaultPermissionChange,
+  onPermissionGuideChange,
   onChange,
 }: {
   description: string
   defaultPermission: ToolPermissionDefault
+  permissionGuideError?: string
+  permissionGuideLabel?: string
+  permissionGuideUrl?: string
   tools: ToolPermissionDraft[]
   validationError?: string
   onDefaultPermissionChange: (defaultPermission: ToolPermissionDefault) => void
+  onPermissionGuideChange?: (guide: { label: string; url: string }) => void
   onChange: (tools: ToolPermissionDraft[]) => void
 }) {
   const updateTool = (id: number, values: Partial<ToolPermissionDraft>) => {
@@ -57,6 +65,40 @@ export function ToolPermissionAuthoring({
         <h2 id="known-tool-permissions-title">Known tools and permissions (optional)</h2>
         <p>{description}</p>
       </div>
+      {onPermissionGuideChange ? (
+        <div className="mcp-tool-permission-guide">
+          <label className="permission-editor-field">
+            <span>Link name</span>
+            <input
+              autoComplete="off"
+              maxLength={80}
+              placeholder="Permission guide"
+              value={permissionGuideLabel ?? ""}
+              onChange={(event) => onPermissionGuideChange({
+                label: event.target.value,
+                url: permissionGuideUrl ?? "",
+              })}
+            />
+          </label>
+          <label className="permission-editor-field">
+            <span>Documentation URL</span>
+            <input
+              autoComplete="off"
+              maxLength={2048}
+              placeholder="https://example.com/docs/permissions"
+              type="url"
+              value={permissionGuideUrl ?? ""}
+              onChange={(event) => onPermissionGuideChange({
+                label: permissionGuideLabel ?? "",
+                url: event.target.value,
+              })}
+            />
+          </label>
+          {permissionGuideError ? (
+            <p className="mcp-create-field-warning" role="alert">{permissionGuideError}</p>
+          ) : null}
+        </div>
+      ) : null}
       <label className="mcp-tool-permission-default">
         <input
           type="checkbox"

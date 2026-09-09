@@ -56,6 +56,8 @@ export function SourceForm({
         return {
           ...currentDraft,
           iconId: template.iconId,
+          permissionGuideLabel: template.permissionGuideLabel,
+          permissionGuideUrl: template.documentation,
           selectedTemplate: template,
           toolPermissionDefault: toolPermissionDefaultFromSettings(template.toolPermissions),
           toolPermissions: toolPermissionDraftFromSettings(
@@ -78,6 +80,8 @@ export function SourceForm({
         ? {
             ...currentDraft,
             iconId: "",
+            permissionGuideLabel: "Permission guide",
+            permissionGuideUrl: "",
             selectedTemplateKey: "",
             selectedTemplate: null,
             templateEnvironmentVariables: [],
@@ -98,6 +102,8 @@ export function SourceForm({
       ...currentDraft,
       creationMethod: "template",
       iconId: "",
+      permissionGuideLabel: "Permission guide",
+      permissionGuideUrl: "",
       selectedTemplateKey: initialTemplateKey,
       selectedTemplate: null,
       templateEnvironmentVariables: [],
@@ -112,6 +118,8 @@ export function SourceForm({
     setDraft((currentDraft) => ({
       ...currentDraft,
       creationMethod,
+      permissionGuideLabel: creationMethod === "direct" ? "Permission guide" : currentDraft.permissionGuideLabel,
+      permissionGuideUrl: creationMethod === "direct" ? "" : currentDraft.permissionGuideUrl,
       toolPermissionDefault: creationMethod === "direct" ? "not-defined" : currentDraft.toolPermissionDefault,
       toolPermissions: creationMethod === "direct" ? [] : currentDraft.toolPermissions,
       visibility: creationMethod === "direct" ? "personal" : currentDraft.visibility,
@@ -122,6 +130,8 @@ export function SourceForm({
     setDraft((currentDraft) => ({
       ...currentDraft,
       iconId: "",
+      permissionGuideLabel: "Permission guide",
+      permissionGuideUrl: "",
       selectedTemplateKey: templateKey,
       selectedTemplate: null,
       templateEnvironmentVariables: [],

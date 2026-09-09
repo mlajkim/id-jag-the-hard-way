@@ -14,7 +14,6 @@ import { requireHubSession } from "@/features/auth/lib/session"
 import { McpManagedClientConfiguration } from "@/features/permissions/components/McpManagedClientConfiguration"
 import { PermissionReadinessSection } from "@/features/permissions/components/PermissionReadinessSection"
 import { fetchPermissionReadiness } from "@/features/permissions/lib/fetchPermissionReadiness"
-import { listPermissionWorkflowRequests } from "@/features/workflow/api/permissionWorkflowRequests"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -35,7 +34,7 @@ export default async function McpServerClientConfigurationRoute({
   const displayName = server.alias ?? server.name
   const mcpServerUrl = resolveMcpDisplayUrl(server)
   const usesHubManagedAccess = server.accessManagement === "hub"
-  const [permissionReadiness, toolsResult, pendingPermissionRequests] = await Promise.all([
+  const [permissionReadiness, toolsResult] = await Promise.all([
     fetchPermissionReadiness(
       server.routeId,
       session.user.username,
@@ -45,21 +44,14 @@ export default async function McpServerClientConfigurationRoute({
       server.serviceAccount,
     ),
     listLiveMcpTools(server),
-    usesHubManagedAccess
-      ? listPermissionWorkflowRequests({
-          mcpKeyName: server.name,
-          project: server.namespace,
-          requesterUsername: session.user.username,
-          status: "pending",
-        })
-      : [],
   ])
   const permissionCheck = (
     <PermissionReadinessSection
       accessAudience={server.accessAudience}
       mcpKeyName={server.name}
+      permissionGuideLabel={server.permissionGuideLabel}
+      permissionGuideUrl={server.permissionGuideUrl}
       project={server.namespace}
-      pendingPermissionRequests={pendingPermissionRequests.map(({ id, status, toolName }) => ({ id, status, toolName }))}
       serverDisplayName={displayName}
       servicePrincipal={server.serviceAccount}
       stepNumber={usesHubManagedAccess ? 2 : 1}

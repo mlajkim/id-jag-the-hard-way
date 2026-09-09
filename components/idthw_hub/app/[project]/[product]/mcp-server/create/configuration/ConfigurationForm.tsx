@@ -49,8 +49,12 @@ export function ConfigurationForm({
     if (!variable.key && !variable.value) return true
     return Boolean(variable.key && (variable.value || (variable.secret && variable.hasExistingSecret)))
   })
+  const permissionGuideUrlReady = !draft.permissionGuideUrl.trim() || isHttpUrl(draft.permissionGuideUrl)
+  const permissionGuideLabelReady = !draft.permissionGuideUrl.trim() || Boolean(draft.permissionGuideLabel.trim())
   const canContinue = templateRequirementsReady
     && environmentVariablesReady
+    && permissionGuideUrlReady
+    && permissionGuideLabelReady
     && (!requiresServiceAccount || Boolean(draft.hubServiceAccountName))
     && (!requiresServiceAccount || toolPermissionValidation.ok)
   const [serviceAccounts, setServiceAccounts] = useState<string[]>([])
@@ -436,11 +440,21 @@ export function ConfigurationForm({
             ? "Review the template defaults. For each known tool, choose no additional permission or enter its audience and required role. You can update these after live tool discovery."
             : "Add any known MCP tools. Choose no additional permission or enter the audience and required role for each tool. You can update these after live tool discovery."}
           defaultPermission={draft.toolPermissionDefault}
+          permissionGuideError={!permissionGuideUrlReady
+            ? "Enter an HTTP or HTTPS URL."
+            : !permissionGuideLabelReady ? "Enter a link name." : undefined}
+          permissionGuideLabel={draft.permissionGuideLabel}
+          permissionGuideUrl={draft.permissionGuideUrl}
           tools={draft.toolPermissions}
           validationError={toolPermissionValidation.ok ? undefined : toolPermissionValidation.error}
           onDefaultPermissionChange={(toolPermissionDefault) => setDraft((currentDraft) => ({
             ...currentDraft,
             toolPermissionDefault,
+          }))}
+          onPermissionGuideChange={({ label, url }) => setDraft((currentDraft) => ({
+            ...currentDraft,
+            permissionGuideLabel: label,
+            permissionGuideUrl: url,
           }))}
           onChange={(toolPermissions) => setDraft((currentDraft) => ({ ...currentDraft, toolPermissions }))}
         />
@@ -457,4 +471,13 @@ export function ConfigurationForm({
       </div>
     </form>
   )
+}
+
+function isHttpUrl(value: string) {
+  try {
+    const url = new URL(value)
+    return url.protocol === "http:" || url.protocol === "https:"
+  } catch {
+    return false
+  }
 }

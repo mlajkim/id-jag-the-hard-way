@@ -22,6 +22,7 @@ export type McpTemplateInput = {
   environmentVariables: McpTemplateEnvironmentVariable[]
   visibility: "project"
   documentation: string
+  permissionGuideLabel: string
   description: string
   toolPermissions?: ToolPermissionSettings
 }

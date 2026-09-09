@@ -18,6 +18,8 @@ export function validateMcpRegistration(payload: unknown): ValidationResult {
   const serverName = trimmedString(payload.serverName)
   const image = trimmedString(payload.image)
   const path = trimmedString(payload.path)
+  const permissionGuideLabel = trimmedString(payload.permissionGuideLabel ?? "Permission guide")
+  const permissionGuideUrl = trimmedString(payload.permissionGuideUrl ?? "")
   const port = trimmedString(payload.port)
   const command = trimmedString(payload.command)
   const containerArguments = validateContainerArguments(payload)
@@ -38,6 +40,15 @@ export function validateMcpRegistration(payload: unknown): ValidationResult {
   if (!image || image.length > 512 || /\s/.test(image)) return invalid("Container image URL is invalid")
   if (!path || path.length > 2048 || !path.startsWith("/")) {
     return invalid("MCP path must start with /")
+  }
+  if (permissionGuideUrl === null || !isOptionalHttpUrl(permissionGuideUrl)) {
+    return invalid("Permission guide URL is invalid")
+  }
+  if (permissionGuideLabel === null || permissionGuideLabel.length > 80) {
+    return invalid("Permission guide link name is invalid")
+  }
+  if (permissionGuideUrl && !permissionGuideLabel) {
+    return invalid("Permission guide link name is required")
   }
 
   const numericPort = Number(port)
@@ -104,6 +115,8 @@ export function validateMcpRegistration(payload: unknown): ValidationResult {
       image,
       mcpKeyName,
       path,
+      permissionGuideLabel,
+      permissionGuideUrl,
       port,
       project,
       serverName,
@@ -230,6 +243,17 @@ function isServiceInDomain(serviceAccount: string, domain: string) {
     && serviceName.length > 0
     && serviceName.length <= 255
     && /^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?$/.test(serviceName)
+}
+
+function isOptionalHttpUrl(value: string) {
+  if (!value) return true
+  if (value.length > 2048) return false
+  try {
+    const url = new URL(value)
+    return url.protocol === "http:" || url.protocol === "https:"
+  } catch {
+    return false
+  }
 }
 
 function trimmedString(value: unknown) {

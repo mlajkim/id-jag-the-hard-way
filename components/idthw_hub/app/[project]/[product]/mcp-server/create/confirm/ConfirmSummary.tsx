@@ -61,6 +61,8 @@ function changedServerFields(before: McpCreateDraft, after: McpCreateDraft) {
     ["Environment variables", formattedEnvironmentVariables(before), formattedEnvironmentVariables(after)],
     ["Access management", before.accessManagement, after.accessManagement],
     ["IAM service account", before.hubServiceAccountName, after.hubServiceAccountName],
+    ["Permission guide link name", before.permissionGuideLabel, after.permissionGuideLabel],
+    ["Permission guide URL", before.permissionGuideUrl, after.permissionGuideUrl],
     [
       "Tool permissions",
       before.accessManagement === "server"
@@ -154,6 +156,8 @@ export function ConfirmSummary({
     image: runtime.image,
     mcpKeyName: draft.mcpKeyName,
     path: runtime.path,
+    permissionGuideLabel: draft.permissionGuideLabel,
+    permissionGuideUrl: draft.permissionGuideUrl,
     port: runtime.port,
     serverName: draft.serverName,
     serviceAccount: draft.hubServiceAccountName,
@@ -188,6 +192,8 @@ export function ConfirmSummary({
           image: runtime.image,
           mcpKeyName: draft.mcpKeyName,
           path: runtime.path,
+          permissionGuideLabel: draft.permissionGuideLabel,
+          permissionGuideUrl: draft.permissionGuideUrl,
           port: runtime.port,
           project,
           serverName: draft.serverName,
@@ -336,6 +342,12 @@ export function ConfirmSummary({
           <div><dt>VPC network</dt><dd>{valueOrFallback(draft.vpcNetwork)}</dd></div>
           <div><dt>Access management</dt><dd>{draft.accessManagement === "hub" ? "Hub-managed access" : "Server-managed access"}</dd></div>
           <div><dt>IAM service account</dt><dd>{valueOrFallback(athenzServiceName(draft.hubServiceAccountName))}</dd></div>
+          {draft.accessManagement === "hub" ? (
+            <>
+              <div><dt>Permission guide link name</dt><dd>{valueOrFallback(draft.permissionGuideLabel)}</dd></div>
+              <div><dt>Permission guide URL</dt><dd>{valueOrFallback(draft.permissionGuideUrl)}</dd></div>
+            </>
+          ) : null}
           <div>
             <dt>Tool permissions</dt>
             <dd><div className="mcp-template-change-value">{toolPermissionSettingsText(toolPermissions)}</div></dd>

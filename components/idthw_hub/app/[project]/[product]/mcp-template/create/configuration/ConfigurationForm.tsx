@@ -32,6 +32,9 @@ export function ConfigurationForm({
     TEMPLATE_MCP_IAM_MEMBER,
     draft.toolPermissionDefault,
   )
+  const permissionGuideUrlReady = !draft.documentation.trim() || isHttpUrl(draft.documentation)
+  const permissionGuideLabelReady = !draft.documentation.trim() || Boolean(draft.permissionGuideLabel.trim())
+  const canContinue = toolPermissionValidation.ok && permissionGuideUrlReady && permissionGuideLabelReady
 
   function updateEnvironmentVariable(
     id: number,
@@ -183,11 +186,21 @@ export function ConfigurationForm({
       <ToolPermissionAuthoring
         description="Add known MCP tools as template defaults. Choose no additional permission or enter the audience and required role for each tool."
         defaultPermission={draft.toolPermissionDefault}
+        permissionGuideError={!permissionGuideUrlReady
+          ? "Enter an HTTP or HTTPS URL."
+          : !permissionGuideLabelReady ? "Enter a link name." : undefined}
+        permissionGuideLabel={draft.permissionGuideLabel}
+        permissionGuideUrl={draft.documentation}
         tools={draft.toolPermissions}
         validationError={toolPermissionValidation.ok ? undefined : toolPermissionValidation.error}
         onDefaultPermissionChange={(toolPermissionDefault) => setDraft((currentDraft) => ({
           ...currentDraft,
           toolPermissionDefault,
+        }))}
+        onPermissionGuideChange={({ label, url }) => setDraft((currentDraft) => ({
+          ...currentDraft,
+          documentation: url,
+          permissionGuideLabel: label,
         }))}
         onChange={(toolPermissions) => setDraft((currentDraft) => ({ ...currentDraft, toolPermissions }))}
       />
@@ -195,7 +208,7 @@ export function ConfigurationForm({
       <div className="mcp-create-actions">
         <Link className="button" href={cancelHref} style={{ textDecoration: "none" }} onClick={resetDraft}>Cancel</Link>
         <Link className="button" href={sourceHref} style={{ textDecoration: "none" }}>Prev</Link>
-        {toolPermissionValidation.ok ? (
+        {canContinue ? (
           <Link className="button mcp-create-primary" href={referenceHref}>Next</Link>
         ) : (
           <button className="button" type="button" disabled>Next</button>
@@ -203,4 +216,13 @@ export function ConfigurationForm({
       </div>
     </form>
   )
+}
+
+function isHttpUrl(value: string) {
+  try {
+    const url = new URL(value)
+    return url.protocol === "http:" || url.protocol === "https:"
+  } catch {
+    return false
+  }
 }

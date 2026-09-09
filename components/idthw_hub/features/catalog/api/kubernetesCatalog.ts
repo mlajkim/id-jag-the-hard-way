@@ -24,6 +24,8 @@ const ANNOTATION_ACCESS_SCOPE = "mcp.idthw.dev/access-scope"
 const ANNOTATION_CREATION_METHOD = "mcp.idthw.dev/creation-method"
 const ANNOTATION_IAM_SERVICE_ACCOUNT = "mcp.idthw.dev/iam-service-account"
 const ANNOTATION_PATH = "mcp.idthw.dev/path"
+const ANNOTATION_PERMISSION_GUIDE_LABEL = "mcp.idthw.dev/permission-guide-label"
+const ANNOTATION_PERMISSION_GUIDE_URL = "mcp.idthw.dev/permission-guide-url"
 const ANNOTATION_PUBLIC_URL = "mcp.idthw.dev/public-url"
 const ANNOTATION_TEMPLATE_KEY = "mcp.idthw.dev/template-key"
 const ANNOTATION_TOOL_PERMISSIONS = "mcp.idthw.dev/tool-permissions"
@@ -181,6 +183,8 @@ function deploymentToMcpServer(
     createdAt: metadata.creationTimestamp,
     desiredReplicas: deployment.spec?.replicas ?? 1,
     path: annotations[ANNOTATION_PATH] ?? "/mcp",
+    permissionGuideLabel: annotations[ANNOTATION_PERMISSION_GUIDE_LABEL]?.trim() || "Permission guide",
+    permissionGuideUrl: optionalHttpUrl(annotations[ANNOTATION_PERMISSION_GUIDE_URL]),
     readyReplicas: deployment.status?.readyReplicas ?? 0,
     status: runtimeStatus.status,
     statusMessage: runtimeStatus.message,
@@ -240,6 +244,16 @@ function firstScopeDomain(accessScope: string | undefined) {
   const marker = ":role."
   const markerIndex = firstScope?.indexOf(marker) ?? -1
   return markerIndex > 0 ? firstScope?.slice(0, markerIndex) : undefined
+}
+
+function optionalHttpUrl(value: string | undefined) {
+  if (!value) return undefined
+  try {
+    const url = new URL(value)
+    return url.protocol === "http:" || url.protocol === "https:" ? value : undefined
+  } catch {
+    return undefined
+  }
 }
 
 function parseJsonAnnotation(value: string | undefined): unknown {

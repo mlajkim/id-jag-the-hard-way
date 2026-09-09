@@ -38,20 +38,6 @@ export function ReferenceForm({
         </div>
       </fieldset>
 
-      <div className="mcp-create-field mcp-template-reference-field">
-        <label htmlFor="template-documentation">Documentation</label>
-        <p>Enter a link to the template documentation, including specifications and usage guides.</p>
-        <input
-          id="template-documentation"
-          className="filter-select"
-          name="documentation"
-          type="url"
-          placeholder="https://example.com/docs"
-          value={draft.documentation}
-          onChange={(event) => setDraft((currentDraft) => ({ ...currentDraft, documentation: event.target.value }))}
-        />
-      </div>
-
       <div className="mcp-create-field mcp-template-description-field">
         <label htmlFor="template-description">Description</label>
         <p>Describe what MCP servers created from this template provide.</p>

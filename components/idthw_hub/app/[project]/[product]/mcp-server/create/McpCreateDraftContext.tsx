@@ -48,6 +48,8 @@ export type McpCreateDraft = {
   vpcNetwork: string
   accessManagement: "hub" | "server"
   hubServiceAccountName: string
+  permissionGuideLabel: string
+  permissionGuideUrl: string
   toolPermissionDefault: ToolPermissionDefault
   toolPermissions: ToolPermissionDraft[]
 }
@@ -74,6 +76,8 @@ const INITIAL_DRAFT: McpCreateDraft = {
   vpcNetwork: "default-vpc-network",
   accessManagement: "hub",
   hubServiceAccountName: "",
+  permissionGuideLabel: "Permission guide",
+  permissionGuideUrl: "",
   toolPermissionDefault: "not-defined",
   toolPermissions: [],
 }
@@ -111,6 +115,8 @@ function draftFromServer(server: McpServerConfiguration): McpCreateDraft {
     vpcNetwork: "default-vpc-network",
     accessManagement: server.accessManagement,
     hubServiceAccountName: server.serviceAccount,
+    permissionGuideLabel: server.permissionGuideLabel ?? "Permission guide",
+    permissionGuideUrl: server.permissionGuideUrl ?? "",
     toolPermissionDefault: toolPermissionDefaultFromSettings(server.toolPermissions),
     toolPermissions: toolPermissionDraftFromSettings(server.toolPermissions, server.serviceAccount),
   }

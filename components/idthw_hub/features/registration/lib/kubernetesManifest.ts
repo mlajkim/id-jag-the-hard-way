@@ -29,6 +29,8 @@ export type McpKubernetesManifestInput = {
   image: string
   mcpKeyName: string
   path: string
+  permissionGuideLabel?: string
+  permissionGuideUrl?: string
   port: string
   project: string
   serverName: string
@@ -98,6 +100,10 @@ export function buildMcpKubernetesResources(
   }
   if (input.description) annotations["mcp.idthw.dev/description"] = input.description
   if (input.iconId) annotations["mcp.idthw.dev/icon"] = input.iconId
+  if (input.permissionGuideUrl) {
+    annotations["mcp.idthw.dev/permission-guide-label"] = input.permissionGuideLabel || "Permission guide"
+    annotations["mcp.idthw.dev/permission-guide-url"] = input.permissionGuideUrl
+  }
   if (input.creationMethod === "template" && input.templateKey) {
     annotations["mcp.idthw.dev/template-key"] = input.templateKey
   }

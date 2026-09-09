@@ -21,6 +21,8 @@ const input = {
   image: "ghcr.io/example/mcp:latest",
   mcpKeyName: "docs-mcp",
   path: "/mcp",
+  permissionGuideLabel: "Docs access guide",
+  permissionGuideUrl: "https://example.test/docs/permissions",
   port: "8080",
   project: "k8s-docs-server",
   serverName: "Docs MCP",
@@ -68,6 +70,14 @@ test("builds namespace, secret, deployment, and service resources", () => {
   assert.equal(deployment.metadata.annotations["mcp.idthw.dev/creation-method"], "direct")
   assert.equal(deployment.metadata.annotations["mcp.idthw.dev/visibility"], "personal")
   assert.equal(deployment.metadata.annotations["mcp.idthw.dev/icon"], "confluence.png")
+  assert.equal(
+    deployment.metadata.annotations["mcp.idthw.dev/permission-guide-label"],
+    "Docs access guide",
+  )
+  assert.equal(
+    deployment.metadata.annotations["mcp.idthw.dev/permission-guide-url"],
+    "https://example.test/docs/permissions",
+  )
   assert.equal(
     deployment.metadata.annotations["mcp.idthw.dev/access-scope"],
     "mcp-hub.mcps.k8s-docs-server:role.docs-mcp-accessor",

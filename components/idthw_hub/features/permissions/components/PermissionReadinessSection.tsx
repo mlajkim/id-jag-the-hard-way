@@ -1,6 +1,6 @@
 "use client"
 
-import { CheckCircle2, ChevronDown, ChevronRight, CircleX, RefreshCw, TriangleAlert } from "lucide-react"
+import { CheckCircle2, ChevronDown, ChevronRight, CircleX, ExternalLink, RefreshCw, TriangleAlert } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState, useTransition } from "react"
 import type { McpTool, McpToolsResult } from "@/features/catalog/types/tools"
@@ -14,7 +14,6 @@ import type {
   PermissionReadiness,
   PermissionReadinessGroup,
 } from "@/features/permissions/types/permissions"
-import type { PendingToolPermissionRequest } from "@/features/workflow/types"
 
 const COLLAPSED_TOOL_COUNT = 5
 
@@ -22,7 +21,8 @@ export function PermissionReadinessSection({
   accessAudience,
   mcpKeyName,
   serverDisplayName,
-  pendingPermissionRequests = [],
+  permissionGuideLabel,
+  permissionGuideUrl,
   project,
   servicePrincipal,
   stepNumber = 1,
@@ -32,7 +32,8 @@ export function PermissionReadinessSection({
   accessAudience?: string
   mcpKeyName: string
   serverDisplayName: string
-  pendingPermissionRequests?: PendingToolPermissionRequest[]
+  permissionGuideLabel?: string
+  permissionGuideUrl?: string
   project: string
   servicePrincipal?: string
   stepNumber?: number
@@ -50,9 +51,6 @@ export function PermissionReadinessSection({
   )
   const sharedGroup = evaluatedReadiness?.groups.find((group) => !group.toolName)
   const defaultGroup = evaluatedReadiness?.defaultPermission === "none" ? sharedGroup : undefined
-  const pendingRequestsByTool = new Map(
-    pendingPermissionRequests.map((request) => [request.toolName, request]),
-  )
   const hasManagedAccess = evaluatedReadiness?.groups.some((group) => (
     group.requirements.some(({ source }) => source === "managed")
   )) ?? false
@@ -72,6 +70,8 @@ export function PermissionReadinessSection({
           : undefined}
         isRefreshing={isRefreshing}
         onRefresh={() => startRefresh(() => router.refresh())}
+        permissionGuideLabel={permissionGuideLabel}
+        permissionGuideUrl={permissionGuideUrl}
         stepNumber={stepNumber}
       />
 
@@ -106,8 +106,8 @@ export function PermissionReadinessSection({
             <ToolPermissionList
               accessAudience={accessAudience}
               mcpKeyName={mcpKeyName}
+              permissionGuideUrl={permissionGuideUrl}
               project={project}
-              pendingRequestsByTool={pendingRequestsByTool}
               servicePrincipal={servicePrincipal}
               sharedGroup={defaultGroup}
               toolGroups={toolGroups}
@@ -129,8 +129,8 @@ export function PermissionReadinessSection({
           <ToolPermissionList
             accessAudience={accessAudience}
             mcpKeyName={mcpKeyName}
+            permissionGuideUrl={permissionGuideUrl}
             project={project}
-            pendingRequestsByTool={pendingRequestsByTool}
             servicePrincipal={servicePrincipal}
             sharedGroup={defaultGroup}
             toolGroups={toolGroups}
@@ -147,8 +147,8 @@ export function PermissionReadinessSection({
 function ToolPermissionList({
   accessAudience,
   mcpKeyName,
+  permissionGuideUrl,
   project,
-  pendingRequestsByTool,
   servicePrincipal,
   sharedGroup,
   toolGroups,
@@ -156,8 +156,8 @@ function ToolPermissionList({
 }: {
   accessAudience?: string
   mcpKeyName: string
+  permissionGuideUrl?: string
   project: string
-  pendingRequestsByTool: Map<string, PendingToolPermissionRequest>
   servicePrincipal?: string
   sharedGroup?: PermissionReadinessGroup
   toolGroups: Map<string, PermissionReadinessGroup>
@@ -171,8 +171,8 @@ function ToolPermissionList({
           group={toolGroups.get(tool.name) ?? sharedGroup}
           key={`${tool.name}:${index}`}
           mcpKeyName={mcpKeyName}
+          permissionGuideUrl={permissionGuideUrl}
           project={project}
-          workflowRequestId={pendingRequestsByTool.get(tool.name)?.id}
           servicePrincipal={servicePrincipal}
           tool={tool}
         />
@@ -185,18 +185,18 @@ function ToolPermissionRow({
   accessAudience,
   group,
   mcpKeyName,
+  permissionGuideUrl,
   project,
   servicePrincipal,
   tool,
-  workflowRequestId,
 }: {
   accessAudience?: string
   group?: PermissionReadinessGroup
   mcpKeyName: string
+  permissionGuideUrl?: string
   project: string
   servicePrincipal?: string
   tool: McpTool
-  workflowRequestId?: string
 }) {
   if (!group) {
     return (
@@ -205,11 +205,9 @@ function ToolPermissionRow({
         <div className="permission-tool-main">
           <ToolIdentity tool={tool} />
           <ToolPermissionAccessButton
-            mcpKeyName={mcpKeyName}
-            project={project}
+            permissionGuideUrl={permissionGuideUrl}
             status="unconfigured"
             toolName={tool.name}
-            workflowRequestId={workflowRequestId}
           />
         </div>
         <PermissionRequestDialog
@@ -236,11 +234,9 @@ function ToolPermissionRow({
       <div className="permission-tool-main">
         <ToolIdentity tool={tool} />
         <ToolPermissionAccessButton
-          mcpKeyName={mcpKeyName}
-          project={project}
+          permissionGuideUrl={permissionGuideUrl}
           status={requestStatus}
           toolName={tool.name}
-          workflowRequestId={workflowRequestId}
         />
       </div>
       <PermissionRequestDialog
@@ -282,11 +278,15 @@ function PermissionHeading({
   copy,
   isRefreshing,
   onRefresh,
+  permissionGuideLabel,
+  permissionGuideUrl,
   stepNumber,
 }: {
   copy?: string
   isRefreshing: boolean
   onRefresh: () => void
+  permissionGuideLabel?: string
+  permissionGuideUrl?: string
   stepNumber: number
 }) {
   return (
@@ -298,19 +298,37 @@ function PermissionHeading({
             Check your permissions
           </h3>
           <p className="section-copy">
-            {copy ?? "All tools are visible. Request missing access beside a tool, or open View permissions to inspect its requirements."}
+            {copy ?? "All tools are visible. Follow the provider guide for missing access, or open View permissions to inspect the requirements."}
           </p>
         </div>
       </div>
-      <button
-        className="button permission-readiness-refresh"
-        disabled={isRefreshing}
-        type="button"
-        onClick={onRefresh}
-      >
-        <RefreshCw className={isRefreshing ? "spinning" : ""} size={14} aria-hidden="true" />
-        {isRefreshing ? "Refreshing..." : "Refresh"}
-      </button>
+      <div className="permission-readiness-actions">
+        {permissionGuideUrl ? (
+          <a className="button permission-guide-link" href={permissionGuideUrl} target="_blank" rel="noreferrer">
+            {permissionGuideLabel || "Permission guide"}
+            <ExternalLink size={13} aria-hidden="true" />
+          </a>
+        ) : (
+          <button
+            className="button permission-guide-link"
+            type="button"
+            disabled
+            title="The provider has not added a permission guide."
+          >
+            Permission guide
+            <ExternalLink size={13} aria-hidden="true" />
+          </button>
+        )}
+        <button
+          className="button permission-readiness-refresh"
+          disabled={isRefreshing}
+          type="button"
+          onClick={onRefresh}
+        >
+          <RefreshCw className={isRefreshing ? "spinning" : ""} size={14} aria-hidden="true" />
+          {isRefreshing ? "Refreshing..." : "Refresh"}
+        </button>
+      </div>
     </div>
   )
 }
