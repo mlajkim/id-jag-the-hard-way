@@ -1,7 +1,9 @@
 import type {
+  ApplicantWorkflowFormTemplate,
   NewWorkflowFormTemplate,
   WorkflowFormTemplate,
   WorkflowFormTemplateField,
+  WorkflowFormTemplateUpdate,
 } from "../types.ts"
 
 export const WORKFLOW_FORM_TEMPLATE_PREFIX = "workflow-form-template-"
@@ -27,12 +29,35 @@ export function buildWorkflowFormTemplateConfigMap(template: WorkflowFormTemplat
       },
       annotations: {
         "mcp.idthw.dev/created-by": validated.createdBy,
+        "mcp.idthw.dev/version": String(validated.version),
       },
     },
     data: {
       "template.json": JSON.stringify(validated),
     },
   }
+}
+
+export function updatedWorkflowFormTemplate(
+  current: WorkflowFormTemplate,
+  input: WorkflowFormTemplateUpdate,
+): WorkflowFormTemplate {
+  if (current.version !== input.version) {
+    throw new Error("Workflow form template version is stale")
+  }
+  return parseWorkflowFormTemplate({
+    applicationContent: input.applicationContent,
+    createdAt: current.createdAt,
+    createdBy: current.createdBy,
+    fields: input.fields.map((field, index) => ({
+      ...field,
+      id: `field-${index + 1}`,
+    })),
+    id: current.id,
+    operatorProcedureUrl: input.operatorProcedureUrl,
+    subject: input.subject,
+    version: current.version + 1,
+  })
 }
 
 export function newWorkflowFormTemplate(
@@ -52,11 +77,19 @@ export function newWorkflowFormTemplate(
 
 export function parseNewWorkflowFormTemplate(value: unknown): Omit<NewWorkflowFormTemplate, "createdBy"> {
   const root = requireRecord(value, "workflow form template")
-  assertOnlyKeys(root, ["applicationContent", "fields", "id", "subject"], "workflow form template")
+  assertOnlyKeys(
+    root,
+    ["applicationContent", "fields", "id", "operatorProcedureUrl", "subject"],
+    "workflow form template",
+  )
   const id = requireString(root.id, "workflow form template id")
   if (!TEMPLATE_ID_PATTERN.test(id)) {
     throw new Error("Workflow form template ID must use lowercase letters, numbers, or hyphens")
   }
+  const operatorProcedureUrl = parseOptionalHttpUrl(
+    root.operatorProcedureUrl,
+    "workflow form template operator procedure URL",
+  )
   return {
     applicationContent: requireDisplayString(
       root.applicationContent,
@@ -70,7 +103,37 @@ export function parseNewWorkflowFormTemplate(value: unknown): Omit<NewWorkflowFo
       type,
     })),
     id,
+    ...(operatorProcedureUrl ? { operatorProcedureUrl } : {}),
     subject: requireDisplayString(root.subject, "workflow form template subject", 200),
+  }
+}
+
+export function parseWorkflowFormTemplateUpdate(value: unknown): WorkflowFormTemplateUpdate {
+  const root = requireRecord(value, "workflow form template update")
+  assertOnlyKeys(
+    root,
+    ["applicationContent", "fields", "operatorProcedureUrl", "subject", "version"],
+    "workflow form template update",
+  )
+  const operatorProcedureUrl = parseOptionalHttpUrl(
+    root.operatorProcedureUrl,
+    "workflow form template operator procedure URL",
+  )
+  return {
+    applicationContent: requireDisplayString(
+      root.applicationContent,
+      "workflow form template application content",
+      10_000,
+    ),
+    fields: parseFields(root.fields, false).map(({ label, options, required, type }) => ({
+      label,
+      options,
+      required,
+      type,
+    })),
+    ...(operatorProcedureUrl ? { operatorProcedureUrl } : {}),
+    subject: requireDisplayString(root.subject, "workflow form template subject", 200),
+    version: requirePositiveInteger(root.version, "workflow form template version"),
   }
 }
 
@@ -82,16 +145,20 @@ export function parseWorkflowFormTemplate(value: unknown): WorkflowFormTemplate 
     "createdBy",
     "fields",
     "id",
+    "operatorProcedureUrl",
     "subject",
     "version",
   ], "workflow form template")
-  if (root.version !== 1) throw new Error("Workflow form template version must be 1")
 
   const id = requireString(root.id, "workflow form template id")
   if (!TEMPLATE_ID_PATTERN.test(id)) throw new Error("Workflow form template id is invalid")
   const createdBy = requireString(root.createdBy, "workflow form template creator")
   if (!USERNAME_PATTERN.test(createdBy)) throw new Error("Workflow form template creator is invalid")
 
+  const operatorProcedureUrl = parseOptionalHttpUrl(
+    root.operatorProcedureUrl,
+    "workflow form template operator procedure URL",
+  )
   return {
     applicationContent: requireDisplayString(
       root.applicationContent,
@@ -102,8 +169,23 @@ export function parseWorkflowFormTemplate(value: unknown): WorkflowFormTemplate 
     createdBy,
     fields: parseFields(root.fields, true),
     id,
+    ...(operatorProcedureUrl ? { operatorProcedureUrl } : {}),
     subject: requireDisplayString(root.subject, "workflow form template subject", 200),
-    version: 1,
+    version: requirePositiveInteger(root.version, "workflow form template version"),
+  }
+}
+
+export function workflowFormTemplateForApplicant(
+  template: WorkflowFormTemplate,
+): ApplicantWorkflowFormTemplate {
+  return {
+    applicationContent: template.applicationContent,
+    createdAt: template.createdAt,
+    createdBy: template.createdBy,
+    fields: template.fields,
+    id: template.id,
+    subject: template.subject,
+    version: template.version,
   }
 }
 
@@ -184,6 +266,26 @@ function requireTimestamp(value: unknown, location: string) {
   const timestamp = requireString(value, location)
   if (!Number.isFinite(Date.parse(timestamp))) throw new Error(`${location} is invalid`)
   return timestamp
+}
+
+function requirePositiveInteger(value: unknown, location: string) {
+  if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 1) {
+    throw new Error(`${location} must be a positive integer`)
+  }
+  return value
+}
+
+function parseOptionalHttpUrl(value: unknown, location: string) {
+  if (value === undefined || value === null || value === "") return undefined
+  const text = requireString(value, location)
+  if (text.length > 2_048) throw new Error(`${location} is invalid`)
+  try {
+    const url = new URL(text)
+    if (url.protocol !== "http:" && url.protocol !== "https:") throw new Error()
+  } catch {
+    throw new Error(`${location} must use HTTP or HTTPS`)
+  }
+  return text
 }
 
 function requireRecord(value: unknown, location: string): Record<string, unknown> {

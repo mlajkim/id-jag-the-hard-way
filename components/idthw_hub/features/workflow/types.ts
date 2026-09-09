@@ -63,13 +63,46 @@ export type WorkflowFormTemplate = {
   createdBy: string
   fields: WorkflowFormTemplateField[]
   id: string
+  operatorProcedureUrl?: string
   subject: string
-  version: 1
+  version: number
 }
 
 export type NewWorkflowFormTemplate = Pick<
   WorkflowFormTemplate,
-  "applicationContent" | "createdBy" | "id" | "subject"
+  "applicationContent" | "createdBy" | "id" | "operatorProcedureUrl" | "subject"
 > & {
   fields: Array<Omit<WorkflowFormTemplateField, "id">>
+}
+
+export type WorkflowFormTemplateUpdate = Pick<
+  WorkflowFormTemplate,
+  "applicationContent" | "operatorProcedureUrl" | "subject" | "version"
+> & {
+  fields: Array<Omit<WorkflowFormTemplateField, "id">>
+}
+
+export type ApplicantWorkflowFormTemplate = Omit<WorkflowFormTemplate, "operatorProcedureUrl">
+
+export type WorkflowApplicationAnswer = {
+  fieldId: string
+  label: string
+  value: string
+}
+
+export type WorkflowApplicationStatus = "approved" | "pending"
+
+export type WorkflowApplication = {
+  answers: WorkflowApplicationAnswer[]
+  approvedAt?: string
+  approvedBy?: string
+  createdAt: string
+  createdBy: string
+  id: string
+  operatorProcedureUrl?: string
+  status: WorkflowApplicationStatus
+  subject: string
+  templateId: string
+  templateVersion: number
+  version: 1
 }

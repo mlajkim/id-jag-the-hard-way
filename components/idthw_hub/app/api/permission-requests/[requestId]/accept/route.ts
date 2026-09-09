@@ -1,12 +1,10 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/features/auth/lib/auth"
-import { requestToolPermissionAccess } from "@/features/permissions/api/requestToolPermissionAccess"
-import { createZmsRequest } from "@/features/registration/api/mcpManagedAccess"
 import {
-  getPermissionWorkflowRequest,
-  markPermissionWorkflowRequestApproved,
-  PermissionWorkflowRequestNotFoundError,
-} from "@/features/workflow/api/permissionWorkflowRequests"
+  getWorkflowApplication,
+  markWorkflowApplicationApproved,
+  WorkflowApplicationNotFoundError,
+} from "@/features/workflow/api/workflowApplications"
 
 export const dynamic = "force-dynamic"
 
@@ -27,43 +25,30 @@ export async function POST(
   const { requestId } = await params
 
   try {
-    const workflowRequest = await getPermissionWorkflowRequest(requestId)
-    if (workflowRequest.status === "approved") {
+    const application = await getWorkflowApplication(requestId)
+    if (application.status === "approved") {
       return NextResponse.json({
         approved: true,
-        checksCompleted: 10,
-        request: workflowRequest,
+        request: application,
       }, { headers: NO_STORE_HEADERS })
     }
 
-    const report = await requestToolPermissionAccess({
-      requirements: workflowRequest.requirements.map((requirement) => ({
-        ...requirement,
-        status: "missing",
-      })),
-      policies: workflowRequest.policies.map((policy) => ({
-        ...policy,
-        status: "missing",
-      })),
-    }, await createZmsRequest("MCP Hub workflow permission approval"))
-    const approvedRequest = await markPermissionWorkflowRequestApproved(workflowRequest, report)
+    const approvedRequest = await markWorkflowApplicationApproved(application, session.user.username)
 
     return NextResponse.json({
       approved: true,
-      checksCompleted: 10,
-      report,
       request: approvedRequest,
     }, { headers: NO_STORE_HEADERS })
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unable to approve permission request"
-    console.error("Unable to approve MCP permission workflow request", {
+    const message = error instanceof Error ? error.message : "Unable to approve workflow application"
+    console.error("Unable to approve workflow application", {
       requestId,
       message: message.trim().replace(/\s+/g, " ").slice(0, 300),
     })
     return NextResponse.json(
-      { error: error instanceof PermissionWorkflowRequestNotFoundError ? message : "Unable to approve permission request" },
+      { error: error instanceof WorkflowApplicationNotFoundError ? message : "Unable to approve workflow application" },
       {
-        status: error instanceof PermissionWorkflowRequestNotFoundError ? 404 : 500,
+        status: error instanceof WorkflowApplicationNotFoundError ? 404 : 500,
         headers: NO_STORE_HEADERS,
       },
     )

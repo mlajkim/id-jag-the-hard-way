@@ -5,7 +5,10 @@ import {
   listWorkflowFormTemplates,
   WorkflowFormTemplateConflictError,
 } from "@/features/workflow/api/workflowFormTemplates"
-import { parseNewWorkflowFormTemplate } from "@/features/workflow/lib/workflowFormTemplate"
+import {
+  parseNewWorkflowFormTemplate,
+  workflowFormTemplateForApplicant,
+} from "@/features/workflow/lib/workflowFormTemplate"
 
 export const dynamic = "force-dynamic"
 
@@ -22,7 +25,7 @@ export async function GET() {
 
   try {
     return NextResponse.json(
-      { templates: await listWorkflowFormTemplates() },
+      { templates: (await listWorkflowFormTemplates()).map(workflowFormTemplateForApplicant) },
       { headers: NO_STORE_HEADERS },
     )
   } catch {

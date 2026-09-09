@@ -3,7 +3,7 @@ import Link from "next/link"
 import { consoleHref, displayProduct } from "@/components/navigation/consoleRoute"
 import { WorkflowConsoleTemplate } from "@/components/templates/WorkflowConsoleTemplate"
 import { requireHubSession } from "@/features/auth/lib/session"
-import { listPermissionWorkflowRequests } from "@/features/workflow/api/permissionWorkflowRequests"
+import { listWorkflowApplications } from "@/features/workflow/api/workflowApplications"
 import { ApprovedRequestCleanupButton } from "@/features/workflow/components/ApprovedRequestCleanupButton"
 import { WorkflowRequestRefreshButton } from "@/features/workflow/components/WorkflowRequestRefreshButton"
 
@@ -21,7 +21,7 @@ export default async function PermissionRequestsRoute({
   const { product, project } = await params
   const requestedStatus = (await searchParams).status
   const activeStatus = requestedStatus === "approved" ? "approved" : "pending"
-  const requests = await listPermissionWorkflowRequests()
+  const requests = await listWorkflowApplications()
   const requestsHref = consoleHref({ project, product, section: "requests" })
   const pendingCount = requests.filter(({ status }) => status === "pending").length
   const approvedCount = requests.length - pendingCount
@@ -41,7 +41,7 @@ export default async function PermissionRequestsRoute({
         <div>
           <span className="workflow-eyebrow">Signed-in approval workflow</span>
           <h1 className="page-title">Permission requests</h1>
-          <p>Review MCP tool-access requests and apply approved Athenz changes.</p>
+          <p>Review submitted workflow applications and record approval decisions.</p>
         </div>
         <div className="workflow-request-counts" aria-label="Permission request actions and totals">
           <WorkflowRequestRefreshButton />
@@ -54,7 +54,7 @@ export default async function PermissionRequestsRoute({
         <div className="workflow-panel-heading">
           <div>
             <span>Queue</span>
-            <h2 id="workflow-request-list-heading">MCP permission workflow</h2>
+            <h2 id="workflow-request-list-heading">Workflow applications</h2>
           </div>
           <strong>{requests.length} requests</strong>
         </div>
@@ -87,10 +87,10 @@ export default async function PermissionRequestsRoute({
               <thead>
                 <tr>
                   <th>Status</th>
-                  <th>Requester</th>
-                  <th>Project</th>
-                  <th>MCP server</th>
-                  <th>Tool</th>
+                  <th>Applicant</th>
+                  <th>Template ID</th>
+                  <th>Version</th>
+                  <th>Subject</th>
                   <th>Created</th>
                   <th><span className="sr-only">Open</span></th>
                 </tr>
@@ -99,13 +99,10 @@ export default async function PermissionRequestsRoute({
                 {visibleRequests.map((request) => (
                   <tr key={request.id}>
                     <td><WorkflowStatus status={request.status} /></td>
-                    <td>
-                      <strong>{request.requesterUsername}</strong>
-                      <small>{request.requesterPrincipal}</small>
-                    </td>
-                    <td><code>{request.project}</code></td>
-                    <td>{request.serverDisplayName}</td>
-                    <td><code>{request.toolName}</code></td>
+                    <td><strong>{request.createdBy}</strong></td>
+                    <td><code>{request.templateId}</code></td>
+                    <td>v{request.templateVersion}</td>
+                    <td><strong>{request.subject}</strong></td>
                     <td>{formatDate(request.createdAt)}</td>
                     <td>
                       <Link
@@ -125,8 +122,8 @@ export default async function PermissionRequestsRoute({
             <Inbox size={24} aria-hidden="true" />
             <strong>{activeStatus === "pending" ? "No pending requests" : "No approved requests"}</strong>
             <p>{activeStatus === "pending"
-              ? "Requests submitted from MCP Hub will appear here automatically."
-              : "Approved requests remain here until you delete the completed records."}</p>
+              ? "Applications submitted through workflow templates will appear here automatically."
+              : "Approved applications remain here until you delete the completed records."}</p>
           </div>
         )}
       </section>

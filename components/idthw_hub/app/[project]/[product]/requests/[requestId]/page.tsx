@@ -6,10 +6,10 @@ import { WorkflowConsoleTemplate } from "@/components/templates/WorkflowConsoleT
 import { requireHubSession } from "@/features/auth/lib/session"
 import { WorkflowApprovalButton } from "@/features/workflow/components/WorkflowApprovalButton"
 import {
-  getPermissionWorkflowRequest,
-  PermissionWorkflowRequestNotFoundError,
-} from "@/features/workflow/api/permissionWorkflowRequests"
-import type { PermissionWorkflowRequest } from "@/features/workflow/types"
+  getWorkflowApplication,
+  WorkflowApplicationNotFoundError,
+} from "@/features/workflow/api/workflowApplications"
+import type { WorkflowApplication } from "@/features/workflow/types"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -22,11 +22,11 @@ export default async function PermissionRequestOverviewRoute({
   await requireHubSession()
   const { product, project, requestId: encodedRequestId } = await params
   const requestId = decodeRouteParam(encodedRequestId)
-  let request: PermissionWorkflowRequest
+  let request: WorkflowApplication
   try {
-    request = await getPermissionWorkflowRequest(requestId)
+    request = await getWorkflowApplication(requestId)
   } catch (error) {
-    if (error instanceof PermissionWorkflowRequestNotFoundError) notFound()
+    if (error instanceof WorkflowApplicationNotFoundError) notFound()
     throw error
   }
   const requestsHref = consoleHref({ project, product, section: "requests" })
@@ -48,9 +48,9 @@ export default async function PermissionRequestOverviewRoute({
           <ArrowLeft size={18} aria-hidden="true" />
         </Link>
         <div>
-          <span className="workflow-eyebrow">Permission request overview</span>
+          <span className="workflow-eyebrow">Workflow application overview</span>
           <div className="workflow-detail-title-row">
-            <h1>{request.toolName}</h1>
+            <h1>{request.subject}</h1>
             <span className="workflow-status" data-status={request.status}>
               {request.status === "approved"
                 ? <CheckCircle2 size={13} aria-hidden="true" />
@@ -58,7 +58,10 @@ export default async function PermissionRequestOverviewRoute({
               {request.status === "approved" ? "Approved" : "Pending"}
             </span>
           </div>
-          <p>{request.requesterUsername} requested access to {request.serverDisplayName}.</p>
+          <p>
+            {request.createdBy} submitted this application using template {request.templateId},
+            version {request.templateVersion}.
+          </p>
         </div>
       </div>
 
@@ -66,66 +69,79 @@ export default async function PermissionRequestOverviewRoute({
         <main className="workflow-overview-main">
           <section className="workflow-overview-card">
             <div className="workflow-card-heading">
-              <span>Request</span>
-              <h2>Overview</h2>
+              <span>Submission</span>
+              <h2>Application responses</h2>
             </div>
-            <dl className="workflow-request-details">
-              <Detail label="Requester" value={request.requesterUsername} />
-              <Detail label="Athenz principal" value={request.requesterPrincipal} code />
-              <Detail label="Project" value={request.project} code />
-              <Detail label="MCP server" value={request.serverDisplayName} />
-              <Detail label="MCP key" value={request.mcpKeyName} code />
-              <Detail label="Tool" value={request.toolName} code />
-              <Detail label="Created" value={formatDate(request.createdAt)} />
-              <Detail label="Approved" value={request.approvedAt ? formatDate(request.approvedAt) : "Not yet"} />
-            </dl>
-          </section>
-
-          <section className="workflow-overview-card">
-            <div className="workflow-card-heading">
-              <span>Changes</span>
-              <h2>Requested permissions</h2>
-            </div>
-            <div className="workflow-permission-list">
-              {request.requirements.map((requirement, index) => (
-                <div className="workflow-permission-item" key={`requirement:${requirement.member}:${requirement.role}:${index}`}>
-                  <span className="workflow-permission-kind">Role membership</span>
-                  <strong>{requirement.label}</strong>
-                  <dl>
-                    <Detail label="Member" value={requirement.member} code compact />
-                    <Detail label="Role" value={requirement.role} code compact />
-                  </dl>
-                </div>
-              ))}
-              {request.policies.map((policy, index) => (
-                <div className="workflow-permission-item" key={`policy:${policy.role}:${policy.action}:${index}`}>
-                  <span className="workflow-permission-kind">Policy assertion</span>
-                  <strong>{policy.label}</strong>
-                  <dl>
-                    <Detail label="Effect" value={policy.effect === "ALLOW" ? "Allow" : "Deny"} compact />
-                    <Detail label="Action" value={policy.action} code compact />
-                    <Detail label="Role" value={policy.role} code compact />
-                    <Detail label="Resource" value={policy.resource} code compact />
-                  </dl>
-                </div>
-              ))}
-            </div>
+            {request.answers.length > 0 ? (
+              <div className="workflow-application-response-wrap">
+                <table className="workflow-application-response-table">
+                  <thead>
+                    <tr>
+                      <th>Key</th>
+                      <th>Value</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {request.answers.map((answer) => (
+                      <tr key={answer.fieldId}>
+                        <th scope="row">{answer.label}</th>
+                        <td>{answer.value || <span>Not provided</span>}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="workflow-permission-list">
+                <p className="workflow-registration-no-fields">This application has no additional fields.</p>
+              </div>
+            )}
           </section>
         </main>
 
         <aside className="workflow-overview-sidebar">
+          <section className="workflow-overview-card workflow-overview-metadata-card">
+            <div className="workflow-card-heading">
+              <span>Request</span>
+              <h2>Overview</h2>
+            </div>
+            <dl className="workflow-request-details">
+              <Detail label="Applicant" value={request.createdBy} />
+              <Detail label="Template ID" value={request.templateId} code />
+              <Detail label="Template version" value={String(request.templateVersion)} />
+              {request.operatorProcedureUrl ? (
+                <div>
+                  <dt>Operational link</dt>
+                  <dd>
+                    <a
+                      className="workflow-view-link"
+                      href={request.operatorProcedureUrl}
+                      rel="noreferrer"
+                      target="_blank"
+                    >
+                      Open operational link
+                    </a>
+                  </dd>
+                </div>
+              ) : null}
+              <Detail label="Created" value={formatDate(request.createdAt)} />
+              <Detail label="Approved" value={request.approvedAt ? formatDate(request.approvedAt) : "Not yet"} />
+              <Detail label="Approved by" value={request.approvedBy ?? "Not yet"} />
+              <Detail label="Application ID" value={request.id} code />
+            </dl>
+          </section>
           <section className="workflow-approval-card">
             <span>Decision</span>
-            <h2>{request.status === "approved" ? "Permission granted" : "Review request"}</h2>
+            <h2>{request.status === "approved" ? "Application approved" : "Review application"}</h2>
             <p>{request.status === "approved"
-              ? "The workflow applied and verified the requested Athenz configuration."
-              : "Accepting this request applies every listed membership and policy assertion."}</p>
+              ? "The approval decision is recorded. Operational fulfillment is handled separately."
+              : "Approving records the decision only. It does not change memberships, policies, or other infrastructure."}</p>
             <WorkflowApprovalButton requestId={request.id} status={request.status} />
           </section>
           <section className="workflow-storage-card">
             <span>Workflow record</span>
             <strong>{request.id}</strong>
-            <p>Stored as <code>mcp-permission-request-{request.id}</code> in the central workflow namespace.</p>
+            <p>Stored as <code>workflow-application-{request.id}</code> in the central workflow namespace.</p>
           </section>
         </aside>
       </div>

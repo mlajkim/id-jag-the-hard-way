@@ -1,3 +1,6 @@
+import { mkdtemp, rm, writeFile } from "node:fs/promises"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 import {
   isKubectlAlreadyExists,
   kubectlArgs,
@@ -9,10 +12,15 @@ import {
   isWorkflowFormTemplateId,
   newWorkflowFormTemplate,
   parseWorkflowFormTemplate,
+  updatedWorkflowFormTemplate,
   WORKFLOW_FORM_TEMPLATE_PREFIX,
   WORKFLOW_FORM_TEMPLATE_RESOURCE,
 } from "../lib/workflowFormTemplate.ts"
-import type { NewWorkflowFormTemplate, WorkflowFormTemplate } from "../types.ts"
+import type {
+  NewWorkflowFormTemplate,
+  WorkflowFormTemplate,
+  WorkflowFormTemplateUpdate,
+} from "../types.ts"
 
 const WORKFLOW_NAMESPACE = "mcp-hub"
 const TEMPLATE_DATA_KEY = "template.json"
@@ -29,6 +37,7 @@ type ConfigMapList = {
 
 export class WorkflowFormTemplateNotFoundError extends Error {}
 export class WorkflowFormTemplateConflictError extends Error {}
+export class WorkflowFormTemplateVersionConflictError extends Error {}
 
 export async function createWorkflowFormTemplate(
   input: NewWorkflowFormTemplate,
@@ -68,22 +77,66 @@ export async function listWorkflowFormTemplates(
     .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
 }
 
-export async function deleteWorkflowFormTemplate(
+export async function getWorkflowFormTemplate(
   templateId: string,
   runKubectl: KubectlRunner = runKubectlCommand,
 ) {
   assertTemplateId(templateId)
-  const resource = `configmap/${WORKFLOW_FORM_TEMPLATE_PREFIX}${templateId}`
-  const getResult = await runKubectl(kubectlArgs([
+  const result = await runKubectl(kubectlArgs([
     "get",
-    resource,
+    `configmap/${WORKFLOW_FORM_TEMPLATE_PREFIX}${templateId}`,
     "--namespace",
     WORKFLOW_NAMESPACE,
     "--ignore-not-found",
     "-o",
-    "name",
+    "json",
   ]))
-  if (!getResult.stdout.trim()) throw new WorkflowFormTemplateNotFoundError("Workflow form template not found")
+  if (!result.stdout.trim()) throw new WorkflowFormTemplateNotFoundError("Workflow form template not found")
+  return templateFromConfigMap(JSON.parse(result.stdout) as StoredConfigMap)
+}
+
+export async function updateWorkflowFormTemplate(
+  templateId: string,
+  input: WorkflowFormTemplateUpdate,
+  runKubectl: KubectlRunner = runKubectlCommand,
+) {
+  const current = await getWorkflowFormTemplate(templateId, runKubectl)
+  if (current.version !== input.version) {
+    throw new WorkflowFormTemplateVersionConflictError(
+      `Workflow form template ${templateId} is now version ${current.version}; reload before updating`,
+    )
+  }
+  const updated = updatedWorkflowFormTemplate(current, input)
+  const patchDirectory = await mkdtemp(join(tmpdir(), "idthw-workflow-template-patch-"))
+  const patchPath = join(patchDirectory, "patch.json")
+  try {
+    await writeFile(patchPath, JSON.stringify({
+      data: { [TEMPLATE_DATA_KEY]: JSON.stringify(updated) },
+      metadata: { annotations: { "mcp.idthw.dev/version": String(updated.version) } },
+    }), { encoding: "utf8", mode: 0o600 })
+    const args = [
+      "patch",
+      `configmap/${WORKFLOW_FORM_TEMPLATE_PREFIX}${templateId}`,
+      "--namespace",
+      WORKFLOW_NAMESPACE,
+      "--type=merge",
+      "--patch-file",
+      patchPath,
+    ]
+    await runKubectl(kubectlArgs([...args, "--dry-run=server"]))
+    await runKubectl(kubectlArgs(args))
+  } finally {
+    await rm(patchDirectory, { recursive: true, force: true })
+  }
+  return updated
+}
+
+export async function deleteWorkflowFormTemplate(
+  templateId: string,
+  runKubectl: KubectlRunner = runKubectlCommand,
+) {
+  await getWorkflowFormTemplate(templateId, runKubectl)
+  const resource = `configmap/${WORKFLOW_FORM_TEMPLATE_PREFIX}${templateId}`
   const args = ["delete", resource, "--namespace", WORKFLOW_NAMESPACE, "--wait=true"]
   await runKubectl(kubectlArgs([...args, "--dry-run=server"]))
   await runKubectl(kubectlArgs(args))

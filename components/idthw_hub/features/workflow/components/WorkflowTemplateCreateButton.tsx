@@ -1,8 +1,9 @@
 "use client"
 
-import { GripVertical, Plus, Trash2, X } from "lucide-react"
+import { GripVertical, Pencil, Plus, Trash2, X } from "lucide-react"
 import { FormEvent, useId, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
+import type { WorkflowFormTemplate } from "@/features/workflow/types"
 
 type DraftField = {
   clientId: number
@@ -12,15 +13,30 @@ type DraftField = {
   type: "bullet-list" | "text"
 }
 
-export function WorkflowTemplateCreateButton() {
+function draftFields(template?: WorkflowFormTemplate): DraftField[] {
+  return (template?.fields ?? []).map((field, index) => ({
+    clientId: index + 1,
+    label: field.label,
+    options: [...field.options],
+    required: field.required,
+    type: field.type,
+  }))
+}
+
+export function WorkflowTemplateCreateButton({
+  template,
+}: {
+  template?: WorkflowFormTemplate
+} = {}) {
   const router = useRouter()
   const dialogRef = useRef<HTMLDialogElement>(null)
   const titleId = useId()
-  const [templateId, setTemplateId] = useState("")
-  const [subject, setSubject] = useState("")
-  const [applicationContent, setApplicationContent] = useState("")
-  const [fields, setFields] = useState<DraftField[]>([])
-  const [nextFieldId, setNextFieldId] = useState(1)
+  const [templateId, setTemplateId] = useState(template?.id ?? "")
+  const [subject, setSubject] = useState(template?.subject ?? "")
+  const [applicationContent, setApplicationContent] = useState(template?.applicationContent ?? "")
+  const [operatorProcedureUrl, setOperatorProcedureUrl] = useState(template?.operatorProcedureUrl ?? "")
+  const [fields, setFields] = useState<DraftField[]>(() => draftFields(template))
+  const [nextFieldId, setNextFieldId] = useState((template?.fields.length ?? 0) + 1)
   const [draggedFieldId, setDraggedFieldId] = useState<number | null>(null)
   const [dragOverFieldId, setDragOverFieldId] = useState<number | null>(null)
   const [error, setError] = useState("")
@@ -36,11 +52,12 @@ export function WorkflowTemplateCreateButton() {
   }
 
   function resetForm() {
-    setTemplateId("")
-    setSubject("")
-    setApplicationContent("")
-    setFields([])
-    setNextFieldId(1)
+    setTemplateId(template?.id ?? "")
+    setSubject(template?.subject ?? "")
+    setApplicationContent(template?.applicationContent ?? "")
+    setOperatorProcedureUrl(template?.operatorProcedureUrl ?? "")
+    setFields(draftFields(template))
+    setNextFieldId((template?.fields.length ?? 0) + 1)
     setDraggedFieldId(null)
     setDragOverFieldId(null)
     setError("")
@@ -78,8 +95,12 @@ export function WorkflowTemplateCreateButton() {
     setIsSaving(true)
 
     try {
-      const response = await fetch("/api/workflow-templates", {
-        method: "POST",
+      const response = await fetch(
+        template
+          ? `/api/workflow-templates/${encodeURIComponent(template.id)}`
+          : "/api/workflow-templates",
+        {
+        method: template ? "PUT" : "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           applicationContent,
@@ -89,20 +110,29 @@ export function WorkflowTemplateCreateButton() {
             required,
             type,
           })),
-          id: templateId,
+          ...(template ? { version: template.version } : { id: templateId }),
+          operatorProcedureUrl,
           subject,
         }),
       })
       const payload = await response.json().catch(() => ({})) as { error?: unknown }
       if (!response.ok) {
-        throw new Error(typeof payload.error === "string" ? payload.error : "Unable to create template")
+        throw new Error(
+          typeof payload.error === "string"
+            ? payload.error
+            : `Unable to ${template ? "update" : "create"} template`,
+        )
       }
 
       dialogRef.current?.close()
       resetForm()
       router.refresh()
     } catch (createError) {
-      setError(createError instanceof Error ? createError.message : "Unable to create template")
+      setError(
+        createError instanceof Error
+          ? createError.message
+          : `Unable to ${template ? "update" : "create"} template`,
+      )
     } finally {
       setIsSaving(false)
     }
@@ -110,9 +140,13 @@ export function WorkflowTemplateCreateButton() {
 
   return (
     <>
-      <button className="button primary workflow-template-create-trigger" type="button" onClick={openDialog}>
-        <Plus size={14} aria-hidden="true" />
-        Create template
+      <button
+        className={template ? "workflow-template-update-trigger" : "button primary workflow-template-create-trigger"}
+        type="button"
+        onClick={openDialog}
+      >
+        {template ? <Pencil size={12} aria-hidden="true" /> : <Plus size={14} aria-hidden="true" />}
+        {template ? "Edit" : "Create template"}
       </button>
 
       <dialog
@@ -129,11 +163,11 @@ export function WorkflowTemplateCreateButton() {
           if (event.target === event.currentTarget) closeDialog()
         }}
       >
-        <form className="workflow-template-dialog-card" onSubmit={createTemplate}>
+        <form autoComplete="off" className="workflow-template-dialog-card" onSubmit={createTemplate}>
           <div className="workflow-template-dialog-head">
             <div>
               <span>Reusable application form</span>
-              <h2 id={titleId}>Create workflow template</h2>
+              <h2 id={titleId}>{template ? "Update workflow template" : "Create workflow template"}</h2>
             </div>
             <button type="button" aria-label="Close template dialog" disabled={isSaving} onClick={closeDialog}>
               <X size={18} aria-hidden="true" />
@@ -144,7 +178,9 @@ export function WorkflowTemplateCreateButton() {
             <label>
               <span>Template ID</span>
               <input
+                autoComplete="off"
                 autoFocus
+                disabled={Boolean(template)}
                 maxLength={63}
                 pattern="[a-z0-9](?:[-a-z0-9]*[a-z0-9])?"
                 placeholder="idthw-api-mcp-tools"
@@ -152,12 +188,17 @@ export function WorkflowTemplateCreateButton() {
                 value={templateId}
                 onChange={(event) => setTemplateId(event.target.value.toLowerCase())}
               />
-              <small>Lowercase letters, numbers, and hyphens. This ID cannot be changed later.</small>
+              <small>
+                {template
+                  ? `This ID cannot be changed. Saving creates version ${template.version + 1}.`
+                  : "Lowercase letters, numbers, and hyphens. This ID cannot be changed later."}
+              </small>
             </label>
 
             <label>
               <span>Subject</span>
               <input
+                autoComplete="off"
                 maxLength={200}
                 placeholder="Request access to the provider service"
                 required
@@ -169,6 +210,7 @@ export function WorkflowTemplateCreateButton() {
             <label>
               <span>Application content</span>
               <textarea
+                autoComplete="off"
                 maxLength={10000}
                 placeholder="Describe what applicants should provide and how the request will be handled."
                 required
@@ -176,6 +218,19 @@ export function WorkflowTemplateCreateButton() {
                 value={applicationContent}
                 onChange={(event) => setApplicationContent(event.target.value)}
               />
+            </label>
+
+            <label>
+              <span>Operational link</span>
+              <input
+                autoComplete="off"
+                maxLength={2048}
+                placeholder="https://docs.example.com/operation"
+                type="url"
+                value={operatorProcedureUrl}
+                onChange={(event) => setOperatorProcedureUrl(event.target.value)}
+              />
+              <small>Optional. Shown to operators reviewing a request and hidden from applicants.</small>
             </label>
 
             <section className="workflow-template-fields" aria-labelledby={`${titleId}-fields`}>
@@ -231,6 +286,7 @@ export function WorkflowTemplateCreateButton() {
                       <label>
                         <span className="sr-only">Field {index + 1} label</span>
                         <input
+                          autoComplete="off"
                           maxLength={120}
                           placeholder={`Field ${index + 1} label`}
                           required
@@ -314,6 +370,7 @@ export function WorkflowTemplateCreateButton() {
                                 <label>
                                   <span className="sr-only">Field {index + 1} option {optionIndex + 1}</span>
                                   <input
+                                    autoComplete="off"
                                     maxLength={120}
                                     placeholder={`Option ${optionIndex + 1}`}
                                     required
@@ -374,7 +431,9 @@ export function WorkflowTemplateCreateButton() {
           <div className="workflow-template-dialog-actions">
             <button className="button" type="button" disabled={isSaving} onClick={closeDialog}>Cancel</button>
             <button className="button primary" type="submit" disabled={isSaving}>
-              {isSaving ? "Creating..." : "Create template"}
+              {isSaving
+                ? template ? "Updating..." : "Creating..."
+                : template ? "Update template" : "Create template"}
             </button>
           </div>
         </form>

@@ -1,4 +1,4 @@
-import { FileText, Home, LayoutTemplate } from "lucide-react"
+import { ExternalLink, FileText, Home, LayoutTemplate } from "lucide-react"
 import Link from "next/link"
 import { consoleHref, displayProduct } from "@/components/navigation/consoleRoute"
 import { WorkflowConsoleTemplate } from "@/components/templates/WorkflowConsoleTemplate"
@@ -62,6 +62,7 @@ export default async function WorkflowTemplatesRoute({
               <thead>
                 <tr>
                   <th>Template ID</th>
+                  <th>Version</th>
                   <th>Subject</th>
                   <th>Application content</th>
                   <th>Fields</th>
@@ -73,7 +74,23 @@ export default async function WorkflowTemplatesRoute({
               <tbody>
                 {templates.map((template) => (
                   <tr key={template.id}>
-                    <td><code>{template.id}</code></td>
+                    <td>
+                      <Link
+                        className="workflow-template-registration-link"
+                        href={consoleHref({
+                          project,
+                          product,
+                          section: "workflow-template",
+                          suffix: `${template.id}/register`,
+                        })}
+                        rel="noreferrer"
+                        target="_blank"
+                      >
+                        <code>{template.id}</code>
+                        <ExternalLink size={12} aria-hidden="true" />
+                      </Link>
+                    </td>
+                    <td>v{template.version}</td>
                     <td><strong>{template.subject}</strong></td>
                     <td><span className="workflow-template-content-preview">{template.applicationContent}</span></td>
                     <td>
@@ -84,7 +101,13 @@ export default async function WorkflowTemplatesRoute({
                     <td><strong>{template.createdBy}</strong></td>
                     <td>{formatDate(template.createdAt)}</td>
                     <td>
-                      <WorkflowTemplateDeleteButton subject={template.subject} templateId={template.id} />
+                      <div className="workflow-template-row-actions">
+                        <WorkflowTemplateCreateButton
+                          key={template.version}
+                          template={template}
+                        />
+                        <WorkflowTemplateDeleteButton subject={template.subject} templateId={template.id} />
+                      </div>
                     </td>
                   </tr>
                 ))}

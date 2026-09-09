@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/features/auth/lib/auth"
-import { deleteApprovedPermissionWorkflowRequests } from "@/features/workflow/api/permissionWorkflowRequests"
+import { deleteApprovedWorkflowApplications } from "@/features/workflow/api/workflowApplications"
 
 export const dynamic = "force-dynamic"
 
@@ -16,11 +16,11 @@ export async function DELETE() {
   }
 
   try {
-    const report = await deleteApprovedPermissionWorkflowRequests()
+    const report = await deleteApprovedWorkflowApplications()
     return NextResponse.json(report, { headers: NO_STORE_HEADERS })
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to delete approved requests"
-    console.error("Unable to delete approved MCP permission workflow requests", {
+    console.error("Unable to delete approved workflow applications", {
       message: message.trim().replace(/\s+/g, " ").slice(0, 300),
     })
     return NextResponse.json(
