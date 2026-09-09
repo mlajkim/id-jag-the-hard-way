@@ -138,6 +138,17 @@ export async function markWorkflowApplicationApproved(
   return approved
 }
 
+export async function approveAllPendingWorkflowApplications(
+  approvedBy: string,
+  runKubectl: KubectlRunner = runKubectlCommand,
+) {
+  const pending = await listWorkflowApplications({ status: "pending" }, runKubectl)
+  for (const application of pending) {
+    await markWorkflowApplicationApproved(application, approvedBy, runKubectl)
+  }
+  return { approved: pending.length }
+}
+
 export async function deleteApprovedWorkflowApplications(
   runKubectl: KubectlRunner = runKubectlCommand,
 ) {

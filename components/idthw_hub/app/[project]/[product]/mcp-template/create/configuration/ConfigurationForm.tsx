@@ -184,7 +184,7 @@ export function ConfigurationForm({
       </fieldset>
 
       <ToolPermissionAuthoring
-        description="Add known MCP tools as template defaults. Choose no additional permission or enter the audience and required role for each tool."
+        description="Configure known MCP tools as template defaults, and decide how the Gateway handles unspecified tools."
         defaultPermission={draft.toolPermissionDefault}
         permissionGuideError={!permissionGuideUrlReady
           ? "Enter an HTTP or HTTPS URL."

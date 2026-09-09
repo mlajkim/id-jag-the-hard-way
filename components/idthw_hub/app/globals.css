@@ -3692,6 +3692,17 @@ body:has(.permission-request-dialog[open]) {
   accent-color: var(--blue);
 }
 
+.mcp-tool-permission-default > span {
+  display: grid;
+  gap: 0;
+}
+
+.mcp-tool-permission-default small {
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 15px;
+}
+
 .mcp-tool-permission-empty {
   width: min(100%, 760px);
   margin-bottom: 10px;
@@ -3952,6 +3963,50 @@ body:has(.permission-request-dialog[open]) {
   min-height: 32px;
   padding: 6px 7px;
   font-size: 10px;
+}
+
+.athenz-role-select-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 32px;
+  gap: 6px;
+  min-width: 0;
+}
+
+.athenz-role-select-refresh {
+  width: 32px;
+  height: 32px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid #cfd6df;
+  border-radius: 4px;
+  background: #fff;
+  color: #526071;
+  cursor: pointer;
+}
+
+.athenz-role-select-refresh:hover:not(:disabled) {
+  border-color: #9fabb9;
+  background: #f6f8fa;
+  color: var(--text);
+}
+
+.athenz-role-select-refresh:focus-visible {
+  border-color: var(--blue);
+  outline: 2px solid rgb(49 116 211 / 14%);
+  outline-offset: 0;
+}
+
+.athenz-role-select-refresh:disabled {
+  background: #f1f3f6;
+  color: #a2abb7;
+  cursor: not-allowed;
+}
+
+.athenz-role-select-status {
+  color: var(--danger);
+  font-size: 9px;
+  font-weight: 650;
+  line-height: 1.35;
 }
 
 .permission-dialog-card:has(.select-menu.open),
@@ -5681,6 +5736,159 @@ body:has(.permission-request-dialog[open]) {
 
 .workflow-request-refresh .spinning {
   animation: permission-refresh-spin 0.8s linear infinite;
+}
+
+.workflow-demo-panel {
+  max-width: 880px;
+}
+
+.workflow-demo-layout {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+}
+
+.workflow-demo-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.workflow-demo-icon {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid #cddbee;
+  border-radius: 9px;
+  background: #f2f7fd;
+  color: #2f6cae;
+}
+
+.workflow-demo-summary h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.workflow-demo-summary p {
+  max-width: 680px;
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.workflow-demo-targets {
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fafbfc;
+}
+
+.workflow-demo-targets > div {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  min-height: 44px;
+  border-bottom: 1px solid var(--line);
+}
+
+.workflow-demo-targets > div:last-child {
+  border-bottom: 0;
+}
+
+.workflow-demo-targets dt,
+.workflow-demo-targets dd {
+  margin: 0;
+  padding: 12px 14px;
+}
+
+.workflow-demo-targets dt {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.workflow-demo-targets dd {
+  border-left: 1px solid var(--line);
+  color: var(--text);
+  font-size: 11px;
+}
+
+.workflow-demo-targets code,
+.workflow-delete-dialog-body code {
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.workflow-demo-targets ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.workflow-demo-targets li {
+  padding: 3px 7px;
+  border: 1px solid #d8dee7;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.workflow-demo-note,
+.workflow-demo-result {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.workflow-demo-note {
+  color: var(--muted);
+}
+
+.workflow-demo-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.workflow-demo-actions .button {
+  min-height: 34px;
+}
+
+.workflow-demo-actions .spinning {
+  animation: permission-refresh-spin 0.8s linear infinite;
+}
+
+.workflow-demo-result {
+  padding: 10px 12px;
+  border: 1px solid #b9dec8;
+  border-radius: 6px;
+  background: #f0faf4;
+  color: #246b42;
+  font-weight: 650;
+}
+
+@media (max-width: 720px) {
+  .workflow-demo-targets > div {
+    grid-template-columns: 1fr;
+  }
+
+  .workflow-demo-targets dd {
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+
+  .workflow-demo-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
 }
 
 .workflow-request-panel,

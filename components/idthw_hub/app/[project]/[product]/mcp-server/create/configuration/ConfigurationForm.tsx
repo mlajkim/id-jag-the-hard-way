@@ -437,8 +437,8 @@ export function ConfigurationForm({
       {requiresServiceAccount ? (
         <ToolPermissionAuthoring
           description={usesTemplate
-            ? "Review the template defaults. For each known tool, choose no additional permission or enter its audience and required role. You can update these after live tool discovery."
-            : "Add any known MCP tools. Choose no additional permission or enter the audience and required role for each tool. You can update these after live tool discovery."}
+            ? "Review the template defaults. Configure each known tool, and decide how the Gateway handles unspecified tools. You can update these after live tool discovery."
+            : "Configure each known MCP tool, and decide how the Gateway handles unspecified tools. You can update these after live tool discovery."}
           defaultPermission={draft.toolPermissionDefault}
           permissionGuideError={!permissionGuideUrlReady
             ? "Enter an HTTP or HTTPS URL."

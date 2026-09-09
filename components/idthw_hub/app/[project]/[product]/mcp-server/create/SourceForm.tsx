@@ -85,7 +85,7 @@ export function SourceForm({
             selectedTemplateKey: "",
             selectedTemplate: null,
             templateEnvironmentVariables: [],
-            toolPermissionDefault: "not-defined",
+            toolPermissionDefault: "none",
             toolPermissions: [],
           }
         : currentDraft)
@@ -107,7 +107,7 @@ export function SourceForm({
       selectedTemplateKey: initialTemplateKey,
       selectedTemplate: null,
       templateEnvironmentVariables: [],
-      toolPermissionDefault: "not-defined",
+      toolPermissionDefault: "none",
       toolPermissions: [],
     }))
     void loadTemplate(initialTemplateKey)
@@ -120,7 +120,7 @@ export function SourceForm({
       creationMethod,
       permissionGuideLabel: creationMethod === "direct" ? "Permission guide" : currentDraft.permissionGuideLabel,
       permissionGuideUrl: creationMethod === "direct" ? "" : currentDraft.permissionGuideUrl,
-      toolPermissionDefault: creationMethod === "direct" ? "not-defined" : currentDraft.toolPermissionDefault,
+      toolPermissionDefault: creationMethod === "direct" ? "none" : currentDraft.toolPermissionDefault,
       toolPermissions: creationMethod === "direct" ? [] : currentDraft.toolPermissions,
       visibility: creationMethod === "direct" ? "personal" : currentDraft.visibility,
     }))
@@ -135,7 +135,7 @@ export function SourceForm({
       selectedTemplateKey: templateKey,
       selectedTemplate: null,
       templateEnvironmentVariables: [],
-      toolPermissionDefault: "not-defined",
+      toolPermissionDefault: "none",
       toolPermissions: [],
     }))
     if (templateKey) void loadTemplate(templateKey)

@@ -1,6 +1,7 @@
 "use client"
 
 import { Plus, Trash2 } from "lucide-react"
+import { AthenzRoleSelect } from "./AthenzRoleSelect"
 import {
   emptyEditablePermissionRequirement,
   SIGNED_IN_USER_MEMBER,
@@ -62,7 +63,7 @@ export function ToolPermissionAuthoring({
       aria-labelledby="known-tool-permissions-title"
     >
       <div className="mcp-tool-permission-heading">
-        <h2 id="known-tool-permissions-title">Known tools and permissions (optional)</h2>
+        <h2 id="known-tool-permissions-title">Known tools and permissions</h2>
         <p>{description}</p>
       </div>
       {onPermissionGuideChange ? (
@@ -105,7 +106,10 @@ export function ToolPermissionAuthoring({
           checked={defaultPermission === "none"}
           onChange={(event) => onDefaultPermissionChange(event.target.checked ? "none" : "not-defined")}
         />
-        No additional permission for unspecified tools
+        <span>
+          No additional permission for unspecified tools
+          <small>When disabled, unspecified tools are blocked until configured.</small>
+        </span>
       </label>
       {tools.length === 0 ? (
         <div className="permission-dialog-empty neutral mcp-tool-permission-empty">
@@ -155,22 +159,21 @@ export function ToolPermissionAuthoring({
                     value={tool.requirements[0]?.audience ?? ""}
                     onChange={(event) => updatePrimaryRequirement(tool, updateTool, {
                       audience: event.target.value,
+                      role: "",
                     })}
                   />
                 </label>
-                <label className="permission-editor-field mcp-tool-permission-requirement-field">
+                <div className="permission-editor-field mcp-tool-permission-requirement-field">
                   <span>Required role</span>
-                  <input
-                    required={tool.requirements.length > 0}
+                  <AthenzRoleSelect
+                    audience={tool.requirements[0]?.audience ?? ""}
                     disabled={tool.requirements.length === 0}
-                    autoComplete="off"
-                    placeholder={tool.requirements.length > 0 ? "docs-getter" : "Not required"}
                     value={tool.requirements[0]?.role ?? ""}
-                    onChange={(event) => updatePrimaryRequirement(tool, updateTool, {
-                      role: event.target.value,
+                    onChange={(role) => updatePrimaryRequirement(tool, updateTool, {
+                      role,
                     })}
                   />
-                </label>
+                </div>
                 <button
                   className="permission-editor-remove"
                   type="button"

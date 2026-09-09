@@ -55,7 +55,7 @@ const INITIAL_DRAFT: McpTemplateDraft = {
   documentation: "",
   permissionGuideLabel: "Permission guide",
   description: "",
-  toolPermissionDefault: "not-defined",
+  toolPermissionDefault: "none",
   toolPermissions: [],
 }
 
