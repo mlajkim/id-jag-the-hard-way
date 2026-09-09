@@ -17,6 +17,529 @@
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
+.workflow-template-create-trigger {
+  min-height: 34px;
+  gap: 6px;
+  padding: 0 13px;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.workflow-template-table {
+  width: 100%;
+  min-width: 1040px;
+  border-collapse: collapse;
+}
+
+.workflow-template-table th {
+  border-bottom: 1px solid #e7eaf0;
+  padding: 9px 12px;
+  background: #fafbfc;
+  color: #727b88;
+  font-size: 10px;
+  font-weight: 850;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.workflow-template-table td {
+  max-width: 300px;
+  border-bottom: 1px solid #edf0f4;
+  padding: 11px 12px;
+  color: #3e4652;
+  font-size: 11px;
+  font-weight: 650;
+  vertical-align: middle;
+}
+
+.workflow-template-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.workflow-template-table tbody tr:hover {
+  background: #f8fbfa;
+}
+
+.workflow-template-table code,
+.workflow-template-delete-body code {
+  color: #364152;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.workflow-template-content-preview {
+  display: -webkit-box;
+  overflow: hidden;
+  color: #626b78;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.workflow-template-field-count {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: #edf3f7;
+  color: #4f5d6c;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.workflow-template-delete-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  padding: 4px 2px;
+  background: transparent;
+  color: #a33728;
+  font-size: 10px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.workflow-template-delete-trigger:hover {
+  color: #7e251a;
+  text-decoration: underline;
+}
+
+.workflow-template-dialog,
+.workflow-template-delete-dialog {
+  width: min(720px, calc(100vw - 32px));
+  max-height: calc(100vh - 40px);
+  margin: auto;
+  overflow: visible;
+  border: 0;
+  border-radius: 8px;
+  padding: 0;
+  background: transparent;
+  box-shadow: 0 24px 70px rgb(15 23 42 / 28%);
+  font-family: var(--font-sans);
+}
+
+.workflow-template-dialog button,
+.workflow-template-dialog input,
+.workflow-template-dialog select,
+.workflow-template-dialog textarea,
+.workflow-template-delete-dialog button,
+.workflow-template-delete-dialog input {
+  font-family: var(--font-sans);
+}
+
+.workflow-template-delete-dialog {
+  width: min(540px, calc(100vw - 32px));
+}
+
+.workflow-template-dialog::backdrop,
+.workflow-template-delete-dialog::backdrop {
+  background: rgb(15 23 42 / 48%);
+}
+
+.workflow-template-dialog-card,
+.workflow-template-delete-card {
+  overflow: hidden;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.workflow-template-dialog-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid #e5e9ef;
+  padding: 15px 17px;
+}
+
+.workflow-template-dialog-head span {
+  display: block;
+  margin-bottom: 3px;
+  color: #16836b;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.workflow-template-dialog-head h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.workflow-template-dialog-head > button {
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #687180;
+  cursor: pointer;
+}
+
+.workflow-template-form {
+  max-height: calc(100vh - 190px);
+  display: grid;
+  gap: 14px;
+  overflow-y: auto;
+  padding: 17px;
+}
+
+.workflow-template-form > label,
+.workflow-template-field-row > label:first-child,
+.workflow-template-delete-body label {
+  display: grid;
+  gap: 6px;
+  color: #46505d;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.workflow-template-form > label > small {
+  color: #7a8490;
+  font-size: 9px;
+  font-weight: 650;
+}
+
+.workflow-template-form input[type="text"],
+.workflow-template-form > label > input,
+.workflow-template-form textarea,
+.workflow-template-field-row > label:first-child input,
+.workflow-template-option-row label input,
+.workflow-template-delete-body input {
+  width: 100%;
+  border: 1px solid #cfd6df;
+  border-radius: 5px;
+  padding: 9px 10px;
+  background: #fff;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  outline: none;
+}
+
+.workflow-template-form textarea {
+  min-height: 112px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.workflow-template-form input:focus,
+.workflow-template-form textarea:focus,
+.workflow-template-option-row input:focus,
+.workflow-template-delete-body input:focus {
+  border-color: #16836b;
+  box-shadow: 0 0 0 3px rgb(22 131 107 / 12%);
+}
+
+.workflow-template-fields {
+  overflow: hidden;
+  border: 1px solid #dce2e8;
+  border-radius: 6px;
+  background: #fafbfc;
+}
+
+.workflow-template-fields-head {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid #e3e7ec;
+  padding: 9px 11px;
+}
+
+.workflow-template-fields-head strong,
+.workflow-template-fields-head small {
+  display: block;
+}
+
+.workflow-template-fields-head strong {
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.workflow-template-fields-head small {
+  margin-top: 2px;
+  color: #77808d;
+  font-size: 9px;
+  font-weight: 650;
+}
+
+.workflow-template-fields-add {
+  display: flex;
+  justify-content: flex-start;
+  border-top: 1px solid #e3e7ec;
+  padding: 9px 10px;
+  background: #fff;
+}
+
+.workflow-template-fields-add .button {
+  min-height: 28px;
+  flex: 0 0 auto;
+  gap: 4px;
+  padding: 0 8px;
+  font-size: 10px;
+}
+
+.workflow-template-field-list {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+}
+
+.workflow-template-field-row {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) 132px auto 30px;
+  align-items: center;
+  gap: 10px;
+  border-radius: 5px;
+  padding: 4px;
+  transition: background 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+}
+
+.workflow-template-field-row[data-dragging="true"] {
+  opacity: 0.45;
+}
+
+.workflow-template-field-row[data-drag-over="true"] {
+  background: #eef9f6;
+  box-shadow: inset 0 2px 0 #16836b;
+}
+
+.workflow-template-field-drag {
+  width: 24px;
+  height: 32px;
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #88919d;
+  cursor: grab;
+}
+
+.workflow-template-field-drag:hover {
+  background: #e8ecef;
+  color: #4e5966;
+}
+
+.workflow-template-field-drag:active {
+  cursor: grabbing;
+}
+
+.workflow-template-field-type select {
+  width: 100%;
+  min-height: 34px;
+  border: 1px solid #cfd6df;
+  border-radius: 5px;
+  padding: 0 28px 0 9px;
+  background: #fff;
+  color: #424c59;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.workflow-template-required-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #56606d;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.workflow-template-required-toggle input {
+  width: 14px;
+  height: 14px;
+  accent-color: #16836b;
+}
+
+.workflow-template-field-remove {
+  width: 30px;
+  height: 30px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid #e2c3be;
+  border-radius: 5px;
+  background: #fff;
+  color: #a33728;
+  cursor: pointer;
+}
+
+.workflow-template-options {
+  grid-column: 1 / -1;
+  margin: 1px 0 3px 18px;
+  border-left: 2px solid #a9d5ca;
+  padding: 8px 0 2px 12px;
+}
+
+.workflow-template-options-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.workflow-template-options-head strong,
+.workflow-template-options-head small {
+  display: block;
+}
+
+.workflow-template-options-head strong {
+  color: #34434c;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.workflow-template-options-head small {
+  margin-top: 2px;
+  color: #79828e;
+  font-size: 9px;
+  font-weight: 650;
+}
+
+.workflow-template-options-head .button {
+  min-height: 27px;
+  flex: 0 0 auto;
+  gap: 4px;
+  padding: 0 8px;
+  font-size: 9px;
+}
+
+.workflow-template-option-list {
+  display: grid;
+  gap: 6px;
+}
+
+.workflow-template-option-row {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr) 62px;
+  align-items: center;
+  gap: 7px;
+}
+
+.workflow-template-option-bullet {
+  color: #16836b;
+  font-size: 17px;
+  line-height: 1;
+  text-align: center;
+}
+
+.workflow-template-option-row label {
+  min-width: 0;
+}
+
+.workflow-template-option-required {
+  color: #68727f;
+  font-size: 9px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.workflow-template-option-remove {
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  justify-self: center;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #a33728;
+  cursor: pointer;
+}
+
+.workflow-template-option-remove:hover {
+  background: #fff0ee;
+}
+
+.workflow-template-fields-empty {
+  margin: 0;
+  padding: 14px 11px;
+  color: #77808d;
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.workflow-template-form-error {
+  margin: 0;
+  color: #b3261e;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.workflow-template-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  border-top: 1px solid #e5e9ef;
+  padding: 12px 17px;
+  background: #fafbfc;
+}
+
+.workflow-template-dialog-actions .button {
+  min-height: 32px;
+  padding: 0 12px;
+  font-size: 10px;
+}
+
+.workflow-template-delete-body {
+  display: grid;
+  gap: 14px;
+  padding: 17px;
+}
+
+.workflow-template-delete-body > p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.workflow-template-delete-confirm {
+  border-color: #c93f2d !important;
+  background: #c93f2d !important;
+  color: #fff !important;
+}
+
+@media (max-width: 760px) {
+  .workflow-template-field-row {
+    grid-template-columns: 24px minmax(0, 1fr) auto auto;
+  }
+
+  .workflow-template-field-row > label:first-child {
+    grid-column: 2 / -1;
+  }
+
+  .workflow-template-options {
+    margin-left: 8px;
+  }
+
+  .workflow-template-dialog-actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .workflow-template-dialog-actions .button {
+    width: 100%;
+  }
+}
+
 @theme inline {
   --color-background: var(--bg);
   --color-foreground: var(--text);

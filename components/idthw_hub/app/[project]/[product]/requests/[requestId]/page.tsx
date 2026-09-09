@@ -3,6 +3,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { consoleHref, decodeRouteParam, displayProduct } from "@/components/navigation/consoleRoute"
 import { WorkflowConsoleTemplate } from "@/components/templates/WorkflowConsoleTemplate"
+import { requireHubSession } from "@/features/auth/lib/session"
 import { WorkflowApprovalButton } from "@/features/workflow/components/WorkflowApprovalButton"
 import {
   getPermissionWorkflowRequest,
@@ -18,6 +19,7 @@ export default async function PermissionRequestOverviewRoute({
 }: {
   params: Promise<{ product: string; project: string; requestId: string }>
 }) {
+  await requireHubSession()
   const { product, project, requestId: encodedRequestId } = await params
   const requestId = decodeRouteParam(encodedRequestId)
   let request: PermissionWorkflowRequest

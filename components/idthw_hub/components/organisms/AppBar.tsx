@@ -36,7 +36,7 @@ const PRODUCTS = [
   {
     id: WORKFLOW_PRODUCT,
     label: "Workflow Platform",
-    description: "Review and approve MCP permission requests.",
+    description: "Create reusable application forms and review requests.",
     icon: ListChecks,
     accent: "workflow",
   },

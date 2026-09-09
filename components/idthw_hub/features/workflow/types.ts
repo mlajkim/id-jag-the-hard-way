@@ -48,3 +48,28 @@ export type PendingToolPermissionRequest = Pick<
   PermissionWorkflowRequest,
   "id" | "status" | "toolName"
 >
+
+export type WorkflowFormTemplateField = {
+  id: string
+  label: string
+  options: string[]
+  required: boolean
+  type: "bullet-list" | "text"
+}
+
+export type WorkflowFormTemplate = {
+  applicationContent: string
+  createdAt: string
+  createdBy: string
+  fields: WorkflowFormTemplateField[]
+  id: string
+  subject: string
+  version: 1
+}
+
+export type NewWorkflowFormTemplate = Pick<
+  WorkflowFormTemplate,
+  "applicationContent" | "createdBy" | "id" | "subject"
+> & {
+  fields: Array<Omit<WorkflowFormTemplateField, "id">>
+}

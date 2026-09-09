@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { auth } from "@/features/auth/lib/auth"
 import { requestToolPermissionAccess } from "@/features/permissions/api/requestToolPermissionAccess"
 import { createZmsRequest } from "@/features/registration/api/mcpManagedAccess"
 import {
@@ -15,6 +16,14 @@ export async function POST(
   _request: Request,
   { params }: { params: Promise<{ requestId: string }> },
 ) {
+  const session = await auth()
+  if (!session?.user?.username) {
+    return NextResponse.json(
+      { error: "Authentication required" },
+      { status: 401, headers: NO_STORE_HEADERS },
+    )
+  }
+
   const { requestId } = await params
 
   try {

@@ -2,6 +2,7 @@ import { CheckCircle2, Clock3, Home, Inbox } from "lucide-react"
 import Link from "next/link"
 import { consoleHref, displayProduct } from "@/components/navigation/consoleRoute"
 import { WorkflowConsoleTemplate } from "@/components/templates/WorkflowConsoleTemplate"
+import { requireHubSession } from "@/features/auth/lib/session"
 import { listPermissionWorkflowRequests } from "@/features/workflow/api/permissionWorkflowRequests"
 import { ApprovedRequestCleanupButton } from "@/features/workflow/components/ApprovedRequestCleanupButton"
 import { WorkflowRequestRefreshButton } from "@/features/workflow/components/WorkflowRequestRefreshButton"
@@ -16,6 +17,7 @@ export default async function PermissionRequestsRoute({
   params: Promise<{ product: string; project: string }>
   searchParams: Promise<{ status?: string }>
 }) {
+  await requireHubSession()
   const { product, project } = await params
   const requestedStatus = (await searchParams).status
   const activeStatus = requestedStatus === "approved" ? "approved" : "pending"
@@ -37,7 +39,7 @@ export default async function PermissionRequestsRoute({
 
       <div className="page-head workflow-page-head">
         <div>
-          <span className="workflow-eyebrow">Open approval workflow</span>
+          <span className="workflow-eyebrow">Signed-in approval workflow</span>
           <h1 className="page-title">Permission requests</h1>
           <p>Review MCP tool-access requests and apply approved Athenz changes.</p>
         </div>

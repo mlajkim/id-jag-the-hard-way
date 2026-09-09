@@ -20,7 +20,7 @@ export default async function ProjectsRoute({
   params: Promise<{ project: string; product: string }>
 }) {
   const { project, product } = await params
-  if (product !== WORKFLOW_PRODUCT) await requireHubSession()
+  await requireHubSession()
   const response = await fetchProjectNamespaces()
   const productHomeHref = productHref(project, product)
   const projectsHref = consoleHref({ project, product, section: "projects" })

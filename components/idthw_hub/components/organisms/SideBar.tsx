@@ -1,6 +1,6 @@
 "use client"
 
-import { BarChart3, ClipboardList, FolderKanban, HelpCircle, ListChecks, Sparkles } from "lucide-react"
+import { BarChart3, ClipboardList, FolderKanban, HelpCircle, LayoutTemplate, ListChecks, Sparkles } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -28,6 +28,7 @@ const GENAI_NAV_ITEMS: Array<{ section: ConsoleSection; label: string; icon: typ
 
 const WORKFLOW_NAV_ITEMS: Array<{ section: ConsoleSection; label: string; icon: typeof ListChecks }> = [
   { section: "projects", label: "Projects", icon: FolderKanban },
+  { section: "workflow-template", label: "Form templates", icon: LayoutTemplate },
   { section: "requests", label: "Permission requests", icon: ListChecks },
 ]
 
