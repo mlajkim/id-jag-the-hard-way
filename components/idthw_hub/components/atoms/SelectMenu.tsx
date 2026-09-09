@@ -13,6 +13,7 @@ export function SelectMenu({
   className = "",
   disabled = false,
   onChange,
+  onOpen,
   options,
   placeholder = "Select an option",
   value,
@@ -21,6 +22,7 @@ export function SelectMenu({
   className?: string
   disabled?: boolean
   onChange: (value: string) => void
+  onOpen?: () => void
   options: SelectMenuOption[]
   placeholder?: string
   value: string
@@ -29,7 +31,7 @@ export function SelectMenu({
   const root = useRef<HTMLDivElement>(null)
   const trigger = useRef<HTMLButtonElement>(null)
   const selectedOption = options.find((option) => option.value === value)
-  const interactionDisabled = disabled || options.length === 0
+  const interactionDisabled = disabled || (options.length === 0 && !onOpen)
 
   useEffect(() => {
     if (!open) return
@@ -67,6 +69,7 @@ export function SelectMenu({
         className="select-menu-trigger"
         disabled={interactionDisabled}
         onClick={() => setOpen((current) => !current)}
+        onFocus={onOpen}
         ref={trigger}
         type="button"
       >
@@ -76,7 +79,7 @@ export function SelectMenu({
         <ChevronDown className="select-menu-chevron" size={15} aria-hidden="true" />
       </button>
 
-      {open ? (
+      {open && options.length > 0 ? (
         <div className="select-menu-options" role="listbox" aria-label={ariaLabel}>
           {options.map((option) => {
             const selected = option.value === value

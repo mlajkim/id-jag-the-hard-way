@@ -13,6 +13,7 @@ export type ConsoleSection =
   | "approval"
   | "monitoring"
   | "workflow-template"
+  | "demo-tools"
   | "requests"
 
 export type ConsoleRoute = {
@@ -30,6 +31,7 @@ const SECTION_SLUGS = new Set<ConsoleSection>([
   "approval",
   "monitoring",
   "workflow-template",
+  "demo-tools",
   "requests",
 ])
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { BarChart3, ClipboardList, FolderKanban, HelpCircle, LayoutTemplate, ListChecks, Sparkles } from "lucide-react"
+import { BarChart3, ClipboardList, FolderKanban, HelpCircle, LayoutTemplate, ListChecks, Sparkles, Wrench } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -30,6 +30,7 @@ const WORKFLOW_NAV_ITEMS: Array<{ section: ConsoleSection; label: string; icon: 
   { section: "projects", label: "Projects", icon: FolderKanban },
   { section: "workflow-template", label: "Form templates", icon: LayoutTemplate },
   { section: "requests", label: "Permission requests", icon: ListChecks },
+  { section: "demo-tools", label: "Demo tools", icon: Wrench },
 ]
 
 export function SideBar() {

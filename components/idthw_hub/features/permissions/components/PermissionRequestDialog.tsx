@@ -15,6 +15,7 @@ import {
 } from "react"
 import { SelectMenu } from "@/components/atoms/SelectMenu"
 import { AdditionalToolAccessField } from "@/features/permissions/components/AdditionalToolAccessField"
+import { AthenzRoleSelect } from "@/features/permissions/components/AthenzRoleSelect"
 import {
   configuredRequirementsFromDraft,
   emptyEditablePermissionRequirement,
@@ -544,19 +545,20 @@ export function PermissionEditor({
                 autoComplete="off"
                 value={requirement.audience}
                 placeholder="api"
-                onChange={(event) => update(requirementIndex, { audience: event.target.value })}
+                onChange={(event) => update(requirementIndex, {
+                  audience: event.target.value,
+                  role: "",
+                })}
               />
             </label>
-            <label className="permission-editor-field permission-editor-role-field">
+            <div className="permission-editor-field permission-editor-role-field">
               <span>Required role</span>
-              <input
-                required
-                autoComplete="off"
+              <AthenzRoleSelect
+                audience={requirement.audience}
                 value={requirement.role}
-                placeholder="docs-getter"
-                onChange={(event) => update(requirementIndex, { role: event.target.value })}
+                onChange={(role) => update(requirementIndex, { role })}
               />
-            </label>
+            </div>
             <label className="permission-editor-field permission-editor-label-field">
               <span>Description (optional)</span>
               <input

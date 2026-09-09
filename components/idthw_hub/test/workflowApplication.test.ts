@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises"
 import test from "node:test"
 import type { KubectlRunner } from "../features/kubernetes/api/kubectl.ts"
 import {
+  approveAllPendingWorkflowApplications,
   createWorkflowApplication,
   deleteApprovedWorkflowApplications,
   getWorkflowApplication,
@@ -114,6 +115,35 @@ test("loads applications stored before workflow status was introduced as pending
   const parsed = parseWorkflowApplication(legacyApplication)
   assert.equal(parsed.status, "pending")
   assert.equal(parsed.templateVersion, 1)
+})
+
+test("approves every pending workflow application in one bulk operation", async () => {
+  const cluster = new FakeWorkflowApplicationCluster()
+  const first = await createWorkflowApplication(
+    TEMPLATE,
+    { answers: { "field-1": "Create" } },
+    "first-applicant",
+    cluster.run,
+  )
+  await createWorkflowApplication(
+    TEMPLATE,
+    { answers: { "field-1": "Delete" } },
+    "second-applicant",
+    cluster.run,
+  )
+  await markWorkflowApplicationApproved(first, "existing-reviewer", cluster.run)
+
+  assert.deepEqual(
+    await approveAllPendingWorkflowApplications("demo-reviewer", cluster.run),
+    { approved: 1 },
+  )
+  const approved = await listWorkflowApplications({ status: "approved" }, cluster.run)
+  assert.equal(approved.length, 2)
+  assert.equal(approved.find(({ id }) => id !== first.id)?.approvedBy, "demo-reviewer")
+  assert.deepEqual(
+    await approveAllPendingWorkflowApplications("demo-reviewer", cluster.run),
+    { approved: 0 },
+  )
 })
 
 type StoredConfigMap = {

@@ -78,7 +78,7 @@ const INITIAL_DRAFT: McpCreateDraft = {
   hubServiceAccountName: "",
   permissionGuideLabel: "Permission guide",
   permissionGuideUrl: "",
-  toolPermissionDefault: "not-defined",
+  toolPermissionDefault: "none",
   toolPermissions: [],
 }
 
