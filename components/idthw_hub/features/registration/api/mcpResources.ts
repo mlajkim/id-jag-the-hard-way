@@ -40,6 +40,8 @@ const ANNOTATION_ICON = "mcp.idthw.dev/icon"
 const ANNOTATION_IAM_SERVICE_ACCOUNT = "mcp.idthw.dev/iam-service-account"
 const ANNOTATION_ID = "mcp.idthw.dev/id"
 const ANNOTATION_PATH = "mcp.idthw.dev/path"
+const ANNOTATION_PERMISSION_GUIDE_LABEL = "mcp.idthw.dev/permission-guide-label"
+const ANNOTATION_PERMISSION_GUIDE_URL = "mcp.idthw.dev/permission-guide-url"
 const ANNOTATION_TEMPLATE_KEY = "mcp.idthw.dev/template-key"
 const ANNOTATION_TOOL_PERMISSIONS = "mcp.idthw.dev/tool-permissions"
 const ANNOTATION_VISIBILITY = "mcp.idthw.dev/visibility"
@@ -219,6 +221,8 @@ export function configurationFromDeployment(
     image: container.image,
     mcpKeyName,
     path: annotations[ANNOTATION_PATH] ?? "/mcp",
+    permissionGuideLabel: annotations[ANNOTATION_PERMISSION_GUIDE_LABEL]?.trim() || "Permission guide",
+    permissionGuideUrl: optionalHttpUrl(annotations[ANNOTATION_PERMISSION_GUIDE_URL]),
     port: String(port),
     project,
     serverName: annotations[ANNOTATION_ALIAS] ?? mcpKeyName,
@@ -463,6 +467,8 @@ export function buildMcpResourceUpdate(
     ANNOTATION_DESCRIPTION,
     ANNOTATION_ICON,
     ANNOTATION_IAM_SERVICE_ACCOUNT,
+    ANNOTATION_PERMISSION_GUIDE_LABEL,
+    ANNOTATION_PERMISSION_GUIDE_URL,
     ANNOTATION_TEMPLATE_KEY,
     ANNOTATION_TOOL_PERMISSIONS,
     MCP_MANAGED_IDENTITY_ANNOTATION,
@@ -585,6 +591,16 @@ function storedToolPermissionSettings(value: string | undefined): ToolPermission
     throw new Error(
       `Stored MCP tool permissions are invalid: ${error instanceof Error ? error.message : "invalid JSON"}`,
     )
+  }
+}
+
+function optionalHttpUrl(value: string | undefined) {
+  if (!value) return ""
+  try {
+    const url = new URL(value)
+    return url.protocol === "http:" || url.protocol === "https:" ? value : ""
+  } catch {
+    return ""
   }
 }
 

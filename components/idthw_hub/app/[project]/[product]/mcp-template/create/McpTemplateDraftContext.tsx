@@ -31,6 +31,7 @@ export type McpTemplateDraft = {
   environmentVariables: McpTemplateEnvironmentVariableDraft[]
   visibility: "project"
   documentation: string
+  permissionGuideLabel: string
   description: string
   toolPermissionDefault: ToolPermissionDefault
   toolPermissions: ToolPermissionDraft[]
@@ -52,6 +53,7 @@ const INITIAL_DRAFT: McpTemplateDraft = {
   ],
   visibility: "project",
   documentation: "",
+  permissionGuideLabel: "Permission guide",
   description: "",
   toolPermissionDefault: "not-defined",
   toolPermissions: [],
@@ -83,6 +85,7 @@ function draftFromTemplate(template: McpTemplateInput): McpTemplateDraft {
       : [{ id: 1, key: "", description: "", required: true, secret: false, defaultValue: "" }],
     visibility: template.visibility,
     documentation: template.documentation,
+    permissionGuideLabel: template.permissionGuideLabel,
     description: template.description,
     toolPermissionDefault: toolPermissionDefaultFromSettings(template.toolPermissions),
     toolPermissions: toolPermissionDraftFromSettings(template.toolPermissions),

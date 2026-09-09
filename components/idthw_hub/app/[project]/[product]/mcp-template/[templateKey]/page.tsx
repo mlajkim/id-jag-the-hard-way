@@ -276,7 +276,7 @@ export default async function McpTemplateOverviewRoute({
             </div>
             {template.documentation ? (
               <a href={template.documentation} target="_blank" rel="noreferrer">
-                Open documentation <ExternalLink size={13} aria-hidden="true" />
+                {template.permissionGuideLabel} <ExternalLink size={13} aria-hidden="true" />
               </a>
             ) : <p>No documentation link has been added.</p>}
           </section>

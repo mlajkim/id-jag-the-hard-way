@@ -25,6 +25,7 @@ export function validateMcpTemplate(payload: unknown): ValidationResult {
   const command = trimmedString(payload.command)
   const containerArguments = validateContainerArguments(payload)
   const documentation = trimmedString(payload.documentation)
+  const permissionGuideLabel = trimmedString(payload.permissionGuideLabel ?? "Permission guide")
   const description = trimmedString(payload.description)
 
   if (!project || !DNS_LABEL_PATTERN.test(project)) {
@@ -51,6 +52,10 @@ export function validateMcpTemplate(payload: unknown): ValidationResult {
   if (payload.transport !== "streamable-http") return invalid("Transport is invalid")
   if (payload.visibility !== "project") return invalid("Visibility is invalid")
   if (documentation === null || !isOptionalHttpUrl(documentation)) return invalid("Documentation URL is invalid")
+  if (permissionGuideLabel === null || permissionGuideLabel.length > 80) {
+    return invalid("Permission guide link name is invalid")
+  }
+  if (documentation && !permissionGuideLabel) return invalid("Permission guide link name is required")
   if (description === null || description.length > 2000) return invalid("Description is invalid")
 
   const environmentVariables = validateEnvironmentVariables(payload.environmentVariables)
@@ -76,6 +81,7 @@ export function validateMcpTemplate(payload: unknown): ValidationResult {
       image,
       name,
       path,
+      permissionGuideLabel,
       port,
       project,
       templateKey,

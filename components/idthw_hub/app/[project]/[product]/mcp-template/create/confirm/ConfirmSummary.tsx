@@ -66,7 +66,8 @@ function changedTemplateFields(before: McpTemplateDraft, after: McpTemplateDraft
     ["Template name", before.name, after.name],
     ["Icon", before.iconId, after.iconId],
     ["Environment variables", formattedEnvironmentVariables(before), formattedEnvironmentVariables(after)],
-    ["Documentation", before.documentation, after.documentation],
+    ["Permission guide link name", before.permissionGuideLabel, after.permissionGuideLabel],
+    ["Permission guide URL", before.documentation, after.documentation],
     ["Description", before.description, after.description],
   ]
   const changes = fields
@@ -143,6 +144,7 @@ export function ConfirmSummary({
     image: draft.image,
     name: draft.name,
     path: draft.path,
+    permissionGuideLabel: draft.permissionGuideLabel,
     port: draft.port,
     project,
     templateKey: draft.templateKey,
@@ -302,6 +304,8 @@ export function ConfirmSummary({
             <dt>Tool permissions</dt>
             <dd><div className="mcp-template-change-value">{toolPermissionSettingsText(toolPermissions)}</div></dd>
           </div>
+          <div><dt>Permission guide link name</dt><dd>{valueOrFallback(draft.permissionGuideLabel)}</dd></div>
+          <div><dt>Permission guide URL</dt><dd>{valueOrFallback(draft.documentation)}</dd></div>
         </dl>
       </section>
 
@@ -312,7 +316,6 @@ export function ConfirmSummary({
         </div>
         <dl className="mcp-confirm-list">
           <div><dt>Visibility</dt><dd>Project</dd></div>
-          <div><dt>Documentation</dt><dd>{valueOrFallback(draft.documentation)}</dd></div>
           <div><dt>Description</dt><dd>{valueOrFallback(draft.description)}</dd></div>
         </dl>
       </section>

@@ -15,6 +15,8 @@ const validPayload = {
   image: "ghcr.io/example/mcp:latest",
   mcpKeyName: "docs-mcp",
   path: "/mcp",
+  permissionGuideLabel: "Docs access guide",
+  permissionGuideUrl: "https://example.test/docs/permissions",
   port: "8080",
   project: "k8s-docs-server",
   serverName: "Docs MCP",
@@ -41,8 +43,25 @@ test("accepts a valid MCP registration", () => {
   if (result.ok) {
     assert.equal(result.input.mcpKeyName, "docs-mcp")
     assert.equal(result.input.iconId, "google-drive.png")
+    assert.equal(result.input.permissionGuideLabel, "Docs access guide")
+    assert.equal(result.input.permissionGuideUrl, "https://example.test/docs/permissions")
     assert.deepEqual(result.input.arguments, ["--transport", "streamable-http"])
   }
+})
+
+test("accepts only HTTP permission guide URLs", () => {
+  assert.equal(validateMcpRegistration({ ...validPayload, permissionGuideUrl: "" }).ok, true)
+  assert.deepEqual(validateMcpRegistration({ ...validPayload, permissionGuideUrl: "javascript:alert(1)" }), {
+    ok: false,
+    error: "Permission guide URL is invalid",
+  })
+})
+
+test("requires a link name when a permission guide URL is set", () => {
+  assert.deepEqual(validateMcpRegistration({ ...validPayload, permissionGuideLabel: "" }), {
+    ok: false,
+    error: "Permission guide link name is required",
+  })
 })
 
 test("allows initials and rejects unsafe MCP icon IDs", () => {

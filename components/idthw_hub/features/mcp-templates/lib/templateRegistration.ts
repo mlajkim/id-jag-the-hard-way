@@ -74,6 +74,12 @@ export function resolveMcpTemplateRegistration(
       iconId: payload.iconId === undefined ? template.iconId : payload.iconId,
       image: template.image,
       path: template.path,
+      permissionGuideLabel: payload.permissionGuideLabel === undefined
+        ? template.permissionGuideLabel
+        : payload.permissionGuideLabel,
+      permissionGuideUrl: payload.permissionGuideUrl === undefined
+        ? template.documentation
+        : payload.permissionGuideUrl,
       port: template.port,
       templateKey: template.templateKey,
       toolPermissions: resolveTemplateMcpIamMember(payload.toolPermissions === undefined

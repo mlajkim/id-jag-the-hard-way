@@ -26,6 +26,7 @@ const validPayload = {
   command: "",
   description: "Atlassian tools",
   documentation: "https://example.test/docs",
+  permissionGuideLabel: "Confluence access guide",
   environmentVariables: [
     {
       key: "CONFLUENCE_URL",
@@ -305,6 +306,8 @@ test("resolves template runtime fields and secret flags from the Kubernetes temp
   if (!result.ok) return
   assert.equal(result.payload.image, validPayload.image)
   assert.equal(result.payload.iconId, "confluence.png")
+  assert.equal(result.payload.permissionGuideLabel, "Confluence access guide")
+  assert.equal(result.payload.permissionGuideUrl, "https://example.test/docs")
   assert.deepEqual(result.payload.arguments, validPayload.arguments)
   assert.deepEqual(result.payload.environmentVariables, [
     { key: "CONFLUENCE_URL", value: "https://example.atlassian.net/wiki", secret: false },

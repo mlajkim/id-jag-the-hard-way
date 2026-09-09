@@ -22,6 +22,8 @@ export type McpServer = {
   defaultToolPermission?: "none" | "not-defined"
   desiredReplicas?: number
   path?: string
+  permissionGuideLabel?: string
+  permissionGuideUrl?: string
   readyReplicas?: number
   status: McpServerStatus
   statusMessage: string

@@ -1989,12 +1989,19 @@ input:disabled {
   border-color: #0958c4 !important;
   background: linear-gradient(135deg, #086ddd 0%, #6246d9 100%) !important;
   box-shadow: 0 5px 14px rgb(29 87 190 / 28%);
+  text-decoration: none;
   transition: box-shadow 140ms ease, transform 140ms ease;
 }
 
-.mcp-access-request-button:hover {
+.mcp-access-request-button:hover:not(:disabled) {
   box-shadow: 0 7px 19px rgb(29 87 190 / 36%);
   transform: translateY(-1px);
+}
+
+.mcp-access-request-button:disabled {
+  border-color: var(--line-strong) !important;
+  background: #f7f7f8 !important;
+  box-shadow: none;
 }
 
 .mcp-access-request-sparkle {
@@ -2083,6 +2090,30 @@ input:disabled {
   gap: 6px;
   padding: 0 10px;
   font-size: 11px;
+}
+
+.permission-readiness-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+  gap: 7px;
+}
+
+.permission-guide-link {
+  min-height: 30px;
+  gap: 6px;
+  padding: 0 10px;
+  border-color: #8bb6ed;
+  background: #f3f7fe;
+  color: #1559a8;
+  font-size: 11px;
+  text-decoration: none;
+}
+
+.permission-guide-link:hover {
+  border-color: #397bc5;
+  background: #e9f2ff;
 }
 
 .permission-readiness-refresh .spinning {
@@ -2450,6 +2481,7 @@ input:disabled {
   background: #f3f7fe;
   color: #1559a8;
   font-size: 10px;
+  text-decoration: none;
   white-space: nowrap;
 }
 
@@ -2858,6 +2890,24 @@ body:has(.permission-request-dialog[open]) {
   color: var(--text-secondary);
   font-size: 13px;
   line-height: 20px;
+}
+
+.mcp-tool-permission-guide {
+  width: min(100%, 760px);
+  display: grid;
+  grid-template-columns: minmax(150px, 220px) minmax(260px, 1fr);
+  align-items: end;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 10px;
+  border: 1px solid #dfe4eb;
+  border-radius: 7px;
+  background: #fbfcfe;
+}
+
+.mcp-tool-permission-guide > .mcp-create-field-warning {
+  grid-column: 1 / -1;
+  margin: 0;
 }
 
 .mcp-tool-permission-default {
@@ -7061,6 +7111,10 @@ body:has(.permission-request-dialog[open]) {
 }
 
 @media (max-width: 640px) {
+  .mcp-tool-permission-guide {
+    grid-template-columns: 1fr;
+  }
+
   .mcp-tool-permission-default {
     grid-template-columns: 1fr;
     align-items: stretch;
