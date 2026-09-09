@@ -57,7 +57,7 @@ export function ApprovedRequestCleanupButton({ count }: { count: number }) {
             </button>
           </div>
           <div className="workflow-delete-dialog-body">
-            <p>This permanently removes {count} approved workflow {count === 1 ? "record" : "records"}. Pending requests and Athenz permissions are not changed.</p>
+            <p>This permanently removes {count} approved workflow {count === 1 ? "record" : "records"}. Pending applications are not changed.</p>
             {error ? <p className="workflow-approval-error" role="alert">{error}</p> : null}
             <div className="workflow-delete-dialog-actions">
               <button className="button" disabled={isDeleting} type="button" onClick={() => dialogRef.current?.close()}>

@@ -72,6 +72,7 @@ export function PermissionReadinessSection({
         onRefresh={() => startRefresh(() => router.refresh())}
         permissionGuideLabel={permissionGuideLabel}
         permissionGuideUrl={permissionGuideUrl}
+        showActions={!simplePermissionStep}
         stepNumber={stepNumber}
       />
 
@@ -280,6 +281,7 @@ function PermissionHeading({
   onRefresh,
   permissionGuideLabel,
   permissionGuideUrl,
+  showActions,
   stepNumber,
 }: {
   copy?: string
@@ -287,6 +289,7 @@ function PermissionHeading({
   onRefresh: () => void
   permissionGuideLabel?: string
   permissionGuideUrl?: string
+  showActions: boolean
   stepNumber: number
 }) {
   return (
@@ -302,7 +305,7 @@ function PermissionHeading({
           </p>
         </div>
       </div>
-      <div className="permission-readiness-actions">
+      {showActions ? <div className="permission-readiness-actions">
         {permissionGuideUrl ? (
           <a className="button permission-guide-link" href={permissionGuideUrl} target="_blank" rel="noreferrer">
             {permissionGuideLabel || "Permission guide"}
@@ -328,7 +331,7 @@ function PermissionHeading({
           <RefreshCw className={isRefreshing ? "spinning" : ""} size={14} aria-hidden="true" />
           {isRefreshing ? "Refreshing..." : "Refresh"}
         </button>
-      </div>
+      </div> : null}
     </div>
   )
 }
