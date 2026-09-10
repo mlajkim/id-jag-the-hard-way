@@ -1,6 +1,6 @@
 # Background
 
-- https://github.com/mlajkim/id-jag-the-hard-way/issues/230
+- https://github.com/mlajkim/id-jag-the-hard-way/issues🟡 TODO: Issue link if possible.
 
 ## What's done?
 
