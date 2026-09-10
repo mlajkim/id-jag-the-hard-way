@@ -88,6 +88,8 @@ The foundational ID-JAG article behind ID-JAG The Hard Way is listed under [Exte
 
 ![Okta's xaa.dev External Resources listing the LY Corp Tech Blog article on ID-JAG](assets/xaa-dev-external-resources-recognition.png)
 
+Want to try XAA without building everything from scratch? Visit **XAA.dev** at <https://xaa.dev/> or [launch the live demo](https://app.xaa.dev?auto_connect=todo0) to run a preconfigured ID-JAG flow in seconds—no account or local setup required.
+
 ## Community Mentions
 
 > [!NOTE]
