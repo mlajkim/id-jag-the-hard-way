@@ -84,6 +84,12 @@ ID-JAG The Hard Way is listed on the [OAuth.net Cross-App Access (XAA) page](htt
 
 ![OAuth.net Cross-App Access test tools listing ID-JAG The Hard Way](assets/oauth-net-xaa-recognition.png)
 
+The foundational ID-JAG article behind ID-JAG The Hard Way is listed under [External Resources on Okta's xaa.dev](https://xaa.dev/docs/resources#external-resources).
+
+![Okta's xaa.dev External Resources listing the LY Corp Tech Blog article on ID-JAG](assets/xaa-dev-external-resources-recognition.png)
+
+Want to try XAA without building everything from scratch? Visit **XAA.dev** at <https://xaa.dev/> or [launch the live demo](https://app.xaa.dev?auto_connect=todo0) to run a preconfigured ID-JAG flow in seconds—no account or local setup required.
+
 ## Community Mentions
 
 > [!NOTE]
