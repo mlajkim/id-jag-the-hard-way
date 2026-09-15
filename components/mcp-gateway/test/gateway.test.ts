@@ -100,9 +100,10 @@ describe("MCP Gateway", () => {
 
   it("reports sanitized OAuth session and Athenz cache status to authenticated Hub callers", async () => {
     const expiresAt = Math.floor(Date.now() / 1000) + 300
+    const idTokenExpiresAt = expiresAt - 120
     const sessionToken = sessionStore.create({
       idToken: "stored-id-token-must-not-leak",
-      idTokenExpiresAt: expiresAt,
+      idTokenExpiresAt,
       subject: "keycloak-subject",
       username: "idjag-learner",
       expiresAt,
@@ -123,6 +124,7 @@ describe("MCP Gateway", () => {
         sessions: Array<{
           username: string
           subject: string
+          idTokenExpiresAt: string
           expiresAt: string
           athenzAccessTokens: { entries: Array<{ audiences: string[]; scope: string }> }
           athenzIdJags: { entries: Array<{ audiences: string[]; scope: string }> }
@@ -131,6 +133,7 @@ describe("MCP Gateway", () => {
       assert.equal(body.sessionCount, 1)
       assert.equal(body.sessions[0].username, "idjag-learner")
       assert.equal(body.sessions[0].subject, "keycloak-subject")
+      assert.equal(body.sessions[0].idTokenExpiresAt, new Date(idTokenExpiresAt * 1000).toISOString())
       assert.equal(body.sessions[0].expiresAt, new Date(expiresAt * 1000).toISOString())
       assert.deepEqual(body.sessions[0].athenzAccessTokens.entries[0].audiences, ["api"])
       assert.equal(body.sessions[0].athenzAccessTokens.entries[0].scope, "api:role.docs-getter")

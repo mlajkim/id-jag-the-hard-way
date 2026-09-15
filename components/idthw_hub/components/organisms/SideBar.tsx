@@ -17,6 +17,7 @@ const NAV_ITEMS: Array<{ section: ConsoleSection; label: string; enabled: boolea
   { section: "catalog", label: "Catalog", enabled: true },
   { section: "mcp-server", label: "MCP server", enabled: true },
   { section: "mcp-template", label: "MCP template", enabled: true },
+  { section: "mcp-gateway-cache", label: "MCP Gateway cache", enabled: true },
   { section: "playground", label: "Playground", enabled: false },
   { section: "approval", label: "Approval", enabled: false },
 ]

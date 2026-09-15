@@ -9,6 +9,7 @@ export type ConsoleSection =
   | "catalog"
   | "mcp-server"
   | "mcp-template"
+  | "mcp-gateway-cache"
   | "playground"
   | "approval"
   | "monitoring"
@@ -27,6 +28,7 @@ const SECTION_SLUGS = new Set<ConsoleSection>([
   "catalog",
   "mcp-server",
   "mcp-template",
+  "mcp-gateway-cache",
   "playground",
   "approval",
   "monitoring",

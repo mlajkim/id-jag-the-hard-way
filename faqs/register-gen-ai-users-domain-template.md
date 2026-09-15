@@ -1,6 +1,6 @@
 # Goal
 
-Register and apply the GenAI users delegation domain template to a service domain under `gen-ai.services` without editing the ZMS default `solution_templates.json`.
+Register and apply either GenAI users delegation domain-template variant to a service domain under `gen-ai.services` without editing the ZMS default `solution_templates.json`.
 
 <!-- TOC depthFrom:2 depthTo:3 -->
 
@@ -11,11 +11,12 @@ Register and apply the GenAI users delegation domain template to a service domai
 <!-- /TOC -->
 
 <details>
-<summary>Last verified on 2026-07-17 — ✅ Success</summary>
+<summary>Verification status — 🟡 Pending human verification</summary>
 
 | # | Date       | Status                                   |
 |---|------------|------------------------------------------|
-| 1 | 2026-07-17 | ✅ Success — human confirmed fully tested |
+| 1 | 2026-07-17 | ✅ Success — human confirmed the original single-template procedure |
+| 2 | TBD        | 🟡 Pending — human has not confirmed the dual-template procedure |
 
 </details>
 
@@ -56,9 +57,13 @@ kubectl -n athenz get configmap athenz-zms-custom-solution-templates -o json | j
 #   "templates": {
 #     "gen_ai_users_delegation": {
 #       "metadata": {
-#         "latestVersion": 2,
-#         "timestamp": "2026-07-21T00:00:00.000Z",
+#         "latestVersion": 3,
+#         "timestamp": "2026-09-15T00:00:00.000Z",
 #         "keywordsToReplace": "_cost_accountable_admin_",
+#         ...
+#     "gen_ai_users_delegation_replace_admin_with_trust": {
+#       "metadata": {
+#         "replaceAdminWithTrust": true,
 #         ...
 ```
 
@@ -91,15 +96,18 @@ kubectl -n athenz exec deployment/athenz-zms-server -- ls -l /opt/athenz/zms/con
 Check that ZMS generated the merged runtime `solution_templates.json`:
 
 ```sh
-kubectl -n athenz exec deployment/athenz-zms-server -- jq -e '.templates.gen_ai_users_delegation' /var/run/athenz/zms-conf/solution_templates.json
+kubectl -n athenz exec deployment/athenz-zms-server -- jq -e '
+  .templates.gen_ai_users_delegation
+  and .templates.gen_ai_users_delegation_replace_admin_with_trust
+' /var/run/athenz/zms-conf/solution_templates.json
 ```
 
 ```sh
 # {
 #   "metadata": {
-#     "latestVersion": 2,
-#     "timestamp": "2026-07-21T00:00:00.000Z",
-#     "description": "gen ai users delegation template",
+#     "latestVersion": 3,
+#     "timestamp": "2026-09-15T00:00:00.000Z",
+#     "description": "GenAI users delegation with legacy admin-member merge behavior",
 #     "keywordsToReplace": "_cost_accountable_admin_",
 #     "autoUpdate": false
 #   },
@@ -135,7 +143,9 @@ Create gen ai service too:
 ./tools/athenz/create-subdomain.sh "gen-ai" "services"
 ```
 
-Finally apply the template:
+The following example deliberately applies `gen_ai_users_delegation`, which keeps the existing admin-member records when it sets the `admin` trust. Use `gen_ai_users_delegation_replace_admin_with_trust` only on a separate domain where the requester is the sole direct admin and already has effective delegated access through `genai-gateway`.
+
+Finally apply the legacy-merge variant:
 
 ```sh
 _service_codes=(athenz spire mail messenger)

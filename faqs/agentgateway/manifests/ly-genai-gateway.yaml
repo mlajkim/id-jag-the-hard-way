@@ -1,0 +1,44 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: agentgateway-proxy
+  namespace: agent-gateway
+spec:
+  gatewayClassName: agentgateway
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        kinds:
+          - group: gateway.networking.k8s.io
+            kind: HTTPRoute
+          - group: agentgateway.dev
+            kind: AgentgatewayModel
+        namespaces:
+          from: All
+---
+apiVersion: agentgateway.dev/v1alpha1
+kind: AgentgatewayModel
+metadata:
+  name: ly-genai-gateway
+  namespace: agent-gateway
+spec:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: agentgateway-proxy
+      sectionName: http
+  match:
+    model: gpt-5.5
+  provider: OpenAI
+  baseURL: https://openai-proxy.linecorp.com/v1
+  policies:
+    auth:
+      secretRef:
+        name: ly-genai-upstream-credential
+        key: Authorization
+    tls:
+      sni: openai-proxy.linecorp.com
+      verifySubjectAltNames:
+        - openai-proxy.linecorp.com

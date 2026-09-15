@@ -22,6 +22,7 @@ test("returns sanitized access-token and ID-JAG cache metadata", async (t) => {
       sessions: [{
         username: "idjag-learner",
         subject: "keycloak-subject",
+        idTokenExpiresAt: "2026-09-06T05:48:47.000Z",
         expiresAt: "2026-09-06T06:48:47.000Z",
         status: "valid",
         athenzAccessTokens: {
@@ -55,6 +56,7 @@ test("returns sanitized access-token and ID-JAG cache metadata", async (t) => {
   assert.equal(status.available, true)
   if (!status.available) return
   assert.equal(status.sessions[0].athenzIdJags.entryCount, 1)
+  assert.equal(status.sessions[0].idTokenExpiresAt, "2026-09-06T05:48:47.000Z")
   assert.deepEqual(status.sessions[0].athenzAccessTokens.entries[0], {
     audiences: ["mcp-hub.mcps.k8s-docs-server"],
     scope: "mcp-hub.mcps.k8s-docs-server:role.accessor",
