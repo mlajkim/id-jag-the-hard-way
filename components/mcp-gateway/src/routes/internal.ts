@@ -43,6 +43,7 @@ export function createInternalRouter(overrides: Partial<InternalRouterDependenci
       return {
         username: session.username,
         subject: session.subject,
+        idTokenExpiresAt: new Date(session.idTokenExpiresAt * 1000).toISOString(),
         expiresAt: new Date(session.expiresAt * 1000).toISOString(),
         status,
         athenzAccessTokens: dependencies.getAccessTokenCacheStatus(session),

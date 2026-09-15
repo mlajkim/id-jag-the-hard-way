@@ -34,6 +34,7 @@ type GatewayIdJagCacheStatus = {
 type GatewayOAuthSession = {
   username: string
   subject: string
+  idTokenExpiresAt: string
   expiresAt: string
   status: SessionStatus
   athenzAccessTokens: GatewayAccessTokenCacheStatus
@@ -92,6 +93,7 @@ function sanitizeGatewayStatus(value: unknown): McpGatewayCacheStatus {
     return {
       username: string(session.username, `sessions[${index}].username`),
       subject: string(session.subject, `sessions[${index}].subject`),
+      idTokenExpiresAt: string(session.idTokenExpiresAt, `sessions[${index}].idTokenExpiresAt`),
       expiresAt: string(session.expiresAt, `sessions[${index}].expiresAt`),
       status: sessionStatus(session.status, `sessions[${index}].status`),
       athenzAccessTokens: sanitizeAccessTokenStatus(session.athenzAccessTokens, index),

@@ -27,6 +27,7 @@ jq -s '{templates: (map(.templates // {}) | add)}' \
   "${current_file}" \
   "${REPO_DIR}/faqs/statics/mcp-hub-managed-access-solution-template.json" \
   "${REPO_DIR}/faqs/statics/mcp-exchange-helpers-solution-template.json" \
+  "${REPO_DIR}/faqs/statics/gen-ai-users-delegation-solution-template.json" \
   >"${merged_file}"
 
 kubectl -n "${namespace}" create configmap "${config_map}" \
@@ -37,4 +38,4 @@ kubectl -n "${namespace}" create configmap "${config_map}" \
 kubectl -n "${namespace}" rollout restart deployment/athenz-zms-server
 kubectl -n "${namespace}" rollout status deployment/athenz-zms-server
 
-ok "MCP solution templates loaded into ZMS"
+ok "Local MCP and GenAI solution templates loaded into ZMS"
