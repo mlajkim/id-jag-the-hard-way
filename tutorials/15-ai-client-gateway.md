@@ -4,18 +4,18 @@
 
 # AI Client Gateway
 
-In this tutorial, we will deploy the `AI Client Gateway`. This component sits between Claude Code and the MCP server. It intercepts every request, resolves the human user's Keycloak ID token, and runs the full ID-JAG token exchange chain — so neither Claude Code nor the user ever has to manage Athenz tokens by hand.
+Deploy AI Client Gateway between Claude Code and the MCP service with the following steps. The gateway uses the signed-in user's Keycloak ID token to obtain an Athenz access token. The MCP server performs the later exchange for API access.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
 - [Deploy AI Client Gateway in K8s](#deploy-ai-client-gateway-in-k8s)
 - [Generate the Required Certificates](#generate-the-required-certificates)
 - [Mount the Certificates](#mount-the-certificates)
-- [Deploy the Human Gateway](#deploy-the-human-gateway)
-- [Set env vars for the gateway](#set-env-vars-for-the-gateway)
-- [Verification Prerequisite](#verification-prerequisite)
+- [Create the Keycloak Client Secret](#create-the-keycloak-client-secret)
+- [Configure the Gateway](#configure-the-gateway)
+- [Sign Out of Keycloak](#sign-out-of-keycloak)
 - [Verify](#verify)
-- [What's next?](#whats-next)
+- [Next Steps](#next-steps)
 
 <!-- /TOC -->
 
@@ -86,7 +86,7 @@ Create the service identity and fetch its X.509 certificate:
 
 ## Mount the Certificates
 
-Store the certificate as a Kubernetes Secret:
+Store the certificate, private key, and CA certificate in a Kubernetes Secret:
 
 ```sh
 kubectl delete -n human secret human-idjag-learner-claude-cert --ignore-not-found=true
@@ -140,7 +140,9 @@ kubectl logs deploy/claude-idjag-learner-ai-client-gateway -n human
 
 ![AI Client Gateway deployed](./assets/15_ai_client_agent_installed_and_used.png)
 
-## Deploy the Human Gateway
+<a id="deploy-the-human-gateway"></a>
+
+## Create the Keycloak Client Secret
 
 Now that the certificate is in place, configure the gateway with the Keycloak credentials it needs to drive the OAuth2 login flow.
 
@@ -162,17 +164,19 @@ Create the Kubernetes Secret from the Keycloak client credentials:
 #   ✔  Secret created: human/human-idjag-learner-claude-keycloak
 ```
 
-## Set env vars for the gateway
+<a id="set-env-vars-for-the-gateway"></a>
 
-Configure the environment variables for the gateway deployment. This patches the deployment with the URLs and credentials it needs to wire up the full token exchange chain.
+## Configure the Gateway
+
+Configure the gateway's upstream address, ZTS endpoint, and Keycloak client settings:
 
 <details>
 <summary>What each variable does</summary>
 
 - `UPSTREAM_BASE_URL` — the in-cluster MCP server the gateway proxies requests to.
-- `ZTS_URL` — the Athenz ZTS endpoint used to exchange ID-JAG tokens for scoped Access Tokens.
-- `ATHENZ_ACCESS_TOKEN_AUDIENCE` — `mcp`, the recipient of the gateway's Access Token. The token can carry both MCP and API scopes; the ID-JAG audience remains the ZTS URL.
-- `KEYCLOAK_URL` / `KEYCLOAK_REALM` — in-cluster Keycloak address used for server-side token validation during the OAuth callback.
+- `ZTS_URL` — the Athenz ZTS endpoint used to exchange ID-JAG tokens for scoped access tokens.
+- `ATHENZ_ACCESS_TOKEN_AUDIENCE` — `mcp`, the recipient of the gateway's access token. The token can carry both MCP and API scopes; the ID-JAG audience remains the ZTS URL.
+- `KEYCLOAK_URL` / `KEYCLOAK_REALM` — in-cluster Keycloak address used for server-side authorization-code exchange during the OAuth callback.
 - `KEYCLOAK_CLIENT_ID` / `KEYCLOAK_CLIENT_SECRET` — pulled from the Kubernetes Secret you just created; used to authenticate this gateway as a registered OAuth2 client.
 - `PUBLIC_BASE_URL` — the port-forwarded gateway address the browser is redirected back to after login.
 - `KEYCLOAK_PUBLIC_URL` — the port-forwarded Keycloak address used in the browser-facing login redirect URL.
@@ -241,7 +245,9 @@ kubectl logs deploy/claude-idjag-learner-ai-client-gateway -n human --tail=5
 # 🔑 Athenz ZTS Endpoint: https://athenz-zts-server.athenz:4443/zts/v1
 ```
 
-## Verification Prerequisite
+<a id="verification-prerequisite"></a>
+
+## Sign Out of Keycloak
 
 Before verifying, sign out of Keycloak so you start with a clean session. You may still be logged in as `admin` or `idjag-learner` from a previous tutorial.
 
@@ -278,7 +284,7 @@ EOF
 ```
 
 > [!NOTE]
-> Notice that there is no `Authorization` header or pre-fetched access token in this configuration. The gateway handles the entire ID-JAG flow on your behalf — you no longer need `_at=$(cat ./keys/idjag-learner.jwt)` or anything like it.
+> This configuration has no manually supplied Athenz access token. Claude Code authenticates through the gateway, which obtains the access token for upstream requests.
 
 Then reload the plugin:
 
@@ -286,7 +292,7 @@ Then reload the plugin:
 /reload-plugins
 ```
 
-Then run the following, then:
+Open the MCP connection menu:
 
 ```sh
 /mcp
@@ -313,10 +319,12 @@ After signing in, you will see the authentication succeed but the MCP connection
 
 ![15_got_new_credential_but_reconnection_failed](./assets/15_got_new_credential_but_reconnection_failed.png)
 
-This failure is intentional. The gateway now has your ID token and can prove who you are, but the `human.idjag-learner.claude` service does not yet have permission in Athenz to exchange that ID token for an ID-JAG token. Think of it like an enterprise policy: even though `idjag-learner` personally has access to the API, the organization has not yet granted this AI agent the right to act on that person's behalf.
+The sign-in succeeded, but Athenz rejected the delegation request. The gateway service, `human.idjag-learner.claude`, needs `zts.jag_exchange` permission for the requested MCP and API roles. The learner's own role memberships do not grant that permission to the gateway.
 
-## What's next?
+<a id="whats-next"></a>
 
-In the next tutorial, we will grant `human.idjag-learner.claude` the Athenz permissions it needs to perform the full ID-JAG token exchange — effectively telling the authorization server that this AI agent is allowed to act on behalf of `idjag-learner`.
+## Next Steps
+
+In the next chapter, you will grant `human.idjag-learner.claude` permission to request an ID-JAG for the MCP and API scopes on the learner's behalf.
 
 Next: [ID-JAG](./16-id-jag.md)

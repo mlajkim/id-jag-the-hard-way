@@ -4,21 +4,23 @@
 
 # API Server
 
-In this tutorial, we will deploy a simple document API, check that it is running, and confirm that requests without an Access Token are rejected by following these steps:
+In this tutorial, we will deploy a simple document API, check that it is running, and confirm that requests without an access token are rejected by following these steps:
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
-- [Create a namespace `api` in kubernetes](#create-a-namespace-api-in-kubernetes)
-- [Deploy a simple API server to the kubernetes](#deploy-a-simple-api-server-to-the-kubernetes)
+- [Create the API Namespace](#create-the-api-namespace)
+- [Deploy the API Server](#deploy-the-api-server)
 - [Send a Request to the API Server](#send-a-request-to-the-api-server)
 - [Learn About the API](#learn-about-the-api)
 - [Verify Access Token Enforcement](#verify-access-token-enforcement)
-- [Learn what's happened](#learn-whats-happened)
-- [Learn what's next](#learn-whats-next)
+- [Understand the Result](#understand-the-result)
+- [Next Steps](#next-steps)
 
 <!-- /TOC -->
 
-## Create a namespace `api` in kubernetes
+<a id="create-a-namespace-api-in-kubernetes"></a>
+
+## Create the API Namespace
 
 ```sh
 kubectl create ns api
@@ -28,7 +30,9 @@ kubectl create ns api
 # namespace/api created
 ```
 
-## Deploy a simple API server to the kubernetes
+<a id="deploy-a-simple-api-server-to-the-kubernetes"></a>
+
+## Deploy the API Server
 
 ```sh
 kubectl create deploy api-server -n api \
@@ -36,7 +40,7 @@ kubectl create deploy api-server -n api \
 ```
 
 
-Create a simple service for the deploy above:
+Expose the Deployment through a Kubernetes Service:
 
 ```sh
 kubectl expose deploy api-server -n api --port 8080 --name api-server
@@ -81,7 +85,7 @@ This makes the server easy to run, easy to reset, and useful for learning how au
 
 In an enterprise environment, you usually do not want to expose an API server without authentication or authorization, even if the server is only reachable internally.
 
-The new API requires a valid Access Token and the appropriate scope for every document operation. Send a request to list documents without a token — this will intentionally return an error:
+The API requires a valid access token and the appropriate scope for every document operation. Send a request to list documents without a token — this will intentionally return an error:
 
 ```sh
 kubectl exec deploy/api-server -n api \
@@ -97,18 +101,20 @@ kubectl exec deploy/api-server -n api \
 
 The `401 Unauthorized` response is expected.
 
-The API starts with token enforcement enabled. It does not need ZPU or downloaded policy files.
+The API starts with token enforcement enabled. Each document endpoint checks the token and its required scope.
 
-## Learn what's happened
+<a id="learn-whats-happened"></a>
 
-The document request is rejected because it has no Access Token:
+## Understand the Result
+
+The document request is rejected because it has no access token:
 
 ![04_arc_get_docs_from_api_server_unauthorized](./assets/04_arc_get_docs_from_api_server_unauthorized.png)
 
-## Learn what's next
+<a id="learn-whats-next"></a>
 
-So, how do we get past this Unauthorized error? We need a trusted authorization server.
+## Next Steps
 
-In the next tutorial, we will introduce [Athenz](https://github.com/AthenZ/athenz)—a [CNCF Sandbox project](https://www.cncf.io/projects/athenz/) battle-tested by tech giants like [Yahoo Inc.](https://www.yahooinc.com/) in the United States, [LY Corporation](https://www.lycorp.co.jp/en/) in Japan, and [Vespa.ai](https://vespa.ai/) in Europe. We’ll deploy it locally, mint our own valid Access Token, and finally unlock our protected API server.
+To call the document endpoint, you need an access token from a trusted authorization server. In the next chapter, you will deploy [Athenz](https://github.com/AthenZ/athenz), then use it to issue tokens for the API in the chapters that follow.
 
 Next: [Authorization Server](./05-authorization-server.md)

@@ -4,21 +4,22 @@
 
 # Kubernetes Cluster
 
-In this tutorial, we will set up Kubernetes cluster with the following step:
+Create and verify a local Kubernetes cluster with the following steps:
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
-- [Create Local Kubernetes Cluster](#create-local-kubernetes-cluster)
+- [Create a Local Kubernetes Cluster](#create-a-local-kubernetes-cluster)
 - [Verify the Kubernetes Cluster](#verify-the-kubernetes-cluster)
 
 <!-- /TOC -->
 
-## Create Local Kubernetes Cluster
+<a id="create-local-kubernetes-cluster"></a>
 
-You can use almost any Kubernetes cluster, but to simplify the process, we will use Kind (Kubernetes in Docker).
+## Create a Local Kubernetes Cluster
+
+Use kind, installed in the previous chapter, to create the local cluster:
 
 ```sh
-go install sigs.k8s.io/kind@latest
 kind create cluster
 ```
 
@@ -37,11 +38,11 @@ kind create cluster
 ```
 
 > [!NOTE]
-> The Single Source of Truth (SSOT) guide for downloading and installing Kind can be found [here](https://kind.sigs.k8s.io/)
+> For other installation methods, see the [kind installation guide](https://kind.sigs.k8s.io/docs/user/quick-start/#installation).
 
 ## Verify the Kubernetes Cluster
 
-Get cluster info of the defualt:
+Check the cluster selected by your current kubectl context:
 
 ```sh
 kubectl cluster-info
@@ -54,7 +55,7 @@ kubectl cluster-info
 # To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
 ```
 
-Get namespaces available:
+List the available namespaces:
 
 ```sh
 kubectl get ns

@@ -1,16 +1,18 @@
 # AI Client Gateway
 
-`AI Client Gateway` is a component used by the **id-jag-the-hard-way**.
+AI Client Gateway connects AI clients to protected MCP services in [ID-JAG The Hard Way](../../README.md). It obtains Athenz access tokens on behalf of a signed-in user and forwards requests to a configured upstream service.
 
 ## Core Authentication Flow
 
-1. `AI Client Gateway` receives a request containing an `id_token`
-1. `AI Client Gateway` uses its securely stored `X.509 certificate` and `private key` to exchange the incoming `id_token` for an `ID_JAG token`, against `IdP Authorization Server`
-1. `IdP Authorization Server` checks enterprise policies, and return `ID_JAG token`
-1. `AI Client Gateway` uses the `ID_JAG token` to fetch `Access Token` against `Authroization Server`.
-1. `AI Client Gateway` uses the `Access Token` to talk to MCP resource server.
+1. The gateway resolves the user's Keycloak ID token from a gateway session or the Open WebUI `oauth_id_token` cookie.
+2. It reads the required scopes from the upstream OpenAPI metadata for the requested operation.
+3. It authenticates to Athenz ZTS with its mounted X.509 certificate and private key, then requests an ID-JAG using the user's ID token.
+4. ZTS validates the ID token and checks whether the user and gateway are authorized for the requested scopes.
+5. The gateway exchanges the ID-JAG for an access token and forwards the request to `UPSTREAM_BASE_URL` with that token.
 
 ![arc_ai_cleint_gateway](./assets/arc_ai_client_gateway.png)
+
+The [main architecture diagram](../../README.md#full-architecture) shows the downstream flow: MCP Runtime Proxy validates the token, and the MCP server exchanges it for an API-specific token.
 
 ## Access-token audience
 
@@ -18,20 +20,16 @@ Set `ATHENZ_ACCESS_TOKEN_AUDIENCE=mcp` when the gateway forwards to the tutorial
 
 This setting applies only to the ID-JAG-to-access-token request. The ID-JAG audience remains the authorization server URL. Leaving the setting unset preserves the existing single-domain behavior, where ZTS derives the access-token audience from the scope.
 
-## Architectural Advantages
+## Identity and Credential Handling
 
-This design introduces several key security and integration benefits:
+The user's ID token identifies the person requesting access. The gateway's certificate identifies the client requesting delegation. Both participate in the authorization decision.
 
-- Seamless ID_JAG Integration: It enables modern ID_JAG token flows even if the underlying AI Client Gateway lacks native support for them.
-- Enhanced Token Security: By handling the token exchange independently, the Access Token is never directly exposed to or handled by the AI client, drastically reducing the attack surface.
-- Zero Credential Exposure: Highly sensitive credentials—specifically the X.509 certificates and private keys—remain completely isolated from the AI Client Gateway, ensuring a much stronger, zero-trust security posture.
+The AI client does not need to obtain Athenz access tokens itself. The gateway handles those tokens and reads its certificate and private key from mounted files. These credentials are available to the gateway process.
 
-## Out of Scope (By Design)
+## Routing and Scopes
 
-To maintain a clean separation of concerns, this component intentionally does not handle the following:
-- Routing Decisions: It does not determine the destination of the request. The AI agent retains full control over routing logic.
-- Hardcoding Scopes: It remains strictly scope-agnostic. While it can dynamically pass down scopes requested by the MCP server, it never hardcodes specific scopes into its own logic.
+`UPSTREAM_BASE_URL` determines where the gateway forwards requests. The upstream OpenAPI document supplies the operation-to-scope mappings through `x-athenz-required-scope`; MCP tool names are matched to OpenAPI operation IDs.
 
-# Notice
+The gateway requests scopes based on that metadata. ZTS decides which scopes it can grant, and the downstream proxy and API validate the issued tokens.
 
-This document itself is depending on the main repository **id-jag-the-hard-way**. If you want to learn about this project, please refer to the main [README.md](../../README.md)
+Follow the [AI Client Gateway tutorial](../../tutorials/15-ai-client-gateway.md) to deploy and configure it.

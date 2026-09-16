@@ -4,22 +4,24 @@
 
 # Trusted Identity Provider — Codex
 
-In this tutorial, we will configure the Authorization Server (Athenz) to trust Keycloak as an Identity Provider (IdP). Without this, Athenz has no way to verify tokens issued by Keycloak and will reject them.
+Configure Athenz to validate Keycloak ID tokens with the following steps. This establishes the identity provider trust needed for ID-JAG exchange.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
-- [Understand What We Need to Do](#understand-what-we-need-to-do)
+- [Understand the Trust Configuration](#understand-the-trust-configuration)
 - [Install Plugin into the ZTS Server](#install-plugin-into-the-zts-server)
 - [Connect Keycloak with the Plugin](#connect-keycloak-with-the-plugin)
 - [Configure ZTS to Load the Plugin](#configure-zts-to-load-the-plugin)
-- [Review Summary of Changes](#review-summary-of-changes)
-- [What's next?](#whats-next)
+- [Review the Result](#review-the-result)
+- [Next Steps](#next-steps)
 
 <!-- /TOC -->
 
-## Understand What We Need to Do
+<a id="understand-what-we-need-to-do"></a>
 
-Athenz does not trust any IdP by default. To exchange a Keycloak-issued ID token for an Athenz token, we must:
+## Understand the Trust Configuration
+
+This deployment is not yet configured to trust Keycloak. To exchange a Keycloak ID token for an ID-JAG, you need to:
 
 1. Install a plugin that teaches Athenz how to validate Keycloak tokens.
 2. Provide the plugin with Keycloak's `jwks_uri` so it can verify token signatures.
@@ -127,14 +129,14 @@ kubectl -n athenz exec deployment/athenz-zts-server \
 Mounting the file is not enough — we must tell the ZTS server where to look for it. Edit the ZTS ConfigMap with `kubectl edit`:
 
 ```sh
-kubectl edit configmap athenz-zts-conf -n athenz
+KUBE_EDITOR=vim kubectl edit configmap athenz-zts-conf -n athenz
 ```
 
 Follow these steps inside `vim`:
 
 1. Type `/zts.prop` and press **Enter** to jump to the properties section.
 2. Press `o` to open a new line below in Insert mode.
-3. Press **Spacebar exactly 4 times** to match the YAML indentation.
+3. Match the indentation of the other properties under `zts.properties: |` (four spaces).
 4. Paste the following line:
 
 ```
@@ -171,13 +173,17 @@ kubectl logs -n athenz deployment/athenz-zts-server -c athenz-zts-server | grep 
 > [!NOTE]
 > The plugin maps the `preferred_username` claim from the Keycloak token to the Athenz principal `human.[preferred_username]`. So `idjag-learner` in Keycloak becomes `human.idjag-learner` in Athenz.
 
-## Review Summary of Changes
+<a id="review-summary-of-changes"></a>
 
-We installed the `KeycloakTokenExchangeProvider` plugin. It takes a Keycloak ID token, validates the claims against Keycloak's public keys, and returns the authenticated Athenz principal:
+## Review the Result
+
+We installed the `KeycloakTokenExchangeProvider` plugin. It takes a Keycloak ID token, verifies the signature with Keycloak's public keys and validates the token claims, and returns the authenticated Athenz principal:
 
 ![Full architecture with plugin connected](../assets/14_arc_plugin_mounted_and_used.png)
 
-## What's next?
+<a id="whats-next"></a>
+
+## Next Steps
 
 We have established trust between Athenz and Keycloak. In the next tutorial, we will deploy the AI Client Gateway, which uses the Keycloak ID token to perform the full ID-JAG exchange chain on behalf of the Codex CLI user.
 

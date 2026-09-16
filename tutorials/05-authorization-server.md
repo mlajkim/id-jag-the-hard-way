@@ -1,6 +1,6 @@
 |             Previous             |         Current          |               Next               |
 |:--------------------------------:|:------------------------:|:--------------------------------:|
-| [API Server](./04-api-server.md) | **Authorization Server** | [Athenz Access Token](./07-athenz-access-token.md) |
+| [API Server](./04-api-server.md) | **Authorization Server** | [Athenz access token](./07-athenz-access-token.md) |
 
 # Authorization Server
 
@@ -9,8 +9,8 @@ In this tutorial, we will deploy Athenz as the local authorization server, enabl
 <!-- TOC depthFrom:2 depthTo:2 -->
 
 - [Deploy Athenz Server](#deploy-athenz-server)
-- [Enable Scopes Across Two Domains](#enable-scopes-across-two-domains)
-- [Check Athenz Server Running](#check-athenz-server-running)
+- [Enable Scopes Across Multiple Domains](#enable-scopes-across-multiple-domains)
+- [Verify the Athenz Deployment](#verify-the-athenz-deployment)
 - [Keep Core Endpoints Locally Reachable](#keep-core-endpoints-locally-reachable)
 - [Open Athenz UI](#open-athenz-ui)
 
@@ -36,9 +36,11 @@ make -C athenz_dist clean-kubernetes-athenz deploy-kubernetes-athenz
 ```
 
 > [!NOTE]
-> The SSOT guide for using the Athenz manifest is available [here](https://github.com/athenz-community/athenz-distribution/blob/main/README.md)
+> For deployment details, see the [Athenz distribution guide](https://github.com/athenz-community/athenz-distribution/blob/main/README.md).
 
-## Enable Scopes Across Two Domains
+<a id="enable-scopes-across-two-domains"></a>
+
+## Enable Scopes Across Multiple Domains
 
 Configure ZTS to allow scopes from both domains used by this tutorial, `mcp` and `api`:
 
@@ -51,14 +53,16 @@ kubectl -n athenz set env deployment/athenz-zts-server \
 kubectl -n athenz rollout status deployment/athenz-zts-server
 ```
 
-This updates the ZTS pod configuration. Each Access Token will still have one audience; scopes from the other domain remain fully qualified for the next token exchange.
+This updates the ZTS pod configuration. Each access token will still have one audience; scopes from the other domain remain fully qualified for the next token exchange.
 
-## Check Athenz Server Running
+<a id="check-athenz-server-running"></a>
+
+## Verify the Athenz Deployment
 
 > [!NOTE]
 > It may take about 5–10 minutes for all Athenz servers to be fully available.
 
-Execute the following to see the status of the Athenz server:
+Wait for the Athenz components to become ready:
 
 ```sh
 _athenz_components=(
@@ -130,6 +134,6 @@ _athenz_ui_port=$(./tools/port.sh athenz-ui)
 
 ![athenz_ui](assets/05_athenz_ui.png)
 
-In the next tutorial, we will create the API domain and request a scoped Access Token:
+In the next tutorial, we will create the API domain and request a scoped access token:
 
-Next: [Athenz Access Token](./07-athenz-access-token.md)
+Next: [Athenz access token](./07-athenz-access-token.md)

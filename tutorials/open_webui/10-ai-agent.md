@@ -1,11 +1,11 @@
 |               Previous               |    Current     |                   Next                   |
 |:------------------------------------:|:--------------:|:----------------------------------------:|
-| [AI Client Agent](../10-ai-agent.md) | **Open WebUI** | [Token Exchange](./11-token-exchange.md) |
+| [AI Agent](../10-ai-agent.md) | **Open WebUI** | [Token Exchange](./11-token-exchange.md) |
 
 # Open WebUI
 
 > [!WARNING]
-> Open WebUI + Ollama is resource-intensive. Running a local LLM requires significant RAM and CPU. On machines with less than 32 GB of memory you may experience very slow inference or out-of-memory errors.
+> This path runs model inference locally with Ollama. Memory and performance requirements depend on the model, context length, and hardware. The configurations below are examples that have been tested, not minimum requirements.
 >
 > This path has been verified on the following hardware:
 >
@@ -14,9 +14,9 @@
 > |  Tahoe 26.2   |        M3 Pro         |  36GB  | gemma4:e4b | Verified Working |
 > | Ubuntu 24 LTS | Intel Core i7-11700KF |  32GB  | gemma4:e4b | Verified Working |
 >
-> If your machine does not meet these specs, consider using [Claude Code](../10-ai-agent.md) as the AI client instead — it runs in the cloud and has no local hardware requirements.
+> To use hosted model inference, choose [Claude Code](../10-ai-agent.md) or [Codex CLI](../codex/10-ai-agent.md). Those clients run locally, but do not require Ollama or a local model for their hosted-model setup.
 
-In this tutorial, we will install Open WebUI as the AI client and connect it to the MCP server for the first time.
+Install Open WebUI and connect it to the MCP service with the following steps. The first document request will fail because token exchange is not yet authorized.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
@@ -26,41 +26,22 @@ In this tutorial, we will install Open WebUI as the AI client and connect it to 
 - [Open Open WebUI](#open-open-webui)
 - [Register MCP Server as a Tool Server in Open WebUI](#register-mcp-server-as-a-tool-server-in-open-webui)
 - [Verify](#verify)
-- [What's happened?](#whats-happened)
+- [Understand the Result](#understand-the-result)
 
 <!-- /TOC -->
 
 ## Install Ollama
 
-> [!NOTE]
-> Ollama is installed locally
-
-Ollama is one of the easiest ways to install an open LLM locally and interact with it.
-
-Simply run the following command:
+Install Ollama on your host using the [instructions for your operating system](https://ollama.com/download). Start Ollama, then verify that its CLI is available:
 
 ```sh
-curl -fsSL https://ollama.com/install.sh | sh
+ollama --version
 ```
-
-```sh
-# Starting Ollama...
-# >>> Downloading Ollama for macOS...
-# ######################################################################## 100.0%
-# >>> Installing Ollama to /Applications...
-# >>> Adding 'ollama' command to PATH (may require password)...
-# Password:
-# >>> Starting Ollama...
-# >>> Install complete. You can now run 'ollama'.
-```
-
-> [!NOTE]
-> For the SSOT install method, visit: https://ollama.com/
 
 ## Install Gemma 4 with Ollama
 
 > [!NOTE]
-> Learn about the specs for the Gemma 4 model [here](https://ai.google.dev/gemma/docs/core?_gl=1*57y72w*_up*MQ..*_ga*MTM5MjUyNzM5NC4xNzc4NDU1OTc0*_ga_P1DBVKWT6V*czE3Nzg0NTU5NzQkbzEkZzAkdDE3Nzg0NTU5NzQkajYwJGwwJGgxMjMzODIwOTA0#gemma-4-inference-memory-requirements) 
+> See the [Gemma model documentation](https://ai.google.dev/gemma/docs/core) for model specifications and memory requirements.
 
 In this tutorial, we will use Gemma 4's `gemma4:e4b` as our AI model:
 
@@ -70,10 +51,12 @@ ollama pull gemma4:e4b
 
 ## Install Open WebUI
 
-Instead of using Ollama's native UI, we will use Open WebUI for a more feature-rich experience. Open WebUI requires a specific Python version and some system dependencies. At the time of writing, the official documentation states that Open WebUI runs on Python 3.11 or lower.
+Deploy Open WebUI as the chat interface. Its container image includes the required runtime and dependencies.
 
 
-### Create namespace for webui
+<a id="create-namespace-for-webui"></a>
+
+### Create the Open WebUI Namespace
 
 First, create the `ai` namespace:
 
@@ -84,7 +67,7 @@ kubectl create ns ai
 ### Deploy Open WebUI in K8s
 
 > [!NOTE]
-> Open WebUI is smart enough to find the ollama running in your local machine, despite Open WebUI is runnning on K8s
+> Open WebUI runs inside Kubernetes and must reach Ollama on your host. The host address depends on your Docker and operating system setup. If no models appear, check the Ollama URL under **Admin Panel > Settings > Connections** and follow the [Open WebUI connection troubleshooting guide](https://docs.openwebui.com/troubleshooting/connection-error/).
 
 Deploy Open WebUI:
 
@@ -115,10 +98,12 @@ kubectl expose deploy open-webui -n ai --port 8080 --name open-webui
 ```
 
 ```sh
-# deployment.apps/open-webui created
+# service/open-webui exposed
 ```
 
-### Deploy pvc for the Open WebUI
+<a id="deploy-pvc-for-the-open-webui"></a>
+
+### Persist Open WebUI Data
 
 First, create a very simple `pvc`:
 
@@ -168,18 +153,18 @@ EOF
 ## Open Open WebUI
 
 > [!NOTE]
-> It may take 3–5 minutes for Open WebUI to be fully available due to its size (1~2 gbs)
+> The first startup can take several minutes while the image downloads and the application initializes.
 >
 > You may also see errors like `Error from server (NotFound): namespaces "idp" not found` or `unable to forward port because pod is not running` in the port-forward terminal — these are expected at this stage and can be ignored.
 
-Open up the url:
+Open Open WebUI in your browser:
 
 ```sh
 _open_webui_port=$(./tools/port.sh open-webui)
 ./tools/open.sh "http://localhost:${_open_webui_port}"
 ```
 
-You will be prompted to create an admin account as the first user. You can simply use:
+Create the first account, which becomes the Open WebUI administrator. For this local walkthrough, the examples use:
 
 - `admin@admin.com`
 - `admin`
@@ -190,7 +175,7 @@ However, the credentials are up to you.
 
 ## Register MCP Server as a Tool Server in Open WebUI
 
-Get Access Token again:
+Get access token again:
 
 ```sh
 _scope="api:role.docs-getter"
@@ -209,18 +194,18 @@ Go to `User Icon` > `Admin Panel` > `Settings` > `Integrations` > `Manage Tool S
 - Description: `MCP server for API that holds documentation`
 - URL: `http://mcp.api:8081`
 - Auth type: `Bearer`
-- API Key: `<YOUR_ACCESS_TOKEN_THAT_YOU'VE_FETCHED`
+- API Key: `<the access token you just fetched>`
 - Access: Change to `Public`
 
 ![10_api_mcp_server_in_open_webui](./assets/10_api_mcp_server_in_open_webui.png)
 
-Before we ask the AI Agent, let's quickly add the tool as the default tool server, so that you do not have to manually add the tool every time.
+Before we ask the AI agent, let's quickly add the tool as the default tool server, so that you do not have to manually add the tool every time.
 
 Go to `User Icon` > `Admin Panel` > `Settings` > `Models`,
 
 Select the edit (Pencil) Icon.
 
-Select `Access` > `Private` then change to `Public` (auotmatic save):
+Select `Access` > `Private` then change to `Public` (saved automatically):
 
 ![10_model_now_public](./assets/10_model_now_public.png)
 
@@ -237,7 +222,7 @@ Follow the steps below to verify the setup.
 > Make sure that the tool we just created is selected
 > ![10_tool_selected](./assets/10_tool_selected.png)
 
-Finally, ask the AI Agent the following (It is expected to fail):
+Finally, ask the AI agent the following (It is expected to fail):
 
 ```
 get docs!
@@ -245,16 +230,18 @@ get docs!
 
 ![10_deliberate_failure_no_permission_to_token_impersonation](./assets/10_deliberate_failure_no_permission_to_token_impersonation.png)
 
-## What's happened?
+<a id="whats-happened"></a>
+
+## Understand the Result
 
 ![10_arc_failed_to_token_exchange](./assets/10_arc_failed_to_token_exchange.png)
 
-We were able to successfully install the AI Client Agent, using:
+We were able to successfully install the AI client, using:
 
 - Open WebUI as an LLM Front-end (for human interaction)
 - Ollama as a Local LLM Provider
-- Gemma 4's `gemma4:26b` as an LLM model
+- Gemma 4 `gemma4:e4b` as the model
 
-We manually passed the Access Token, which has permission to access the API server. However, it fails due to the default behavior of the MCP, which attempts to exchange the given Access Token into another token. This is an expected failure however. We will fix it in the next section.
+Open WebUI sent the learner's API access token to the MCP server. The MCP server tried to exchange that token before calling the API, but ZTS rejected the exchange because the MCP service lacks exchange permission. You will grant that permission in the next chapter.
 
 Next: [Token Exchange](./11-token-exchange.md)

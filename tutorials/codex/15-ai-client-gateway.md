@@ -4,19 +4,19 @@
 
 # AI Client Gateway — Codex
 
-In this tutorial, we will deploy the `AI Client Gateway`. This component sits between Codex CLI and the MCP server. It intercepts every request, resolves the human user's Keycloak ID token, and runs the full ID-JAG token exchange chain — so neither Codex nor the user ever has to manage Athenz tokens by hand.
+Deploy AI Client Gateway between Codex CLI and the MCP service with the following steps. The gateway uses the signed-in user's Keycloak ID token to obtain an Athenz access token. The MCP server performs the later exchange for API access.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
 - [Deploy AI Client Gateway in K8s](#deploy-ai-client-gateway-in-k8s)
 - [Generate the Required Certificates](#generate-the-required-certificates)
 - [Mount the Certificates](#mount-the-certificates)
-- [Deploy the Human Gateway](#deploy-the-human-gateway)
-- [Set env vars for the gateway](#set-env-vars-for-the-gateway)
-- [Verification Prerequisite](#verification-prerequisite)
+- [Create the Keycloak Client Secret](#create-the-keycloak-client-secret)
+- [Configure the Gateway](#configure-the-gateway)
+- [Sign Out of Keycloak](#sign-out-of-keycloak)
 - [Update Codex MCP Config](#update-codex-mcp-config)
 - [Verify](#verify)
-- [What's next?](#whats-next)
+- [Next Steps](#next-steps)
 
 <!-- /TOC -->
 
@@ -83,7 +83,7 @@ Create the service identity and fetch its X.509 certificate:
 
 ## Mount the Certificates
 
-Store the certificate as a Kubernetes Secret:
+Store the certificate, private key, and CA certificate in a Kubernetes Secret:
 
 ```sh
 test -f ./keys/human-idjag-learner-codex.crt
@@ -133,7 +133,9 @@ kubectl logs deploy/codex-idjag-learner-ai-client-gateway -n human
 # 🔑 Athenz ZTS Endpoint: https://athenz-zts-server.athenz:4443/zts/v1
 ```
 
-## Deploy the Human Gateway
+<a id="deploy-the-human-gateway"></a>
+
+## Create the Keycloak Client Secret
 
 Configure the gateway with the Keycloak credentials it needs to drive the OAuth2 login flow.
 
@@ -155,7 +157,9 @@ Create the Kubernetes Secret from the Keycloak client credentials:
 #   ✔  Secret created: human/human-idjag-learner-codex-keycloak
 ```
 
-## Set env vars for the gateway
+<a id="set-env-vars-for-the-gateway"></a>
+
+## Configure the Gateway
 
 Configure the environment variables for the gateway deployment:
 
@@ -163,9 +167,9 @@ Configure the environment variables for the gateway deployment:
 <summary>What each variable does</summary>
 
 - `UPSTREAM_BASE_URL` — the in-cluster MCP server the gateway proxies requests to.
-- `ZTS_URL` — the Athenz ZTS endpoint used to exchange ID-JAG tokens for scoped Access Tokens.
-- `ATHENZ_ACCESS_TOKEN_AUDIENCE` — `mcp`, the recipient of the gateway's Access Token. The token can carry both MCP and API scopes; the ID-JAG audience remains the ZTS URL.
-- `KEYCLOAK_URL` / `KEYCLOAK_REALM` — in-cluster Keycloak address used for server-side token validation during the OAuth callback.
+- `ZTS_URL` — the Athenz ZTS endpoint used to exchange ID-JAG tokens for scoped access tokens.
+- `ATHENZ_ACCESS_TOKEN_AUDIENCE` — `mcp`, the recipient of the gateway's access token. The token can carry both MCP and API scopes; the ID-JAG audience remains the ZTS URL.
+- `KEYCLOAK_URL` / `KEYCLOAK_REALM` — in-cluster Keycloak address used for server-side authorization-code exchange during the OAuth callback.
 - `KEYCLOAK_CLIENT_ID` / `KEYCLOAK_CLIENT_SECRET` — pulled from the Kubernetes Secret you just created; used to authenticate this gateway as a registered OAuth2 client.
 - `PUBLIC_BASE_URL` — the port-forwarded gateway address the browser is redirected back to after login.
 - `KEYCLOAK_PUBLIC_URL` — the port-forwarded Keycloak address used in the browser-facing login redirect URL.
@@ -224,7 +228,9 @@ kubectl expose deploy codex-idjag-learner-ai-client-gateway -n human --port 3101
 kubectl logs deploy/codex-idjag-learner-ai-client-gateway -n human --tail=5
 ```
 
-## Verification Prerequisite
+<a id="verification-prerequisite"></a>
+
+## Sign Out of Keycloak
 
 Before verifying, sign out of Keycloak so you start with a clean session:
 
@@ -289,9 +295,11 @@ Codex will try to initialize the MCP server and fail:
 
 ![Codex MCP token exchange forbidden](./assets/15_codex_gateway_token_exchange_forbidden.png)
 
-This is expected. Codex reached the AI Client Gateway, and the gateway tried to exchange the logged-in user's Keycloak ID token through Athenz ZTS. Athenz rejected that exchange because `human.idjag-learner.codex` does not yet have `zts.jag_exchange` permission for the requested API role.
+This is expected. Codex reached the AI Client Gateway, and the gateway tried to exchange the logged-in user's Keycloak ID token through Athenz ZTS. Athenz rejected that exchange because `human.idjag-learner.codex` does not yet have `zts.jag_exchange` permission for the requested MCP and API roles.
 
-## What's next?
+<a id="whats-next"></a>
+
+## Next Steps
 
 In the next tutorial, we will grant `human.idjag-learner.codex` the Athenz permissions it needs to perform the full ID-JAG token exchange.
 

@@ -4,32 +4,29 @@
 
 # AI Client Gateway — Open WebUI
 
-In this tutorial, we will deploy the `AI Client Gateway`, which acts as an intermediary layer between:
-
-- Open WebUI (The AI Client Agent)
-- MCP Server (Authorization Proxy)
-
-with the following steps:
+Deploy AI Client Gateway between Open WebUI and the protected MCP service with the following steps:
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
-- [Learn about ID-JAG?](#learn-about-id-jag)
+- [Understand ID-JAG](#understand-id-jag)
 - [Understand How the ID-JAG Specification Helps Us](#understand-how-the-id-jag-specification-helps-us)
 - [Deploy AI Client Gateway in K8s](#deploy-ai-client-gateway-in-k8s)
 - [Check the Logs](#check-the-logs)
 - [Generate the Required Certificates](#generate-the-required-certificates)
 - [Mount the Secret](#mount-the-secret)
-- [What's done?](#whats-done)
+- [Review the Result](#review-the-result)
 - [Modify the Tool Target](#modify-the-tool-target)
 - [Verify](#verify)
-- [What's happened?](#whats-happened)
-- [What's next?](#whats-next)
+- [Understand the Result](#understand-the-result)
+- [Next Steps](#next-steps)
 
 <!-- /TOC -->
 
-## Learn about ID-JAG?
+<a id="learn-about-id-jag"></a>
 
-ID-JAG (Identity Assertion JWT Authorization Grant) is a proposed authorization standard, primarily championed by companies like Okta. It extends the trust model of Single Sign-On (SSO) into the realm of API access. In short, it applies the trust established with an Identity Provider (IdP) during SSO to secure API access between applications, or between an AI agent and a backend service.
+## Understand ID-JAG
+
+ID-JAG (Identity Assertion JWT Authorization Grant) is an IETF draft specification used in Cross-App Access. It lets a client use an ID token to request authorization for API access on behalf of the signed-in user.
 
 You can learn more about the specifics here:
 
@@ -38,12 +35,12 @@ You can learn more about the specifics here:
 
 ## Understand How the ID-JAG Specification Helps Us
 
-When you log in via `Keycloak`, it generates an ID Token that represents your identity. Through the ID-JAG process, we can dynamically handle permissions without manual token management. Specifically, we can:
+Keycloak issues an ID token when you sign in. The gateway uses it in two exchanges:
 
-1. Exchange the initial ID Token for an ID-JAG token scoped to a new audience, `ai.open-webui`.
-1. Fetch an Access Token with the audience `mcp` (carrying both the MCP and required API scopes) using the `ai.open-webui` ID-JAG token.
+1. Exchange the ID token for an ID-JAG addressed to the ZTS authorization server URL, `https://athenz-zts-server.athenz:4443/zts/v1`.
+2. Exchange that ID-JAG for an access token with audience `mcp` and both the MCP and required API scopes.
 
-This means we no longer have to manually insert an Access Token for each tool in the UI. Furthermore, tools can be securely shared among all users in the AI Client Agent without any manual intervention.
+`ai.open-webui` is the gateway's service identity, not the ID-JAG audience. The gateway obtains tokens for the signed-in user, so you no longer paste an Athenz access token into the tool settings. ZTS still checks the user's roles and the gateway's exchange permissions.
 
 ## Deploy AI Client Gateway in K8s
 
@@ -56,7 +53,7 @@ kubectl create deploy ai-client-gateway -n ai \
   --image=ghcr.io/mlajkim/ai-client-gateway:latest
 ```
 
-Configure the `ai-client-gateway` to watch the MCP server:
+Configure the gateway to forward requests to the MCP service:
 
 ```yaml
 kubectl patch deploy ai-client-gateway -n ai --patch "$(cat <<'EOF'
@@ -77,7 +74,7 @@ EOF
 )"
 ```
 
-`ATHENZ_ACCESS_TOKEN_AUDIENCE=mcp` selects the recipient of the Access Token carrying MCP and API scopes. The ID-JAG audience remains the ZTS URL.
+`ATHENZ_ACCESS_TOKEN_AUDIENCE=mcp` selects the recipient of the access token carrying MCP and API scopes. The ID-JAG audience remains the ZTS URL.
 
 Expose the deployment so it can be accessed:
 
@@ -101,11 +98,11 @@ You will likely encounter an error similar to this:
 # ...
 ```
 
-This happens because the AI Client Gateway requires a TLS certificate to connect to Athenz Server securely.
+The gateway requires its X.509 certificate and private key to authenticate to ZTS. The next steps create and mount those files.
 
 ## Generate the Required Certificates
 
-Let's generate the necessary keys and certificate that represents `ai_client_gateway` service.
+Create the `ai.open-webui` service identity and its certificate for the gateway.
 
 First, create a directory and generate the RSA key pair:
 
@@ -235,9 +232,11 @@ kubectl logs deploy/ai-client-gateway -n ai
 # 🔑 Athenz ZTS Endpoint: https://athenz-zts-server.athenz:4443/zts/v1
 ```
 
-## What's done?
+<a id="whats-done"></a>
 
-We just installed `AI Client Agent` (Highlighted in Red) which Open WebUI can talk to as a tool :
+## Review the Result
+
+AI Client Gateway is now deployed. Next, configure Open WebUI to send tool requests through it:
 
 ![15_ai_client_agent_installed_and_used](./assets/15_ai_client_agent_installed_and_used.png)
 
@@ -256,8 +255,8 @@ open http://localhost:$_open_webui_keycloak_port
 1. Navigate to `User Icon` > `Admin Panel` > `Settings` > `Integrations`.
 1. Click the configuration icon for the API MCP Server.
 1. Make the following changes:
-  - Change the MCP Authorization Server URL to the proxy URL: http://ai-client-gateway.ai:3101
-  - Change the `Auth` to `Oauth`
+  - Change the tool server URL to `http://ai-client-gateway.ai:3101`.
+  - Set **Auth** to **OAuth**.
 
 ![15_edit_connection_of_tool](./assets/15_edit_connection_of_tool.png)
 
@@ -274,24 +273,28 @@ _open_webui_port=$(./tools/port.sh open-webui)
 
 ![15_logged_in_as_idjag_learner](./assets/15_logged_in_as_idjag_learner.png)
 
-Now, test the setup by asking the AI Agent:
+Now, test the setup by asking the AI agent:
 
 ```
 Get docs!
 ```
 
-The request will deliberately fail as following:
+The request should fail because the gateway does not yet have ID-JAG exchange permission:
 
 ![15_deliberate_failure_to_get_without_permission](./assets/15_deliberate_failure_to_get_without_permission.png)
 
-## What's happened?
+<a id="whats-happened"></a>
 
-We created a certificate for `ai.open-webui`, but this service does not yet have the necessary permissions in Athenz to exchange your Keycloak ID Token into an ID-JAG token (indicated by the red box in your architecture diagram). Because the gateway cannot assert your identity, the request is denied.
+## Understand the Result
+
+The user is signed in, and the gateway authenticates to ZTS as `ai.open-webui`. ZTS rejects the exchange because that service lacks `zts.jag_exchange` permission for the requested MCP and API roles.
 
 ![15_arc_not_enough_permission_into_idjag](./assets/15_arc_not_enough_permission_into_idjag.png)
 
-## What's next?
+<a id="whats-next"></a>
 
-In the next tutorial, we will fix this permission error by granting the proper token exchange policies, allowing us to successfully execute the end-to-end prompt.
+## Next Steps
+
+In the next chapter, you will grant the gateway ID-JAG exchange permission for the MCP and API roles, then retry the document request.
 
 Next: [ID-JAG](./16-id-jag.md)

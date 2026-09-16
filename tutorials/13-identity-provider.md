@@ -4,22 +4,24 @@
 
 # Identity Provider
 
-In this tutorial, we will deploy [Keycloak](https://www.keycloak.org/) as an Identity Provider (IdP) so that individual users — not the admin certificate — can log in and have their own identity.
+Deploy [Keycloak](https://www.keycloak.org/) as an identity provider (IdP) with the following steps. Users will sign in to obtain an ID token for the later ID-JAG exchange.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
-- [Docker pull keycloak](#docker-pull-keycloak)
+- [Load the Keycloak Image](#load-the-keycloak-image)
 - [Deploy Keycloak in K8s](#deploy-keycloak-in-k8s)
-- [Open Keycloak on Browser](#open-keycloak-on-browser)
-- [Setup Client](#setup-client)
-- [Setup User](#setup-user)
-- [Setup id_token Expiration](#setup-id_token-expiration)
-- [What's done?](#whats-done)
-- [What's next?](#whats-next)
+- [Open Keycloak in Your Browser](#open-keycloak-in-your-browser)
+- [Register the Keycloak Client](#register-the-keycloak-client)
+- [Create the Learner Account](#create-the-learner-account)
+- [Configure the Token Lifespan](#configure-the-token-lifespan)
+- [Review the Result](#review-the-result)
+- [Next Steps](#next-steps)
 
 <!-- /TOC -->
 
-## Docker pull keycloak
+<a id="docker-pull-keycloak"></a>
+
+## Load the Keycloak Image
 
 If you are using **kind**, do the following:
 
@@ -36,7 +38,7 @@ If you are using **kind**, do the following:
 >
 > Then replace `quay.io/keycloak/keycloak:latest` with `keycloak:kind-load` in the `kubectl create deployment` command below.
 
-On **amd64** (or if unsure), the standard pull works:
+On **amd64**, pull and load the image:
 
 ```sh
 docker pull quay.io/keycloak/keycloak:latest
@@ -124,7 +126,9 @@ Expose the deployment:
 kubectl expose deployment keycloak --port=8080 -n idp
 ```
 
-## Open Keycloak on Browser
+<a id="open-keycloak-on-browser"></a>
+
+## Open Keycloak in Your Browser
 
 Wait for the pod to be ready:
 
@@ -144,7 +148,9 @@ _keycloak_port=$(./tools/port.sh keycloak)
 
 ![Keycloak running](./assets/13_keycloak_running.png)
 
-## Setup Client
+<a id="setup-client"></a>
+
+## Register the Keycloak Client
 
 In Keycloak, a **Client** represents an application that requests authentication on behalf of a user. We use the default `master` realm.
 
@@ -160,7 +166,9 @@ _acg_port=$(./tools/port.sh ai-client-gateway)
 
 ![Keycloak client added](./assets/13_keycloak_client_added.png)
 
-## Setup User
+<a id="setup-user"></a>
+
+## Create the Learner Account
 
 Create a human user account to represent a learner:
 
@@ -174,10 +182,12 @@ OPEN_UI=true ./tools/keycloak/create-user.sh \
 
 ![13_user_created_idjag_learner](./assets/13_user_created_idjag_learner.png)
 
-## Setup id_token Expiration
+<a id="setup-id_token-expiration"></a>
+
+## Configure the Token Lifespan
 
 > [!TIP]
-> For this tutorial, setting the `id_token` lifespan to `4 hours` is fine. In production, set it based on your security requirements.
+> Set the realm token lifespan to four hours for this walkthrough. The helper updates Keycloak's `accessTokenLifespan` setting. Choose a lifespan appropriate to your security requirements outside this learning environment.
 
 ```sh
 ./tools/keycloak/set-token-lifespan.sh 14400
@@ -192,16 +202,20 @@ OPEN_UI=true ./tools/keycloak/create-user.sh \
 
 ![13_access_token_lifespan_set](./assets/13_access_token_lifespan_set.png)
 
-## What's done?
+<a id="whats-done"></a>
+
+## Review the Result
 
 We have deployed Keycloak and created:
 
 - A client `human.idjag-learner.claude` that will represent our AI client (Claude Code)
-- A user `idjag-learner` who represents a real human employee
+- A user `idjag-learner` who represents the person requesting API access
 
 At this point, Keycloak is running and configured, but our Authorization Server (Athenz) does not yet trust it. The next tutorial establishes that trust.
 
-## What's next?
+<a id="whats-next"></a>
+
+## Next Steps
 
 We have set up the Identity Provider. Now we need to configure Athenz to accept and verify tokens issued by Keycloak.
 

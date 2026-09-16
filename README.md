@@ -1,16 +1,16 @@
 # ID-JAG The Hard Way
 
-*Bootstrap ID-JAG Architecture the hard way in the AI Agent Era. No scripts.*
+*Build Cross-App Access for AI agents with ID-JAG, the hard way.*
 
-This tutorial walks you through building an ID-JAG-based AI agent authorization architecture from scratch. It is not for someone looking for a fully automated demo or a one-command installer. It is optimized for learning — taking the long route to understand the identities, tokens, policies, and trust boundaries required to let an AI agent access protected APIs on behalf of a signed-in human user, as defined in the [ID-JAG specification](https://techblog.lycorp.co.jp/en/20260417a).
+Build an AI agent that accesses protected APIs on behalf of a signed-in user. You will configure identities, policies, and token exchanges step by step, then use intentional failures to understand where authorization is enforced.
 
-IDTHW is deliberately multi-surface: the same authorization pattern is exercised through AI clients, Kubernetes workloads, Athenz policy and token services, and an OIDC identity provider instead of a single mock path.
+The tutorial uses Identity Assertion JWT Authorization Grant (ID-JAG), an [IETF draft specification](https://datatracker.ietf.org/doc/draft-ietf-oauth-identity-assertion-authz-grant/) used in Cross-App Access (XAA). For an introduction, see the [ID-JAG overview on the LY Tech Blog](https://techblog.lycorp.co.jp/en/20260417a).
 
 [![Start Tutorial](./assets/start-tutorial-glow.svg)](./tutorials/01-working-directory.md)
 
 ## What You Will Build
 
-By the end of this tutorial, you will have a fully functional local flow:
+By the end of this tutorial, you will be able to sign in through Keycloak and ask an AI agent to retrieve documents from an API running in your local Kubernetes cluster:
 
 ![ID-JAG The Hard Way Demo - Claude](./assets/id-jag-demo-claude.gif)
 
@@ -20,13 +20,16 @@ The same authorization path can also be driven through the Open WebUI flow:
 
 In both flows:
 
-1. **You** send a real prompt to an AI agent.
-1. The **AI agent** calls a real protected MCP server on your behalf.
-1. The **Resource Server** validates the access token and checks the scope required by the requested operation.
+1. **You** sign in and ask the AI agent to retrieve documents.
+2. The **AI Client Gateway** obtains a scoped access token on your behalf and forwards the tool call to the MCP service.
+3. **MCP Runtime Proxy** validates the incoming token. The **MCP server** exchanges it for an API access token and calls the API.
+4. The **API server** validates the exchanged token and checks the scope required by the operation.
 
-## Technical Spec
+<a id="technical-spec"></a>
 
-IDTHW is a tutorial plus a runnable local stack. Each layer below exists so the same delegated authorization model can be tested across multiple clients, services, and trust boundaries.
+## Components
+
+The tutorial uses the following components:
 
 <table>
   <tr>
@@ -49,38 +52,50 @@ IDTHW is a tutorial plus a runnable local stack. Each layer below exists so the 
 
 ## Full Architecture
 
-Here is a diagram of the full architecture:
+The completed tutorial uses this token flow. Keycloak authenticates the user; Athenz authorizes the gateway and MCP server to exchange tokens on that user's behalf.
 
 ![full_architecture](./assets/full_architecture.png)
 
-1. The user logs into the system via the Keycloak IdP.
-2. The user inputs a prompt, initiating a task with the AI agent.
-3. The AI agent requests an ID-JAG token from the Athenz IdP Authorization Server.
-4. Athenz evaluates and validates the enterprise policies to ensure the requested delegation is permitted.
-5. The AI agent requests an access token from the Athenz Authorization Server.
-6. The AI agent sends a request, equipped with the token, to the Model Context Protocol (MCP) server.
-7. The MCP server performs a token exchange with the Authorization Server.
-8. The MCP server sends a request with the exchanged token to the final Resource Server.
+1. The user signs in through Keycloak and sends a prompt to the AI client.
+2. AI Client Gateway resolves the user's ID token from the signed-in session.
+3. The gateway authenticates to Athenz ZTS and requests an ID-JAG for the required MCP and API scopes.
+4. ZTS validates the ID token and checks whether the user and gateway are authorized for those scopes.
+5. The gateway exchanges the ID-JAG for an access token with audience `mcp` and forwards the tool call.
+6. MCP Runtime Proxy validates the token and checks `mcp:role.mcp-accessor` before forwarding the call to the MCP server.
+7. The MCP server exchanges the token for one with audience `api` and scope `api:role.docs-getter`.
+8. The API validates the exchanged token and checks the required scope before returning documents.
+
+The diagram groups the gateway with the requesting agent. The tutorial's MCP service identity is `mcp.idthw-api-mcp`; the image still shows its earlier name.
 
 ## Permission Architecture
 
-The following graph shows the required least permissions for each component:
-
 ![Permission - ID-JAG The Hard Way](./assets/permission-id-jag-the-hard-way-permission-architecture.png)
+
+The diagram illustrates the delegation relationships. The table below uses the current domain names and scope checks for the final document retrieval flow:
+
+| Principal or component | Permission or check |
+|---|---|
+| User `human.idjag-learner` | Membership in `mcp:role.mcp-accessor` and `api:role.docs-getter`. |
+| AI Client Gateway | `zts.jag_exchange` permission for both roles. Its service identity depends on the client path. |
+| MCP Runtime Proxy | Validates incoming tokens with audience `mcp` and scope `mcp:role.mcp-accessor`. |
+| MCP service `mcp.idthw-api-mcp` | Source and target exchange permissions to obtain an API token from the incoming MCP token. |
+| API server | Validates exchanged tokens with audience `api` and scope `api:role.docs-getter`. |
+
+Athenz controls token issuance and exchange. The proxy and API enforce the audience and scopes in issued tokens; they do not download Athenz policies. A token can remain usable until it expires after a role membership change.
 
 ## Philosophy
 
-The philosophy behind this repository is explained in detail:
+Read about the tutorial's approach to learning through intentional failures:
 
 [ID-JAG The Hard Way: Learning AI agent authorization through failure - LY Tech Blog](https://techblog.lycorp.co.jp/en/20260526a)
 
 ## Special Thanks
 
-The name and concept of this tutorial series is inspired by [kelseyhightower/kubernetes-the-hard-way](https://github.com/kelseyhightower/kubernetes-the-hard-way).
+The name and approach of this tutorial series are inspired by [kelseyhightower/kubernetes-the-hard-way](https://github.com/kelseyhightower/kubernetes-the-hard-way).
 
 ## Recognitions
 
-ID-JAG The Hard Way is listed on the [OAuth.net Cross-App Access (XAA) page](https://oauth.net/cross-app-access/) as a test tool for learning ID-JAG
+ID-JAG The Hard Way is listed on the [OAuth.net Cross-App Access (XAA) page](https://oauth.net/cross-app-access/) as a test tool for learning ID-JAG.
 
 ![OAuth.net Cross-App Access test tools listing ID-JAG The Hard Way](assets/oauth-net-xaa-recognition.png)
 
@@ -116,8 +131,8 @@ ID-JAG The Hard Way grows across both the root repository and the Athenz communi
 
 If this tutorial helped you, a ⭐ on either repository means a lot — it helps others find it too!
 
-Have questions or ran into a problem? [Open an issue](https://github.com/mlajkim/id-jag-the-hard-way/issues).
+Have a question or a problem? [Open an issue](https://github.com/mlajkim/id-jag-the-hard-way/issues).
 
-If not:
+Start with the working directory setup:
 
 [![Start Tutorial](./assets/start-tutorial-glow.svg)](./tutorials/01-working-directory.md)

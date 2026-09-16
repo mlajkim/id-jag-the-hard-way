@@ -1,27 +1,24 @@
 |               Previous               |  Current  |                   Next                   |
 |:------------------------------------:|:---------:|:----------------------------------------:|
-| [AI Client Agent](../10-ai-agent.md) | **Codex** | [Token Exchange](./11-token-exchange.md) |
+| [AI Agent](../10-ai-agent.md) | **Codex** | [Token Exchange](./11-token-exchange.md) |
 
 # Codex
 
 ![10_codex](./assets/10_codex.png)
 
 > [!NOTE]
-> OpenAI Codex CLI runs in the cloud and has no local hardware requirements. This path uses the Codex CLI as the AI client instead of Claude Code or Open WebUI.
+> Codex CLI runs on your machine. With OpenAI-hosted models, model inference runs remotely, so this path does not require a local model runtime such as Ollama.
 
-> [!NOTE]
-> Codex is currently BETA, but has been confirmed working.
-
-In this tutorial, we will install Codex CLI as the AI client and connect it to the MCP server for the first time.
+Install Codex CLI and connect it to the MCP server with the following steps. The first tool call will fail because the MCP server does not yet have token exchange permission.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
 - [Install Codex CLI](#install-codex-cli)
-- [Login to Codex](#login-to-codex)
+- [Sign In to Codex](#sign-in-to-codex)
 - [Add the MCP Server to Codex](#add-the-mcp-server-to-codex)
-- [Connect to MCP Server](#connect-to-mcp-server)
+- [Connect to the MCP Server](#connect-to-the-mcp-server)
 - [Verify](#verify)
-- [What's happened?](#whats-happened)
+- [Understand the Result](#understand-the-result)
 
 <!-- /TOC -->
 
@@ -37,29 +34,30 @@ codex --version
 # codex-cli X.XXX.X
 ```
 
-If you don't see a version, install it:
+If Codex is not installed, install [Node.js and npm](https://nodejs.org/en/download), then run:
 
 ```sh
 npm install -g @openai/codex
 ```
 
 > [!NOTE]
-> For the official Codex CLI installation guide, visit: https://github.com/openai/codex
+> For other installation methods, see the [official Codex CLI documentation](https://developers.openai.com/codex/cli/).
 
-## Login to Codex
+<a id="login-to-codex"></a>
 
-Set your OpenAI API key:
+## Sign In to Codex
+
+Start Codex and follow the sign-in prompts:
 
 ```sh
-export OPENAI_API_KEY=<your-openai-api-key>
+codex
 ```
 
-> [!TIP]
-> You can add this to your shell profile (e.g. `~/.zshrc` or `~/.bashrc`) so you do not have to set it every time.
+Choose **Sign in with ChatGPT** or another available authentication method. See the [authentication guide](https://learn.chatgpt.com/docs/auth) for the supported options. Exit Codex after signing in to configure the MCP connection in your shell.
 
 ## Add the MCP Server to Codex
 
-Get the Access Token:
+Get the access token:
 
 ```sh
 _scope="api:role.docs-getter"
@@ -111,7 +109,9 @@ approval_mode = "approve"
 approval_mode = "approve"
 ```
 
-## Connect to MCP Server
+<a id="connect-to-mcp-server"></a>
+
+## Connect to the MCP Server
 
 Start Codex in this project directory:
 
@@ -123,7 +123,7 @@ codex
 
 ## Verify
 
-Let's see if we can talk through the `id-jag-the-hard-way-mcp` MCP.
+Call the document retrieval tool through `id-jag-the-hard-way-mcp`:
 
 Type the following prompt in Codex:
 
@@ -135,11 +135,13 @@ This will intentionally fail — the request will return a `No Permission to Tok
 
 ![Codex token exchange not authorized](./assets/10_codex_token_exchange_not_authorized.png)
 
-This is expected. The MCP server received your Access Token and tried to exchange it for a narrower-scoped token to call the API server — but it does not yet have permission to do that.
+This is expected. The MCP server received your access token and tried to exchange it for a token to call the API on your behalf. Both tokens use audience `api` and the `docs-getter` scope at this stage; the missing permission is for the exchange itself.
 
-## What's happened?
+<a id="whats-happened"></a>
 
-We successfully connected Codex CLI to the MCP server with an Athenz Access Token. However, the MCP server's token exchange step is not yet authorized.
+## Understand the Result
+
+We successfully connected Codex CLI to the MCP server with an Athenz access token. However, the MCP server's token exchange step is not yet authorized.
 
 In the next tutorial we will fix this by granting the MCP server permission to exchange tokens.
 
