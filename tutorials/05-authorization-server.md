@@ -1,6 +1,6 @@
 |             Previous             |         Current          |               Next               |
 |:--------------------------------:|:------------------------:|:--------------------------------:|
-| [API Server](./04-api-server.md) | **Authorization Server** | [ZPU Server](./06-zpu-server.md) |
+| [API Server](./04-api-server.md) | **Authorization Server** | [Athenz Access Token](./07-athenz-access-token.md) |
 
 # Authorization Server
 
@@ -114,6 +114,6 @@ _athenz_ui_port=$(./tools/port.sh athenz-ui)
 
 ![athenz_ui](assets/05_athenz_ui.png)
 
-In the next tutorial, we will create a ZPU (details later explained):
+In the next tutorial, we will create the API domain and request a scoped Access Token:
 
-Next: [ZPU Server](./06-zpu-server.md)
+Next: [Athenz Access Token](./07-athenz-access-token.md)

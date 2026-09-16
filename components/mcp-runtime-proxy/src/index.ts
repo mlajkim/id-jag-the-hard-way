@@ -50,7 +50,11 @@ const server = createRuntimeProxyServer(
   accessTokenVerifier,
   runtimeProxyLogger,
   tokenPublisher,
-  { path: readinessPath, timeoutMs: readinessTimeoutMs },
+  {
+    path: readinessPath,
+    timeoutMs: readinessTimeoutMs,
+    publicOpenApi: process.env.MCP_PUBLIC_OPENAPI_ENABLED === "true",
+  },
 )
 
 server.listen(port, "0.0.0.0", () => {

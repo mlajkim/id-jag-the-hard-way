@@ -12,9 +12,9 @@ The architecture implements the [ID-JAG specification](https://techblog.lycorp.c
 
 The repository contains these runtime components and supporting plugins:
 
-1. **`components/api_server/`** — Java 17 (Maven) REST API that enforces Athenz access tokens. Also contains two sub-services:
+1. **`components/api_server/`** — Legacy Java 17 (Maven) REST API. The core tutorial now uses `components/idthw-demo-api/`, which validates Athenz access tokens and enforces per-operation scopes without ZPU. The legacy API directory also contains two sub-services:
    - **`components/api_server/mcp/`** — Node.js/TypeScript MCP (Model Context Protocol) server that performs token exchange with Athenz ZTS before calling the API server.
-   - **`components/api_server/authorization_proxy/`** — Spring Boot 3.2.5 proxy that sits in front of the MCP server and validates Athenz access tokens.
+   - **`components/api_server/authorization_proxy/`** — Legacy Spring Boot 3.2.5 proxy that evaluates Athenz policies. The core tutorial uses `components/mcp-runtime-proxy/` with OpenAPI discovery enabled, while retaining the existing MCP adapter and AI Client Gateway.
 
 2. **`components/ai_client_gateway/`** — Node.js/TypeScript Express proxy that intercepts AI client requests, converts ID tokens to ID-JAG tokens via Athenz, and injects the appropriate access token before forwarding to the MCP server.
 
@@ -30,9 +30,9 @@ The repository contains these runtime components and supporting plugins:
 
 8. **`local_workload_instance_provider/`** — Standalone Java 17 Maven plugin for the optional local Copper Argos flow. It validates an OIDC ID token as workload attestation and restricts certificate enrollment to the authenticated user's Athenz home-domain subtree. It is not deployed by default; the `athenzd` FAQ mounts and registers it for testing.
 
-9. **`athenz_dist/`** — Git submodule pointing to `athenz-community/athenz-distribution`. Acts as the authorization server (ZMS + ZTS) and ZPU for the tutorial.
+9. **`athenz_dist/`** — Git submodule pointing to `athenz-community/athenz-distribution`. Acts as the authorization server (ZMS + ZTS) for the tutorial.
 
-10. **`zpu/`** — Bash script + Dockerfile for the Athenz ZPU (policy updater) service.
+10. **`zpu/`** — Legacy Bash script + Dockerfile for the Athenz ZPU (policy updater) service; not required by the core tutorial.
 
 11. **`genai_proxy/`** — Minimal locally run Node.js proxy that validates Athenz Bearer tokens with the ZTS public key, requires a `gen-ai.services.<project>` audience and `gen-ai-users` scope, replaces that token with `OPENAI_CODEX_API_KEY`, and forwards OpenAI-compatible `/v1/*` requests to the gateway configured by `GENAI_UPSTREAM_BASE_URL`. It meters both Chat Completions and Responses API token fields, keeps daily JST per-project, per-user and per-model counters with a JST `last_usage` time in `HH:mm:ss` format, owns and enforces per-service-code daily spending limits with HTTP 429 responses, persists counters under the gitignored `components/athenzd/.athenzd/` directory for `make local`, and exposes user-specific projects, limits, spend, and costs at unauthenticated `GET /api/users/{user}`.
 
@@ -139,7 +139,7 @@ The provider Dockerfiles are export-only — they copy their built JARs into a m
 
 - **ID-JAG token**: An identity assertion token that carries the delegated identity of a human user to an AI agent. The gateway converts IdP-issued ID tokens into ID-JAG tokens via Athenz.
 - **Token exchange chain**: AI agent → ID-JAG → Athenz AT → MCP server → token exchange → scoped AT → API server. Each hop re-narrows the permission scope.
-- **Athenz ZTS/ZMS**: The authorization server. ZMS manages policies; ZTS issues access tokens after evaluating policies. ZPU pushes policies to resource servers for offline evaluation.
+- **Athenz ZTS/ZMS**: The authorization server. ZMS manages roles and policies; ZTS issues tokens after checking membership and the applicable issuance/exchange policies. The tutorial's API and MCP Runtime Proxy validate signed scopes directly, without ZPU or local policy evaluation.
 - **Self-signed certs**: Local development uses self-signed certificates. Keys and cert directories are gitignored. Maven SSL flags are set in all `make local` targets.
 
 ## Tutorials

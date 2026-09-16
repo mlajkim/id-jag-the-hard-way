@@ -24,9 +24,9 @@ In the previous tutorial, you used the admin certificate to mint an Access Token
 
 Admin credentials can create domains, register services, and modify policies. Using them for routine API calls gives far more power than the request needs.
 
-Instead, you will create a dedicated identity, `human.idjag-learner`, to represent you as the learner. Athenz evaluates access against a principal, so placing this principal into only the needed role gives it only the permissions attached to that role.
+Instead, you will create a dedicated identity, `human.idjag-learner`, to represent you as the learner. ZTS checks the principal's role membership when issuing a token. The API checks the issued scopes for each operation.
 
-The token you fetch is also scoped to `api:role.docs-getter`. Even if the token is leaked, it can only call endpoints allowed by that role.
+The token you fetch is also scoped to `api:role.docs-getter`. Even if the token is leaked, it can only call endpoints that accept that scope.
 
 > [!NOTE]
 > Athenz also supports UserCerts for real human users. This tutorial uses a service identity to keep the local setup focused on authorization flow rather than user certificate enrollment.
@@ -34,7 +34,7 @@ The token you fetch is also scoped to `api:role.docs-getter`. Even if the token 
 
 ## Create a learner identity
 
-You already used these identity and certificate helper scripts for ZPU. Run the same flow for a new learner identity, `human.idjag-learner`:
+Use the identity and certificate helper scripts to create a learner identity, `human.idjag-learner`:
 
 ```sh
 ./tools/athenz/create-tld.sh "human"
@@ -199,7 +199,7 @@ curl -sS -k -H "Authorization: Bearer $_my_access_token" http://localhost:14443/
 ```
 
 > [!TIP]
-> If the request fails immediately after changing role membership, wait a few seconds and retry. ZPU and ZPE load policy changes on a short sync interval.
+> If token issuance fails immediately after changing role membership, wait a few seconds for ZTS to observe the change, then request a new token. The API checks the scopes in the issued token; it does not synchronize policies.
 
 ## Review Architecture
 

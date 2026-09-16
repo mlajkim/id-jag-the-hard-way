@@ -22,7 +22,7 @@ In both flows:
 
 1. **You** send a real prompt to an AI agent.
 1. The **AI agent** calls a real protected MCP server on your behalf.
-1. The **Resource Server** authorizes the request using real tokens and least-privilege policies for each transaction.
+1. The **Resource Server** validates the access token and checks the scope required by the requested operation.
 
 ## Technical Spec
 
