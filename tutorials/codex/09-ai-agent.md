@@ -1,6 +1,6 @@
 |               Previous               |  Current  |                   Next                   |
 |:------------------------------------:|:---------:|:----------------------------------------:|
-| [AI Agent](../10-ai-agent.md) | **Codex** | [Token Exchange](./11-token-exchange.md) |
+| [AI Agent](../09-ai-agent.md) | **Codex** | [Token Exchange](./10-token-exchange.md) |
 
 # Codex
 
@@ -145,4 +145,4 @@ We successfully connected Codex CLI to the MCP server with an Athenz access toke
 
 In the next tutorial we will fix this by granting the MCP server permission to exchange tokens.
 
-Next: [Token Exchange](./11-token-exchange.md)
+Next: [Token Exchange](./10-token-exchange.md)

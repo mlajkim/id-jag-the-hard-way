@@ -19,9 +19,9 @@ The goal of this tutorial is to test Athenz external members in roles and groups
 
 # Prerequisites
 
-- Complete the main tutorial through [ID-JAG](../tutorials/16-id-jag.md).
-- Have the local ZMS port-forward running through the normal tutorial setup.
-- Use Athenz `v1.12.38` or later. `v1.12.37` introduced the feature, but `v1.12.38` fixed important external-member validation behavior. This tutorial was checked against the upstream `v1.12.43` tag.
+1. Complete the main [ID-JAG The Hard Way tutorial](https://github.com/mlajkim/id-jag-the-hard-way/tree/main/tutorials).
+2. Have the local ZMS port-forward running through the normal tutorial setup.
+3. Use Athenz `v1.12.38` or later. `v1.12.37` introduced the feature, but `v1.12.38` fixed important external-member validation behavior. This tutorial was checked against the upstream `v1.12.43` tag.
 
 # Background
 

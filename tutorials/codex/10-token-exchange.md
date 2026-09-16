@@ -1,8 +1,8 @@
-|           Previous           |      Current       |                       Next                       |
-|:----------------------------:|:------------------:|:------------------------------------------------:|
-| [AI Agent](./10-ai-agent.md) | **Token Exchange** | [Protect MCP Server](./12-protect-mcp-server.md) |
+|              Previous               |          Current           |                       Next                       |
+|:-----------------------------------:|:--------------------------:|:------------------------------------------------:|
+| [Codex](./09-ai-agent.md) | **Token Exchange - Codex** | [Protect MCP Server](./11-protect-mcp-server.md) |
 
-# Token Exchange
+# Token Exchange - Codex
 
 In this tutorial, we will fix the "Principal not authorized for token exchange" error from the previous step. The MCP server received your access token but did not have permission to exchange it for a new one on your behalf.
 
@@ -68,7 +68,7 @@ Add the `mcp.idthw-api-mcp` service principal as a member of both roles:
 #   ✔  mcp.idthw-api-mcp  →  api:role.docs-getter-exchanger
 ```
 
-The incoming token still has audience `api` at this stage. Chapter 12 introduces the MCP audience and adds permission to exchange from `mcp` to `api`.
+The incoming token still has audience `api` at this stage. Chapter 11 introduces the MCP audience and adds permission to exchange from `mcp` to `api`.
 
 <a id="refresh-the-mcp-token"></a>
 
@@ -91,44 +91,38 @@ _scope="api:role.docs-getter"
 #   ✔  Token saved to: ./keys/idjag-learner.jwt
 ```
 
-Update `.mcp.json` with the fresh token:
+Overwrite `.codex/config.toml` with the fresh token and append the provided settings:
 
 ```sh
 _mcp_port=$(./tools/port.sh mcp)
 _at=$(cat ./keys/idjag-learner.jwt)
 
-cat > .mcp.json <<EOF
-{
-  "mcpServers": {
-    "id-jag-the-hard-way-mcp": {
-      "type": "http",
-      "url": "http://localhost:${_mcp_port}/mcp",
-      "headers": {
-        "Authorization": "Bearer ${_at}"
-      }
-    }
-  }
-}
+cat > .codex/config.toml <<EOF
+[mcp_servers.id-jag-the-hard-way-mcp]
+url = "http://localhost:${_mcp_port}/mcp"
+http_headers = { Authorization = "Bearer ${_at}" }
 EOF
+
+cat .codex/settings.toml >> .codex/config.toml
 ```
 
 ## Verify
 
-Reload your MCP server in Claude Code:
+Start a new Codex chat so the updated MCP config is used:
 
 ```sh
-/reload-plugins
+/new
 ```
 
-Then ask:
+Then ask the exact same prompt that failed before:
 
 ```sh
 get docs from k8s doc server!
 ```
 
-You just got the docs list through Claude Code.
+You just got the docs list through Codex.
 
-![11_claude_code_success_to_get_docs](./assets/11_claude_code_success_to_get_docs.png)
+![Codex token exchange successful](./assets/11_codex_token_exchange_successful.png)
 
 <a id="whats-happened"></a>
 
@@ -138,4 +132,4 @@ The MCP server (`mcp.idthw-api-mcp`) can now exchange the incoming token and cal
 
 The API validates access tokens, but the MCP endpoint does not yet validate incoming tokens before processing requests. API calls still depend on a successful token exchange. In the next chapter, you will add MCP Runtime Proxy to validate tokens before allowing protected MCP requests.
 
-Next: [Protect MCP Server](./12-protect-mcp-server.md)
+Next: [Protect MCP Server](./11-protect-mcp-server.md)

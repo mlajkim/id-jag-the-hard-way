@@ -27,7 +27,7 @@ The goal of this document is to reproduce an ID-JAG delegation→impersonation s
 
 # Prerequisites
 
-Complete [16-id-jag.md](../../../tutorials/16-id-jag.md) before starting this procedure.
+1. Complete the main [ID-JAG The Hard Way tutorial](https://github.com/mlajkim/id-jag-the-hard-way/tree/main/tutorials).
 
 # Steps
 

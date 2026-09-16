@@ -1,6 +1,6 @@
 |                            Previous                            |            Current            |           Next           |
 |:--------------------------------------------------------------:|:-----------------------------:|:------------------------:|
-| [Trusted Identity Provider](./14-trusted-identity-provider.md) | **AI Client Gateway — Codex** | [ID-JAG](./16-id-jag.md) |
+| [Trusted Identity Provider](./13-trusted-identity-provider.md) | **AI Client Gateway — Codex** | [ID-JAG](./15-id-jag.md) |
 
 # AI Client Gateway — Codex
 
@@ -303,4 +303,4 @@ This is expected. Codex reached the AI Client Gateway, and the gateway tried to 
 
 In the next tutorial, we will grant `human.idjag-learner.codex` the Athenz permissions it needs to perform the full ID-JAG token exchange.
 
-Next: [ID-JAG](./16-id-jag.md)
+Next: [ID-JAG](./15-id-jag.md)

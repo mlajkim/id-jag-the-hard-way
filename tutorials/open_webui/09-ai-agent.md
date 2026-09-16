@@ -1,6 +1,6 @@
 |               Previous               |    Current     |                   Next                   |
 |:------------------------------------:|:--------------:|:----------------------------------------:|
-| [AI Agent](../10-ai-agent.md) | **Open WebUI** | [Token Exchange](./11-token-exchange.md) |
+| [AI Agent](../09-ai-agent.md) | **Open WebUI** | [Token Exchange](./10-token-exchange.md) |
 
 # Open WebUI
 
@@ -14,7 +14,7 @@
 > |  Tahoe 26.2   |        M3 Pro         |  36GB  | gemma4:e4b | Verified Working |
 > | Ubuntu 24 LTS | Intel Core i7-11700KF |  32GB  | gemma4:e4b | Verified Working |
 >
-> To use hosted model inference, choose [Claude Code](../10-ai-agent.md) or [Codex CLI](../codex/10-ai-agent.md). Those clients run locally, but do not require Ollama or a local model for their hosted-model setup.
+> To use hosted model inference, choose [Claude Code](../09-ai-agent.md) or [Codex CLI](../codex/09-ai-agent.md). Those clients run locally, but do not require Ollama or a local model for their hosted-model setup.
 
 Install Open WebUI and connect it to the MCP service with the following steps. The first document request will fail because token exchange is not yet authorized.
 
@@ -244,4 +244,4 @@ We were able to successfully install the AI client, using:
 
 Open WebUI sent the learner's API access token to the MCP server. The MCP server tried to exchange that token before calling the API, but ZTS rejected the exchange because the MCP service lacks exchange permission. You will grant that permission in the next chapter.
 
-Next: [Token Exchange](./11-token-exchange.md)
+Next: [Token Exchange](./10-token-exchange.md)

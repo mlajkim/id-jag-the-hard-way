@@ -19,8 +19,8 @@ After this tutorial, Keycloak remains reachable over HTTP at `http://localhost:3
 
 # Prerequisites
 
-- Complete the main tutorial through [Identity Provider](../tutorials/13-identity-provider.md).
-- Keep `./tools/keep-k8s-port-forward.sh` running in another terminal.
+1. Complete the main [ID-JAG The Hard Way tutorial](https://github.com/mlajkim/id-jag-the-hard-way/tree/main/tutorials).
+2. Keep `./tools/keep-k8s-port-forward.sh` running in another terminal.
 
 # Steps
 

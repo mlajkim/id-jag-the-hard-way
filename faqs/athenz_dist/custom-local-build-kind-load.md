@@ -22,10 +22,10 @@ Build custom local Athenz ZMS/ZTS images from `athenz_dist`, load them into the 
 
 # Prerequisites
 
-- Run from the repo root.
-- Docker is running.
-- `kubectl` is pointed at the local kind cluster.
-- The `athenz` namespace already exists.
+1. Run from the repo root.
+2. Docker is running.
+3. `kubectl` is pointed at the local kind cluster.
+4. The `athenz` namespace already exists.
 
 # Steps
 

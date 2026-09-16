@@ -1,6 +1,6 @@
 |                    Previous                    |      Current       |                      Next                      |
 |:----------------------------------------------:|:------------------:|:----------------------------------------------:|
-| [AI Client Gateway](./15-ai-client-gateway.md) | **ID-JAG — Codex** | *None: You are at the end of the tutorial! 🎉* |
+| [AI Client Gateway](./14-ai-client-gateway.md) | **ID-JAG — Codex** | *None: You are at the end of the tutorial! 🎉* |
 
 # ID-JAG — Codex
 

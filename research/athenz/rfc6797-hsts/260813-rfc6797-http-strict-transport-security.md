@@ -24,10 +24,10 @@ The goal of this document is to verify that the Athenz ZMS and ZTS HTTPS interfa
 
 This tutorial requires the following to be completed:
 
-- Complete the main [ID-JAG The Hard Way tutorial](../../../tutorials/16-id-jag.md), including the final ID-JAG step.
-- Keep the tutorial's Kubernetes cluster running.
-- Keep `./tools/keep-k8s-port-forward.sh` running in another terminal.
-- Run all commands from the ID-JAG The Hard Way repository root.
+1. Complete the main [ID-JAG The Hard Way tutorial](https://github.com/mlajkim/id-jag-the-hard-way/tree/main/tutorials).
+2. Keep the tutorial's Kubernetes cluster running.
+3. Keep `./tools/keep-k8s-port-forward.sh` running in another terminal.
+4. Run all commands from the ID-JAG The Hard Way repository root.
 
 # Steps
 

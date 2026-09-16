@@ -22,9 +22,9 @@ Register and apply either GenAI users delegation domain-template variant to a se
 
 # Prerequisites
 
-- Have the local Kubernetes cluster configured for this repo.
-- Have `kubectl` pointed at that cluster.
-- Have the Athenz ZMS custom solution-template PR applied. It adds `athenz-zms-custom-solution-templates` and merges it with the default templates at ZMS pod startup.
+1. Have the local Kubernetes cluster configured for this repo.
+2. Have `kubectl` pointed at that cluster.
+3. Have the Athenz ZMS custom solution-template PR applied. It adds `athenz-zms-custom-solution-templates` and merges it with the default templates at ZMS pod startup.
 
 # Steps
 

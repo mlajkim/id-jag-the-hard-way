@@ -1,21 +1,55 @@
-|              Previous               |          Current           |                       Next                       |
-|:-----------------------------------:|:--------------------------:|:------------------------------------------------:|
-| [Codex](./10-ai-agent.md) | **Token Exchange - Codex** | [Protect MCP Server](./12-protect-mcp-server.md) |
+|              Previous               |             Current             |                       Next                       |
+|:-----------------------------------:|:-------------------------------:|:------------------------------------------------:|
+| [Open WebUI](./09-ai-agent.md) | **Token Exchange - Open WebUI** | [Protect MCP Server](./11-protect-mcp-server.md) |
 
-# Token Exchange - Codex
+# Token Exchange - Open WebUI
 
 In this tutorial, we will fix the "Principal not authorized for token exchange" error from the previous step. The MCP server received your access token but did not have permission to exchange it for a new one on your behalf.
 
 Configure permissions for [OAuth 2.0 Token Exchange (RFC 8693)](https://www.rfc-editor.org/rfc/rfc8693.html) and retry the request with the following steps:
 
+> [!NOTE]
+> access tokens are short-lived. We will fetch a fresh token at the start of this tutorial so Open WebUI does not keep using an expired token from the previous step.
+
 <!-- TOC depthFrom:2 depthTo:2 -->
 
-- [Authorize the MCP Token Exchange](#authorize-the-mcp-token-exchange)
 - [Refresh the Learner Token](#refresh-the-learner-token)
+- [Authorize the MCP Token Exchange](#authorize-the-mcp-token-exchange)
 - [Verify](#verify)
 - [Understand the Result](#understand-the-result)
 
 <!-- /TOC -->
+
+The incoming token still has audience `api` at this stage. Chapter 11 introduces the MCP audience and adds permission to exchange from `mcp` to `api`.
+
+<a id="refresh-the-mcp-token"></a>
+
+## Refresh the Learner Token
+
+Fetch a fresh token with the `api:role.docs-getter` scope:
+
+```sh
+_scope="api:role.docs-getter"
+./tools/athenz/fetch-access-token.sh \
+  "./keys/idjag-learner.crt" \
+  "./keys/idjag-learner.key" \
+  "${_scope}" \
+  "./keys/idjag-learner.jwt"
+
+cat "./keys/idjag-learner.jwt"
+```
+
+```sh
+#   ·  Fetching Access Token for scope: api:role.docs-getter...
+#   ✔  Access token issued for scope: api:role.docs-getter
+#   ✔  Token saved to: ./keys/idjag-learner.jwt
+```
+
+Navigate to `User Icon` > `Admin Panel` > `Settings` > `Integrations`, and click the configure icon for the API MCP Server.
+
+Attach the refreshed access token exactly as we did previously:
+
+![11_attach_access_token](./assets/11_attach_access_token.png)
 
 <a id="allow-mcp-server-to-exchange-the-given-access-token"></a>
 
@@ -68,61 +102,17 @@ Add the `mcp.idthw-api-mcp` service principal as a member of both roles:
 #   ✔  mcp.idthw-api-mcp  →  api:role.docs-getter-exchanger
 ```
 
-The incoming token still has audience `api` at this stage. Chapter 12 introduces the MCP audience and adds permission to exchange from `mcp` to `api`.
-
-<a id="refresh-the-mcp-token"></a>
-
-## Refresh the Learner Token
-
-Fetch a fresh token with `api:role.docs-getter` so the next request does not use an expired token:
-
-```sh
-_scope="api:role.docs-getter"
-./tools/athenz/fetch-access-token.sh \
-  "./keys/idjag-learner.crt" \
-  "./keys/idjag-learner.key" \
-  "${_scope}" \
-  "./keys/idjag-learner.jwt"
-```
-
-```sh
-#   ·  Fetching Access Token for scope: api:role.docs-getter...
-#   ✔  Access token issued for scope: api:role.docs-getter
-#   ✔  Token saved to: ./keys/idjag-learner.jwt
-```
-
-Overwrite `.codex/config.toml` with the fresh token and append the provided settings:
-
-```sh
-_mcp_port=$(./tools/port.sh mcp)
-_at=$(cat ./keys/idjag-learner.jwt)
-
-cat > .codex/config.toml <<EOF
-[mcp_servers.id-jag-the-hard-way-mcp]
-url = "http://localhost:${_mcp_port}/mcp"
-http_headers = { Authorization = "Bearer ${_at}" }
-EOF
-
-cat .codex/settings.toml >> .codex/config.toml
-```
-
 ## Verify
 
-Start a new Codex chat so the updated MCP config is used:
+Now, ask the AI agent the exact same prompt that failed before:
 
 ```sh
-/new
+get docs!
 ```
 
-Then ask the exact same prompt that failed before:
+You just got the docs list through Open WebUI.
 
-```sh
-get docs from k8s doc server!
-```
-
-You just got the docs list through Codex.
-
-![Codex token exchange successful](./assets/11_codex_token_exchange_successful.png)
+![11_succcesfully_get_docs_through_ai_for_the_first_time](./assets/11_succcesfully_get_docs_through_ai_for_the_first_time.png)
 
 <a id="whats-happened"></a>
 
@@ -132,4 +122,4 @@ The MCP server (`mcp.idthw-api-mcp`) can now exchange the incoming token and cal
 
 The API validates access tokens, but the MCP endpoint does not yet validate incoming tokens before processing requests. API calls still depend on a successful token exchange. In the next chapter, you will add MCP Runtime Proxy to validate tokens before allowing protected MCP requests.
 
-Next: [Protect MCP Server](./12-protect-mcp-server.md)
+Next: [Protect MCP Server](./11-protect-mcp-server.md)

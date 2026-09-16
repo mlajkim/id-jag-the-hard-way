@@ -1,6 +1,6 @@
 |                    Previous                    |                Current                |                      Next                      |
 |:----------------------------------------------:|:-------------------------------------:|:----------------------------------------------:|
-| [Identity Provider](./13-identity-provider.md) | **Trusted Identity Provider — Codex** | [AI Client Gateway](./15-ai-client-gateway.md) |
+| [Identity Provider](./12-identity-provider.md) | **Trusted Identity Provider — Codex** | [AI Client Gateway](./14-ai-client-gateway.md) |
 
 # Trusted Identity Provider — Codex
 
@@ -187,4 +187,4 @@ We installed the `KeycloakTokenExchangeProvider` plugin. It takes a Keycloak ID 
 
 We have established trust between Athenz and Keycloak. In the next tutorial, we will deploy the AI Client Gateway, which uses the Keycloak ID token to perform the full ID-JAG exchange chain on behalf of the Codex CLI user.
 
-Next: [AI Client Gateway](./15-ai-client-gateway.md)
+Next: [AI Client Gateway](./14-ai-client-gateway.md)

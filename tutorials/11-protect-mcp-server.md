@@ -1,8 +1,8 @@
-|                 Previous                 |                Current                 |                      Next                      |
-|:----------------------------------------:|:--------------------------------------:|:----------------------------------------------:|
-| [Token Exchange](./11-token-exchange.md) | **Protect MCP Server - Open WebUI** | [Identity Provider](./13-identity-provider.md) |
+|                 Previous                 |        Current         |                      Next                      |
+|:----------------------------------------:|:----------------------:|:----------------------------------------------:|
+| [Token Exchange](./10-token-exchange.md) | **Protect MCP Server** | [Identity Provider](./12-identity-provider.md) |
 
-# Protect MCP Server - Open WebUI
+# Protect MCP Server
 
 Protect MCP tool execution with MCP Runtime Proxy using the following steps. The proxy validates incoming access tokens before forwarding protected requests to the MCP server. MCP initialization and `tools/list` remain public for discovery.
 
@@ -14,6 +14,7 @@ Protect MCP tool execution with MCP Runtime Proxy using the following steps. The
 - [Fix Insufficient Permission](#fix-insufficient-permission)
 - [Allow Exchange from MCP to API](#allow-exchange-from-mcp-to-api)
 - [Request Both MCP and API Scopes](#request-both-mcp-and-api-scopes)
+- [Update .mcp.json with the New Token](#update-mcpjson-with-the-new-token)
 - [Verify](#verify)
 - [Review the Result](#review-the-result)
 - [Next Steps](#next-steps)
@@ -65,7 +66,7 @@ EOF
 kubectl rollout status deploy/mcp -n api
 ```
 
-The proxy uses the `api-zts-ca` ConfigMap from chapter 07 to trust the ZTS signing-key endpoint. It validates incoming tokens; the MCP adapter uses its own service certificate for the downstream token exchange.
+The proxy uses the `api-zts-ca` ConfigMap from chapter 06 to trust the ZTS signing-key endpoint. It validates incoming tokens; the MCP adapter uses its own service certificate for the downstream token exchange.
 
 ## Update the MCP Service to Point to the Proxy
 
@@ -81,30 +82,53 @@ kubectl patch svc mcp -n api --patch '{"spec":{"ports":[{"port":8081,"targetPort
 
 ## Verify (Expected Failure)
 
-Ask Open WebUI:
+> [!WARNING]
+> This step will intentionally fail - that is the point, and you will fix it in the next section.
+
+Reload the plugin in Claude Code:
 
 ```sh
-get docs!
+/reload-plugins
 ```
 
-Open WebUI can still initialize and list the available tools. The tool call fails because protected requests require `mcp:role.mcp-accessor`, while the current token has audience `api` and only grants `docs-getter`. The proxy rejects that audience before checking the MCP scope.
+Then ask:
+
+```sh
+get docs from k8s doc server!
+```
+
+The client can still initialize and list the available tools. The tool call fails because protected requests require `mcp:role.mcp-accessor`, while the current token has audience `api` and only grants `docs-getter`. The proxy rejects that audience before checking the MCP scope.
+
+You can also see from the log of the `auth-proxy` container that the request was rejected:
 
 ```sh
 kubectl logs deploy/mcp -n api -c auth-proxy
 ```
 
+```sh
+# Look for event "access_denied" with status 401: the token audience is still api.
+```
+
 ## Fix Insufficient Permission
 
-Create the `mcp-accessor` role in the `mcp` domain from chapter 09. The proxy maps this scope to MCP access directly:
+Create the `mcp-accessor` role in the `mcp` domain from chapter 08. The proxy maps this scope to MCP access directly:
 
 ```sh
 ./tools/athenz/create-role.sh "mcp" "mcp-accessor"
-./tools/athenz/add-role-member.sh "mcp" "mcp-accessor" "human.idjag-learner"
 ```
 
 ```sh
 #   ·  Creating Role: mcp:role.mcp-accessor...
 #   ✔  Role created: mcp:role.mcp-accessor
+```
+
+Add `human.idjag-learner` as a member:
+
+```sh
+./tools/athenz/add-role-member.sh "mcp" "mcp-accessor" "human.idjag-learner"
+```
+
+```sh
 #   ·  Adding Member human.idjag-learner to Role: mcp:role.mcp-accessor...
 #   ✔  human.idjag-learner  →  mcp:role.mcp-accessor
 ```
@@ -120,7 +144,7 @@ The next token will have audience `mcp`. Authorize the MCP service to exchange i
 ./tools/athenz/add-policy.sh "api" "docs-getter-exchanger" "zts.token_target_exchange" "mcp:role.docs-getter"
 ```
 
-The source assertion is `mcp:api`; the target assertion is `api:mcp:role.docs-getter`. The `docs-getter-exchanger` role already contains `mcp.idthw-api-mcp` from chapter 11. These policies permit exchange; the incoming token must also carry `api:role.docs-getter`.
+The source assertion is `mcp:api`; the target assertion is `api:mcp:role.docs-getter`. The `docs-getter-exchanger` role already contains `mcp.idthw-api-mcp` from chapter 10. These policies permit exchange; the incoming token must also carry `api:role.docs-getter`.
 
 <a id="fetch-a-new-access-token-for-the-new-role"></a>
 
@@ -134,16 +158,14 @@ _scope="mcp:role.mcp-accessor api:role.docs-getter"
   "./keys/idjag-learner.crt" \
   "./keys/idjag-learner.key" \
   "${_scope}" \
-  "./keys/api_mcp-accessor_docs-getter.jwt" \
+  "./keys/idjag-learner.jwt" \
   --audience mcp
-
-cat "./keys/api_mcp-accessor_docs-getter.jwt"
 ```
 
 ```sh
 #   ·  Fetching Access Token for scope: mcp:role.mcp-accessor api:role.docs-getter...
 #   ✔  Access token issued for scope: mcp:role.mcp-accessor api:role.docs-getter
-#   ✔  Token saved to: ./keys/api_mcp-accessor_docs-getter.jwt
+#   ✔  Token saved to: ./keys/idjag-learner.jwt
 ```
 
 The relevant claims are shown below (scope order may differ). Only the audience-domain role is shortened:
@@ -157,20 +179,49 @@ The relevant claims are shown below (scope order may differ). Only the audience-
 
 The MCP adapter requests `audience=api` and `scope=api:role.docs-getter` for its downstream exchange. The resulting API token has `aud=api` and `scp=["docs-getter"]`; it no longer carries MCP access. The API rejects the original MCP-bound token even though that token carries its qualified API scope.
 
-Navigate back to Open WebUI and replace the MCP Authorization header with this new access token.
+## Update .mcp.json with the New Token
+
+```sh
+_mcp_port=$(./tools/port.sh mcp)
+_at=$(cat ./keys/idjag-learner.jwt)
+
+cat > .mcp.json <<EOF
+{
+  "mcpServers": {
+    "id-jag-the-hard-way-mcp": {
+      "type": "http",
+      "url": "http://localhost:${_mcp_port}/mcp",
+      "headers": {
+        "Authorization": "Bearer ${_at}"
+      }
+    }
+  }
+}
+EOF
+```
 
 ## Verify
 
-Ask Open WebUI again:
+Reload in Claude Code, then ask:
 
 ```sh
-get docs!
+/reload-plugins
 ```
+
+```sh
+get docs from k8s doc server!
+```
+
+![12_claude_token_exchange_successful](./assets/12_claude_token_exchange_successful.png)
 
 Check the MCP server logs to confirm the proxy authorized the request:
 
 ```sh
 kubectl logs deploy/mcp -n api -c auth-proxy
+```
+
+```sh
+# Look for "access_token_verified" followed by "request_completed".
 ```
 
 <a id="review-summary-of-changes"></a>
@@ -183,4 +234,6 @@ MCP Runtime Proxy now validates tokens in front of the MCP adapter. Any client c
 
 ## Next Steps
 
-Next: [Identity Provider](./13-identity-provider.md)
+So far, you have authenticated to ZTS with the certificate for `human.idjag-learner`. In the next chapter, you will deploy Keycloak so users can sign in through an identity provider and receive an ID token.
+
+Next: [Identity Provider](./12-identity-provider.md)
