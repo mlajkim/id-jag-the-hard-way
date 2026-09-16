@@ -1,6 +1,6 @@
 |                      Previous                      |        Current         |             Next             |
 |:--------------------------------------------------:|:----------------------:|:----------------------------:|
-| [Granular Permission](./08-granular-permission.md) | **MCP Server for API** | [AI Agent](./10-ai-agent.md) |
+| [Granular Permission](./07-granular-permission.md) | **MCP Server for API** | [AI Agent](./09-ai-agent.md) |
 
 # MCP Server for API
 
@@ -186,4 +186,4 @@ flowchart LR
 
 ## Next Steps
 
-Next: [AI Agent](./10-ai-agent.md)
+Next: [AI Agent](./09-ai-agent.md)

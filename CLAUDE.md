@@ -144,7 +144,7 @@ The provider Dockerfiles are export-only — they copy their built JARs into a m
 
 ## Tutorials
 
-The `tutorials/` directory contains the canonical learning path (01–14, with sub-steps). They are Markdown files intended to be read in order. The `tutorials/challenges/` subdirectory contains challenge exercises. Always keep tutorial content consistent with the code behavior when making changes.
+The `tutorials/` directory contains the canonical learning path (01–15, with alternative AI client paths). They are Markdown files intended to be read in order. The `tutorials/challenges/` subdirectory contains challenge exercises. Always keep tutorial content consistent with the code behavior when making changes.
 
 ## FAQ Writing Rules
 

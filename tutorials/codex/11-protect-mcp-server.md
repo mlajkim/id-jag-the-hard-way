@@ -1,6 +1,6 @@
 |                 Previous                 |            Current             |                      Next                      |
 |:----------------------------------------:|:------------------------------:|:----------------------------------------------:|
-| [Token Exchange](./11-token-exchange.md) | **Protect MCP Server - Codex** | [Identity Provider](./13-identity-provider.md) |
+| [Token Exchange](./10-token-exchange.md) | **Protect MCP Server - Codex** | [Identity Provider](./12-identity-provider.md) |
 
 # Protect MCP Server - Codex
 
@@ -66,7 +66,7 @@ EOF
 kubectl rollout status deploy/mcp -n api
 ```
 
-The proxy uses the `api-zts-ca` ConfigMap from chapter 07 to trust the ZTS signing-key endpoint. It validates incoming tokens; the MCP adapter uses its own service certificate for the downstream token exchange.
+The proxy uses the `api-zts-ca` ConfigMap from chapter 06 to trust the ZTS signing-key endpoint. It validates incoming tokens; the MCP adapter uses its own service certificate for the downstream token exchange.
 
 ## Update the MCP Service to Point to the Proxy
 
@@ -96,7 +96,7 @@ kubectl logs deploy/mcp -n api -c auth-proxy
 
 ## Fix Insufficient Permission
 
-Create the `mcp-accessor` role in the `mcp` domain from chapter 09. The proxy maps this scope to MCP access directly:
+Create the `mcp-accessor` role in the `mcp` domain from chapter 08. The proxy maps this scope to MCP access directly:
 
 ```sh
 ./tools/athenz/create-role.sh "mcp" "mcp-accessor"
@@ -121,7 +121,7 @@ The next token will have audience `mcp`. Authorize the MCP service to exchange i
 ./tools/athenz/add-policy.sh "api" "docs-getter-exchanger" "zts.token_target_exchange" "mcp:role.docs-getter"
 ```
 
-The source assertion is `mcp:api`; the target assertion is `api:mcp:role.docs-getter`. The `docs-getter-exchanger` role already contains `mcp.idthw-api-mcp` from chapter 11. These policies permit exchange; the incoming token must also carry `api:role.docs-getter`.
+The source assertion is `mcp:api`; the target assertion is `api:mcp:role.docs-getter`. The `docs-getter-exchanger` role already contains `mcp.idthw-api-mcp` from chapter 10. These policies permit exchange; the incoming token must also carry `api:role.docs-getter`.
 
 <a id="fetch-a-new-access-token-for-the-new-role"></a>
 
@@ -197,4 +197,4 @@ MCP Runtime Proxy now validates tokens in front of the MCP adapter. Any client c
 
 ## Next Steps
 
-Next: [Identity Provider](./13-identity-provider.md)
+Next: [Identity Provider](./12-identity-provider.md)

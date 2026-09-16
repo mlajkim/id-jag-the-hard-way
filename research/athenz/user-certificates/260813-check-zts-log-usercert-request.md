@@ -22,8 +22,10 @@ The goal of this document is to verify that Athenz ZTS records the requested use
 
 This tutorial requires the following to be completed:
 
-1. Complete the main [ID-JAG The Hard Way tutorial](../../../tutorials/16-id-jag.md), including the final ID-JAG step.
-1. Complete [Fetch an Athenz user certificate](../../../faqs/fetch-athenz-user-cert.md) successfully. This prepares the user-certificate provider, Keycloak flow, private key, and `user.idjag-learner` certificate request.
+1. Complete the main [ID-JAG The Hard Way tutorial](https://github.com/mlajkim/id-jag-the-hard-way/tree/main/tutorials).
+2. Fetch an [Athenz user certificate](https://github.com/mlajkim/id-jag-the-hard-way/blob/main/faqs/fetch-athenz-user-cert.md).
+
+   This prepares the user-certificate provider, Keycloak flow, private key, and `user.idjag-learner` certificate request.
 
 # Steps
 

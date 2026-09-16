@@ -1,6 +1,6 @@
 |                    Previous                    |                  Current                   |                      Next                      |
 |:----------------------------------------------:|:------------------------------------------:|:----------------------------------------------:|
-| [Identity Provider](./13-identity-provider.md) | **Trusted Identity Provider — Open WebUI** | [AI Client Gateway](./15-ai-client-gateway.md) |
+| [Identity Provider](./12-identity-provider.md) | **Trusted Identity Provider — Open WebUI** | [AI Client Gateway](./14-ai-client-gateway.md) |
 
 # Trusted Identity Provider — Open WebUI
 
@@ -211,7 +211,7 @@ We have successfully established trust relationships between:
 - Authorization Server (Athenz) and Identity Provider (Keycloak)
 - AI client (Open WebUI) and Identity Provider (Keycloak)
 
-Next, you will deploy AI Client Gateway and send a request through it. Sign-in will succeed, but token exchange will fail until you grant the gateway permission in chapter 16.
+Next, you will deploy AI Client Gateway and send a request through it. Sign-in will succeed, but token exchange will fail until you grant the gateway permission in chapter 15.
 
-Next: [AI Client Gateway](./15-ai-client-gateway.md)
+Next: [AI Client Gateway](./14-ai-client-gateway.md)
 

@@ -1,6 +1,6 @@
 |                    Previous                    |            Current            |                      Next                      |
 |:----------------------------------------------:|:-----------------------------:|:----------------------------------------------:|
-| [Identity Provider](./13-identity-provider.md) | **Trusted Identity Provider** | [AI Client Gateway](./15-ai-client-gateway.md) |
+| [Identity Provider](./12-identity-provider.md) | **Trusted Identity Provider** | [AI Client Gateway](./14-ai-client-gateway.md) |
 
 # Trusted Identity Provider
 
@@ -221,4 +221,4 @@ We have established trust between:
 
 But we still have not connected the AI client (Open WebUI / Claude Code) to Keycloak for login. In the next tutorial, we will deploy the AI Client Gateway, which uses the Keycloak ID token to perform the ID-JAG exchange chain.
 
-Next: [AI Client Gateway](./15-ai-client-gateway.md)
+Next: [AI Client Gateway](./14-ai-client-gateway.md)

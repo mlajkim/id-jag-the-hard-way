@@ -1,6 +1,6 @@
 |                            Previous                            |              Current               |           Next           |
 |:--------------------------------------------------------------:|:----------------------------------:|:------------------------:|
-| [Trusted Identity Provider](./14-trusted-identity-provider.md) | **AI Client Gateway — Open WebUI** | [ID-JAG](./16-id-jag.md) |
+| [Trusted Identity Provider](./13-trusted-identity-provider.md) | **AI Client Gateway — Open WebUI** | [ID-JAG](./15-id-jag.md) |
 
 # AI Client Gateway — Open WebUI
 
@@ -297,4 +297,4 @@ The user is signed in, and the gateway authenticates to ZTS as `ai.open-webui`. 
 
 In the next chapter, you will grant the gateway ID-JAG exchange permission for the MCP and API roles, then retry the document request.
 
-Next: [ID-JAG](./16-id-jag.md)
+Next: [ID-JAG](./15-id-jag.md)

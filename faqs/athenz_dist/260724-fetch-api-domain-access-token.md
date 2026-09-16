@@ -19,10 +19,10 @@ Fetch an Athenz access token containing every `api` role accessible to the reque
 
 # Prerequisites
 
-- Run the commands from the ID-JAG The Hard Way repository root.
-- The local ZTS environment is running.
-- The `human.idjag-learner` certificate and private key exist under `keys/`.
-- The principal has access to at least one role in the `api` domain.
+1. Run the commands from the ID-JAG The Hard Way repository root.
+2. The local ZTS environment is running.
+3. The `human.idjag-learner` certificate and private key exist under `keys/`.
+4. The principal has access to at least one role in the `api` domain.
 
 # Steps
 

@@ -23,11 +23,11 @@ The goal of this tutorial is to connect a vendor MCP server to MCP Hub, using Co
 
 # Prerequisites
 
-- Complete the main tutorial through [MCP Server for API](../tutorials/09-mcp-server-for-api.md).
-- Have the local Kubernetes cluster available.
-- Complete [Setup Core MCP Proxy](./setup-core-mcp-proxy.md).
-- Have a Confluence Cloud site. The free plan is enough for a local multi-user demo.
-- Make sure your Kubernetes cluster can pull `ghcr.io/sooperset/mcp-atlassian:latest`.
+1. Complete the main [ID-JAG The Hard Way tutorial](https://github.com/mlajkim/id-jag-the-hard-way/tree/main/tutorials).
+2. Have the local Kubernetes cluster available.
+3. Set up [Core MCP Proxy](https://github.com/mlajkim/id-jag-the-hard-way/blob/main/faqs/setup-core-mcp-proxy.md).
+4. Have a Confluence Cloud site. The free plan is enough for a local multi-user demo.
+5. Make sure your Kubernetes cluster can pull `ghcr.io/sooperset/mcp-atlassian:latest`.
 
 # Background
 

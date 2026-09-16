@@ -28,9 +28,9 @@ The goal of this document is to build the latest multi-domain access-token ZTS b
 
 This tutorial requires the following to be completed:
 
-1. Complete the main [ID-JAG The Hard Way tutorial](../../../tutorials/16-id-jag.md).
-1. Keep the existing IDTHW `kind` cluster and Athenz deployment running.
-1. Install Git, Go, Java, Maven, Docker, `kind`, and `kubectl`.
+1. Complete the main [ID-JAG The Hard Way tutorial](https://github.com/mlajkim/id-jag-the-hard-way/tree/main/tutorials).
+2. Keep the existing IDTHW `kind` cluster and Athenz deployment running.
+3. Install Git, Go, Java, Maven, Docker, `kind`, and `kubectl`.
 
 # Steps
 

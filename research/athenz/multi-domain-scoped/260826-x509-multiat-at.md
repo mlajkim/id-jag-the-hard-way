@@ -28,8 +28,8 @@ The goal of this document is to use an X.509 identity to obtain one access token
 
 This tutorial requires the following to be completed:
 
-1. Complete the main [ID-JAG The Hard Way tutorial](../../../tutorials/16-id-jag.md).
-1. Complete [Setup multi-domain-scoped ZTS](./260825-setup-multi-domain-scoped-zts.md), including `athenz.zts.access_token_max_domains=10`.
+1. Complete the main [ID-JAG The Hard Way tutorial](https://github.com/mlajkim/id-jag-the-hard-way/tree/main/tutorials).
+2. Set up [multi-domain-scoped ZTS](https://github.com/mlajkim/id-jag-the-hard-way/blob/main/research/athenz/multi-domain-scoped/260825-setup-multi-domain-scoped-zts.md) with `athenz.zts.access_token_max_domains=10`.
 
 # Steps
 

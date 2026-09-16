@@ -34,9 +34,9 @@ An access-token exchange may keep or remove scopes from the ID-JAG, but it must 
 
 # Prerequisites
 
-1. Complete [ID-JAG The Hard Way](../../../tutorials/16-id-jag.md).
-1. Deploy the ZTS build containing multi-domain ID-JAG support.
-1. Configure `athenz.zts.access_token_max_domains` to at least `2`.
+1. Complete the main [ID-JAG The Hard Way tutorial](https://github.com/mlajkim/id-jag-the-hard-way/tree/main/tutorials).
+2. Deploy the ZTS build containing multi-domain ID-JAG support.
+3. Configure `athenz.zts.access_token_max_domains` to at least `2`.
 
 # Steps
 

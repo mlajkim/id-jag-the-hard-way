@@ -1,6 +1,6 @@
 |                     Previous                     |   Current    |                   Next                   |
 |:------------------------------------------------:|:------------:|:----------------------------------------:|
-| [MCP Server for API](./09-mcp-server-for-api.md) | **AI agent** | [Token Exchange](./11-token-exchange.md) |
+| [MCP Server for API](./08-mcp-server-for-api.md) | **AI agent** | [Token Exchange](./10-token-exchange.md) |
 
 # AI Agent: Claude
 
@@ -21,8 +21,8 @@ Connect Claude Code to the MCP server with the following steps. You will provide
 
 > [!NOTE]
 > `Claude Code` is the default client for this tutorial path. If you prefer a different client, see the alternatives:
-> - [Codex](./codex/10-ai-agent.md)
-> - [Open WebUI](./open_webui/10-ai-agent.md)
+> - [Codex](./codex/09-ai-agent.md)
+> - [Open WebUI](./open_webui/09-ai-agent.md)
 
 
 ## Install Claude
@@ -179,4 +179,4 @@ We successfully connected Claude Code to the MCP server with an Athenz access to
 
 In the next tutorial we will fix this by granting the MCP server permission to exchange tokens.
 
-Next: [Token Exchange](./11-token-exchange.md)
+Next: [Token Exchange](./10-token-exchange.md)

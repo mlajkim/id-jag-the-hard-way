@@ -24,11 +24,11 @@ The goal of this document is to use the RFC 7523 JWT bearer authorization grant 
 
 This tutorial requires the following to be completed:
 
-- Complete the main [ID-JAG The Hard Way tutorial](../../../tutorials/16-id-jag.md), including the final ID-JAG step.
-- Keep the tutorial's Kubernetes cluster and `./tools/keep-k8s-port-forward.sh` running.
-- Use Athenz v1.12.42 or later.
-- Have `curl`, `jq`, and `openssl` available.
-- Run all commands from the ID-JAG The Hard Way repository root.
+1. Complete the main [ID-JAG The Hard Way tutorial](https://github.com/mlajkim/id-jag-the-hard-way/tree/main/tutorials).
+2. Keep the tutorial's Kubernetes cluster and `./tools/keep-k8s-port-forward.sh` running.
+3. Use Athenz v1.12.42 or later.
+4. Have `curl`, `jq`, and `openssl` available.
+5. Run all commands from the ID-JAG The Hard Way repository root.
 
 # Steps
 

@@ -37,12 +37,12 @@ Test `athenzd` against the local ID-JAG The Hard Way environment: configure Keyc
 
 # Prerequisites
 
-- Complete the main tutorial through [Identity Provider](../../tutorials/13-identity-provider.md).
-- Leave `./tools/keep-k8s-port-forward.sh` running throughout setup, testing, and the first four cleanup steps.
-- Complete [Make Keycloak HTTPS for ZTS User Certificates](../make-keycloak-https.md).
-- Confirm that `ghcr.io/mlajkim/local-workload-instance-provider:latest` has been published.
-- Run commands from the repository root unless a command explicitly changes directory.
-- Ensure the reserved `home` top-level domain exists and ZMS allows personal user-domain creation. `athenzd` creates `home.idjag-learner` when needed but never creates the reserved `home` domain.
+1. Complete the main [ID-JAG The Hard Way tutorial](https://github.com/mlajkim/id-jag-the-hard-way/tree/main/tutorials).
+2. Leave `./tools/keep-k8s-port-forward.sh` running throughout setup, testing, and the first four cleanup steps.
+3. Configure [Keycloak HTTPS for ZTS user certificates](https://github.com/mlajkim/id-jag-the-hard-way/blob/main/faqs/make-keycloak-https.md).
+4. Confirm that `ghcr.io/mlajkim/local-workload-instance-provider:latest` has been published.
+5. Run commands from the repository root unless a command explicitly changes directory.
+6. Ensure the reserved `home` top-level domain exists and ZMS allows personal user-domain creation. `athenzd` creates `home.idjag-learner` when needed but never creates the reserved `home` domain.
 
 > [!NOTE]
 > This test calls `POST /zts/v1/instance` and writes an X.509 certificate, private key, and signer CA locally. It does not exchange the ID token for an Athenz access token or start a long-running certificate-rotation daemon.

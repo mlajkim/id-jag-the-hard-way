@@ -1,6 +1,6 @@
 |                     Previous                     |        Current        |                              Next                              |
 |:------------------------------------------------:|:---------------------:|:--------------------------------------------------------------:|
-| [Protect MCP Server](./12-protect-mcp-server.md) | **Identity Provider** | [Trusted Identity Provider](./14-trusted-identity-provider.md) |
+| [Protect MCP Server](./11-protect-mcp-server.md) | **Identity Provider** | [Trusted Identity Provider](./13-trusted-identity-provider.md) |
 
 # Identity Provider
 
@@ -219,4 +219,4 @@ At this point, Keycloak is running and configured, but our Authorization Server 
 
 We have set up the Identity Provider. Now we need to configure Athenz to accept and verify tokens issued by Keycloak.
 
-Next: [Trusted Identity Provider](./14-trusted-identity-provider.md)
+Next: [Trusted Identity Provider](./13-trusted-identity-provider.md)

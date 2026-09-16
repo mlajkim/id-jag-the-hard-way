@@ -1,6 +1,6 @@
 |                      Previous                      |         Current         |                       Next                       |
 |:--------------------------------------------------:|:-----------------------:|:------------------------------------------------:|
-| [Athenz access token](./07-athenz-access-token.md) | **Granular Permission** | [MCP Server for API](./09-mcp-server-for-api.md) |
+| [Athenz access token](./06-athenz-access-token.md) | **Granular Permission** | [MCP Server for API](./08-mcp-server-for-api.md) |
 
 # Granular Permission
 
@@ -209,4 +209,4 @@ You successfully fetched an X.509 certificate for the non-admin service identity
 
 ![08_arc_fetch_at_with_non_admin_certificiate](./assets/08_arc_fetch_at_with_non_admin_certificiate.png)
 
-Next: [MCP Server for API](./09-mcp-server-for-api.md)
+Next: [MCP Server for API](./08-mcp-server-for-api.md)

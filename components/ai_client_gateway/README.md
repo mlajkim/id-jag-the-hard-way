@@ -32,4 +32,4 @@ The AI client does not need to obtain Athenz access tokens itself. The gateway h
 
 The gateway requests scopes based on that metadata. ZTS decides which scopes it can grant, and the downstream proxy and API validate the issued tokens.
 
-Follow the [AI Client Gateway tutorial](../../tutorials/15-ai-client-gateway.md) to deploy and configure it.
+Follow the [AI Client Gateway tutorial](../../tutorials/14-ai-client-gateway.md) to deploy and configure it.

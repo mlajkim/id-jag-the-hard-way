@@ -24,9 +24,9 @@ The goal of this FAQ is to run IDTHW Hub locally and use its MCP Hub product.
 
 # Prerequisites
 
-- Have the local Kubernetes cluster configured for this repo.
-- Have `kubectl` pointed at that cluster.
-- Have Node.js and npm available.
+1. Have the local Kubernetes cluster configured for this repo.
+2. Have `kubectl` pointed at that cluster.
+3. Have Node.js and npm available.
 
 # Steps
 

@@ -1,6 +1,6 @@
 |             Previous             |         Current         |                        Next                        |
 |:--------------------------------:|:-----------------------:|:--------------------------------------------------:|
-| [Authorization Server](./05-authorization-server.md) | **Athenz access token** | [Granular Permission](./08-granular-permission.md) |
+| [Authorization Server](./05-authorization-server.md) | **Athenz access token** | [Granular Permission](./07-granular-permission.md) |
 
 # Athenz Access Token
 
@@ -240,4 +240,4 @@ We have successfully retrieved an Athenz access token as `user.athenz_admin` and
 
 The administrator can also manage Athenz domains and policies. Routine API calls do not need those privileges. In the next chapter, you will create a dedicated learner identity and grant it the document-reading role.
 
-Next: [Granular Permission](./08-granular-permission.md)
+Next: [Granular Permission](./07-granular-permission.md)

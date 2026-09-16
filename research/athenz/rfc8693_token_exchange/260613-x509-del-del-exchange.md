@@ -33,7 +33,7 @@ The goal of this document is to model a full X.509 delegated access-token exchan
 
 This tutorial requires the following to be completed:
 
-- [12-protect-mcp-server.md](../../../tutorials/12-protect-mcp-server.md)
+1. Complete the main [ID-JAG The Hard Way tutorial](https://github.com/mlajkim/id-jag-the-hard-way/tree/main/tutorials).
 
 # Steps
 

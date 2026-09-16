@@ -67,8 +67,8 @@ The goal of this document is to ..., with the following steps:
 
 This tutorial requires the following to be completed:
 
-1. Complete the main [ID-JAG The Hard Way tutorial](../tutorials/16-id-jag.md).
-1. Complete any additional feature-specific tutorial or FAQ.
+1. Complete the main [ID-JAG The Hard Way tutorial](https://github.com/mlajkim/id-jag-the-hard-way/tree/main/tutorials).
+2. Complete any additional feature-specific tutorial or FAQ.
 
 # Steps
 

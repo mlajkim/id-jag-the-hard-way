@@ -33,7 +33,7 @@ The goal of this document is to model a full ID-JAG delegated exchange chain fro
 
 This tutorial requires the following to be completed:
 
-- [16-id-jag.md](../../../tutorials/16-id-jag.md)
+1. Complete the main [ID-JAG The Hard Way tutorial](https://github.com/mlajkim/id-jag-the-hard-way/tree/main/tutorials).
 
 # Steps
 

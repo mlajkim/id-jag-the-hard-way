@@ -1,6 +1,6 @@
 |                     Previous                     |              Current               |                              Next                              |
 |:------------------------------------------------:|:----------------------------------:|:--------------------------------------------------------------:|
-| [Protect MCP Server](./12-protect-mcp-server.md) | **Identity Provider — Open WebUI** | [Trusted Identity Provider](./14-trusted-identity-provider.md) |
+| [Protect MCP Server](./11-protect-mcp-server.md) | **Identity Provider — Open WebUI** | [Trusted Identity Provider](./13-trusted-identity-provider.md) |
 
 # Identity Provider — Open WebUI
 
@@ -330,4 +330,4 @@ Keycloak now authenticates the learner account for Open WebUI:
 
 Open WebUI now trusts Keycloak for sign-in. In the next chapter, you will configure Athenz to validate Keycloak ID tokens for ID-JAG exchange.
 
-Next: [Trusted Identity Provider](./14-trusted-identity-provider.md)
+Next: [Trusted Identity Provider](./13-trusted-identity-provider.md)

@@ -26,7 +26,7 @@ The goal of this document is to reproduce the rejected X.509 impersonation→del
 
 # Prerequisites
 
-Complete [12-protect-mcp-server.md](../../../tutorials/12-protect-mcp-server.md) before starting this procedure.
+1. Complete the main [ID-JAG The Hard Way tutorial](https://github.com/mlajkim/id-jag-the-hard-way/tree/main/tutorials).
 
 # Steps
 

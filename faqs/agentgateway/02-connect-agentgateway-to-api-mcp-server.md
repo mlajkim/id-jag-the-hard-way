@@ -24,10 +24,10 @@ The goal of this FAQ is to register the protected API MCP Server as an agentgate
 
 # Prerequisites
 
-- Run the commands from the ID-JAG The Hard Way repository root.
-- Complete the ID-JAG The Hard Way tutorial so that the protected `mcp` Service is running in the `api` namespace.
-- Complete [Install agentgateway on Kubernetes](./01-install-agent-gateway.md).
-- Keep `./tools/keep-k8s-port-forward.sh` running.
+1. Complete the main [ID-JAG The Hard Way tutorial](https://github.com/mlajkim/id-jag-the-hard-way/tree/main/tutorials).
+2. Run the commands from the ID-JAG The Hard Way repository root.
+3. Complete the [agentgateway installation](https://github.com/mlajkim/id-jag-the-hard-way/blob/main/faqs/agentgateway/01-install-agent-gateway.md).
+4. Keep `./tools/keep-k8s-port-forward.sh` running.
 
 # Steps
 
@@ -210,4 +210,4 @@ The `api-mcp` route should show the `http` listener, `/mcp` match, and `agent-ga
 - [Agentgateway MCP server quickstart](https://agentgateway.dev/docs/kubernetes/latest/quickstart/mcp/)
 - [AgentgatewayBackend API reference](https://agentgateway.dev/docs/kubernetes/latest/reference/api/)
 - [Kubernetes HTTPRoute](https://gateway-api.sigs.k8s.io/api-types/httproute/)
-- [Protect MCP Server](../../tutorials/12-protect-mcp-server.md)
+- [Protect MCP Server](../../tutorials/11-protect-mcp-server.md)

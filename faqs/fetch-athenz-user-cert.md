@@ -17,8 +17,8 @@ The goal of this tutorial is to fetch an Athenz user certificate for `user.idjag
 
 # Prerequisites
 
-- Complete the main tutorial through [ID-JAG](../tutorials/16-id-jag.md).
-- Complete [Make Keycloak HTTPS for ZTS User Certificates](./make-keycloak-https.md).
+1. Complete the main [ID-JAG The Hard Way tutorial](https://github.com/mlajkim/id-jag-the-hard-way/tree/main/tutorials).
+2. Configure [Keycloak HTTPS for ZTS user certificates](https://github.com/mlajkim/id-jag-the-hard-way/blob/main/faqs/make-keycloak-https.md).
 
 # Steps
 

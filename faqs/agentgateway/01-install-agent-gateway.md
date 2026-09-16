@@ -25,7 +25,7 @@ The goal of this FAQ is to install the agentgateway control plane and an agentga
 
 # Prerequisites
 
-- Complete the ID-JAG The Hard Way tutorial.
+1. Complete the main [ID-JAG The Hard Way tutorial](https://github.com/mlajkim/id-jag-the-hard-way/tree/main/tutorials).
 
 # Steps
 

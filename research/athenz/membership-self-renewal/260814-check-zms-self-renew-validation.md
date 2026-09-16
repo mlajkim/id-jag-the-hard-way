@@ -25,8 +25,8 @@ The goal of this document is to verify that Athenz ZMS rejects role and group se
 
 This tutorial requires the following to be completed:
 
-1. Complete the main [ID-JAG The Hard Way tutorial](../../../tutorials/16-id-jag.md), including the final ID-JAG step.
-1. Keep `./tools/keep-k8s-port-forward.sh` running in another terminal.
+1. Complete the main [ID-JAG The Hard Way tutorial](https://github.com/mlajkim/id-jag-the-hard-way/tree/main/tutorials).
+2. Keep `./tools/keep-k8s-port-forward.sh` running in another terminal.
 
 # Steps
 

@@ -1,6 +1,6 @@
 |                            Previous                            |        Current        |           Next           |
 |:--------------------------------------------------------------:|:---------------------:|:------------------------:|
-| [Trusted Identity Provider](./14-trusted-identity-provider.md) | **AI Client Gateway** | [ID-JAG](./16-id-jag.md) |
+| [Trusted Identity Provider](./13-trusted-identity-provider.md) | **AI Client Gateway** | [ID-JAG](./15-id-jag.md) |
 
 # AI Client Gateway
 
@@ -327,4 +327,4 @@ The sign-in succeeded, but Athenz rejected the delegation request. The gateway s
 
 In the next chapter, you will grant `human.idjag-learner.claude` permission to request an ID-JAG for the MCP and API scopes on the learner's behalf.
 
-Next: [ID-JAG](./16-id-jag.md)
+Next: [ID-JAG](./15-id-jag.md)
