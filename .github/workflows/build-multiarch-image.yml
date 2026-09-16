@@ -1,0 +1,205 @@
+name: Build a multi-platform image
+
+on:
+  workflow_call:
+    inputs:
+      image:
+        required: true
+        type: string
+      context:
+        required: true
+        type: string
+      node-checks:
+        default: ""
+        type: string
+      java-build:
+        default: ""
+        type: string
+      publish-pr:
+        default: true
+        type: boolean
+    secrets:
+      DEPLOY_GHCR_SECRET:
+        required: false
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: image-${{ inputs.image }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and test ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    env:
+      PUBLISH_IMAGE: ${{ github.event_name != 'pull_request' || (inputs.publish-pr && github.event.pull_request.head.repo.full_name == github.repository) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        if: inputs.node-checks != ''
+        with:
+          node-version: "22"
+
+      - name: Run Node.js checks
+        if: inputs.node-checks != ''
+        working-directory: ${{ inputs.context }}
+        env:
+          CHECK_COMMAND: ${{ inputs.node-checks }}
+        run: bash -e -o pipefail -c "$CHECK_COMMAND"
+
+      - uses: actions/setup-java@v4
+        if: inputs.java-build != ''
+        with:
+          java-version: "17"
+          distribution: temurin
+          cache: maven
+          cache-dependency-path: ${{ inputs.context }}/pom.xml
+
+      - name: Build Java artifacts
+        if: inputs.java-build != ''
+        working-directory: ${{ inputs.context }}
+        env:
+          BUILD_COMMAND: ${{ inputs.java-build }}
+        run: bash -e -o pipefail -c "$BUILD_COMMAND"
+
+      - name: Set image name
+        id: image
+        env:
+          COMPONENT: ${{ inputs.image }}
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/$COMPONENT" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ steps.image.outputs.name }}
+          tags: |
+            type=ref,event=pr,prefix=pr
+            type=sha
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+
+      - name: Log in to GHCR
+        if: env.PUBLISH_IMAGE == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.DEPLOY_GHCR_SECRET || secrets.GITHUB_TOKEN }}
+
+      # Publishing by digest leaves latest and PR tags untouched until both
+      # architectures pass the container checks below.
+      - name: Build image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ inputs.context }}
+          file: ${{ inputs.context }}/Dockerfile
+          platforms: linux/${{ matrix.arch }}
+          tags: ${{ env.PUBLISH_IMAGE == 'true' && steps.image.outputs.name || format('{0}:ci', steps.image.outputs.name) }}
+          labels: ${{ steps.meta.outputs.labels }}
+          outputs: ${{ env.PUBLISH_IMAGE == 'true' && format('type=image,name={0},push-by-digest=true,name-canonical=true,push=true', steps.image.outputs.name) || 'type=docker' }}
+          provenance: ${{ env.PUBLISH_IMAGE == 'true' }}
+          cache-from: type=gha,scope=${{ inputs.image }}-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=${{ inputs.image }}-${{ matrix.arch }}
+
+      - name: Check the built container
+        env:
+          COMPONENT: ${{ inputs.image }}
+          IMAGE_NAME: ${{ steps.image.outputs.name }}
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+          PLATFORM: linux/${{ matrix.arch }}
+        run: |
+          image="$IMAGE_NAME:ci"
+          if [[ "$PUBLISH_IMAGE" == true ]]; then
+            image="$IMAGE_NAME@$IMAGE_DIGEST"
+            docker pull --platform "$PLATFORM" "$image"
+          fi
+          bash .github/scripts/check-container.sh "$COMPONENT" "$image" "$PLATFORM"
+
+      - name: Record the tested digest
+        if: env.PUBLISH_IMAGE == 'true'
+        env:
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+          ARCH: ${{ matrix.arch }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/digests"
+          printf '%s\n' "$IMAGE_DIGEST" > "$RUNNER_TEMP/digests/$ARCH"
+
+      - uses: actions/upload-artifact@v4
+        if: env.PUBLISH_IMAGE == 'true'
+        with:
+          name: ${{ inputs.image }}-digests-${{ matrix.arch }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    name: Publish the combined image
+    needs: build
+    if: github.event_name != 'pull_request' || (inputs.publish-pr && github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ${{ inputs.image }}-digests-*
+          path: ${{ runner.temp }}/digests
+          merge-multiple: true
+
+      - name: Set image name
+        id: image
+        env:
+          COMPONENT: ${{ inputs.image }}
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/$COMPONENT" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.DEPLOY_GHCR_SECRET || secrets.GITHUB_TOKEN }}
+
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ steps.image.outputs.name }}
+          tags: |
+            type=ref,event=pr,prefix=pr
+            type=sha
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+
+      - name: Publish and verify both platforms
+        env:
+          IMAGE_NAME: ${{ steps.image.outputs.name }}
+          IMAGE_METADATA: ${{ steps.meta.outputs.json }}
+        run: |
+          sources=()
+          for arch in amd64 arm64; do
+            read -r digest < "$RUNNER_TEMP/digests/$arch"
+            [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]] || exit 1
+            sources+=("$IMAGE_NAME@$digest")
+          done
+          mapfile -t tags < <(jq -r '.tags[]' <<< "$IMAGE_METADATA")
+          (( ${#tags[@]} > 0 )) || exit 1
+          tag_args=()
+          for tag in "${tags[@]}"; do
+            tag_args+=(--tag "$tag")
+          done
+          docker buildx imagetools create "${tag_args[@]}" "${sources[@]}"
+          docker buildx imagetools inspect "${tags[0]}" --raw |
+            jq -e '[.manifests[].platform | select(.os == "linux") | .architecture] | unique | sort == ["amd64", "arm64"]'
