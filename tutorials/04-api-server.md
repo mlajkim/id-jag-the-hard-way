@@ -4,8 +4,7 @@
 
 # API Server
 
-In this tutorial, we will set up a simple API server that exposes a small HTTP API for storing and managing documents.
-We will first run the API server without authorization so that we can understand its basic behavior. Then, we will enable Access Token enforcement and confirm that unauthorized requests are rejected.
+In this tutorial, we will deploy a simple document API, check that it is running, and confirm that requests without an Access Token are rejected by following these steps:
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
@@ -13,13 +12,11 @@ We will first run the API server without authorization so that we can understand
 - [Deploy a simple API server to the kubernetes](#deploy-a-simple-api-server-to-the-kubernetes)
 - [Send a Request to the API Server](#send-a-request-to-the-api-server)
 - [Learn About the API](#learn-about-the-api)
-- [Protect the API Server](#protect-the-api-server)
+- [Verify Access Token Enforcement](#verify-access-token-enforcement)
 - [Learn what's happened](#learn-whats-happened)
 - [Learn what's next](#learn-whats-next)
 
 <!-- /TOC -->
-
-![04_arc_get_docs_from_api_server](./assets/04_arc_get_docs_from_api_server.png)
 
 ## Create a namespace `api` in kubernetes
 
@@ -35,7 +32,7 @@ kubectl create ns api
 
 ```sh
 kubectl create deploy api-server -n api \
-  --image=ghcr.io/mlajkim/api-server:latest
+  --image=ghcr.io/mlajkim/idthw-demo-api:latest
 ```
 
 
@@ -61,28 +58,15 @@ kubectl rollout status deploy/api-server -n api
 # deployment "api-server" successfully rolled out
 ```
 
-Send a request to list the documents.
+Check the public health endpoint. The image includes Node.js, so we can use its built-in `fetch`:
 
 ```sh
 kubectl exec deploy/api-server -n api \
-  -- curl -s http://localhost:8080/api/docs | jq
+  -- node -e 'fetch("http://localhost:8080/healthz").then(async r => console.log(await r.text()))' | jq
 ```
 
 ```sh
-# {
-#   "docs": [
-#     {
-#       "name": "first default doc",
-#       "id": 1,
-#       "content": "hello world"
-#     },
-#     {
-#       "name": "second default doc",
-#       "id": 2,
-#       "content": "how are you?"
-#     }
-#   ]
-# }
+# { "ok": true }
 ```
 
 ## Learn About the API
@@ -93,45 +77,31 @@ It does not use a database. Instead, documents are stored in memory. If you rest
 
 This makes the server easy to run, easy to reset, and useful for learning how authorization changes the behavior of an API.
 
-## Protect the API Server
-
-> [!NOTE]
-> At this point, you may see ERROR logs from the API server. You can ignore them for now.
+## Verify Access Token Enforcement
 
 In an enterprise environment, you usually do not want to expose an API server without authentication or authorization, even if the server is only reachable internally.
 
-The API server you cloned already supports Access Token enforcement. You can enable it by setting `AT_REQUIRED=true` as the following:
-
-```sh
-kubectl set env deploy/api-server AT_REQUIRED=true -n api
-```
-
-```sh
-# deployment.apps/api-server env updated
-```
-
-Now send the same request to the protected API server — this will intentionally return an error:
+The new API requires a valid Access Token and the appropriate scope for every document operation. Send a request to list documents without a token — this will intentionally return an error:
 
 ```sh
 kubectl exec deploy/api-server -n api \
-  -- curl -s http://localhost:8080/api/docs | jq
+  -- node -e 'fetch("http://localhost:8080/api/docs").then(async r => console.log(await r.text()))' | jq
 ```
 
 ```sh
 # {
-#   "error": "Unauthorized",
-#   "message": "Authorization header is missing or invalid Bearer token.",
-#   "status": 401
+#   "error": "missing_access_token",
+#   "message": "Pass an Athenz access token as Authorization: Bearer <token>."
 # }
 ```
 
-`Unauthorized` is expected.
+The `401 Unauthorized` response is expected.
 
-The API server is now protected, so requests without a valid Bearer Access Token are rejected.
+The API starts with token enforcement enabled. It does not need ZPU or downloaded policy files.
 
 ## Learn what's happened
 
-Unauthorized error is returned when you tried to fetch the data from the API Server, with `AT_REQUIRED=true` API Server:
+The document request is rejected because it has no Access Token:
 
 ![04_arc_get_docs_from_api_server_unauthorized](./assets/04_arc_get_docs_from_api_server_unauthorized.png)
 

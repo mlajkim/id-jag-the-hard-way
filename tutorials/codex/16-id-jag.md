@@ -89,47 +89,39 @@ kubectl logs -n human deployment/codex-idjag-learner-ai-client-gateway --tail=30
 # [Athenz AT] 🔑 Successfully fetched Athenz Access Token. Granted scope: ["docs-getter","mcp-accessor"]
 ```
 
-2. The MCP Authorization Proxy checked that the gateway's Access Token had `access` on `mcp`.
+2. MCP Runtime Proxy validates the token before forwarding a protected call. Its [verifier](../../components/mcp-runtime-proxy/src/auth.ts) accepts only `alg=RS256` and `typ=at+jwt`, verifies the signature against trusted ZTS signing keys, checks `exp` and any `nbf` restriction, requires audience `api`, and checks the `api:role.mcp-accessor` scope.
+
+Inspect the `auth-proxy` container, which runs MCP Runtime Proxy:
 
 ```sh
-kubectl logs -n api deployment/mcp -c auth-proxy --tail=20
+kubectl logs -n api deployment/mcp -c auth-proxy --tail=50
 ```
 
-```sh
-# [2026-07-06 21:30:34] [INFO] [MCP-Auth-Proxy] ✅ AUTHORIZED: 'access' on 'mcp' (Token: eyJraWQiOi...)
-# [2026-07-06 21:30:34] [INFO] [MCP-Auth-Proxy] ➡️ Forwarding to downstream MCP Server for API Server
-```
+Find an `access_token_verified` event. It is emitted only after all of those checks pass. Check its `audiences`, `scopes`, `keyId`, and `expiresInSeconds`, then match its `requestId` to a `request_completed` event with `upstreamStatus: 200`. Short scopes such as `mcp-accessor` are accepted only when `api` is the sole audience.
 
-3. The MCP server exchanged the incoming Access Token for an API-specific `docs-getter` Access Token.
+A public discovery request can also complete successfully, so `request_completed` alone does not confirm token validation. Reading the JWT's `alg` header alone does not verify its signature either.
+
+3. The existing MCP adapter still performs the downstream token exchange in this tutorial. It authenticates as `api.api-mcp` and exchanges the incoming token for an API-specific `docs-getter` Access Token before calling the API.
+
+<details>
+<summary>Confirm the adapter's token exchange</summary>
 
 ```sh
 kubectl logs -n api deployment/mcp -c mcp --tail=20
 ```
 
-```sh
-# [INFO] [Token Exchange] Initiating for scope: "api:role.docs-getter" using /app/certs/api-mcp.crt cert, token: eyJraWQiOiJhdGhl...
-# [INFO] [Token Exchange] ✅ Success! scope: ["api:role.docs-getter"] gotScope: ["docs-getter"] token: eyJraWQiOiJhdGhl...
-# 2026-07-07T06:30:34+09:00 [INFO] IP: 127.0.0.1 | POST /mcp HTTP/1.1 | Status: 200 | Time: 268.199 ms
-# Headers: -
-# Body: {
-#   method: 'tools/call',
-#   params: {
-#     name: 'get_k8s_docs',
-#     arguments: {}
-#   },
-#   jsonrpc: '2.0',
-#   id: 2
-# }
-```
+Look for a successful `[Token Exchange]` entry requesting `api:role.docs-getter` and granting `docs-getter`.
 
-4. The API server authorized the final token and returned the docs.
+</details>
+
+4. The API independently [validates the exchanged token](../../components/idthw-demo-api/src/auth.ts) using trusted ZTS signing keys, checks its type, lifetime, and audience, and requires `api:role.docs-getter` before returning the docs.
 
 ```sh
 kubectl logs -n api deployment/api-server --tail=20
 ```
 
 ```sh
-# [DEBUG] Access Granted: Action 'get' allowed on Resource 'docs' (Token: eyJraWQi...)
+# Look for event "request_completed", method "GET", status 200.
 ```
 
 At every hop, the Principle of Least Privilege was enforced — each component only held the minimum permissions it needed.

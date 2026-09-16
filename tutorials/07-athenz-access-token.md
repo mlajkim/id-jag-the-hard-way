@@ -1,6 +1,6 @@
 |             Previous             |         Current         |                        Next                        |
 |:--------------------------------:|:-----------------------:|:--------------------------------------------------:|
-| [ZPU Server](./06-zpu-server.md) | **Athenz Access Token** | [Granular Permission](./08-granular-permission.md) |
+| [Authorization Server](./05-authorization-server.md) | **Athenz Access Token** | [Granular Permission](./08-granular-permission.md) |
 
 # Athenz Access Token
 
@@ -8,8 +8,10 @@ In this tutorial, you will get the Access Token that the API server requests wit
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
+- [Create the API domain](#create-the-api-domain)
+- [Trust the ZTS signing-key endpoint](#trust-the-zts-signing-key-endpoint)
 - [Create Athenz Role under the API domain](#create-athenz-role-under-the-api-domain)
-- [Create Policies](#create-policies)
+- [Understand the required API scopes](#understand-the-required-api-scopes)
 - [Add Root User as a member](#add-root-user-as-a-member)
 - [Get Access Token as Root User](#get-access-token-as-root-user)
 - [Send request to the protected server](#send-request-to-the-protected-server)
@@ -18,11 +20,58 @@ In this tutorial, you will get the Access Token that the API server requests wit
 
 <!-- /TOC -->
 
+## Create the API domain
+
+Create the Athenz domain that represents the API:
+
+```sh
+./tools/athenz/create-tld.sh "api"
+```
+
+```sh
+#   ·  Creating TLD: api...
+#   ✔  TLD created: api
+```
+
+This domain is separate from the Kubernetes namespace `api` created in chapter 04.
+
+## Trust the ZTS signing-key endpoint
+
+The API verifies Access Tokens using ZTS's public signing keys. Mount the tutorial CA so Node.js can authenticate the HTTPS connection to ZTS:
+
+```sh
+kubectl -n api create configmap api-zts-ca \
+  --from-file=ca.crt=./athenz_dist/certs/ca.cert.pem
+
+kubectl patch deploy api-server -n api --patch "$(cat <<'EOF'
+spec:
+  template:
+    spec:
+      containers:
+        - name: idthw-demo-api
+          env:
+            - name: NODE_EXTRA_CA_CERTS
+              value: /var/run/athenz/ca.crt
+          volumeMounts:
+            - name: zts-ca
+              mountPath: /var/run/athenz
+              readOnly: true
+      volumes:
+        - name: zts-ca
+          configMap:
+            name: api-zts-ca
+EOF
+)"
+kubectl rollout status deploy/api-server -n api
+```
+
+The container is named `idthw-demo-api`, matching the image used in chapter 04. The Deployment and Service are still named `api-server`, so existing MCP connections and port forwarding keep the same address.
+
 ## Create Athenz Role under the API domain
 
-Athenz uses **Role-Based Access Control (RBAC)**. When a user or service is added to a role, they are granted the permissions associated with that role.
+Athenz uses **Role-Based Access Control (RBAC)**. ZTS checks role membership before issuing the requested role scope. The API checks that signed scope against the requested operation.
 
-Earlier, in our API server, we needed a way to check if a client has permission to perform a `get` (HTTP method) operation on the `api`'s resource `docs` (or `api:docs` in Athenz Grammar). Currently, there are no roles defined for this, so let's create them.
+Reading documents requires the `api:role.docs-getter` scope. Create that role first.
 
 > [!NOTE]
 > `create-role.sh` — PUTs an empty role definition to the ZMS API, creating a named role under a given domain. Run `cat ./tools/athenz/create-role.sh` to inspect.
@@ -43,39 +92,19 @@ This creates the role and opens the role page in the Athenz UI.
 
 ![07_create_api_domain_role](./assets/07_create_api_domain_role.png)
 
-## Create Policies
+## Understand the required API scopes
 
-The role we just created (`docs-getter`) is a container for members. The actual permissions are defined as **Policies** in Athenz and then attached to roles. Once attached, a member of that role inherits the defined permissions.
+The API validates the token's signature against trusted ZTS signing keys, its expiry, and audience `api`. Each operation requires an exact scope:
 
-> [!NOTE]
-> `add-policy.sh` — Creates an Athenz policy assertion granting a role a specific action on a resource, then PUTs it to the ZMS API. Run `cat ./tools/athenz/add-policy.sh` to inspect.
+| Operation | Required scope |
+|---|---|
+| `GET /api/docs` | `api:role.docs-getter` |
+| `POST /api/docs` | `api:role.docs-poster` |
+| `DELETE /api/docs/{doc_id}` | `api:role.docs-deleter` |
 
-The API server has its own logic to translate the client request to Athenz resource and action.
+The API accepts `scope` or `scp` claims and also accepts short role names, such as `docs-getter`, when `api` is the sole audience. A read token cannot create or delete documents.
 
-- HTTP Action `get` -> Athenz Action `get`
-- HTTP Resource `docs` -> Athenz Resource `docs`
-
-Therefore, we need to create a policy like this:
-
-```sh
-./tools/athenz/add-policy.sh "api" "docs-getter" "get" "docs"
-```
-
-```sh
-#   ·  Creating Policy: api:policy.docs-getter_get_docs...
-#   ✔  Policy created: api:policy.docs-getter_get_docs
-```
-
-The command above means, attach a policy `docs-get-policy` to the role `docs-getter` under the domain `api`. This policy grants the role `docs-getter` the permission to `get` the resource `docs` under the domain `api`, or `docs:api`. The `get` action on `docs:api` is equivalent to the `GET /docs` request to the API server.
-
-You can verify these policies and their assertions by navigating to the **Policies** tab under the `api` domain in the **Athenz UI**.
-
-```sh
-_athenz_ui_port=$(./tools/port.sh athenz-ui)
-./tools/open.sh "http://localhost:${_athenz_ui_port}/domain/api/role/docs-getter/policy"
-```
-
-![07_add_policy_to_role](./assets/07_add_policy_to_role.png)
+These mappings live in the API; it does not download or evaluate Athenz action/resource policies. ZTS still controls token issuance, and later chapters configure the policies needed for token exchange and ID-JAG. Removing role membership stops new grants after ZTS observes the change; an already-issued token can remain usable until it expires.
 
 ## Add Root User as a member
 

@@ -22,7 +22,9 @@ In this tutorial, we will secure MCP tool execution using an Authorization Proxy
 
 ## Run Authorization Proxy for API MCP
 
-Deploy the authorization proxy as a sidecar container in the `mcp` deployment. It allows protocol bootstrap and tool discovery without an access token, and verifies the Athenz Access Token before forwarding protected methods such as `tools/call` to the real MCP server:
+Deploy MCP Runtime Proxy as the `auth-proxy` sidecar. It validates the Access Token's signature, expiry, audience `api`, and `api:role.mcp-accessor` scope. The existing MCP adapter continues to exchange tokens before calling the API.
+
+Enable OpenAPI discovery for the current AI Client Gateway and Open WebUI. MCP bootstrap and tool discovery remain public; protected requests require the accessor scope.
 
 ```sh
 kubectl patch deploy mcp -n api --patch "$(cat <<'EOF'
@@ -31,81 +33,48 @@ spec:
     spec:
       containers:
         - name: auth-proxy
-          image: ghcr.io/mlajkim/mcp-authorization-proxy:latest
+          image: ghcr.io/mlajkim/mcp-runtime-proxy:latest
           imagePullPolicy: Always
           env:
-            - name: SERVER_PORT
+            - name: PORT
               value: "8082"
             - name: MCP_TARGET_URL
               value: "http://localhost:8081"
-            - name: MCP_RESOURCE
-              value: "mcp"
+            - name: ATHENZ_EXPECTED_AUDIENCE
+              value: "api"
+            - name: ATHENZ_REQUIRED_SCOPE
+              value: "api:role.mcp-accessor"
+            - name: ATHENZ_JWKS_CA_PATH
+              value: "/var/run/athenz/ca.crt"
+            - name: MCP_PUBLIC_OPENAPI_ENABLED
+              value: "true"
           ports:
             - containerPort: 8082
-EOF
-)"
-```
-
-```sh
-# deployment.apps/mcp patched
-```
-
-Attach the ZPU sidecar so the proxy can evaluate policies locally:
-
-```sh
-kubectl patch deploy mcp -n api --patch "$(cat <<'EOF'
-spec:
-  template:
-    spec:
-      containers:
-        - name: auth-proxy
           volumeMounts:
-            - name: api-server-policies
-              mountPath: /app/policies
-              readOnly: true
-        - name: zpu
-          image: ghcr.io/mlajkim/zpu:latest
-          imagePullPolicy: Always
-          env:
-            - name: ZPU_DOMAIN
-              value: "api"
-            - name: ZTS_URL
-              value: "https://athenz-zts-server.athenz:4443/zts/v1"
-            - name: ZPU_INTERVAL_SECONDS
-              value: "5"
-          volumeMounts:
-            - name: api-server-policies
-              mountPath: /policies
-            - name: api-zpu-cert
-              mountPath: /var/run/athenz/zpu
+            - name: zts-ca
+              mountPath: /var/run/athenz
               readOnly: true
       volumes:
-        - name: api-server-policies
-          emptyDir: {}
-        - name: api-zpu-cert
-          secret:
-            secretName: api-zpu-cert
-            defaultMode: 0400
+        - name: zts-ca
+          configMap:
+            name: api-zts-ca
 EOF
 )"
+kubectl rollout status deploy/mcp -n api
 ```
 
-```sh
-# deployment.apps/mcp patched
-```
+The `api-zts-ca` ConfigMap was created in chapter 07. The proxy needs only the CA and ZTS's public signing keys. No ZPU sidecar, policy volume, or proxy service certificate is required; Runtime Proxy's downstream token-file exchange stays disabled.
 
 ## Update the MCP Service to Point to the Proxy
 
-The `mcp` service currently routes traffic directly to the MCP container on port `8081`. We need to re-point it to the proxy on port `8082`:
+Keep the Service on port `8081`, and route its traffic through the proxy on port `8082`:
 
 ```sh
-kubectl delete svc mcp -n api
-kubectl expose deploy mcp -n api --port 8081 --target-port 8082 --name mcp
+kubectl patch svc mcp -n api --patch '{"spec":{"ports":[{"port":8081,"targetPort":8082}]}}'
 ```
 
 ```sh
-# service "mcp" deleted
-# service/mcp exposed
+# service/mcp patched
 ```
 
 ## Verify (Expected Failure)
@@ -125,9 +94,7 @@ Then ask:
 get docs from k8s doc server!
 ```
 
-![12_no_permission_to_access_mcp](./assets/12_no_permission_to_access_mcp.png)
-
-The client can still initialize and list the available tools. The tool call fails because the proxy requires `access` on the `api:mcp` resource for protected methods, and we have not created that policy yet.
+The client can still initialize and list the available tools. The tool call fails because protected requests require `api:role.mcp-accessor`, while the current token only grants `docs-getter`.
 
 You can also see from the log of the `auth-proxy` container that the request was rejected:
 
@@ -136,23 +103,20 @@ kubectl logs deploy/mcp -n api -c auth-proxy
 ```
 
 ```sh
-# [2026-06-21 01:38:33] [WARN] [MCP-Auth-Proxy] REJECTED: Policy denied access. (Action: 'access', Resource: 'mcp', Token: eyJraWQiOi...)
+# Look for event "access_denied", code "insufficient_scope", status 403.
 ```
 
 ## Fix Insufficient Permission
 
-Create the `mcp-accessor` role and attach the required policy:
+Create the `mcp-accessor` role. The proxy maps this scope to MCP access directly:
 
 ```sh
 ./tools/athenz/create-role.sh "api" "mcp-accessor"
-./tools/athenz/add-policy.sh "api" "mcp-accessor" "access" "mcp"
 ```
 
 ```sh
 #   ·  Creating Role: api:role.mcp-accessor...
 #   ✔  Role created: api:role.mcp-accessor
-#   ·  Creating Policy: api:policy.mcp-accessor_access_mcp...
-#   ✔  Policy created: api:policy.mcp-accessor_access_mcp
 ```
 
 Add `human.idjag-learner` as a member:
@@ -236,13 +200,12 @@ kubectl logs deploy/mcp -n api -c auth-proxy
 ```
 
 ```sh
-# AUTHORIZED: 'access' on 'mcp' (Token: eyJraWQi...)
-# Forwarding to downstream MCP Server for API Server
+# Look for "access_token_verified" followed by "request_completed".
 ```
 
 ## Review Summary of Changes
 
-We deployed the Authorization Proxy in front of the MCP server. Any client can initialize and list tools without an Athenz access role. Protected methods such as `tools/call` reach the MCP server only when the caller's Access Token carries the `api:role.mcp-accessor` scope.
+We deployed MCP Runtime Proxy in front of the existing MCP adapter, using signed token scopes instead of downloaded policies. Any client can initialize and list tools without an Athenz access role. Protected methods such as `tools/call` reach the MCP server only when the caller's Access Token carries the `api:role.mcp-accessor` scope.
 
 ## What's next?
 

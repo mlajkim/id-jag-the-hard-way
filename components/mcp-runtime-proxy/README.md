@@ -39,6 +39,7 @@ For new Hub-managed servers, Runtime Proxy also manages the selected Athenz serv
 | `MCP_TARGET_URL` | `http://127.0.0.1:8080` | Base URL of the MCP container in the same pod |
 | `MCP_READINESS_PATH` | `/mcp` | MCP endpoint used by the readiness probe |
 | `MCP_READINESS_TIMEOUT_MS` | `4000` | Total timeout for the MCP readiness lifecycle |
+| `MCP_PUBLIC_OPENAPI_ENABLED` | `false` | Allow public `GET /openapi.json` and CORS preflight for the tutorial adapter; keep MCP discovery public even with an old token |
 | `ATHENZ_JWKS_URL` | `https://athenz-zts-server.athenz:4443/zts/v1/oauth2/keys?rfc=true` | ZTS signing-key endpoint |
 | `ATHENZ_JWKS_CA_PATH` | `/var/run/athenz/ca.crt` | CA used to authenticate the HTTPS JWKS endpoint |
 | `ATHENZ_JWKS_CACHE_TTL_SECONDS` | `300` | In-memory JWKS cache lifetime |
@@ -69,6 +70,8 @@ For new Hub-managed servers, Runtime Proxy also manages the selected Athenz serv
 Hub-managed deployments set the audience to `mcp-hub.mcps.<project>`, require `mcp-hub.mcps.<project>:role.accessor`, and mount the Athenz CA from the project-local `mcp-runtime-proxy-athenz-ca` ConfigMap. MCP Hub idempotently refreshes that ConfigMap from its configured Athenz CA when a Hub-managed server is created or updated.
 
 The incoming path and query string are appended to `MCP_TARGET_URL`. For example, `/mcp` is forwarded to `http://127.0.0.1:8080/mcp` with request and response streaming preserved.
+
+The core tutorial uses the existing AI Client Gateway and MCP adapter with `MCP_PUBLIC_OPENAPI_ENABLED=true`. Tool routes still require the accessor scope. Public MCP methods are recognized only on the configured MCP path (`MCP_READINESS_PATH`, default `/mcp`). The adapter performs downstream token exchange, so `ATHENZ_TOKEN_FILE_EXCHANGE_ENABLED` remains `false`; Runtime Proxy needs no service identity or token-file volume in this flow.
 
 `GET /healthz` is a process liveness check. `GET /readyz` performs an MCP-standard lifecycle against the colocated server: `initialize`, `notifications/initialized`, `ping`, and `tools/list`, followed by best-effort session cleanup. It returns `503` until that lifecycle succeeds, so Kubernetes readiness reflects the MCP protocol rather than only the proxy process.
 

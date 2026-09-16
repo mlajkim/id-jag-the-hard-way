@@ -43,7 +43,7 @@ export function createRuntimeProxyServer(
   accessTokenVerifier: AthenzAccessTokenVerifier,
   logger: RuntimeProxyLogger = runtimeProxyLogger,
   tokenPublisher?: ToolAccessTokenPublisher,
-  readiness: RuntimeProxyReadinessOptions = {},
+  readiness: RuntimeProxyOptions = {},
 ) {
   if (!(["http:", "https:"] as string[]).includes(target.protocol)) {
     throw new Error("MCP_TARGET_URL must use http or https")
@@ -66,7 +66,7 @@ async function handleRequest(
   accessTokenVerifier: AthenzAccessTokenVerifier,
   logger: RuntimeProxyLogger,
   tokenPublisher?: ToolAccessTokenPublisher,
-  readiness: RuntimeProxyReadinessOptions = {},
+  readiness: RuntimeProxyOptions = {},
 ) {
   const requestUrl = new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`)
   if (requestUrl.pathname === "/healthz") {
@@ -100,7 +100,7 @@ async function handleRequest(
 
   let publication: ToolAccessTokenPublication | undefined
   try {
-    const authorization = await authorizeRequest(request, accessTokenVerifier)
+    const authorization = await authorizeRequest(request, accessTokenVerifier, readiness)
     if (authorization.accessTokenVerified) {
       logger.info("access_token_verified", {
         ...requestFields,
@@ -216,7 +216,8 @@ async function handleRequest(
   }
 }
 
-export type RuntimeProxyReadinessOptions = {
+export type RuntimeProxyOptions = {
+  publicOpenApi?: boolean
   path?: string
   timeoutMs?: number
 }
@@ -226,7 +227,7 @@ async function probeMcpReadiness(
   {
     path = DEFAULT_MCP_READINESS_PATH,
     timeoutMs = DEFAULT_MCP_READINESS_TIMEOUT_MS,
-  }: RuntimeProxyReadinessOptions,
+  }: RuntimeProxyOptions,
 ) {
   if (!path.startsWith("/") || path.startsWith("//")) {
     throw new Error("MCP readiness path must start with one slash")
@@ -374,17 +375,30 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 async function authorizeRequest(
   request: IncomingMessage,
   accessTokenVerifier: AthenzAccessTokenVerifier,
+  options: RuntimeProxyOptions,
 ): Promise<AuthorizedRequest> {
-  const authorization = request.headers.authorization
-  if (authorization) {
-    const verification = await accessTokenVerifier.verify(authorization)
-    return { accessTokenVerified: true, verification }
+  const path = new URL(request.url ?? "/", "http://localhost").pathname
+  if (options.publicOpenApi && (
+    (request.method === "GET" && path === "/openapi.json") || request.method === "OPTIONS"
+  )) {
+    return { accessTokenVerified: false, publicMethod: request.method === "OPTIONS" ? "preflight" : "openapi" }
   }
 
-  if (request.method === "POST") {
-    const body = await readRequestBody(request)
-    const publicMethod = publicMcpMethod(body)
-    if (publicMethod) return { accessTokenVerified: false, bufferedBody: body, publicMethod }
+  const authorization = request.headers.authorization
+  // The tutorial adapter keeps discovery public even when clients send an old token.
+  // Only interpret public MCP messages on the MCP path, never on OpenAPI tool routes.
+  let bufferedBody: Buffer | undefined
+  const mcpPath = options.path ?? DEFAULT_MCP_READINESS_PATH
+  if (request.method === "POST" && (!authorization || options.publicOpenApi)
+    && (path === mcpPath || path === `${mcpPath}/`)) {
+    bufferedBody = await readRequestBody(request)
+    const publicMethod = publicMcpMethod(bufferedBody)
+    if (publicMethod) return { accessTokenVerified: false, bufferedBody, publicMethod }
+  }
+
+  if (authorization) {
+    const verification = await accessTokenVerifier.verify(authorization)
+    return { accessTokenVerified: true, verification, bufferedBody }
   }
 
   await accessTokenVerifier.verify(undefined)
