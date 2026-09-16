@@ -53,6 +53,27 @@ test("accepts a fully-qualified managed scope in a multi-audience token", async 
   })}`)
 })
 
+test("accepts the tutorial's two-domain scopes only with the MCP audience", async () => {
+  const verifier = createAthenzAccessTokenVerifier({
+    expectedAudience: "mcp",
+    requiredScope: "mcp:role.mcp-accessor",
+    now: () => NOW,
+    resolveSigningKey: async () => signingKeys.publicKey,
+  })
+  const claims = {
+    aud: "mcp",
+    exp: NOW / 1000 + 300,
+    scp: ["mcp-accessor", "api:role.docs-getter"],
+  }
+  await verifier.verify(`Bearer ${accessToken(claims)}`)
+  await assertAccessError(() => verifier.verify(`Bearer ${accessToken({
+    ...claims, aud: "api", scp: ["mcp:role.mcp-accessor", "docs-getter"],
+  })}`), 401, "invalid_access_token")
+  await assertAccessError(() => verifier.verify(`Bearer ${accessToken({
+    ...claims, scp: ["api:role.docs-getter"],
+  })}`), 403, "insufficient_scope")
+})
+
 test("rejects missing, expired, incorrectly signed, and wrong-audience tokens", async () => {
   const verifier = verifierForTest()
   const otherKeys = generateKeyPairSync("rsa", { modulusLength: 2048 })

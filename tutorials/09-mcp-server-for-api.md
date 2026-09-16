@@ -19,26 +19,27 @@ In this tutorial, we will set up MCP Server for API so that our AI client agent 
 
 ## Create Service Cert for MCP Server
 
-To run the MCP Server, just like we have given service identity for human user `human.idjag-learner`, we also need to give service identity for the MCP server. Because the MCP server is part of the API server, we will create service `api-mcp` under the TLD `api`.
+To run the MCP Server, just like we have given service identity for human user `human.idjag-learner`, we also need to give service identity for the MCP server. Create the service `idthw-api-mcp` under its own Athenz TLD, `mcp`. Its principal is `mcp.idthw-api-mcp`; the API keeps the `api` domain. Athenz domains define authorization boundaries independently of Kubernetes namespaces, so both deployments can remain in the `api` namespace.
 
 Run the following:
 
 ```sh
+./tools/athenz/create-tld.sh "mcp"
 ./tools/athenz/create-private-key.sh "./keys/api-mcp"
-./tools/athenz/create-service.sh "api" "api-mcp" "./keys/api-mcp.public.key"
-./tools/athenz/enable-cert-provider.sh "api" "api-mcp"
-./tools/athenz/fetch-cert.sh "api" "api-mcp" "./keys/api-mcp.key" "v1"
+./tools/athenz/create-service.sh "mcp" "idthw-api-mcp" "./keys/api-mcp.public.key"
+./tools/athenz/enable-cert-provider.sh "mcp" "idthw-api-mcp"
+./tools/athenz/fetch-cert.sh "mcp" "idthw-api-mcp" "./keys/api-mcp.key" "v1"
 ```
 
 ```sh
 #   ·  Generating RSA key pair for: ./keys/api-mcp...
 #   ✔  Keys generated: ./keys/api-mcp.key, ./keys/api-mcp.public.key
-#   ·  Registering Service: api.api-mcp...
-#   ✔  Service registered: api.api-mcp
-#   ·  Enabling ZTS Certificate Provider for api.api-mcp...
+#   ·  Registering Service: mcp.idthw-api-mcp...
+#   ✔  Service registered: mcp.idthw-api-mcp
+#   ·  Enabling ZTS Certificate Provider for mcp.idthw-api-mcp...
 # [Template(s) successfully applied to domain]
-#   ✔  ZTS Certificate Provider enabled for api.api-mcp
-#   ·  Fetching X.509 Certificate for api.api-mcp...
+#   ✔  ZTS Certificate Provider enabled for mcp.idthw-api-mcp
+#   ·  Fetching X.509 Certificate for mcp.idthw-api-mcp...
 #   ✔  Certificate saved to: ./keys/api-mcp.crt
 ```
 
@@ -115,6 +116,8 @@ spec:
               value: "http://api-server.api:8080"
             - name: PUBLIC_BASE_URL
               value: "http://mcp.api:8081"
+            - name: ACCESS_MCP_REQUIRED_SCOPE
+              value: "mcp:role.mcp-accessor"
             - name: MCP_CERT_DIR
               value: "/app/certs"
             - name: ATHENZ_CERT_PATH
@@ -164,9 +167,12 @@ kubectl logs deploy/mcp -n api
 
 ## What's done?
 
-We have created a running MCP Server for API with service identity `api.api-mcp` highlighted in red below.
+We have created a running MCP Server for API with service identity `mcp.idthw-api-mcp`. Its OpenAPI metadata advertises `mcp:role.mcp-accessor` together with the `api` role required by each tool.
 
-![09_arch_mcp_server_for_api](./assets/09_arch_mcp_server_for_api.png)
+```mermaid
+flowchart LR
+    MCP["MCP domain: mcp<br/>Service: mcp.idthw-api-mcp"] -->|Exchanged access token| API["API domain: api<br/>Scope: api:role.docs-getter"]
+```
 
 ## What's next?
 

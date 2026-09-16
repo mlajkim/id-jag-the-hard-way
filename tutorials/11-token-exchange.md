@@ -52,19 +52,21 @@ In Athenz, you must explicitly define both the source and the target of the exch
 > [!NOTE]
 > The MCP server does not need direct access to the target resource. It only needs permission to perform the exchange itself.
 
-Add the `api.api-mcp` service principal as a member of both roles:
+Add the `mcp.idthw-api-mcp` service principal as a member of both roles:
 
 ```sh
-./tools/athenz/add-role-member.sh "api" "to-api-exchanger" "api.api-mcp"
-./tools/athenz/add-role-member.sh "api" "docs-getter-exchanger" "api.api-mcp"
+./tools/athenz/add-role-member.sh "api" "to-api-exchanger" "mcp.idthw-api-mcp"
+./tools/athenz/add-role-member.sh "api" "docs-getter-exchanger" "mcp.idthw-api-mcp"
 ```
 
 ```sh
-#   ·  Adding Member api.api-mcp to Role: api:role.to-api-exchanger...
-#   ✔  api.api-mcp  →  api:role.to-api-exchanger
-#   ·  Adding Member api.api-mcp to Role: api:role.docs-getter-exchanger...
-#   ✔  api.api-mcp  →  api:role.docs-getter-exchanger
+#   ·  Adding Member mcp.idthw-api-mcp to Role: api:role.to-api-exchanger...
+#   ✔  mcp.idthw-api-mcp  →  api:role.to-api-exchanger
+#   ·  Adding Member mcp.idthw-api-mcp to Role: api:role.docs-getter-exchanger...
+#   ✔  mcp.idthw-api-mcp  →  api:role.docs-getter-exchanger
 ```
+
+The incoming token still has audience `api` at this stage. Chapter 12 introduces the MCP audience and adds permission to exchange from `mcp` to `api`.
 
 ## Refresh the MCP Token
 
@@ -126,7 +128,7 @@ You just got the docs list through Claude Code.
 
 ## What's happened?
 
-By creating the `to-api-exchanger` and `docs-getter-exchanger` roles, the MCP server (`api.api-mcp`) can now exchange the incoming `api` Access Token for a narrower-scoped token before calling the API server.
+By creating the `to-api-exchanger` and `docs-getter-exchanger` roles, the MCP server (`mcp.idthw-api-mcp`) can now exchange the incoming `api` Access Token for a narrower-scoped token before calling the API server.
 
 Our API server is so far fully protected by Athenz Access Tokens. However, the MCP server itself has no authentication layer - anyone who can reach it can use it. In the next tutorial, we will deploy an Authorization Proxy in front of the MCP server.
 
