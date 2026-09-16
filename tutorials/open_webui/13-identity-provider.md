@@ -4,39 +4,39 @@
 
 # Identity Provider — Open WebUI
 
-In this tutorial, we will configure [Keycloak](https://www.keycloak.org/) as an Identity Provider (IdP) for our AI Client Agent, enabling users to sign in with non-admin (standard) accounts.
+Configure [Keycloak](https://www.keycloak.org/) as the identity provider for Open WebUI with the following steps. You will create a learner account and sign in to Open WebUI through Keycloak.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
 - [Deploy Keycloak in K8s](#deploy-keycloak-in-k8s)
-- [Open Keycloak on Browser](#open-keycloak-on-browser)
-- [Setup Client](#setup-client)
-- [Setup User](#setup-user)
-- [Setup id_token expiration date](#setup-id_token-expiration-date)
+- [Open Keycloak in Your Browser](#open-keycloak-in-your-browser)
+- [Register the Keycloak Client](#register-the-keycloak-client)
+- [Create the Learner Account](#create-the-learner-account)
+- [Configure the Token Lifespan](#configure-the-token-lifespan)
 - [Add Keycloak Settings to Open WebUI](#add-keycloak-settings-to-open-webui)
 - [Sign in as `idjag-learner`](#sign-in-as-idjag-learner)
-- [Accept the account](#accept-the-account)
+- [Approve the Learner Account](#approve-the-learner-account)
 - [Return to the `idjag-learner` Browser](#return-to-the-idjag-learner-browser)
-- [What's done?](#whats-done)
-- [What's next?](#whats-next)
+- [Review the Result](#review-the-result)
+- [Next Steps](#next-steps)
 
 <!-- /TOC -->
 
 ## Deploy Keycloak in K8s
 
-First of all, Create a namespace for Keycloak:
+Create the Keycloak namespace:
 
 ```sh
 kubectl create ns idp
 ```
 
-Then deploy the keycloak:
+Deploy Keycloak:
 
 ```sh
 kubectl create deployment keycloak --image=quay.io/keycloak/keycloak:latest -n idp
 ```
 
-Then, make sure that the keycloak has the correct ENV so that you can login as admin:
+Set the administrator credentials and start Keycloak in development mode:
 
 ```sh
 _keycloak_admin=$(./tools/config.sh keycloak admin)
@@ -60,9 +60,7 @@ EOF
 )"
 ```
 
-In kubernetes, the data may be ephemeral so we need some kind of data storage to contain the IdP so that even if you restart your PC, and once you rerun the server your data is preserved.
-
-First, create a very simple `pvc`:
+Create a PersistentVolumeClaim (PVC) to preserve Keycloak data across pod restarts:
 
 ```sh
 cat <<EOF | kubectl apply -f -
@@ -105,7 +103,9 @@ And finally expose the deployment:
 kubectl expose deployment keycloak --port=8080 -n idp
 ```
 
-## Open Keycloak on Browser
+<a id="open-keycloak-on-browser"></a>
+
+## Open Keycloak in Your Browser
 
 > [!NOTE]
 > If you are using `kind` and facing `ImagePullBackOff`, load the image manually:
@@ -145,7 +145,9 @@ _keycloak_port=$(./tools/port.sh keycloak)
 
 ![13_keycloak_running](./assets/13_keycloak_running.png)
 
-## Setup Client
+<a id="setup-client"></a>
+
+## Register the Keycloak Client
 
 In Keycloak, a `Client` represents an application that requests authentication on behalf of a user. Since the service identity name of the AI client will be `ai.open-webui`, we will use that as the client name.
 
@@ -166,7 +168,9 @@ You should see a confirmation screen similar to this:
 
 ![13_keycloak_client_added](./assets/13_keycloak_client_added.png)
 
-## Setup User
+<a id="setup-user"></a>
+
+## Create the Learner Account
 
 Let's create a human user account to represent you:
 
@@ -178,10 +182,12 @@ OPEN_UI=true ./tools/keycloak/create-user.sh \
   Learner
 ```
 
-## Setup id_token expiration date
+<a id="setup-id_token-expiration-date"></a>
+
+## Configure the Token Lifespan
 
 > [!TIP]
-> For this tutorial, it is okay to set the `id_token` lifespan to `4 hours`. In production, you must consider the appropriate lifespan based on your security requirements.
+> Set the realm token lifespan to four hours for this walkthrough. The helper updates Keycloak's `accessTokenLifespan` setting. Choose a lifespan appropriate to your security requirements outside this learning environment.
 
 ```sh
 ./tools/keycloak/set-token-lifespan.sh 14400
@@ -260,7 +266,7 @@ Wait for the Open WebUI pod to be ready after the patch:
 kubectl rollout status deploy/open-webui -n ai
 ```
 
-In this tutorial, when you login to Open WebUI with the non-admin account (i.e. `idjag-learner`), you will open a different browser or incognito mode.
+Open a separate browser profile or private window for `idjag-learner` so the learner and administrator sessions stay separate.
 
 ```sh
 _open_webui_port=$(./tools/port.sh open-webui)
@@ -271,16 +277,16 @@ You will see a new login panel with a **Continue with Keycloak** button:
 
 ![13_continue_with_keycloak_appeared](./assets/13_continue_with_keycloak_appeared.png)
 
-Click it, and you will be prompted to log in. Use the credentials we created.
-
-Then you will be prompted to add member
+Click **Continue with Keycloak** and sign in with the learner account:
 
 - `Username`: `idjag-learner`
 - `Password`: `password`
 
 ![13_login_successful_as_idjag_learner](./assets/13_login_successful_as_idjag_learner.png)
 
-## Accept the account
+<a id="accept-the-account"></a>
+
+## Approve the Learner Account
 
 Return to the browser where you are logged in as the `admin` user.
 
@@ -310,14 +316,18 @@ You should now be successfully logged into the interface.
 
 ![13_hello_idjag_leanrer](./assets/13_hello_idjag_leanrer.png)
 
-## What's done?
+<a id="whats-done"></a>
 
-We have installed Keycloak (Red dotted box) locally and configured it as an identity provider for our AI Client Agent. This way, non-admin user can sign in with his/her own account:
+## Review the Result
+
+Keycloak now authenticates the learner account for Open WebUI:
 
 ![13_arc_signed_into_ui_with_keycloak](./assets/13_arc_signed_into_ui_with_keycloak.png)
 
-## What's next?
+<a id="whats-next"></a>
 
-We have let our AI Client agent to trust Keycloak as an IdP. But we have not yet configured Authorization Server to trust Keycloak as IdP. In the next tutorial, we will set up our Authorization Server to trust Keycloak.
+## Next Steps
+
+Open WebUI now trusts Keycloak for sign-in. In the next chapter, you will configure Athenz to validate Keycloak ID tokens for ID-JAG exchange.
 
 Next: [Trusted Identity Provider](./14-trusted-identity-provider.md)

@@ -4,19 +4,21 @@
 
 # Working Directory
 
-In this tutorial, we will set up a working directory for the tutorial with the following steps:
+Set up the working directory for all tutorial commands with the following steps:
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
-- [Create directory](#create-directory)
-- [Change directory](#change-directory)
-- [Stay on the directory `~/id_jag_the_hard_way_workspace`](#stay-on-the-directory-id_jag_the_hard_way_workspace)
+- [Clone the Repository](#clone-the-repository)
+- [Enter the Working Directory](#enter-the-working-directory)
+- [Run Commands from the Repository Root](#run-commands-from-the-repository-root)
 
 <!-- /TOC -->
 
-## Create directory
+<a id="create-directory"></a>
 
-We will create a directory `~/id_jag_the_hard_way_workspace` by cloning the project:
+## Clone the Repository
+
+Clone the project into `~/id_jag_the_hard_way_workspace` using one of the following methods:
 
 If you are using `gh` for GitHub:
 
@@ -36,20 +38,24 @@ If you are using HTTPS for git:
 git clone https://github.com/mlajkim/id-jag-the-hard-way.git ~/id_jag_the_hard_way_workspace
 ```
 
-## Change directory
+<a id="change-directory"></a>
+
+## Enter the Working Directory
 
 ```sh
 cd ~/id_jag_the_hard_way_workspace
 ```
 
-Sync submodule codes:
+Download the Git submodules:
 
 ```sh
 git submodule update --init --recursive
 ```
 
-## Stay on the directory `~/id_jag_the_hard_way_workspace`
+<a id="stay-on-the-directory-id_jag_the_hard_way_workspace"></a>
 
-Every script used in this tutorial will assume that it is being run from the `id_jag_the_hard_way_workspace` directory. If you need to run any script, you will need to change into this directory first. The name & directory can be customized to your needs, as long as you come back to this directory to run any scripts referenced by any tutorial.
+## Run Commands from the Repository Root
+
+Run tutorial commands from the repository root, including when you open another terminal. You can choose a different directory name or location when cloning, but relative paths in the commands assume the repository root.
 
 Next: [Prerequisites](./02-prerequisites.md)

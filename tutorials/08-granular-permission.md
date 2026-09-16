@@ -1,10 +1,10 @@
 |                      Previous                      |         Current         |                       Next                       |
 |:--------------------------------------------------:|:-----------------------:|:------------------------------------------------:|
-| [Athenz Access Token](./07-athenz-access-token.md) | **Granular Permission** | [MCP Server for API](./09-mcp-server-for-api.md) |
+| [Athenz access token](./07-athenz-access-token.md) | **Granular Permission** | [MCP Server for API](./09-mcp-server-for-api.md) |
 
 # Granular Permission
 
-In the previous tutorial, you used the admin certificate to mint an Access Token. In this tutorial, you will replace that admin credential with a dedicated learner identity and prove that it can only access what `api:role.docs-getter` allows with the following steps:
+In the previous tutorial, you used the admin certificate to mint an access token. In this tutorial, you will replace that admin credential with a dedicated learner identity and verify access with the `api:role.docs-getter` scope with the following steps:
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
@@ -13,7 +13,7 @@ In the previous tutorial, you used the admin certificate to mint an Access Token
 - [Troubleshoot missing role membership](#troubleshoot-missing-role-membership)
 - [Grant the learner access to `docs-getter`](#grant-the-learner-access-to-docs-getter)
 - [Fetch the Access Token again](#fetch-the-access-token-again)
-- [Send request to the protected server](#send-request-to-the-protected-server)
+- [Call the Protected API](#call-the-protected-api)
 - [Review Architecture](#review-architecture)
 
 <!-- /TOC -->
@@ -26,7 +26,7 @@ Admin credentials can create domains, register services, and modify policies. Us
 
 Instead, you will create a dedicated identity, `human.idjag-learner`, to represent you as the learner. ZTS checks the principal's role membership when issuing a token. The API checks the issued scopes for each operation.
 
-The token you fetch is also scoped to `api:role.docs-getter`. Even if the token is leaked, it can only call endpoints that accept that scope.
+The token has audience `api` and scope `api:role.docs-getter`. This API accepts it for reading documents, but rejects it for creating or deleting them. Anyone holding the token may be able to use that read access until it expires.
 
 > [!NOTE]
 > Athenz also supports UserCerts for real human users. This tutorial uses a service identity to keep the local setup focused on authorization flow rather than user certificate enrollment.
@@ -173,7 +173,9 @@ _my_access_token=$(./tools/athenz/fetch-access-token.sh \
 # }
 ```
 
-## Send request to the protected server
+<a id="send-request-to-the-protected-server"></a>
+
+## Call the Protected API
 
 Finally, send a request to the protected API server with the learner token:
 
@@ -203,7 +205,7 @@ curl -sS -k -H "Authorization: Bearer $_my_access_token" http://localhost:14443/
 
 ## Review Architecture
 
-You successfully fetched an X.509 certificate for the non-admin service identity (`human.idjag-learner`) and exchanged it for an Athenz Access Token scoped specifically to `api:role.docs-getter`:
+You successfully fetched an X.509 certificate for the non-admin service identity (`human.idjag-learner`) and used it to authenticate a request for an Athenz access token scoped specifically to `api:role.docs-getter`:
 
 ![08_arc_fetch_at_with_non_admin_certificiate](./assets/08_arc_fetch_at_with_non_admin_certificiate.png)
 

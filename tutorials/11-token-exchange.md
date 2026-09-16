@@ -4,22 +4,24 @@
 
 # Token Exchange
 
-In this tutorial, we will fix the "Principal not authorized for token exchange" error from the previous step. The MCP server received your Access Token but did not have permission to exchange it for a new one on your behalf.
+In this tutorial, we will fix the "Principal not authorized for token exchange" error from the previous step. The MCP server received your access token but did not have permission to exchange it for a new one on your behalf.
 
-By implementing [OAuth 2.0 Token Exchange (RFC 8693)](https://www.rfc-editor.org/rfc/rfc8693.html), we will grant the MCP server permission to exchange the user's Access Token and act on their behalf to call the API server.
+Configure permissions for [OAuth 2.0 Token Exchange (RFC 8693)](https://www.rfc-editor.org/rfc/rfc8693.html) and retry the request with the following steps:
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
-- [Allow MCP Server to Exchange the Given Access Token](#allow-mcp-server-to-exchange-the-given-access-token)
-- [Refresh the MCP Token](#refresh-the-mcp-token)
+- [Authorize the MCP Token Exchange](#authorize-the-mcp-token-exchange)
+- [Refresh the Learner Token](#refresh-the-learner-token)
 - [Verify](#verify)
-- [What's happened?](#whats-happened)
+- [Understand the Result](#understand-the-result)
 
 <!-- /TOC -->
 
-## Allow MCP Server to Exchange the Given Access Token
+<a id="allow-mcp-server-to-exchange-the-given-access-token"></a>
 
-Even if the original requester has `get` access to the `api:docs` resource, that does not automatically mean anyone can exchange the Access Token on their behalf. We need to create dedicated roles that explicitly allow token exchange.
+## Authorize the MCP Token Exchange
+
+The learner can request the `api:role.docs-getter` scope, but that does not authorize the MCP server to exchange the resulting token. Create separate roles that grant the MCP service permission to perform the exchange.
 
 Create the exchange roles:
 
@@ -68,9 +70,11 @@ Add the `mcp.idthw-api-mcp` service principal as a member of both roles:
 
 The incoming token still has audience `api` at this stage. Chapter 12 introduces the MCP audience and adds permission to exchange from `mcp` to `api`.
 
-## Refresh the MCP Token
+<a id="refresh-the-mcp-token"></a>
 
-The role and policy changed, so fetch a fresh Access Token scoped to the real API docs permission:
+## Refresh the Learner Token
+
+Fetch a fresh token with `api:role.docs-getter` so the next request does not use an expired token:
 
 ```sh
 _scope="api:role.docs-getter"
@@ -126,10 +130,12 @@ You just got the docs list through Claude Code.
 
 ![11_claude_code_success_to_get_docs](./assets/11_claude_code_success_to_get_docs.png)
 
-## What's happened?
+<a id="whats-happened"></a>
 
-By creating the `to-api-exchanger` and `docs-getter-exchanger` roles, the MCP server (`mcp.idthw-api-mcp`) can now exchange the incoming `api` Access Token for a narrower-scoped token before calling the API server.
+## Understand the Result
 
-Our API server is so far fully protected by Athenz Access Tokens. However, the MCP server itself has no authentication layer - anyone who can reach it can use it. In the next tutorial, we will deploy an Authorization Proxy in front of the MCP server.
+The MCP server (`mcp.idthw-api-mcp`) can now exchange the incoming token and call the API on the learner's behalf. Both the incoming and exchanged tokens have audience `api` and scope `docs-getter`. The next chapter introduces separate MCP and API audiences.
+
+The API validates access tokens, but the MCP endpoint does not yet validate incoming tokens before processing requests. API calls still depend on a successful token exchange. In the next chapter, you will add MCP Runtime Proxy to validate tokens before allowing protected MCP requests.
 
 Next: [Protect MCP Server](./12-protect-mcp-server.md)

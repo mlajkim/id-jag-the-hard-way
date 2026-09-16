@@ -4,26 +4,28 @@
 
 # Protect MCP Server - Codex
 
-In this tutorial, we will secure MCP tool execution using an Authorization Proxy - exactly as we protected the API server with Athenz in earlier tutorials. MCP protocol bootstrap and `tools/list` remain public so clients can discover the server and its available tools before requesting access.
+Protect MCP tool execution with MCP Runtime Proxy using the following steps. The proxy validates incoming access tokens before forwarding protected requests to the MCP server. MCP initialization and `tools/list` remain public for discovery.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
-- [Run Authorization Proxy for API MCP](#run-authorization-proxy-for-api-mcp)
+- [Deploy MCP Runtime Proxy](#deploy-mcp-runtime-proxy)
 - [Update the MCP Service to Point to the Proxy](#update-the-mcp-service-to-point-to-the-proxy)
 - [Verify (Expected Failure)](#verify-expected-failure)
 - [Fix Insufficient Permission](#fix-insufficient-permission)
 - [Allow Exchange from MCP to API](#allow-exchange-from-mcp-to-api)
-- [Fetch a New Access Token for the New Role](#fetch-a-new-access-token-for-the-new-role)
+- [Request Both MCP and API Scopes](#request-both-mcp-and-api-scopes)
 - [Update Codex Config with the New Token](#update-codex-config-with-the-new-token)
 - [Verify](#verify)
-- [Review Summary of Changes](#review-summary-of-changes)
-- [What's next?](#whats-next)
+- [Review the Result](#review-the-result)
+- [Next Steps](#next-steps)
 
 <!-- /TOC -->
 
-## Run Authorization Proxy for API MCP
+<a id="run-authorization-proxy-for-api-mcp"></a>
 
-Deploy MCP Runtime Proxy as the `auth-proxy` sidecar. It validates the Access Token's signature, expiry, audience `mcp`, and `mcp:role.mcp-accessor` scope. The existing MCP adapter continues to exchange tokens before calling the API.
+## Deploy MCP Runtime Proxy
+
+Deploy MCP Runtime Proxy as the `auth-proxy` sidecar. It validates the access token's signature, expiry, audience `mcp`, and `mcp:role.mcp-accessor` scope. The existing MCP adapter continues to exchange tokens before calling the API.
 
 Enable OpenAPI discovery for the current AI Client Gateway and Open WebUI. MCP bootstrap and tool discovery remain public; protected requests require the accessor scope.
 
@@ -64,7 +66,7 @@ EOF
 kubectl rollout status deploy/mcp -n api
 ```
 
-The `api-zts-ca` ConfigMap was created in chapter 07. The proxy needs only the CA and ZTS's public signing keys. No ZPU sidecar, policy volume, or proxy service certificate is required; Runtime Proxy's downstream token-file exchange stays disabled.
+The proxy uses the `api-zts-ca` ConfigMap from chapter 07 to trust the ZTS signing-key endpoint. It validates incoming tokens; the MCP adapter uses its own service certificate for the downstream token exchange.
 
 ## Update the MCP Service to Point to the Proxy
 
@@ -121,7 +123,9 @@ The next token will have audience `mcp`. Authorize the MCP service to exchange i
 
 The source assertion is `mcp:api`; the target assertion is `api:mcp:role.docs-getter`. The `docs-getter-exchanger` role already contains `mcp.idthw-api-mcp` from chapter 11. These policies permit exchange; the incoming token must also carry `api:role.docs-getter`.
 
-## Fetch a New Access Token for the New Role
+<a id="fetch-a-new-access-token-for-the-new-role"></a>
+
+## Request Both MCP and API Scopes
 
 Request scopes from both domains and explicitly select `mcp` as the audience. The MCP scope permits the incoming request; the API scope permits the later exchange. A multi-domain request without an audience is rejected by ZTS:
 
@@ -183,10 +187,14 @@ get docs from k8s doc server!
 
 ![Codex MCP access successful](./assets/12_codex_mcp_access_successful.png)
 
-## Review Summary of Changes
+<a id="review-summary-of-changes"></a>
 
-We deployed MCP Runtime Proxy in front of the existing MCP adapter, using signed token scopes instead of downloaded policies. Any client can initialize and list tools without an Athenz access role. Protected methods such as `tools/call` reach the MCP server only when the caller's Access Token carries the `mcp:role.mcp-accessor` scope.
+## Review the Result
 
-## What's next?
+MCP Runtime Proxy now validates tokens in front of the MCP adapter. Any client can initialize and list tools without an Athenz access role. Protected methods such as `tools/call` reach the MCP server only when the caller's access token carries the `mcp:role.mcp-accessor` scope.
+
+<a id="whats-next"></a>
+
+## Next Steps
 
 Next: [Identity Provider](./13-identity-provider.md)

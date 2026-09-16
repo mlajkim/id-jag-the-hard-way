@@ -4,22 +4,24 @@
 
 # MCP Server for API
 
-In this tutorial, we will set up MCP Server for API so that our AI client agent that we will install in the next tutorial can interact with our protected API server for you with the following steps:
+Deploy an MCP server that exposes the document API as tools for an AI client with the following steps:
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
-- [Create Service Cert for MCP Server](#create-service-cert-for-mcp-server)
-- [Create K8s Secret](#create-k8s-secret)
+- [Create the MCP Service Identity](#create-the-mcp-service-identity)
+- [Create a Kubernetes Secret](#create-a-kubernetes-secret)
 - [Deploy the MCP Server](#deploy-the-mcp-server)
-- [Mount Secret](#mount-secret)
-- [What's done?](#whats-done)
-- [What's next?](#whats-next)
+- [Mount the Secret](#mount-the-secret)
+- [Review the Result](#review-the-result)
+- [Next Steps](#next-steps)
 
 <!-- /TOC -->
 
-## Create Service Cert for MCP Server
+<a id="create-service-cert-for-mcp-server"></a>
 
-To run the MCP Server, just like we have given service identity for human user `human.idjag-learner`, we also need to give service identity for the MCP server. Create the service `idthw-api-mcp` under its own Athenz TLD, `mcp`. Its principal is `mcp.idthw-api-mcp`; the API keeps the `api` domain. Athenz domains define authorization boundaries independently of Kubernetes namespaces, so both deployments can remain in the `api` namespace.
+## Create the MCP Service Identity
+
+The MCP server needs its own identity to authenticate token exchange requests to ZTS. Create the service `idthw-api-mcp` under the Athenz top-level domain (TLD) `mcp`. Its principal is `mcp.idthw-api-mcp`; the API keeps the `api` domain. Athenz domains define authorization boundaries independently of Kubernetes namespaces, so both deployments can remain in the `api` namespace.
 
 Run the following:
 
@@ -43,7 +45,9 @@ Run the following:
 #   ✔  Certificate saved to: ./keys/api-mcp.crt
 ```
 
-## Create K8s Secret
+<a id="create-k8s-secret"></a>
+
+## Create a Kubernetes Secret
 
 Create a secret based on the generated certificates:
 
@@ -96,15 +100,17 @@ kubectl rollout status deploy/mcp -n api
 > [!NOTE]
 > If you see the following error, the container is still starting up. Wait a few seconds and try again.
 >
-> ```sh
+> ```text
 > Error from server (BadRequest): container "mcp" in pod is waiting to start: ContainerCreating
 > ```
 
-## Mount Secret
+<a id="mount-secret"></a>
+
+## Mount the Secret
 
 Mount the cert secret into the MCP container:
 
-```yaml
+```sh
 kubectl patch deploy mcp -n api --patch "$(cat <<'EOF'
 spec:
   template:
@@ -165,7 +171,9 @@ kubectl logs deploy/mcp -n api
 # MCP endpoint available at: http://mcp.api:8081/mcp
 ```
 
-## What's done?
+<a id="whats-done"></a>
+
+## Review the Result
 
 We have created a running MCP Server for API with service identity `mcp.idthw-api-mcp`. Its OpenAPI metadata advertises `mcp:role.mcp-accessor` together with the `api` role required by each tool.
 
@@ -174,6 +182,8 @@ flowchart LR
     MCP["MCP domain: mcp<br/>Service: mcp.idthw-api-mcp"] -->|Exchanged access token| API["API domain: api<br/>Scope: api:role.docs-getter"]
 ```
 
-## What's next?
+<a id="whats-next"></a>
+
+## Next Steps
 
 Next: [AI Agent](./10-ai-agent.md)

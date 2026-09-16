@@ -4,13 +4,13 @@
 
 # ID-JAG
 
-In this tutorial, we will resolve the authorization failure from the previous step. We will configure the token exchange policies in Athenz that allow the AI Client Gateway to exchange your Keycloak ID token for an ID-JAG token on your behalf. Once those permissions are in place, you will run the same prompt again and see it succeed end-to-end.
+Authorize the AI Client Gateway to exchange your Keycloak ID token for an ID-JAG with the following steps. Then repeat the document request and inspect the token checks at each service.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
 - [Grant Permissions to `human.idjag-learner.claude`](#grant-permissions-to-humanidjag-learnerclaude)
 - [Verify](#verify)
-- [What's happened?](#whats-happened)
+- [Understand the Result](#understand-the-result)
 - [Finally](#finally)
 
 <!-- /TOC -->
@@ -19,7 +19,7 @@ In this tutorial, we will resolve the authorization failure from the previous st
 
 The `human.idjag-learner.claude` service needs permission to perform JAG exchange into the target roles it will use.
 
-Create one JAG-exchange role in each target domain: `api` for document access and `mcp` for MCP access. The gateway will request both scopes in one ID-JAG, then exchange it for an Access Token with audience `mcp`:
+Create one JAG-exchange role in each target domain: `api` for document access and `mcp` for MCP access. The gateway will request both scopes in one ID-JAG, then exchange it for an access token with audience `mcp`:
 
 ```sh
 ./tools/athenz/create-role.sh "api" "docs-getter-jag-exchanger"
@@ -63,15 +63,15 @@ Now add `human.idjag-learner.claude` as a member of both roles:
 
 ## Verify
 
-Do:
+Reload the MCP configuration in Claude Code:
 
-```sh
+```text
 /reload-plugins
 ```
 
-Then:
+Open the MCP connection menu:
 
-```sh
+```text
 /mcp
 ```
 
@@ -85,13 +85,15 @@ get docs from k8s doc server!
 
 ![16_successful_retrieval_from_server](./assets/16_successful_retrieval_from_server.png)
 
-🎉 ID-JAG worked! You got the docs!
+The response should contain the documents returned by the API.
 
-## What's happened?
+<a id="whats-happened"></a>
+
+## Understand the Result
 
 The logs show each authorization boundary in the chain. The gateway requests `mcp:role.mcp-accessor api:role.docs-getter` with access-token audience `mcp`. The MCP service `mcp.idthw-api-mcp` then exchanges that token for audience `api`, retaining only `api:role.docs-getter`.
 
-1. The AI Client Gateway resolved the signed-in user's Keycloak ID token, exchanged it for an ID-JAG token, and then fetched an Athenz Access Token.
+1. The AI Client Gateway resolved the signed-in user's Keycloak ID token, exchanged it for an ID-JAG token, and then fetched an Athenz access token.
 
 ```sh
 kubectl logs -n human deployment/claude-idjag-learner-ai-client-gateway --tail=300
@@ -119,7 +121,7 @@ Find an `access_token_verified` event. It is emitted only after all of those che
 
 A public discovery request can also complete successfully, so `request_completed` alone does not confirm token validation. Reading the JWT's `alg` header alone does not verify its signature either.
 
-3. The existing MCP adapter still performs the downstream token exchange in this tutorial. It authenticates as `mcp.idthw-api-mcp` and exchanges the incoming token for an API-specific `docs-getter` Access Token before calling the API.
+3. The MCP adapter performs the downstream token exchange. It authenticates as `mcp.idthw-api-mcp` and exchanges the incoming token for an API-specific `docs-getter` access token before calling the API.
 
 <details>
 <summary>Confirm the adapter's token exchange</summary>
@@ -142,13 +144,13 @@ kubectl logs -n api deployment/api-server --tail=20
 # Look for event "request_completed", method "GET", status 200.
 ```
 
-At every hop, the Principle of Least Privilege was enforced — each component only held the minimum permissions it needed.
+The proxy checks MCP access, and the API checks document access. The downstream exchange changes the audience from `mcp` to `api` and retains only the document-reading scope.
 
 ## Finally
 
 Thank you for following along. Hope it was helpful.
 
-You have seen the full ID-JAG flow end-to-end: a human signs in, an AI agent acts on their behalf with a scoped identity, enterprise policy governs exactly what the agent can do, and the organization can tighten or expand those boundaries at any time — without touching application code.
+You have connected user sign-in to delegated API access. Athenz policies control token issuance and exchange; the proxy and API enforce each token's audience and scopes. Changes to role membership affect new grants after ZTS observes them, while issued tokens can remain usable until they expire.
 
 If you found this tutorial useful, please consider giving either repository a ⭐ on GitHub!
 

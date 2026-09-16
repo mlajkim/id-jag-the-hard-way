@@ -1,21 +1,21 @@
 |                     Previous                     |   Current    |                   Next                   |
 |:------------------------------------------------:|:------------:|:----------------------------------------:|
-| [MCP Server for API](./09-mcp-server-for-api.md) | **AI Agent** | [Token Exchange](./11-token-exchange.md) |
+| [MCP Server for API](./09-mcp-server-for-api.md) | **AI agent** | [Token Exchange](./11-token-exchange.md) |
 
 # AI Agent: Claude
 
 ![10_claude](./assets/10_claude.png)
 
-In this tutorial, we connect an AI agent to the MCP server for the first time. We will manually provide an Athenz Access Token as a Bearer header and see how far we get.
+Connect Claude Code to the MCP server with the following steps. You will provide an Athenz access token in the `Authorization` header and observe the expected token exchange failure.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
 - [Install Claude](#install-claude)
 - [Add the MCP Server to Claude Code](#add-the-mcp-server-to-claude-code)
-- [Login to Claude](#login-to-claude)
-- [Connect to MCP Server](#connect-to-mcp-server)
+- [Sign In to Claude](#sign-in-to-claude)
+- [Connect to the MCP Server](#connect-to-the-mcp-server)
 - [Verify](#verify)
-- [What's happened?](#whats-happened)
+- [Understand the Result](#understand-the-result)
 
 <!-- /TOC -->
 
@@ -51,7 +51,7 @@ If you don't see a version (e.g. `X.X.XXX (Claude Code)`), install it:
 
 ## Add the MCP Server to Claude Code
 
-Claude Code reads `.mcp.json` only on startup, so create this file before launching Claude.
+Create `.mcp.json` before launching Claude Code so it can load the MCP server configuration.
 
 > [!NOTE]
 > The MCP URL below points at `localhost` because `./tools/keep-k8s-port-forward.sh` forwards your local machine to the Kubernetes service. Keep the port-forwarder running in one terminal, then run this in another terminal before launching Claude:
@@ -62,7 +62,7 @@ Claude Code reads `.mcp.json` only on startup, so create this file before launch
 >
 > If Claude says the port-forward connection dropped, restart `./tools/keep-k8s-port-forward.sh`, wait for `mcp` again, and retry.
 
-Get the Access Token:
+Get the access token:
 
 ```sh
 _scope="api:role.docs-getter"
@@ -126,7 +126,9 @@ cat .mcp.json
 >
 > This writes the server entry to `.mcp.json` (project scope). You still need to reload: run `/reload-plugins` inside Claude Code.
 
-## Login to Claude
+<a id="login-to-claude"></a>
+
+## Sign In to Claude
 
 Now start Claude — it will pick up `.mcp.json` automatically on launch:
 
@@ -136,7 +138,9 @@ claude
 
 If it is your first time, choose `2. Anthropic Console account`. You can create an account or use **Continue with Google** for a faster sign-up.
 
-## Connect to MCP Server
+<a id="connect-to-mcp-server"></a>
+
+## Connect to the MCP Server
 
 Run:
 
@@ -150,7 +154,7 @@ You can see that you are `✅ Connected` for the `id-jag-the-hard-way-mcp`:
 
 ## Verify
 
-Let's see if we can really talk through the `id-jag-the-hard-way-mcp` MCP.
+Call the document retrieval tool through `id-jag-the-hard-way-mcp`:
 
 Hit `Esc` one time to go back to the prompt dialog, then type this prompt into Claude Code:
 
@@ -165,11 +169,13 @@ This will intentionally fail — the request will return a `No Permission to Tok
 
 ![10_claude_says_no_access_for_token_exchange](./assets/10_claude_says_no_access_for_token_exchange.png)
 
-This is expected. The MCP server received your Access Token and tried to exchange it for a narrower-scoped token to call the API server — but it does not yet have permission to do that.
+This is expected. The MCP server received your access token and tried to exchange it for a token to call the API on your behalf. Both tokens use audience `api` and the `docs-getter` scope at this stage; the missing permission is for the exchange itself.
 
-## What's happened?
+<a id="whats-happened"></a>
 
-We successfully connected Claude Code to the MCP server with an Athenz Access Token. However, the MCP server's token exchange step is not yet authorized.
+## Understand the Result
+
+We successfully connected Claude Code to the MCP server with an Athenz access token. However, the MCP server's token exchange step is not yet authorized.
 
 In the next tutorial we will fix this by granting the MCP server permission to exchange tokens.
 

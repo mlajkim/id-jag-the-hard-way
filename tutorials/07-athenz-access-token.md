@@ -1,22 +1,22 @@
 |             Previous             |         Current         |                        Next                        |
 |:--------------------------------:|:-----------------------:|:--------------------------------------------------:|
-| [Authorization Server](./05-authorization-server.md) | **Athenz Access Token** | [Granular Permission](./08-granular-permission.md) |
+| [Authorization Server](./05-authorization-server.md) | **Athenz access token** | [Granular Permission](./08-granular-permission.md) |
 
 # Athenz Access Token
 
-In this tutorial, you will get the Access Token that the API server requests with the following steps:
+Request an Athenz access token and use it to read documents from the API with the following steps:
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
 - [Create the API domain](#create-the-api-domain)
 - [Trust the ZTS signing-key endpoint](#trust-the-zts-signing-key-endpoint)
-- [Create Athenz Role under the API domain](#create-athenz-role-under-the-api-domain)
+- [Create the Document-Reading Role](#create-the-document-reading-role)
 - [Understand the required API scopes](#understand-the-required-api-scopes)
-- [Add Root User as a member](#add-root-user-as-a-member)
-- [Get Access Token as Root User](#get-access-token-as-root-user)
-- [Send request to the protected server](#send-request-to-the-protected-server)
-- [What's done?](#whats-done)
-- [What's next?](#whats-next)
+- [Add the Administrator to the Role](#add-the-administrator-to-the-role)
+- [Request a Token as the Administrator](#request-a-token-as-the-administrator)
+- [Call the Protected API](#call-the-protected-api)
+- [Review the Result](#review-the-result)
+- [Next Steps](#next-steps)
 
 <!-- /TOC -->
 
@@ -37,7 +37,7 @@ This domain is separate from the Kubernetes namespace `api` created in chapter 0
 
 ## Trust the ZTS signing-key endpoint
 
-The API verifies Access Tokens using ZTS's public signing keys. Mount the tutorial CA so Node.js can authenticate the HTTPS connection to ZTS:
+The API verifies access tokens using ZTS's public signing keys. Mount the tutorial CA so Node.js can authenticate the HTTPS connection to ZTS:
 
 ```sh
 kubectl -n api create configmap api-zts-ca \
@@ -65,9 +65,11 @@ EOF
 kubectl rollout status deploy/api-server -n api
 ```
 
-The container is named `idthw-demo-api`, matching the image used in chapter 04. The Deployment and Service are still named `api-server`, so existing MCP connections and port forwarding keep the same address.
+The container is named `idthw-demo-api`, matching the image used in chapter 04. The Deployment and Service are named `api-server`.
 
-## Create Athenz Role under the API domain
+<a id="create-athenz-role-under-the-api-domain"></a>
+
+## Create the Document-Reading Role
 
 Athenz uses **Role-Based Access Control (RBAC)**. ZTS checks role membership before issuing the requested role scope. The API checks that signed scope against the requested operation.
 
@@ -106,14 +108,16 @@ The API accepts `scope` or `scp` claims and also accepts short role names, such 
 
 These mappings live in the API; it does not download or evaluate Athenz action/resource policies. ZTS still controls token issuance, and later chapters configure the policies needed for token exchange and ID-JAG. Removing role membership stops new grants after ZTS observes the change; an already-issued token can remain usable until it expires.
 
-## Add Root User as a member
+<a id="add-root-user-as-a-member"></a>
 
-When we manifested Athenz server, it gives us the root user certificate by default. For now, we will use the root user to get the access token. To get the Access Token for the specific role (or scope), we first need to add the root user as a member of the role.
+## Add the Administrator to the Role
+
+The Athenz deployment provides a certificate for the administrator principal, `user.athenz_admin`. Use it for this first token request. ZTS requires the requester to be a member of the role specified in the requested scope.
 
 > [!NOTE]
 > `add-role-member.sh` — PUTs a member entry to a role via the ZMS API, granting that principal the permissions associated with the role. Run `cat ./tools/athenz/add-role-member.sh` to inspect.
 
-The default service name for the root user is `user.athenz_admin`. We can add the admin user as a member of the `docs-getter` role in the `api` domain:
+Add `user.athenz_admin` to the `docs-getter` role in the `api` domain:
 
 ```sh
 ./tools/athenz/add-role-member.sh "api" "docs-getter" "user.athenz_admin"
@@ -128,12 +132,14 @@ _athenz_ui_port=$(./tools/port.sh athenz-ui)
 
 ![07_add_role_member](./assets/07_add_role_member.png)
 
-## Get Access Token as Root User
+<a id="get-access-token-as-root-user"></a>
+
+## Request a Token as the Administrator
 
 > [!NOTE]
 > `fetch-access-token.sh` — POSTs a `client_credentials` grant to the ZTS token endpoint and returns a signed Athenz access token scoped to the requested role. Run `cat ./tools/athenz/fetch-access-token.sh` to inspect.
 
-Execute the script, using the root user certificate and key generated by the athenz-distribution, and save the output directly into a variable named `_root_user_at`.
+Execute the script, using the administrator certificate and key generated by the Athenz distribution, and save the output directly into a variable named `_root_user_at`.
 
 ```sh
 _scope="api:role.docs-getter"
@@ -173,7 +179,9 @@ _root_user_at=$(./tools/athenz/fetch-access-token.sh \
 # }
 ```
 
-## Send request to the protected server
+<a id="send-request-to-the-protected-server"></a>
+
+## Call the Protected API
 
 Last time we tried to access the `docs` resource of the API server, but we got a 401 Unauthorized error:
 
@@ -182,18 +190,17 @@ curl -sS -k http://localhost:14443/api/docs | jq .
 ```
 
 > [!NOTE]
-> If you see `curl: (52) Empty reply from server` or `curl: (7) Failed to connect to localhost port 14443`, wait a few seconds and try again. The port-forward or sidecar may still be settling. Do not panic; the 401 Unauthorized response below is the expected result at this point.
+> If you see `curl: (52) Empty reply from server` or `curl: (7) Failed to connect to localhost port 14443`, wait a few seconds and try again. Check that the API Deployment is ready and the port-forwarder is running. Once connected, the API should return the missing-token response below.
 
 ```sh
 # {
-#   "error": "Unauthorized",
-#   "message": "Authorization header is missing or invalid Bearer token.",
-#   "status": 401
+#   "error": "missing_access_token",
+#   "message": "Pass an Athenz access token as Authorization: Bearer <token>."
 # }
 ```
 
 
-With the Access Token, let's see if we can access it now. Pass it as `Authorization: Bearer <token>`:
+With the access token, let's see if we can access it now. Pass it as `Authorization: Bearer <token>`:
 
 > [!NOTE]
 > If you see `curl: (52) Empty reply from server`, wait a few seconds and try again.
@@ -219,16 +226,18 @@ curl -sS -k -H "Authorization: Bearer $_root_user_at" http://localhost:14443/api
 # }
 ```
 
-## What's done?
+<a id="whats-done"></a>
 
-We have successfully retrieved an Athenz Access Token as `user.athenz_admin` and used it to access the protected API.
+## Review the Result
+
+We have successfully retrieved an Athenz access token as `user.athenz_admin` and used it to access the protected API.
 
 ![07_arc_get_athenz_at_and_pass_api_req](./assets/07_arc_get_athenz_at_and_pass_api_req.png)
 
-## What's next?
+<a id="whats-next"></a>
 
-As you may have noticed, relying on the highly privileged `user.athenz_admin` for everyday operations is a bad security practice. While it was a valuable exercise for testing our protected API, we need to strictly enforce the principle of **least privilege**.
+## Next Steps
 
-In the next section, we will generate a new X.509 certificate that represents *you*—the one learning `id-jag`—and use it to securely access the API!
+The administrator can also manage Athenz domains and policies. Routine API calls do not need those privileges. In the next chapter, you will create a dedicated learner identity and grant it the document-reading role.
 
 Next: [Granular Permission](./08-granular-permission.md)
