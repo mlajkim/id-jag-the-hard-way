@@ -12,6 +12,12 @@
 
 ![arc_ai_cleint_gateway](./assets/arc_ai_client_gateway.png)
 
+## Access-token audience
+
+Set `ATHENZ_ACCESS_TOKEN_AUDIENCE=mcp` when the gateway forwards to the tutorial's MCP service. Its OpenAPI metadata requests `mcp:role.mcp-accessor` plus the API role for the selected operation. ZTS requires an explicit audience when these scopes span domains. The resulting token has audience `mcp` and retains the qualified API scope for the MCP server's subsequent exchange to audience `api`.
+
+This setting applies only to the ID-JAG-to-access-token request. The ID-JAG audience remains the authorization server URL. Leaving the setting unset preserves the existing single-domain behavior, where ZTS derives the access-token audience from the scope.
+
 ## Architectural Advantages
 
 This design introduces several key security and integration benefits:

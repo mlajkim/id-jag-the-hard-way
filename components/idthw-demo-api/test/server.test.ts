@@ -116,6 +116,14 @@ test("accepts scope/scp strings and arrays, and disambiguates multi-domain token
   }
 })
 
+test("requires exchange before accepting the tutorial's MCP-bound token", async (t) => {
+  const api = await fixture(t)
+  const incoming = await token({ aud: "mcp", scope: undefined, scp: ["mcp-accessor", "api:role.docs-getter"] })
+  assert.equal((await api.request("GET", "/api/docs", incoming)).status, 401)
+  const downstream = await token({ aud: "api", scope: undefined, scp: ["docs-getter"] })
+  assert.equal((await api.request("GET", "/api/docs", downstream)).status, 200)
+})
+
 test("rejects expired, premature, wrong-audience, and invalid-identity tokens", async (t) => {
   const api = await fixture(t)
   for (const claims of [

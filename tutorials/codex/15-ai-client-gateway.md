@@ -164,6 +164,7 @@ Configure the environment variables for the gateway deployment:
 
 - `UPSTREAM_BASE_URL` — the in-cluster MCP server the gateway proxies requests to.
 - `ZTS_URL` — the Athenz ZTS endpoint used to exchange ID-JAG tokens for scoped Access Tokens.
+- `ATHENZ_ACCESS_TOKEN_AUDIENCE` — `mcp`, the recipient of the gateway's Access Token. The token can carry both MCP and API scopes; the ID-JAG audience remains the ZTS URL.
 - `KEYCLOAK_URL` / `KEYCLOAK_REALM` — in-cluster Keycloak address used for server-side token validation during the OAuth callback.
 - `KEYCLOAK_CLIENT_ID` / `KEYCLOAK_CLIENT_SECRET` — pulled from the Kubernetes Secret you just created; used to authenticate this gateway as a registered OAuth2 client.
 - `PUBLIC_BASE_URL` — the port-forwarded gateway address the browser is redirected back to after login.
@@ -185,6 +186,8 @@ spec:
           env:
             - name: UPSTREAM_BASE_URL
               value: "http://mcp.api:8081"
+            - name: ATHENZ_ACCESS_TOKEN_AUDIENCE
+              value: "mcp"
             - name: ZTS_URL
               value: "https://athenz-zts-server.athenz:4443/zts/v1"
             - name: KEYCLOAK_URL

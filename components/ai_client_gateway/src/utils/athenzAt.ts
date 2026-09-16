@@ -25,11 +25,14 @@ function getExp(token: string): number {
 // fetchATFromZTS actually calls to ZTS
 async function fetchATFromZTS(idJag: string, scope: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    const body = new URLSearchParams({
+    const params = new URLSearchParams({
       grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
       assertion: idJag,
       scope: scope,
-    }).toString();
+    });
+    const audience = process.env.ATHENZ_ACCESS_TOKEN_AUDIENCE;
+    if (audience) params.set("audience", audience);
+    const body = params.toString();
 
     const targetUrl = ZTS_URL.replace(/\/$/, "") + "/oauth2/token";
     const url = new URL(targetUrl);

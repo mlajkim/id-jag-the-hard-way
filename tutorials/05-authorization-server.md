@@ -4,11 +4,12 @@
 
 # Authorization Server
 
-In this tutorial, we will deploy Athenz as the local authorization server and verify that it is running properly in Kubernetes cluster.
+In this tutorial, we will deploy Athenz as the local authorization server, enable scopes across the `mcp` and `api` domains, and verify it with the following steps:
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
 - [Deploy Athenz Server](#deploy-athenz-server)
+- [Enable Scopes Across Two Domains](#enable-scopes-across-two-domains)
 - [Check Athenz Server Running](#check-athenz-server-running)
 - [Keep Core Endpoints Locally Reachable](#keep-core-endpoints-locally-reachable)
 - [Open Athenz UI](#open-athenz-ui)
@@ -36,6 +37,21 @@ make -C athenz_dist clean-kubernetes-athenz deploy-kubernetes-athenz
 
 > [!NOTE]
 > The SSOT guide for using the Athenz manifest is available [here](https://github.com/athenz-community/athenz-distribution/blob/main/README.md)
+
+## Enable Scopes Across Two Domains
+
+Configure ZTS to allow scopes from both domains used by this tutorial, `mcp` and `api`:
+
+```sh
+_zts_java_opts=$(kubectl -n athenz get deployment/athenz-zts-server \
+  -o jsonpath='{.spec.template.spec.containers[?(@.name=="athenz-zts-server")].env[?(@.name=="JAVA_OPTS")].value}')
+kubectl -n athenz set env deployment/athenz-zts-server \
+  --containers=athenz-zts-server \
+  "JAVA_OPTS=${_zts_java_opts} -Dathenz.zts.access_token_max_domains=10"
+kubectl -n athenz rollout status deployment/athenz-zts-server
+```
+
+This updates the ZTS pod configuration. Each Access Token will still have one audience; scopes from the other domain remain fully qualified for the next token exchange.
 
 ## Check Athenz Server Running
 

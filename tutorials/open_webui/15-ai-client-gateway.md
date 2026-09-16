@@ -41,7 +41,7 @@ You can learn more about the specifics here:
 When you log in via `Keycloak`, it generates an ID Token that represents your identity. Through the ID-JAG process, we can dynamically handle permissions without manual token management. Specifically, we can:
 
 1. Exchange the initial ID Token for an ID-JAG token scoped to a new audience, `ai.open-webui`.
-1. Fetch an Access Token with the audience `api` (and its required scopes) using the `ai.open-webui` ID-JAG token.
+1. Fetch an Access Token with the audience `mcp` (carrying both the MCP and required API scopes) using the `ai.open-webui` ID-JAG token.
 
 This means we no longer have to manually insert an Access Token for each tool in the UI. Furthermore, tools can be securely shared among all users in the AI Client Agent without any manual intervention.
 
@@ -69,11 +69,15 @@ spec:
           env:
             - name: UPSTREAM_BASE_URL
               value: "http://mcp.api:8081"
+            - name: ATHENZ_ACCESS_TOKEN_AUDIENCE
+              value: "mcp"
             - name: ZTS_URL
               value: "https://athenz-zts-server.athenz:4443/zts/v1"
 EOF
 )"
 ```
+
+`ATHENZ_ACCESS_TOKEN_AUDIENCE=mcp` selects the recipient of the Access Token carrying MCP and API scopes. The ID-JAG audience remains the ZTS URL.
 
 Expose the deployment so it can be accessed:
 

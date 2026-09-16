@@ -12,6 +12,7 @@ In this tutorial, we will secure MCP tool execution using an Authorization Proxy
 - [Update the MCP Service to Point to the Proxy](#update-the-mcp-service-to-point-to-the-proxy)
 - [Verify (Expected Failure)](#verify-expected-failure)
 - [Fix Insufficient Permission](#fix-insufficient-permission)
+- [Allow Exchange from MCP to API](#allow-exchange-from-mcp-to-api)
 - [Fetch a New Access Token for the New Role](#fetch-a-new-access-token-for-the-new-role)
 - [Update .mcp.json with the New Token](#update-mcpjson-with-the-new-token)
 - [Verify](#verify)
@@ -22,7 +23,7 @@ In this tutorial, we will secure MCP tool execution using an Authorization Proxy
 
 ## Run Authorization Proxy for API MCP
 
-Deploy MCP Runtime Proxy as the `auth-proxy` sidecar. It validates the Access Token's signature, expiry, audience `api`, and `api:role.mcp-accessor` scope. The existing MCP adapter continues to exchange tokens before calling the API.
+Deploy MCP Runtime Proxy as the `auth-proxy` sidecar. It validates the Access Token's signature, expiry, audience `mcp`, and `mcp:role.mcp-accessor` scope. The existing MCP adapter continues to exchange tokens before calling the API.
 
 Enable OpenAPI discovery for the current AI Client Gateway and Open WebUI. MCP bootstrap and tool discovery remain public; protected requests require the accessor scope.
 
@@ -41,9 +42,9 @@ spec:
             - name: MCP_TARGET_URL
               value: "http://localhost:8081"
             - name: ATHENZ_EXPECTED_AUDIENCE
-              value: "api"
+              value: "mcp"
             - name: ATHENZ_REQUIRED_SCOPE
-              value: "api:role.mcp-accessor"
+              value: "mcp:role.mcp-accessor"
             - name: ATHENZ_JWKS_CA_PATH
               value: "/var/run/athenz/ca.crt"
             - name: MCP_PUBLIC_OPENAPI_ENABLED
@@ -94,7 +95,7 @@ Then ask:
 get docs from k8s doc server!
 ```
 
-The client can still initialize and list the available tools. The tool call fails because protected requests require `api:role.mcp-accessor`, while the current token only grants `docs-getter`.
+The client can still initialize and list the available tools. The tool call fails because protected requests require `mcp:role.mcp-accessor`, while the current token has audience `api` and only grants `docs-getter`. The proxy rejects that audience before checking the MCP scope.
 
 You can also see from the log of the `auth-proxy` container that the request was rejected:
 
@@ -103,60 +104,76 @@ kubectl logs deploy/mcp -n api -c auth-proxy
 ```
 
 ```sh
-# Look for event "access_denied", code "insufficient_scope", status 403.
+# Look for event "access_denied" with status 401: the token audience is still api.
 ```
 
 ## Fix Insufficient Permission
 
-Create the `mcp-accessor` role. The proxy maps this scope to MCP access directly:
+Create the `mcp-accessor` role in the `mcp` domain from chapter 09. The proxy maps this scope to MCP access directly:
 
 ```sh
-./tools/athenz/create-role.sh "api" "mcp-accessor"
+./tools/athenz/create-role.sh "mcp" "mcp-accessor"
 ```
 
 ```sh
-#   ·  Creating Role: api:role.mcp-accessor...
-#   ✔  Role created: api:role.mcp-accessor
+#   ·  Creating Role: mcp:role.mcp-accessor...
+#   ✔  Role created: mcp:role.mcp-accessor
 ```
 
 Add `human.idjag-learner` as a member:
 
 ```sh
-./tools/athenz/add-role-member.sh "api" "mcp-accessor" "human.idjag-learner"
+./tools/athenz/add-role-member.sh "mcp" "mcp-accessor" "human.idjag-learner"
 ```
 
 ```sh
-#   ·  Adding Member human.idjag-learner to Role: api:role.mcp-accessor...
-#   ✔  human.idjag-learner  →  api:role.mcp-accessor
+#   ·  Adding Member human.idjag-learner to Role: mcp:role.mcp-accessor...
+#   ✔  human.idjag-learner  →  mcp:role.mcp-accessor
 ```
+
+## Allow Exchange from MCP to API
+
+The next token will have audience `mcp`. Authorize the MCP service to exchange it for an API token:
+
+```sh
+./tools/athenz/create-role.sh "mcp" "to-api-exchanger"
+./tools/athenz/add-policy.sh "mcp" "to-api-exchanger" "zts.token_source_exchange" "api"
+./tools/athenz/add-role-member.sh "mcp" "to-api-exchanger" "mcp.idthw-api-mcp"
+./tools/athenz/add-policy.sh "api" "docs-getter-exchanger" "zts.token_target_exchange" "mcp:role.docs-getter"
+```
+
+The source assertion is `mcp:api`; the target assertion is `api:mcp:role.docs-getter`. The `docs-getter-exchanger` role already contains `mcp.idthw-api-mcp` from chapter 11. These policies permit exchange; the incoming token must also carry `api:role.docs-getter`.
 
 ## Fetch a New Access Token for the New Role
 
-The Access Token must now include both scopes - one to pass through the MCP proxy, and one to call the API server:
+Request scopes from both domains and explicitly select `mcp` as the audience. The MCP scope permits the incoming request; the API scope permits the later exchange. A multi-domain request without an audience is rejected by ZTS:
 
 ```sh
-_scope="api:role.mcp-accessor api:role.docs-getter"
+_scope="mcp:role.mcp-accessor api:role.docs-getter"
 ./tools/athenz/fetch-access-token.sh \
   "./keys/idjag-learner.crt" \
   "./keys/idjag-learner.key" \
   "${_scope}" \
-  "./keys/idjag-learner.jwt"
+  "./keys/idjag-learner.jwt" \
+  --audience mcp
 ```
 
 ```sh
-#   ·  Fetching Access Token for scope: api:role.mcp-accessor api:role.docs-getter...
-#   ✔  Access token issued for scope: api:role.mcp-accessor api:role.docs-getter
+#   ·  Fetching Access Token for scope: mcp:role.mcp-accessor api:role.docs-getter...
+#   ✔  Access token issued for scope: mcp:role.mcp-accessor api:role.docs-getter
 #   ✔  Token saved to: ./keys/idjag-learner.jwt
 ```
 
-Verify that the token's `scp` claim contains both roles:
+The relevant claims are shown below (scope order may differ). Only the audience-domain role is shortened:
 
 ```json
-"scp": [
-  "docs-getter",
-  "mcp-accessor"
-],
+{
+  "aud": "mcp",
+  "scp": ["mcp-accessor", "api:role.docs-getter"]
+}
 ```
+
+The MCP adapter requests `audience=api` and `scope=api:role.docs-getter` for its downstream exchange. The resulting API token has `aud=api` and `scp=["docs-getter"]`; it no longer carries MCP access. The API rejects the original MCP-bound token even though that token carries its qualified API scope.
 
 ## Update .mcp.json with the New Token
 
@@ -205,7 +222,7 @@ kubectl logs deploy/mcp -n api -c auth-proxy
 
 ## Review Summary of Changes
 
-We deployed MCP Runtime Proxy in front of the existing MCP adapter, using signed token scopes instead of downloaded policies. Any client can initialize and list tools without an Athenz access role. Protected methods such as `tools/call` reach the MCP server only when the caller's Access Token carries the `api:role.mcp-accessor` scope.
+We deployed MCP Runtime Proxy in front of the existing MCP adapter, using signed token scopes instead of downloaded policies. Any client can initialize and list tools without an Athenz access role. Protected methods such as `tools/call` reach the MCP server only when the caller's Access Token carries the `mcp:role.mcp-accessor` scope.
 
 ## What's next?
 

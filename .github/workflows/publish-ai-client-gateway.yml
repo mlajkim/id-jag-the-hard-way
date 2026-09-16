@@ -30,6 +30,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Test gateway
+        working-directory: ${{ env.BUILD_DIR }}
+        run: |
+          npm install --no-audit --no-fund
+          npm test
+
       # 1. Docker Registry Login
       - name: Log in to GHCR
         uses: docker/login-action@v3
