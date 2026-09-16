@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: idthw-demo-api
+  namespace: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: idthw-demo-api
+  template:
+    metadata:
+      labels:
+        app: idthw-demo-api
+    spec:
+      containers:
+        - name: idthw-demo-api
+          image: ghcr.io/mlajkim/idthw-demo-api:latest
+          imagePullPolicy: Always
+          env:
+            - name: NODE_EXTRA_CA_CERTS
+              value: /var/run/athenz/ca.crt
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          volumeMounts:
+            - name: zts-ca
+              mountPath: /var/run/athenz
+              readOnly: true
+      volumes:
+        - name: zts-ca
+          configMap:
+            name: idthw-demo-api-ca
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: idthw-demo-api
+  namespace: api
+spec:
+  selector:
+    app: idthw-demo-api
+  ports:
+    - port: 8080
+      targetPort: http
