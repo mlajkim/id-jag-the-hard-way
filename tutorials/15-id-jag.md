@@ -93,6 +93,8 @@ The response should contain the documents returned by the API.
 
 The logs show each authorization boundary in the chain. The gateway requests `mcp:role.mcp-accessor api:role.docs-getter` with access-token audience `mcp`. The MCP service `mcp.idthw-api-mcp` then exchanges that token for audience `api`, retaining only `api:role.docs-getter`.
 
+![Complete core flow from Keycloak sign-in through ID-JAG to protected API access](./assets/core_15_idjag_flow.svg)
+
 1. The AI Client Gateway resolved the signed-in user's Keycloak ID token, exchanged it for an ID-JAG token, and then fetched an Athenz access token.
 
 ```sh

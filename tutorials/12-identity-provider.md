@@ -213,6 +213,8 @@ We have deployed Keycloak and created:
 
 At this point, Keycloak is running and configured, but our Authorization Server (Athenz) does not yet trust it. The next tutorial establishes that trust.
 
+![Keycloak is configured, but Athenz does not yet trust its tokens](./assets/core_12_idp_untrusted.svg)
+
 <a id="whats-next"></a>
 
 ## Next Steps

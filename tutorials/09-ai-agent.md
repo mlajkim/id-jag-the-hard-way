@@ -177,6 +177,8 @@ This is expected. The MCP server received your access token and tried to exchang
 
 We successfully connected Claude Code to the MCP server with an Athenz access token. However, the MCP server's token exchange step is not yet authorized.
 
+![Claude reaches the MCP server, but Athenz rejects its token exchange](./assets/core_09_exchange_denied.svg)
+
 In the next tutorial we will fix this by granting the MCP server permission to exchange tokens.
 
 Next: [Token Exchange](./10-token-exchange.md)

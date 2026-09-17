@@ -54,7 +54,7 @@ The tutorial uses the following components:
 
 The completed tutorial uses this token flow. Keycloak authenticates the user; Athenz authorizes the gateway and MCP server to exchange tokens on that user's behalf.
 
-![full_architecture](./assets/full_architecture.png)
+![Core tutorial architecture: Claude, AI Client Gateway, MCP Runtime Proxy, and API](./tutorials/assets/core_15_idjag_flow.svg)
 
 1. The user signs in through Keycloak and sends a prompt to the AI client.
 2. AI Client Gateway resolves the user's ID token from the signed-in session.
@@ -65,13 +65,13 @@ The completed tutorial uses this token flow. Keycloak authenticates the user; At
 7. The MCP server exchanges the token for one with audience `api` and scope `api:role.docs-getter`.
 8. The API validates the exchanged token and checks the required scope before returning documents.
 
-The diagram groups the gateway with the requesting agent. The tutorial's MCP service identity is `mcp.idthw-api-mcp`; the image still shows its earlier name.
+The diagram shows the default Claude Code path. Codex and Open WebUI use their own AI Client Gateway service identities.
 
 ## Permission Architecture
 
-![Permission - ID-JAG The Hard Way](./assets/permission-id-jag-the-hard-way-permission-architecture.png)
+![User memberships and gateway and MCP exchange permissions](./tutorials/assets/core_permissions.svg)
 
-The diagram illustrates the delegation relationships. The table below uses the current domain names and scope checks for the final document retrieval flow:
+The diagram shows the Claude Code path's delegation permissions. These are the checks for the final document retrieval flow:
 
 | Principal or component | Permission or check |
 |---|---|
@@ -79,7 +79,7 @@ The diagram illustrates the delegation relationships. The table below uses the c
 | AI Client Gateway | `zts.jag_exchange` permission for both roles. Its service identity depends on the client path. |
 | MCP Runtime Proxy | Validates incoming tokens with audience `mcp` and scope `mcp:role.mcp-accessor`. |
 | MCP service `mcp.idthw-api-mcp` | Source and target exchange permissions to obtain an API token from the incoming MCP token. |
-| API server | Validates exchanged tokens with audience `api` and scope `api:role.docs-getter`. |
+| API server `api.idthw-api` | Validates exchanged tokens with audience `api` and scope `api:role.docs-getter`. |
 
 Athenz controls token issuance and exchange. The proxy and API enforce the audience and scopes in issued tokens; they do not download Athenz policies. A token can remain usable until it expires after a role membership change.
 

@@ -144,6 +144,18 @@ The provider Dockerfiles are export-only — they copy their built JARs into a m
 
 The `tutorials/` directory contains the canonical learning path (01–15, with alternative AI client paths). They are Markdown files intended to be read in order. The `tutorials/challenges/` subdirectory contains challenge exercises. Always keep tutorial content consistent with the code behavior when making changes.
 
+## Architecture Diagrams
+
+- Use editable, self-contained SVGs for architecture and flow diagrams.
+- Preserve the technical meaning: components, identities, boundaries, permissions, protocols, and arrow directions.
+- Show the architecture with short labels. Keep explanations in the surrounding Markdown; omit explanatory headings, paragraphs, and summary panels inside diagrams.
+- Keep component cards simple: names and identities, with extra detail only when essential to that diagram. Omit validation and role annotations such as `JWT · docs-getter` or `JWT · mcp-accessor`; put those checks in Markdown or dedicated permission diagrams.
+- Use a consistent visual style: restrained colors, distinct component icons, readable type, intentional spacing, and clean arrow routing. Human icons have a connected head and body, without facial detail.
+- Prefer straight horizontal or vertical connectors. Use diagonals only when needed, always at the same 45° angle; avoid arbitrary slopes and curved routes.
+- Reuse the token key drawing: gold for access tokens, blue for exchanged access tokens.
+- Match each diagram to its tutorial stage and client path; use the current core component names in the core tutorial.
+- Keep screenshots and recorded demos in their original formats. Render and visually inspect SVGs before replacing image references.
+
 ## FAQ Writing Rules
 
 For files under `faqs/`, keep the main path short and procedure-first.

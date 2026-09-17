@@ -27,7 +27,7 @@ This deployment is not yet configured to trust Keycloak. To exchange a Keycloak 
 2. Provide the plugin with Keycloak's `jwks_uri` so it can verify token signatures.
 3. Tell the ZTS server where to find the plugin configuration.
 
-![Athenz not yet trusting Keycloak](./assets/14_athenz_not_trusting_keycloak_yet.png)
+![Athenz not yet trusting Keycloak](./assets/core_12_idp_untrusted.svg)
 
 ## Install Plugin into the ZTS Server
 
@@ -65,7 +65,7 @@ kubectl -n athenz exec deployment/athenz-zts-server \
 # -rw-r--r-- 1 root root 3237 May 1 14:26 keycloak-token-provider.jar
 ```
 
-![Plugin mounted in ZTS server](./assets/14_place_plugin.png)
+![Plugin mounted in ZTS server](./assets/core_13_provider_installed.svg)
 
 ## Connect Keycloak with the Plugin
 
@@ -209,7 +209,7 @@ kubectl logs -n athenz deployment/athenz-zts-server -c athenz-zts-server | grep 
 
 We installed the `KeycloakTokenExchangeProvider` plugin. It takes a Keycloak ID token, verifies the signature with Keycloak's public keys and validates the token claims, and returns the authenticated Athenz principal:
 
-![Full architecture with plugin connected](./assets/14_arc_plugin_mounted_and_used.png)
+![ZTS provider uses Keycloak signing keys and maps the learner identity](./assets/core_13_provider_trust.svg)
 
 <a id="whats-next"></a>
 

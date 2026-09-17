@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1840" height="920" viewBox="0 0 1840 920" role="img" aria-labelledby="title description">
+<title id="title">AI Client Gateway token flow</title>
+<desc id="description">AI Client Gateway token flow</desc>
+<defs><marker id="arrow-blue" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="m1 1 9 5-9 5Z" fill="#1a73e8"/></marker>
+<marker id="arrow-green" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="m1 1 9 5-9 5Z" fill="#188038"/></marker>
+<marker id="arrow-red" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="m1 1 9 5-9 5Z" fill="#c5221f"/></marker>
+<marker id="arrow-gray" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="m1 1 9 5-9 5Z" fill="#5f6368"/></marker>
+<marker id="arrow-purple" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="m1 1 9 5-9 5Z" fill="#7b4cc0"/></marker>
+  <g id="human" fill="currentColor"><path d="M12 13a7 7 0 1 1 8 0c6 2 10 7 10 13v4H2v-4c0-6 4-11 10-13Z"/></g>
+  <g id="server" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="26" height="11" rx="3"/><rect x="3" y="18" width="26" height="11" rx="3"/><path d="M18 8.5h5m-5 15h5"/><circle cx="9" cy="8.5" r="1"/><circle cx="9" cy="23.5" r="1"/></g>
+  <g id="shield" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M16 2 29 7v9c0 7-7 12-13 15C10 28 3 23 3 16V7Z"/><path d="m10 16 4 4 9-10"/></g>
+  <g id="key" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><circle cx="10" cy="11" r="7"/><path d="m15 16 13 13m-6-6 4-4m-9-1 4-4"/></g>
+  <g id="agent" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="7" width="26" height="21" rx="6"/><path d="M16 7V2m-5 19h10M9 14h1m12 0h1"/></g>
+  <g id="exchange" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h24m-6-6 6 6-6 6M29 23H5m6-6-6 6 6 6"/></g>
+  <g id="plugin" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v8m12-8v8M7 10h18v7a9 9 0 0 1-18 0Zm9 16v5"/></g>
+  <g id="file" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h13l7 7v21H6Zm13 0v8h7M11 17h10m-10 6h10"/></g>
+  <g id="lock" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="13" width="22" height="17" rx="3"/><path d="M10 13V8a6 6 0 0 1 12 0v5m-6 7v4"/></g></defs>
+<rect width="1840" height="920" rx="20" fill="#fff"/>
+<g font-family="Arial, Helvetica, sans-serif">
+<rect x="40" y="30" width="1760" height="240" rx="20" fill="#f8fafd" stroke="#c4d4ee" stroke-width="1.5" stroke-dasharray="6 6"/>
+<text x="62" y="59" text-anchor="start" fill="#1a73e8" font-size="18" font-weight="600">Athenz</text>
+<rect x="80" y="90" width="480" height="140" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
+<circle cx="117" cy="132" r="23" fill="#e8f0fe"/><use href="#plugin" transform="translate(104 119) scale(.8125)" color="#1a73e8"/>
+<text x="153" y="129" text-anchor="start" fill="#202124" font-size="23" font-weight="700">IdP authorization</text>
+<text x="153" y="156" text-anchor="start" fill="#202124" font-size="23" font-weight="700">server</text>
+<rect x="1280" y="90" width="480" height="140" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
+<circle cx="1317" cy="132" r="23" fill="#e8f0fe"/><use href="#shield" transform="translate(1304 119) scale(.8125)" color="#1a73e8"/>
+<text x="1353" y="129" text-anchor="start" fill="#202124" font-size="23" font-weight="700">Authorization</text>
+<text x="1353" y="156" text-anchor="start" fill="#202124" font-size="23" font-weight="700">server</text>
+<rect x="40" y="640" width="1080" height="240" rx="20" fill="#faf8fd" stroke="#d8cce9" stroke-width="1.5" stroke-dasharray="6 6"/>
+<text x="62" y="669" text-anchor="start" fill="#7b4cc0" font-size="18" font-weight="600">Requesting agent · ai.open-webui</text>
+<rect x="70" y="710" width="280" height="130" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
+<circle cx="107" cy="752" r="23" fill="#e8f0fe"/><use href="#agent" transform="translate(94 739) scale(.8125)" color="#1a73e8"/>
+<text x="143" y="749" text-anchor="start" fill="#202124" font-size="23" font-weight="700">AI client</text>
+<rect x="650" y="710" width="430" height="130" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
+<circle cx="687" cy="752" r="23" fill="#e8f0fe"/><use href="#exchange" transform="translate(674 739) scale(.8125)" color="#1a73e8"/>
+<text x="723" y="749" text-anchor="start" fill="#202124" font-size="23" font-weight="700">AI Client Gateway</text>
+<rect x="1480" y="710" width="320" height="130" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
+<circle cx="1517" cy="752" r="23" fill="#e8f0fe"/><use href="#server" transform="translate(1504 739) scale(.8125)" color="#1a73e8"/>
+<text x="1553" y="749" text-anchor="start" fill="#202124" font-size="23" font-weight="700">MCP</text>
+<text x="1640" y="822" text-anchor="middle" fill="#5f6368" font-size="18" font-weight="400">api.mcp-api</text>
+<path d="M1280 158 L560 158" fill="none" stroke="#5f6368" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 6" marker-end="url(#arrow-gray)"/>
+<path d="M350 775 L650 775" fill="none" stroke="#1a73e8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-blue)"/>
+<path d="M740 710 L740 360 L190 360 L190 230" fill="none" stroke="#1a73e8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-blue)"/>
+<path d="M260 230 L260 440 L480 440 L480 230" fill="none" stroke="#5f6368" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-gray)"/>
+<path d="M540 230 L540 555 L820 555 L820 710" fill="none" stroke="#188038" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 6" marker-end="url(#arrow-green)"/>
+<path d="M960 710 L960 365 L1370 365 L1370 230" fill="none" stroke="#1a73e8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-blue)"/>
+<path d="M1460 230 L1460 500 L1040 500 L1040 710" fill="none" stroke="#188038" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 6" marker-end="url(#arrow-green)"/>
+<path d="M1080 775 L1480 775" fill="none" stroke="#1a73e8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-blue)"/>
+<path d="M1680 710 L1680 230" fill="none" stroke="#5f6368" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 6" marker-end="url(#arrow-gray)"/>
+<rect x="885.825" y="114" width="68.35" height="29" rx="5" fill="#fff"/><text x="920" y="136" text-anchor="middle" fill="#5f6368" font-size="19" font-weight="600">Mount</text>
+<rect x="435.615" y="728" width="128.77" height="29" rx="5" fill="#fff"/><text x="500" y="750" text-anchor="middle" fill="#1a73e8" font-size="19" font-weight="600">1. ID token</text>
+<rect x="375.405" y="295" width="189.19" height="54" rx="5" fill="#fff"/><text x="470" y="317" text-anchor="middle" fill="#1a73e8" font-size="19" font-weight="600">2. ID-JAG request</text><text x="470" y="342" text-anchor="middle" fill="#1a73e8" font-size="19">ID token</text>
+<rect x="270.23" y="443" width="239.54000000000002" height="29" rx="5" fill="#fff"/><text x="390" y="465" text-anchor="middle" fill="#5f6368" font-size="19" font-weight="600">3. Enterprise policies</text>
+<rect x="630.65" y="513" width="118.7" height="29" rx="5" fill="#fff"/><text x="690" y="535" text-anchor="middle" fill="#188038" font-size="19" font-weight="600">3.1 ID-JAG</text>
+<rect x="1015.1949999999999" y="303" width="249.61" height="54" rx="5" fill="#fff"/><text x="1140" y="325" text-anchor="middle" fill="#1a73e8" font-size="19" font-weight="600">4. Access token request</text><text x="1140" y="350" text-anchor="middle" fill="#1a73e8" font-size="19">ID-JAG</text>
+<rect x="1180.44" y="458" width="179.12" height="29" rx="5" fill="#fff"/><text x="1270" y="480" text-anchor="middle" fill="#188038" font-size="19" font-weight="600">4.1 Access token</text>
+<rect x="1210.58" y="703" width="138.84" height="54" rx="5" fill="#fff"/><text x="1280" y="725" text-anchor="middle" fill="#1a73e8" font-size="19" font-weight="600">5. Request</text><text x="1280" y="750" text-anchor="middle" fill="#1a73e8" font-size="19">Access token</text>
+<rect x="1590.51" y="513" width="158.98000000000002" height="29" rx="5" fill="#fff"/><text x="1670" y="535" text-anchor="middle" fill="#5f6368" font-size="19" font-weight="600">JWT validation</text>
+</g>
+</svg>

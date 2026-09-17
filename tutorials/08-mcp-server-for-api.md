@@ -177,10 +177,7 @@ kubectl logs deploy/mcp -n api
 
 We have created a running MCP Server for API with service identity `mcp.idthw-api-mcp`. Its OpenAPI metadata advertises `mcp:role.mcp-accessor` together with the `api` role required by each tool.
 
-```mermaid
-flowchart LR
-    MCP["MCP domain: mcp<br/>Service: mcp.idthw-api-mcp"] -->|Exchanged access token| API["API domain: api<br/>Scope: api:role.docs-getter"]
-```
+![MCP adapter calls the API with an exchanged access token](./assets/core_08_mcp_api.svg)
 
 <a id="whats-next"></a>
 

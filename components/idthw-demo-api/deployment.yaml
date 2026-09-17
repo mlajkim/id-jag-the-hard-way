@@ -18,6 +18,8 @@ spec:
           image: ghcr.io/mlajkim/idthw-demo-api:latest
           imagePullPolicy: Always
           env:
+            - name: ACCESS_TOKEN_ENABLED
+              value: "false"
             - name: NODE_EXTRA_CA_CERTS
               value: /var/run/athenz/ca.crt
           ports:

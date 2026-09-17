@@ -234,7 +234,7 @@ get docs!
 
 ## Understand the Result
 
-![10_arc_failed_to_token_exchange](./assets/10_arc_failed_to_token_exchange.png)
+![10_arc_failed_to_token_exchange](./assets/10_arc_failed_to_token_exchange.svg)
 
 We were able to successfully install the AI client, using:
 

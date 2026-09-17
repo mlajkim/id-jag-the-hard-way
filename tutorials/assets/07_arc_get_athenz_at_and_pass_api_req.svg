@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1720" height="780" viewBox="0 0 1720 780" role="img" aria-labelledby="title description">
+<title id="title">Athenz access token and document request</title>
+<desc id="description">Athenz access token and document request</desc>
+<defs><marker id="arrow-blue" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="m1 1 9 5-9 5Z" fill="#1a73e8"/></marker>
+<marker id="arrow-green" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="m1 1 9 5-9 5Z" fill="#188038"/></marker>
+<marker id="arrow-red" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="m1 1 9 5-9 5Z" fill="#c5221f"/></marker>
+<marker id="arrow-gray" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="m1 1 9 5-9 5Z" fill="#5f6368"/></marker>
+<marker id="arrow-purple" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="m1 1 9 5-9 5Z" fill="#7b4cc0"/></marker>
+  <g id="human" fill="currentColor"><path d="M12 13a7 7 0 1 1 8 0c6 2 10 7 10 13v4H2v-4c0-6 4-11 10-13Z"/></g>
+  <g id="server" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="26" height="11" rx="3"/><rect x="3" y="18" width="26" height="11" rx="3"/><path d="M18 8.5h5m-5 15h5"/><circle cx="9" cy="8.5" r="1"/><circle cx="9" cy="23.5" r="1"/></g>
+  <g id="shield" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M16 2 29 7v9c0 7-7 12-13 15C10 28 3 23 3 16V7Z"/><path d="m10 16 4 4 9-10"/></g>
+  <g id="key" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><circle cx="10" cy="11" r="7"/><path d="m15 16 13 13m-6-6 4-4m-9-1 4-4"/></g>
+  <g id="agent" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="7" width="26" height="21" rx="6"/><path d="M16 7V2m-5 19h10M9 14h1m12 0h1"/></g>
+  <g id="exchange" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h24m-6-6 6 6-6 6M29 23H5m6-6-6 6 6 6"/></g>
+  <g id="plugin" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v8m12-8v8M7 10h18v7a9 9 0 0 1-18 0Zm9 16v5"/></g>
+  <g id="file" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h13l7 7v21H6Zm13 0v8h7M11 17h10m-10 6h10"/></g>
+  <g id="lock" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="13" width="22" height="17" rx="3"/><path d="M10 13V8a6 6 0 0 1 12 0v5m-6 7v4"/></g></defs>
+<rect width="1720" height="780" rx="20" fill="#fff"/>
+<g font-family="Arial, Helvetica, sans-serif">
+<rect x="1030" y="480" width="650" height="250" rx="20" fill="#f8fafd" stroke="#c4d4ee" stroke-width="1.5" stroke-dasharray="6 6"/>
+<text x="1052" y="509" text-anchor="start" fill="#1a73e8" font-size="18" font-weight="600">api</text>
+<rect x="60" y="550" width="280" height="140" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
+<circle cx="97" cy="592" r="23" fill="#e8f0fe"/><use href="#human" transform="translate(84 579) scale(.8125)" color="#1a73e8"/>
+<text x="133" y="589" text-anchor="start" fill="#202124" font-size="23" font-weight="700">Human</text>
+<rect x="560" y="60" width="480" height="150" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
+<circle cx="597" cy="102" r="23" fill="#e8f0fe"/><use href="#shield" transform="translate(584 89) scale(.8125)" color="#1a73e8"/>
+<text x="633" y="99" text-anchor="start" fill="#202124" font-size="23" font-weight="700">Athenz</text>
+<text x="800" y="192" text-anchor="middle" fill="#5f6368" font-size="18" font-weight="400">Authorization server</text>
+<rect x="1060" y="550" width="250" height="140" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
+<circle cx="1097" cy="592" r="23" fill="#e8f0fe"/><use href="#shield" transform="translate(1084 579) scale(.8125)" color="#1a73e8"/>
+<text x="1133" y="589" text-anchor="start" fill="#202124" font-size="23" font-weight="700">Token</text>
+<text x="1133" y="616" text-anchor="start" fill="#202124" font-size="23" font-weight="700">validation</text>
+<use href="#lock" transform="translate(1284 559) scale(.5)" color="#5f6368"/>
+<rect x="1400" y="550" width="250" height="140" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
+<circle cx="1437" cy="592" r="23" fill="#e8f0fe"/><use href="#server" transform="translate(1424 579) scale(.8125)" color="#1a73e8"/>
+<text x="1473" y="589" text-anchor="start" fill="#202124" font-size="23" font-weight="700">API service</text>
+<path d="M130 550 L130 115 L560 115" fill="none" stroke="#1a73e8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-blue)"/>
+<path d="M560 175 L255 175 L255 550" fill="none" stroke="#188038" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 6" marker-end="url(#arrow-green)"/>
+<path d="M340 600 L1060 600" fill="none" stroke="#1a73e8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-blue)"/>
+<path d="M1310 600 L1400 600" fill="none" stroke="#1a73e8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-blue)"/>
+<path d="M1500 690 L1500 750 L200 750 L200 690" fill="none" stroke="#188038" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 6" marker-end="url(#arrow-green)"/>
+<rect x="200.125" y="50" width="269.75" height="54" rx="5" fill="#fff"/><text x="335" y="72" text-anchor="middle" fill="#1a73e8" font-size="19" font-weight="600">1. Request AT</text><text x="335" y="97" text-anchor="middle" fill="#1a73e8" font-size="19">Default root user · X.509</text>
+<rect x="325.475" y="228" width="169.05" height="29" rx="5" fill="#fff"/><text x="410" y="250" text-anchor="middle" fill="#188038" font-size="19" font-weight="600">2. Access token</text>
+<rect x="580.895" y="527" width="238.21" height="54" rx="5" fill="#fff"/><text x="700" y="549" text-anchor="middle" fill="#1a73e8" font-size="19" font-weight="600" font-family="Consolas, Liberation Mono, monospace">3. GET /api/docs</text><text x="700" y="574" text-anchor="middle" fill="#1a73e8" font-size="19" font-family="Consolas, Liberation Mono, monospace">Athenz access token</text>
+<rect x="1296.445" y="497" width="117.11" height="50" rx="5" fill="#fff"/><text x="1355" y="517" text-anchor="middle" fill="#1a73e8" font-size="17" font-weight="600">4. Validate</text><text x="1355" y="540" text-anchor="middle" fill="#1a73e8" font-size="17">AT</text>
+<rect x="750.58" y="720" width="138.84" height="29" rx="5" fill="#fff"/><text x="820" y="742" text-anchor="middle" fill="#188038" font-size="19" font-weight="600">5. Documents</text>
+</g>
+</svg>

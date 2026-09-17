@@ -136,6 +136,8 @@ You just got the docs list through Claude Code.
 
 The MCP server (`mcp.idthw-api-mcp`) can now exchange the incoming token and call the API on the learner's behalf. Both the incoming and exchanged tokens have audience `api` and scope `docs-getter`. The next chapter introduces separate MCP and API audiences.
 
+![Authorized MCP token exchange returns an API token and documents](./assets/core_10_exchange_allowed.svg)
+
 The API validates access tokens, but the MCP endpoint does not yet validate incoming tokens before processing requests. API calls still depend on a successful token exchange. In the next chapter, you will add MCP Runtime Proxy to validate tokens before allowing protected MCP requests.
 
 Next: [Protect MCP Server](./11-protect-mcp-server.md)

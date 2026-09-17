@@ -207,6 +207,6 @@ curl -sS -k -H "Authorization: Bearer $_my_access_token" http://localhost:14443/
 
 You successfully fetched an X.509 certificate for the non-admin service identity (`human.idjag-learner`) and used it to authenticate a request for an Athenz access token scoped specifically to `api:role.docs-getter`:
 
-![08_arc_fetch_at_with_non_admin_certificiate](./assets/08_arc_fetch_at_with_non_admin_certificiate.png)
+![Learner requests a docs-getter access token and calls the protected API](./assets/core_07_learner_access.svg)
 
 Next: [MCP Server for API](./08-mcp-server-for-api.md)

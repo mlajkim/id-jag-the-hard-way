@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2080" height="1100" viewBox="0 0 2080 1100" role="img" aria-labelledby="title description">
+<title id="title">ID-JAG architecture</title>
+<desc id="description">ID-JAG architecture</desc>
+<defs><marker id="arrow-blue" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="m1 1 9 5-9 5Z" fill="#1a73e8"/></marker>
+<marker id="arrow-green" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="m1 1 9 5-9 5Z" fill="#188038"/></marker>
+<marker id="arrow-red" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="m1 1 9 5-9 5Z" fill="#c5221f"/></marker>
+<marker id="arrow-gray" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="m1 1 9 5-9 5Z" fill="#5f6368"/></marker>
+<marker id="arrow-purple" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="m1 1 9 5-9 5Z" fill="#7b4cc0"/></marker>
+  <g id="human" fill="currentColor"><path d="M12 13a7 7 0 1 1 8 0c6 2 10 7 10 13v4H2v-4c0-6 4-11 10-13Z"/></g>
+  <g id="server" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="26" height="11" rx="3"/><rect x="3" y="18" width="26" height="11" rx="3"/><path d="M18 8.5h5m-5 15h5"/><circle cx="9" cy="8.5" r="1"/><circle cx="9" cy="23.5" r="1"/></g>
+  <g id="shield" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M16 2 29 7v9c0 7-7 12-13 15C10 28 3 23 3 16V7Z"/><path d="m10 16 4 4 9-10"/></g>
+  <g id="key" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><circle cx="10" cy="11" r="7"/><path d="m15 16 13 13m-6-6 4-4m-9-1 4-4"/></g>
+  <g id="agent" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="7" width="26" height="21" rx="6"/><path d="M16 7V2m-5 19h10M9 14h1m12 0h1"/></g>
+  <g id="exchange" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h24m-6-6 6 6-6 6M29 23H5m6-6-6 6 6 6"/></g>
+  <g id="plugin" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v8m12-8v8M7 10h18v7a9 9 0 0 1-18 0Zm9 16v5"/></g>
+  <g id="file" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h13l7 7v21H6Zm13 0v8h7M11 17h10m-10 6h10"/></g>
+  <g id="lock" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="13" width="22" height="17" rx="3"/><path d="M10 13V8a6 6 0 0 1 12 0v5m-6 7v4"/></g></defs>
+<rect width="2080" height="1100" rx="20" fill="#fff"/>
+<g font-family="Arial, Helvetica, sans-serif">
+<rect x="30" y="30" width="340" height="260" rx="20" fill="#f8fafd" stroke="#c4d4ee" stroke-width="1.5" stroke-dasharray="6 6"/>
+<text x="52" y="59" text-anchor="start" fill="#1a73e8" font-size="18" font-weight="600">Keycloak</text>
+<rect x="560" y="30" width="1480" height="260" rx="20" fill="#f8fafd" stroke="#c4d4ee" stroke-width="1.5" stroke-dasharray="6 6"/>
+<text x="582" y="59" text-anchor="start" fill="#1a73e8" font-size="18" font-weight="600">Athenz</text>
+<rect x="60" y="90" width="280" height="150" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
+<circle cx="97" cy="132" r="23" fill="#e8f0fe"/><use href="#key" transform="translate(84 119) scale(.8125)" color="#1a73e8"/>
+<text x="133" y="129" text-anchor="start" fill="#202124" font-size="23" font-weight="700">IdP</text>
+<rect x="600" y="90" width="460" height="150" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
+<circle cx="637" cy="132" r="23" fill="#e8f0fe"/><use href="#plugin" transform="translate(624 119) scale(.8125)" color="#1a73e8"/>
+<text x="673" y="129" text-anchor="start" fill="#202124" font-size="23" font-weight="700">IdP authorization</text>
+<text x="673" y="156" text-anchor="start" fill="#202124" font-size="23" font-weight="700">server</text>
+<rect x="1570" y="90" width="430" height="150" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
+<circle cx="1607" cy="132" r="23" fill="#e8f0fe"/><use href="#shield" transform="translate(1594 119) scale(.8125)" color="#1a73e8"/>
+<text x="1643" y="129" text-anchor="start" fill="#202124" font-size="23" font-weight="700">Authorization</text>
+<text x="1643" y="156" text-anchor="start" fill="#202124" font-size="23" font-weight="700">server</text>
+<rect x="60" y="740" width="300" height="160" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
+<circle cx="97" cy="782" r="23" fill="#e8f0fe"/><use href="#human" transform="translate(84 769) scale(.8125)" color="#1a73e8"/>
+<text x="133" y="779" text-anchor="start" fill="#202124" font-size="23" font-weight="700">Human</text>
+<text x="210" y="882" text-anchor="middle" fill="#5f6368" font-size="18" font-weight="400">human.idjag-learner</text>
+<rect x="650" y="740" width="360" height="160" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
+<circle cx="687" cy="782" r="23" fill="#e8f0fe"/><use href="#agent" transform="translate(674 769) scale(.8125)" color="#1a73e8"/>
+<text x="723" y="779" text-anchor="start" fill="#202124" font-size="23" font-weight="700">Requesting agent</text>
+<text x="723" y="806" text-anchor="start" fill="#202124" font-size="23" font-weight="700">(AI)</text>
+<text x="830" y="882" text-anchor="middle" fill="#5f6368" font-size="18" font-weight="400">ai.open-webui</text>
+<rect x="1330" y="740" width="300" height="160" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
+<circle cx="1367" cy="782" r="23" fill="#e8f0fe"/><use href="#exchange" transform="translate(1354 769) scale(.8125)" color="#1a73e8"/>
+<text x="1403" y="779" text-anchor="start" fill="#202124" font-size="23" font-weight="700">MCP</text>
+<text x="1480" y="882" text-anchor="middle" fill="#5f6368" font-size="18" font-weight="400">api.mcp-api</text>
+<rect x="1760" y="740" width="280" height="160" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
+<circle cx="1797" cy="782" r="23" fill="#e8f0fe"/><use href="#server" transform="translate(1784 769) scale(.8125)" color="#1a73e8"/>
+<text x="1833" y="779" text-anchor="start" fill="#202124" font-size="23" font-weight="700">Resource</text>
+<text x="1833" y="806" text-anchor="start" fill="#202124" font-size="23" font-weight="700">server</text>
+<text x="1900" y="882" text-anchor="middle" fill="#5f6368" font-size="18" font-weight="400">api.api</text>
+<path d="M600 166 L340 166" fill="none" stroke="#5f6368" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 6" marker-end="url(#arrow-gray)"/>
+<path d="M1570 166 L1060 166" fill="none" stroke="#5f6368" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 6" marker-end="url(#arrow-gray)"/>
+<path d="M360 790 L650 790" fill="none" stroke="#1a73e8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-blue)"/>
+<path d="M710 740 L710 405 L170 405 L170 240" fill="none" stroke="#1a73e8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-blue)"/>
+<path d="M290 240 L290 510 L770 510 L770 740" fill="none" stroke="#188038" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 6" marker-end="url(#arrow-green)"/>
+<path d="M360 860 L650 860" fill="none" stroke="#1a73e8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-blue)"/>
+<path d="M850 740 L850 240" fill="none" stroke="#1a73e8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-blue)"/>
+<path d="M940 240 L940 740" fill="none" stroke="#188038" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 6" marker-end="url(#arrow-green)"/>
+<path d="M700 240 L700 325 L980 325 L980 240" fill="none" stroke="#5f6368" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-gray)"/>
+<path d="M1010 770 L1140 770 L1140 395 L1630 395 L1630 240" fill="none" stroke="#1a73e8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-blue)"/>
+<path d="M1700 240 L1700 475 L1210 475 L1210 815 L1010 815" fill="none" stroke="#188038" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 6" marker-end="url(#arrow-green)"/>
+<path d="M1010 860 L1330 860" fill="none" stroke="#1a73e8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-blue)"/>
+<path d="M1390 740 L1390 550 L1780 550 L1780 240" fill="none" stroke="#1a73e8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-blue)"/>
+<path d="M1860 240 L1860 635 L1490 635 L1490 740" fill="none" stroke="#188038" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 6" marker-end="url(#arrow-green)"/>
+<path d="M1630 825 L1760 825" fill="none" stroke="#1a73e8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-blue)"/>
+<path d="M1330 790 L1280 790 L1280 1050 L2060 1050 L2060 325 L2000 325 L2000 240" fill="none" stroke="#5f6368" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 6" marker-end="url(#arrow-gray)"/>
+<path d="M1960 740 L1960 240" fill="none" stroke="#5f6368" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 6" marker-end="url(#arrow-gray)"/>
+<rect x="390.51" y="122" width="158.98000000000002" height="29" rx="5" fill="#fff"/><text x="470" y="144" text-anchor="middle" fill="#5f6368" font-size="19" font-weight="600">JWT validation</text>
+<rect x="1265.825" y="122" width="68.35" height="29" rx="5" fill="#fff"/><text x="1300" y="144" text-anchor="middle" fill="#5f6368" font-size="19" font-weight="600">Mount</text>
+<rect x="455.72" y="748" width="98.56" height="29" rx="5" fill="#fff"/><text x="505" y="770" text-anchor="middle" fill="#1a73e8" font-size="19" font-weight="600">1. Login</text>
+<rect x="360.58" y="363" width="138.84" height="29" rx="5" fill="#fff"/><text x="430" y="385" text-anchor="middle" fill="#1a73e8" font-size="19" font-weight="600">1.1 Redirect</text>
+<rect x="425.58" y="468" width="138.84" height="29" rx="5" fill="#fff"/><text x="495" y="490" text-anchor="middle" fill="#188038" font-size="19" font-weight="600">1.2 ID token</text>
+<rect x="453.07" y="811" width="103.86" height="52" rx="5" fill="#fff"/><text x="505" y="832" text-anchor="middle" fill="#1a73e8" font-size="18" font-weight="600">2. Prompt</text><text x="505" y="856" text-anchor="middle" fill="#1a73e8" font-size="18">Get docs</text>
+<rect x="745.405" y="582" width="189.19" height="54" rx="5" fill="#fff"/><text x="840" y="604" text-anchor="middle" fill="#1a73e8" font-size="19" font-weight="600">3. Request ID-JAG</text><text x="840" y="629" text-anchor="middle" fill="#1a73e8" font-size="19">ID token</text>
+<rect x="963.3" y="659" width="113.4" height="28" rx="5" fill="#fff"/><text x="1020" y="680" text-anchor="middle" fill="#188038" font-size="18" font-weight="600">4.1 ID-JAG</text>
+<rect x="768.99" y="286" width="142.02" height="52" rx="5" fill="#fff"/><text x="840" y="307" text-anchor="middle" fill="#5f6368" font-size="18" font-weight="600">4. Enterprise</text><text x="840" y="331" text-anchor="middle" fill="#5f6368" font-size="18">policies</text>
+<rect x="1155.195" y="323" width="249.61" height="54" rx="5" fill="#fff"/><text x="1280" y="345" text-anchor="middle" fill="#1a73e8" font-size="19" font-weight="600">5. Access token request</text><text x="1280" y="370" text-anchor="middle" fill="#1a73e8" font-size="19">ID-JAG</text>
+<rect x="1230.44" y="431" width="179.12" height="29" rx="5" fill="#fff"/><text x="1320" y="453" text-anchor="middle" fill="#188038" font-size="19" font-weight="600">5.1 Access token</text>
+<rect x="1103.76" y="814" width="132.48000000000002" height="52" rx="5" fill="#fff"/><text x="1170" y="835" text-anchor="middle" fill="#1a73e8" font-size="18" font-weight="600">6. Request</text><text x="1170" y="859" text-anchor="middle" fill="#1a73e8" font-size="18">Access token</text>
+<rect x="1469.91" y="504" width="180.18" height="52" rx="5" fill="#fff"/><text x="1560" y="525" text-anchor="middle" fill="#1a73e8" font-size="18" font-weight="600">7. Token exchange</text><text x="1560" y="549" text-anchor="middle" fill="#1a73e8" font-size="18">Access token</text>
+<rect x="1564.68" y="594" width="170.64000000000001" height="28" rx="5" fill="#fff"/><text x="1650" y="615" text-anchor="middle" fill="#188038" font-size="18" font-weight="600">7.1 Exchanged AT</text>
+<rect x="1631.94" y="765" width="126.12" height="50" rx="5" fill="#fff"/><text x="1695" y="785" text-anchor="middle" fill="#1a73e8" font-size="17" font-weight="600">8. Request</text><text x="1695" y="808" text-anchor="middle" fill="#1a73e8" font-size="17">Exchanged AT</text>
+<rect x="1464.22" y="1019" width="151.56" height="28" rx="5" fill="#fff"/><text x="1540" y="1040" text-anchor="middle" fill="#5f6368" font-size="18" font-weight="600">JWT validation</text>
+<rect x="1884.22" y="659" width="151.56" height="28" rx="5" fill="#fff"/><text x="1960" y="680" text-anchor="middle" fill="#5f6368" font-size="18" font-weight="600">JWT validation</text>
+</g>
+</svg>

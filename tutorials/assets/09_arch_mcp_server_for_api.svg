@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1740" height="660" viewBox="0 0 1740 660" role="img" aria-labelledby="title description">
+<title id="title">MCP server in front of the API</title>
+<desc id="description">MCP server in front of the API</desc>
+<defs><marker id="arrow-blue" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="m1 1 9 5-9 5Z" fill="#1a73e8"/></marker>
+<marker id="arrow-green" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="m1 1 9 5-9 5Z" fill="#188038"/></marker>
+<marker id="arrow-red" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="m1 1 9 5-9 5Z" fill="#c5221f"/></marker>
+<marker id="arrow-gray" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="m1 1 9 5-9 5Z" fill="#5f6368"/></marker>
+<marker id="arrow-purple" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="m1 1 9 5-9 5Z" fill="#7b4cc0"/></marker>
+  <g id="human" fill="currentColor"><path d="M12 13a7 7 0 1 1 8 0c6 2 10 7 10 13v4H2v-4c0-6 4-11 10-13Z"/></g>
+  <g id="server" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="26" height="11" rx="3"/><rect x="3" y="18" width="26" height="11" rx="3"/><path d="M18 8.5h5m-5 15h5"/><circle cx="9" cy="8.5" r="1"/><circle cx="9" cy="23.5" r="1"/></g>
+  <g id="shield" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M16 2 29 7v9c0 7-7 12-13 15C10 28 3 23 3 16V7Z"/><path d="m10 16 4 4 9-10"/></g>
+  <g id="key" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><circle cx="10" cy="11" r="7"/><path d="m15 16 13 13m-6-6 4-4m-9-1 4-4"/></g>
+  <g id="agent" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="7" width="26" height="21" rx="6"/><path d="M16 7V2m-5 19h10M9 14h1m12 0h1"/></g>
+  <g id="exchange" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h24m-6-6 6 6-6 6M29 23H5m6-6-6 6 6 6"/></g>
+  <g id="plugin" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v8m12-8v8M7 10h18v7a9 9 0 0 1-18 0Zm9 16v5"/></g>
+  <g id="file" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h13l7 7v21H6Zm13 0v8h7M11 17h10m-10 6h10"/></g>
+  <g id="lock" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="13" width="22" height="17" rx="3"/><path d="M10 13V8a6 6 0 0 1 12 0v5m-6 7v4"/></g></defs>
+<rect width="1740" height="660" rx="20" fill="#fff"/>
+<g font-family="Arial, Helvetica, sans-serif">
+<rect x="640" y="44" width="400" height="140" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
+<circle cx="677" cy="86" r="23" fill="#e8f0fe"/><use href="#shield" transform="translate(664 73) scale(.8125)" color="#1a73e8"/>
+<text x="713" y="83" text-anchor="start" fill="#202124" font-size="23" font-weight="700">Athenz</text>
+<text x="840" y="166" text-anchor="middle" fill="#5f6368" font-size="18" font-weight="400">Authorization server</text>
+<rect x="40" y="300" width="310" height="270" rx="20" fill="#faf8fd" stroke="#d8cce9" stroke-width="1.5" stroke-dasharray="6 6"/>
+<text x="62" y="329" text-anchor="start" fill="#7b4cc0" font-size="18" font-weight="600">human</text>
+<rect x="410" y="300" width="1290" height="270" rx="20" fill="#f8fafd" stroke="#c4d4ee" stroke-width="1.5" stroke-dasharray="6 6"/>
+<text x="432" y="329" text-anchor="start" fill="#1a73e8" font-size="18" font-weight="600">api</text>
+<rect x="64" y="370" width="260" height="150" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
+<circle cx="101" cy="412" r="23" fill="#e8f0fe"/><use href="#human" transform="translate(88 399) scale(.8125)" color="#1a73e8"/>
+<text x="137" y="409" text-anchor="start" fill="#202124" font-size="23" font-weight="700">Human</text>
+<text x="194" y="502" text-anchor="middle" fill="#5f6368" font-size="18" font-weight="400">human.idjag-learner</text>
+<rect x="450" y="370" width="290" height="150" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
+<circle cx="487" cy="412" r="23" fill="#e8f0fe"/><use href="#server" transform="translate(474 399) scale(.8125)" color="#1a73e8"/>
+<text x="523" y="409" text-anchor="start" fill="#202124" font-size="23" font-weight="700">MCP server</text>
+<text x="595" y="502" text-anchor="middle" fill="#5f6368" font-size="18" font-weight="400">api.api-mcp</text>
+<rect x="980" y="370" width="250" height="150" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
+<circle cx="1017" cy="412" r="23" fill="#e8f0fe"/><use href="#shield" transform="translate(1004 399) scale(.8125)" color="#1a73e8"/>
+<text x="1053" y="409" text-anchor="start" fill="#202124" font-size="23" font-weight="700">Athenz ZPE</text>
+<use href="#lock" transform="translate(1204 379) scale(.5)" color="#5f6368"/>
+<rect x="1410" y="370" width="250" height="150" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
+<circle cx="1447" cy="412" r="23" fill="#e8f0fe"/><use href="#server" transform="translate(1434 399) scale(.8125)" color="#1a73e8"/>
+<text x="1483" y="409" text-anchor="start" fill="#202124" font-size="23" font-weight="700">API service</text>
+<path d="M740 440 L980 440" fill="none" stroke="#1a73e8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-blue)"/>
+<path d="M1230 440 L1410 440" fill="none" stroke="#1a73e8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-blue)"/>
+<rect x="775.475" y="398" width="169.05" height="29" rx="5" fill="#fff"/><text x="860" y="420" text-anchor="middle" fill="#1a73e8" font-size="19" font-weight="600">Forward request</text>
+<rect x="1258.53" y="389" width="122.94000000000001" height="52" rx="5" fill="#fff"/><text x="1320" y="410" text-anchor="middle" fill="#1a73e8" font-size="18" font-weight="600">Validate AT</text><text x="1320" y="434" text-anchor="middle" fill="#1a73e8" font-size="18">Forward</text>
+</g>
+</svg>
