@@ -31,7 +31,7 @@ start() {
 node_http() {
   docker exec -i "$container" node --input-type=module - "$@" <<'JS'
 import assert from "node:assert/strict";
-const [port, path, status] = process.argv.slice(2);
+const [port, path, status, expectedBody] = process.argv.slice(2);
 let failure;
 for (let attempt = 0; attempt < 40; attempt++) {
   try {
@@ -39,7 +39,11 @@ for (let attempt = 0; attempt < 40; attempt++) {
       signal: AbortSignal.timeout(1000),
     });
     assert.equal(response.status, Number(status));
-    await response.arrayBuffer();
+    if (expectedBody !== undefined) {
+      assert.deepEqual(await response.json(), JSON.parse(expectedBody));
+    } else {
+      await response.arrayBuffer();
+    }
     process.exit(0);
   } catch (error) {
     failure = error;
@@ -69,8 +73,15 @@ java_http() {
 
 case "$component" in
   idthw-demo-api)
+    # The tutorial starts open and enables token enforcement later.
     start
-    node_http 8080 /healthz 200
+    node_http 8080 /healthz 200 '{"ok":true,"accessTokenEnabled":false}'
+    node_http 8080 /api/docs 200
+    docker stop --time 2 "$container" >/dev/null
+    container=
+
+    start -e ACCESS_TOKEN_ENABLED=true
+    node_http 8080 /healthz 200 '{"ok":true,"accessTokenEnabled":true}'
     node_http 8080 /api/docs 401
     ;;
   idthw-demo-api-mcp)
