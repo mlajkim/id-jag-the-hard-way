@@ -18,7 +18,7 @@ make -C ui setup-permissions-api
 ./tools/setup-permissions.sh tools/config/init.yaml
 ```
 
-> **Order note:** run this after the `api` namespace and `api-server` deployment exist. The setup script creates cert secrets and restarts configured deployments.
+> **Order note:** run this after the `api` namespace and `mcp` deployment exist. The setup script creates the MCP service's cert secret and restarts its deployment.
 
 ### What's inside
 

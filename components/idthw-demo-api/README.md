@@ -16,7 +16,7 @@ The API verifies RS256 access tokens against trusted ZTS signing keys, requires 
 
 Both `scope` and `scp` accept strings or arrays. Short role names such as `docs-getter` are accepted only when `api` is the sole audience. Missing or invalid tokens receive `401`, insufficient scopes receive `403`, and unavailable signing keys receive `503`.
 
-No ZPU, local policy files, or API service certificate is needed. ZTS controls token issuance; the API enforces the issued scopes. Removing role membership does not revoke an already-issued token before its expiry.
+The API needs no local policy files or service certificate. ZTS controls token issuance; the API enforces the issued scopes. Removing role membership does not revoke an already-issued token before its expiry.
 
 Documents are stored in memory, start with the same two sample documents as the Java API, and reset on restart. Creation requires nonempty `name` and `content` strings and a JSON body of at most 64 KiB. `GET /healthz` is public and checks only that the process is running. Request logs contain HTTP methods, status codes, and durations; they do not include tokens or request bodies.
 
