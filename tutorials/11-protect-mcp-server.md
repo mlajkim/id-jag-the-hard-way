@@ -106,7 +106,7 @@ kubectl logs deploy/mcp -n api -c auth-proxy
 ```
 
 ```sh
-# Look for event "access_denied" with status 401: the token audience is still api.
+# Look for "! WARN" and "access denied" with status=401: the token audience is still api.
 ```
 
 ## Fix Insufficient Permission
@@ -221,7 +221,7 @@ kubectl logs deploy/mcp -n api -c auth-proxy
 ```
 
 ```sh
-# Look for "access_token_verified" followed by "request_completed".
+# Look for "access token verified" followed by "request completed" with the same requestId and upstreamStatus=200.
 ```
 
 <a id="review-summary-of-changes"></a>

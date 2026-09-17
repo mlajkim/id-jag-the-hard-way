@@ -6,7 +6,15 @@ The proxy verifies the JWT's RS256 signature against ZTS JWKS, requires an unexp
 
 MCP protocol bootstrap, `ping`, and `tools/list` remain public so the Hub can discover tools before a user has access. Other requests fail closed with `401` for a missing or invalid token, `403` for a missing scope, and `503` when ZTS signing keys cannot be loaded. Denials are logged without logging the token.
 
-Runtime logs are one-line JSON records with a request ID. Protected calls emit `request_received`, `access_token_verified`, and `request_completed` events. The verified event includes the signed token's subject, user ID, client ID, audiences, scopes, signing-key ID, and expiry information. Public calls and failures have distinct events. Authorization headers and raw token values are never logged.
+Runtime logs default to one-line text with a timestamp, severity, event category, and request ID. Each line has one small marker: `→` for incoming requests, `✓` for successful steps, `·` for other information, `!` for warnings, and `×` for errors. Terminal output colors only the severity marker and label; redirected output stays free of color codes. Set `NO_COLOR=1` to disable terminal colors or `LOG_FORMAT=json` to retain the original structured JSON format.
+
+Protected calls emit `request_received`, `access_token_verified`, and `request_completed` events (shown with spaces in text mode). The verified event includes the signed token's subject, user ID, client ID, audiences, scopes, signing-key ID, and expiry information. Public calls and failures have distinct events. Upstream HTTP 4xx responses are warnings and 5xx responses are errors. Authorization headers and raw token values are never logged.
+
+```text
+2026-09-17T09:00:00.000Z → INFO  [mcp-runtime-proxy] [request] request received | requestId=demo-request method=POST path=/mcp accessTokenPresent=true
+2026-09-17T09:00:00.012Z ✓ INFO  [mcp-runtime-proxy] [request] request completed | requestId=demo-request method=POST path=/mcp durationMs=12 upstreamStatus=200
+2026-09-17T09:00:01.002Z ! WARN  [mcp-runtime-proxy] [auth] access denied | requestId=demo-denied method=POST path=/mcp code=insufficient_scope status=403
+```
 
 ## Request path
 
@@ -40,6 +48,8 @@ For new Hub-managed servers, Runtime Proxy also manages the selected Athenz serv
 | `MCP_READINESS_PATH` | `/mcp` | MCP endpoint used by the readiness probe |
 | `MCP_READINESS_TIMEOUT_MS` | `4000` | Total timeout for the MCP readiness lifecycle |
 | `MCP_PUBLIC_OPENAPI_ENABLED` | `false` | Allow public `GET /openapi.json` and CORS preflight for the tutorial adapter; keep MCP discovery public even with an old token |
+| `LOG_FORMAT` | `text` | Log output format: readable `text` or structured `json` |
+| `NO_COLOR` | Unset | Disable terminal log colors when set |
 | `ATHENZ_JWKS_URL` | `https://athenz-zts-server.athenz:4443/zts/v1/oauth2/keys?rfc=true` | ZTS signing-key endpoint |
 | `ATHENZ_JWKS_CA_PATH` | `/var/run/athenz/ca.crt` | CA used to authenticate the HTTPS JWKS endpoint |
 | `ATHENZ_JWKS_CACHE_TTL_SECONDS` | `300` | In-memory JWKS cache lifetime |
