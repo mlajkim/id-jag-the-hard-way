@@ -149,7 +149,8 @@ async function handleRequest(
       buildUpstreamUrl(target, requestUrl),
       bufferedBody,
     )
-    logger.info("request_completed", {
+    const completionLevel = upstreamStatus >= 500 ? "error" : upstreamStatus >= 400 ? "warn" : "info"
+    logger[completionLevel]("request_completed", {
       ...requestFields,
       durationMs: Date.now() - startedAt,
       upstreamStatus,

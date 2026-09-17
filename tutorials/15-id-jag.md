@@ -117,9 +117,11 @@ Inspect the `auth-proxy` container, which runs MCP Runtime Proxy:
 kubectl logs -n api deployment/mcp -c auth-proxy --tail=50
 ```
 
-Find an `access_token_verified` event. It is emitted only after all of those checks pass. Check its `audiences`, `scopes`, `keyId`, and `expiresInSeconds`, then match its `requestId` to a `request_completed` event with `upstreamStatus: 200`. Short scopes such as `mcp-accessor` are accepted only when `mcp` is the sole audience.
+Find an `access token verified` line in the default text logs. It is emitted only after all of those checks pass. Check its `audiences`, `scopes`, `keyId`, and `expiresInSeconds`, then match its `requestId` to a `request completed` line with `upstreamStatus=200`. Short scopes such as `mcp-accessor` are accepted only when `mcp` is the sole audience.
 
-A public discovery request can also complete successfully, so `request_completed` alone does not confirm token validation. Reading the JWT's `alg` header alone does not verify its signature either.
+A public discovery request can also complete successfully, so `request completed` alone does not confirm token validation. Reading the JWT's `alg` header alone does not verify its signature either.
+
+With `LOG_FORMAT=json` set on the `auth-proxy` container, the same events appear as `access_token_verified` and `request_completed`, with `"upstreamStatus":200` in the JSON record. Older Runtime Proxy images also use this JSON format by default.
 
 3. The MCP adapter performs the downstream token exchange. It authenticates as `mcp.idthw-api-mcp` and exchanges the incoming token for an API-specific `docs-getter` access token before calling the API.
 
