@@ -243,7 +243,7 @@ kubectl logs deploy/claude-idjag-learner-ai-client-gateway -n human --tail=5
 # 🔑 Athenz ZTS Endpoint: https://athenz-zts-server.athenz:4443/zts/v1
 ```
 
-![Claude gateway connects Keycloak, Athenz, and the protected MCP route](./assets/core_14_gateway_route.svg)
+![AI Client Gateway connects the AI agent, IdP, IdP AS, AS, and the protected MCP route](./assets/core_14_gateway_route.svg)
 
 <a id="verification-prerequisite"></a>
 
@@ -321,7 +321,7 @@ After signing in, you will see the authentication succeed but the MCP connection
 
 The sign-in succeeded, but Athenz rejected the delegation request. The gateway service, `human.idjag-learner.claude`, needs `zts.jag_exchange` permission for the requested MCP and API roles. The learner's own role memberships do not grant that permission to the gateway.
 
-![Keycloak sign-in succeeds, but ZTS denies the gateway's ID-JAG request](./assets/core_14_idjag_denied.svg)
+![IdP sign-in succeeds, but the IdP AS denies the gateway's ID-JAG request](./assets/core_14_idjag_denied.svg)
 
 <a id="whats-next"></a>
 

@@ -1,4 +1,6 @@
 // Native SVG drawing primitives for the core tutorial artwork.
+export const COMPONENT_SIZE = Object.freeze({ width: 280, height: 200 })
+
 const esc = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;')
 const ink = '#202B40'
 const muted = '#718096'
@@ -50,30 +52,31 @@ export class Architecture {
   icon(kind, x, y, size = 44, tone = kind) {
     return `<g transform="translate(${x} ${y}) scale(${size / 52})" color="${tones[tone][0]}">${glyphs[kind]}</g>`
   }
-  card(id, x, y, w, h, title, { kind = id, sub = [], tag, inactive = false, compact = false } = {}) {
+  card(id, x, y, title, { kind = id, sub = [], tag, inactive = false } = {}) {
+    const { width: w, height: h } = COMPONENT_SIZE
     const tone = inactive ? 'inactive' : kind
     const [accent, tint] = tones[tone]
     const lines = Array.isArray(title) ? title : [title]
     const details = Array.isArray(sub) ? sub : [sub]
     const parts = [`<g data-component="${esc(id)}"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="18" fill="white" stroke="#DEE4ED" stroke-width="1.2" filter="url(#card-shadow)"/>`]
-    if (compact) {
-      parts.push(`<rect x="${x + 20}" y="${y + 24}" width="64" height="64" rx="17" fill="${tint}"/>`, this.icon(kind, x + 30, y + 34, 44, tone))
-      lines.forEach((line, i) => parts.push(this.text(x + 106, y + 49 + i * 28, line, { size: 24, weight: 600 })))
-      details.forEach((line, i) => parts.push(this.text(x + 106, y + h - 24 - (details.length - i - 1) * 23, line, { size: Math.min(16, (w - 128) / (line.length * .56)), color: muted, mono: true })))
-    } else {
-      parts.push(`<rect x="${x + 22}" y="${y + 20}" width="58" height="58" rx="16" fill="${tint}"/>`, this.icon(kind, x + 31, y + 29, 40, tone))
-      if (tag) {
-        const tw = tag.length * 8 + 20
-        parts.push(`<rect x="${x + w - tw - 20}" y="${y + 29}" width="${tw}" height="25" rx="8" fill="${tint}"/>`, this.text(x + w - tw / 2 - 20, y + 46, tag, { size: 13, weight: 500, color: accent, mono: true, anchor: 'middle' }))
-      }
-      lines.forEach((line, i) => parts.push(this.text(x + 22, y + 108 + i * 27, line, { size: 24, weight: 600 })))
-      details.forEach((line, i) => parts.push(this.text(x + 22, y + h - 20 - (details.length - i - 1) * 22, line, { size: Math.min(16, (w - 44) / (line.length * .6)), color: muted, mono: true })))
+    parts.push(`<rect x="${x + 22}" y="${y + 20}" width="58" height="58" rx="16" fill="${tint}"/>`, this.icon(kind, x + 31, y + 29, 40, tone))
+    if (tag) {
+      const tw = tag.length * 8 + 20
+      parts.push(`<rect x="${x + w - tw - 20}" y="${y + 29}" width="${tw}" height="25" rx="8" fill="${tint}"/>`, this.text(x + w - tw / 2 - 20, y + 46, tag, { size: 13, weight: 500, color: accent, mono: true, anchor: 'middle' }))
     }
+    lines.forEach((line, i) => parts.push(this.text(x + 22, y + 108 + i * 27, line, { size: 24, weight: 600 })))
+    details.forEach((line, i) => parts.push(this.text(x + 22, y + h - 20 - (details.length - i - 1) * 22, line, { size: 14, color: muted, mono: true })))
     parts.push('</g>'); this.nodes.push(parts.join(''))
     return { id, x, y, w, h, left: (t = .5) => [x, y + h * t], right: (t = .5) => [x + w, y + h * t], top: (t = .5) => [x + w * t, y], bottom: (t = .5) => [x + w * t, y + h] }
   }
-  frame(x, y, w, h, title) {
-    this.groups.push(`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="24" fill="#F1F3FA" fill-opacity=".8" stroke="#E1E5F0" stroke-width="1"/>${this.text(x + 22, y + 31, title, { size: 14, weight: 600, color: '#7A85A0', spacing: '1.3' })}`)
+  group(cards, title, { product } = {}) {
+    if (!cards.length) throw new Error('A group needs at least one component')
+    const padding = 48
+    const x = Math.min(...cards.map(card => card.x)) - padding
+    const y = Math.min(...cards.map(card => card.y)) - padding
+    const w = Math.max(...cards.map(card => card.x + card.w)) - x + padding
+    const h = Math.max(...cards.map(card => card.y + card.h)) - y + padding
+    this.groups.push(`<rect data-group="${esc(title)}" x="${x}" y="${y}" width="${w}" height="${h}" rx="24" fill="#F1F3FA" fill-opacity=".8" stroke="#E1E5F0" stroke-width="1"/>${this.text(x + 22, y + 31, title, { size: 14, weight: 600, color: '#7A85A0', spacing: '1.3' })}${product ? this.text(x + w - 22, y + 31, product, { size: 14, color: muted, anchor: 'end' }) : ''}`)
   }
   edge(points, { tone = 'blue', dash = false, label, at, size = 18, secondary, token, tokenAt } = {}) {
     const color = flows[tone]
