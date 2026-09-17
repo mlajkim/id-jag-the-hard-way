@@ -120,10 +120,6 @@ case "$component" in
     # The default command exports the built JAR and exits successfully.
     docker run --rm --network none --platform "$platform" --tmpfs /export "$image"
     ;;
-  zpu)
-    docker run --rm --network none --platform "$platform" --entrypoint bash "$image" \
-      -ec 'bash -n /usr/local/bin/zpu.sh; curl --version >/dev/null'
-    ;;
   *)
     echo "No container check defined for $component" >&2
     exit 1

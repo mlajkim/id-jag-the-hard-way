@@ -6,25 +6,6 @@ domain: api
 
 # Service identities in this domain
 services:
-  - name: zpu
-    key_version: v1
-    local_keys_dir: ./keys
-    k8s:
-      ns: api
-      deployment: api-server
-      secret:
-        name: api-zpu-cert
-        files:
-          cert:
-            k8s_name: cert
-            local_name: api-zpu.crt
-          key:
-            k8s_name: key
-            local_name: api-zpu.key
-          ca:
-            k8s_name: ca
-            import_from: ./athenz_dist/certs/ca.cert.pem
-
   - name: api-mcp
     key_version: v1
     local_keys_dir: ./keys

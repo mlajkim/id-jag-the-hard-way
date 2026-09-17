@@ -29,7 +29,7 @@ The goal of this document is to define the structure and philosophy of the `rese
 
 ## Philosophy
 
-This directory is the **single source of truth (SSOT)** for research findings, error outputs, troubleshooting procedures, and non-obvious configuration steps related to ID-JAG and its surrounding technologies: Athenz (ZMS, ZTS, ZPU), Keycloak, MCP servers, the AI client gateway, Kubernetes, and more.
+This directory is the **single source of truth (SSOT)** for research findings, error outputs, troubleshooting procedures, and non-obvious configuration steps related to ID-JAG and its surrounding technologies: Athenz (ZMS, ZTS), Keycloak, MCP servers, the AI client gateway, Kubernetes, and more.
 
 When you encounter an error, a known issue, or a hard-won configuration step, document it here instead of leaving it in Slack, a notepad, or memory. Future readers — including yourself — can find the root cause, the exact steps taken, and the outcome in one place without re-investigating from scratch.
 
