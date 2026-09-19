@@ -16,7 +16,7 @@
 >
 > To use hosted model inference, choose [Claude Code](../09-ai-agent.md) or [Codex CLI](../codex/09-ai-agent.md). Those clients run locally, but do not require Ollama or a local model for their hosted-model setup.
 
-Install Open WebUI and connect it to the MCP service with the following steps. The first document request succeeds using the learner's API access token.
+Install Open WebUI, connect it to the MCP service, and verify that it discovers the document tools.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
@@ -27,6 +27,7 @@ Install Open WebUI and connect it to the MCP service with the following steps. T
 - [Register MCP Server as a Tool Server in Open WebUI](#register-mcp-server-as-a-tool-server-in-open-webui)
 - [Verify](#verify)
 - [Understand the Result](#understand-the-result)
+- [Next Steps](#next-steps)
 
 <!-- /TOC -->
 
@@ -175,27 +176,13 @@ However, the credentials are up to you.
 
 ## Register MCP Server as a Tool Server in Open WebUI
 
-Get access token again:
-
-```sh
-_scope="api:role.docs-getter"
-_my_access_token=$(./tools/athenz/fetch-access-token.sh \
-  "./keys/idjag-learner.crt" \
-  "./keys/idjag-learner.key" \
-  "${_scope}" \
-  "./keys/idjag-learner.jwt")
-
-cat "./keys/idjag-learner.jwt"
-```
-
 Go to `User Icon` > `Admin Panel` > `Settings` > `Integrations` > `Manage Tool Servers` > `+ Icon` to register the MCP server as a tool server.
 
 - Name: `API MCP Server`
 - Description: `MCP server for API that holds documentation`
 - URL: `http://mcp.mcp:8081`
 - OpenAPI spec: `/openapi.json`
-- Auth type: `Bearer`
-- API Key: `<the access token you just fetched>`
+- Auth type: `None`
 - Access: Change to `Public`
 
 The OpenAPI operations are `POST /tools/get_k8s_docs`, `POST /tools/post_k8s_doc`, and `POST /tools/delete_k8s_doc`. Each operation takes the tool arguments as a JSON object.
@@ -217,24 +204,20 @@ Then in `tools` section, select the tool that we just created as the following:
 
 ## Verify
 
-Follow the steps below to verify the setup.
+Open the registered tool server and confirm that its OpenAPI specification lists these operations:
 
-> [!NOTE]
-> Make sure that the tool we just created is selected
-> ![10_tool_selected](./assets/10_tool_selected.png)
-
-Ask the client to retrieve documents:
-
-```text
-get docs from k8s doc server!
-```
-
-The `get_k8s_docs` tool succeeds and returns the API's documents. Its structured result contains `status: 200` and `ok: true`.
+- `get_k8s_docs`
+- `post_k8s_doc`
+- `delete_k8s_doc`
 
 ## Understand the Result
 
-Open WebUI sends the learner's API access token to `idthw-demo-api-mcp`. In `forward` mode, MCP passes that token to the API, which validates audience `api` and scope `docs-getter` before returning documents.
+Open WebUI can connect to `idthw-demo-api-mcp` and discover its document tools without an access token. Discovery reads tool definitions; it does not retrieve documents from the protected API.
 
-![The AI client retrieves documents through MCP](../assets/core_09_mcp_success.svg)
+![The AI client connects to MCP and discovers the tools](../assets/core_09_mcp_success.svg)
 
-The MCP endpoint does not yet validate incoming tokens itself. In the next chapter, you will add Runtime Proxy to protect tool execution. Next: [Protect MCP Server](./10-protect-mcp-server.md)
+## Next Steps
+
+The AI client can now discover the MCP tools. In the next chapter, we will add Runtime Proxy to validate access tokens before allowing tool execution.
+
+Next: [Protect MCP Server](./10-protect-mcp-server.md)

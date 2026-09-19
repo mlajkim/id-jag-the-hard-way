@@ -206,4 +206,6 @@ We installed the `KeycloakTokenExchangeProvider` plugin, which takes the ID toke
 
 ## Next Steps
 
-Athenz now trusts Keycloak ID tokens. In the next chapter, you will deploy AI Client Gateway and configure Open WebUI to send tool requests through it. Next: [AI Client Gateway](./14-ai-client-gateway.md)
+Athenz now trusts Keycloak ID tokens. In the next chapter, you will deploy AI Client Gateway and configure Open WebUI to send tool requests through it.
+
+Next: [AI Client Gateway](./14-ai-client-gateway.md)

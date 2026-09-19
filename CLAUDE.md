@@ -13,7 +13,7 @@ The architecture implements the [ID-JAG specification](https://techblog.lycorp.c
 The repository contains these runtime components and supporting plugins:
 
 1. **`components/api_server/`** — Legacy Java 17 (Maven) REST API. The core tutorial now uses `components/idthw-demo-api/`, which validates Athenz access tokens and enforces per-operation scopes directly. The legacy API directory also contains two sub-services:
-   - **`components/idthw-demo-api-mcp/`** — Core tutorial and Hub MCP server. Chapter 08 forwards the learner's API token for a successful call; chapter 10 switches to request-specific token files supplied by Runtime Proxy; chapter 11 grants downstream exchange permissions.
+   - **`components/idthw-demo-api-mcp/`** — Core tutorial and Hub MCP server. Chapter 08 verifies startup and tool discovery; chapter 10 adds Runtime Proxy, which supplies request-specific API token files; chapter 11 grants downstream exchange permissions.
    - **`components/api_server/mcp/`** — Legacy Node.js/TypeScript MCP adapter that performs its own token exchange; no longer used by the core tutorial.
    - **`components/api_server/authorization_proxy/`** — Legacy Spring Boot 3.2.5 proxy that evaluates Athenz policies. The core tutorial uses `components/mcp-runtime-proxy/` for validation and downstream exchange, with OpenAPI discovery for the existing AI Client Gateway.
 

@@ -8,7 +8,7 @@ Complete the shared [Authorize the Downstream Exchange](../11-token-exchange.md#
 
 ## Update the Client
 
-Open **Admin Panel > Settings > Integrations > Manage Tool Servers** and edit `API MCP Server`. Replace the bearer API key with the learner's MCP-audience token saved in `./keys/idjag-learner.jwt`. Keep the URL `http://mcp.mcp:8081` and OpenAPI spec `/openapi.json`.
+Open **Admin Panel > Settings > Integrations > Manage Tool Servers** and edit `API MCP Server`. Set the auth type to `Bearer` and use the learner's MCP-audience token saved in `./keys/idjag-learner.jwt` as the API key. Keep the URL `http://mcp.mcp:8081` and OpenAPI spec `/openapi.json`.
 
 Start a new chat, select the document tool, and ask `get docs!`.
 
@@ -18,4 +18,6 @@ Runtime Proxy validates the learner's MCP token, exchanges it for an API token, 
 
 ![Runtime Proxy exchanges the token before MCP calls the API](../assets/core_11_exchange_allowed.svg)
 
-Open WebUI can now retrieve documents through the protected MCP service. In the next chapter, you will deploy Keycloak so users can sign in and receive an ID token. Next: [Identity Provider](./12-identity-provider.md)
+Open WebUI can now retrieve documents through the protected MCP service. In the next chapter, you will deploy Keycloak so users can sign in and receive an ID token.
+
+Next: [Identity Provider](./12-identity-provider.md)

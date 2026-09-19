@@ -131,4 +131,6 @@ Keep token enforcement enabled.
 
 ## Next Steps
 
-The API now requires an access token. In the next chapter, you will deploy Athenz as the authorization server. Next: [Authorization Server](./05-authorization-server.md)
+The API now requires an access token. In the next chapter, you will deploy Athenz as the authorization server.
+
+Next: [Authorization Server](./05-authorization-server.md)

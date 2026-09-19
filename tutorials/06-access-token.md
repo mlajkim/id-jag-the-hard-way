@@ -232,4 +232,6 @@ We have successfully retrieved an Athenz access token as `user.athenz_admin` and
 
 ## Next Steps
 
-The administrator can also manage Athenz domains and policies. Routine API calls do not need those privileges. In the next chapter, you will create a dedicated learner identity and grant it the document-reading role. Next: [Granular Permission](./07-granular-permission.md)
+The administrator can also manage Athenz domains and policies. Routine API calls do not need those privileges. In the next chapter, you will create a dedicated learner identity and grant it the document-reading role.
+
+Next: [Granular Permission](./07-granular-permission.md)

@@ -122,4 +122,6 @@ The exchanged token grants only `api:role.docs-getter`. The MCP container has re
 
 ## Next Steps
 
-The learner can now retrieve documents through the protected MCP service using a certificate-issued token. In the next chapter, you will deploy Keycloak so users can sign in and receive an ID token. Next: [Identity Provider](./12-identity-provider.md)
+The learner can now retrieve documents through the protected MCP service using a certificate-issued token. In the next chapter, you will deploy Keycloak so users can sign in and receive an ID token.
+
+Next: [Identity Provider](./12-identity-provider.md)

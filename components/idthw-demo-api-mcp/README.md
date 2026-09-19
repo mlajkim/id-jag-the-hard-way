@@ -2,13 +2,20 @@
 
 This MCP serves the core tutorial and Hub-managed deployments. It does not perform Athenz token exchange itself and does not need access to the MCP service private key.
 
+## Supplied API tokens
+
+The MCP server calls the resource server with an API access token supplied in either of two ways:
+
+- Set `API_ACCESS_TOKEN` at startup for direct use. All tool calls use that token's permissions until it expires.
+- Let Runtime Proxy supply a request-specific token file after exchange. The MCP server reads that file immediately before calling the API.
+
+No mode switch is needed. A request-specific file takes precedence over `API_ACCESS_TOKEN`; an invalid or unreadable file fails the call without falling back to the startup token. The incoming client's bearer header is never forwarded to the API. Leave `API_ACCESS_TOKEN` unset in deployments where Runtime Proxy supplies tokens for each user.
+
 ## Core tutorial
 
-Chapter 08 explicitly sets `MCP_ACCESS_TOKEN_MODE=forward` to demonstrate a successful document request with the learner's existing API token. This mode forwards the incoming bearer token to the API, which validates it. MCP does not validate that token itself.
+Chapter 08 deploys the MCP server and verifies initialization and tool discovery without a proxy or access token. Chapter 09 connects an AI client to discover the tools. Document retrieval requires a supplied API token.
 
-Chapter 10 switches to the default `MCP_ACCESS_TOKEN_MODE=token-file` and sets `HOST=127.0.0.1` so requests enter through Runtime Proxy in the same pod. The proxy validates MCP access and performs downstream exchange using the service identity. Chapter 11 grants that identity the missing exchange permissions.
-
-In `token-file` mode, a missing or invalid token-file path fails closed; the incoming bearer header is never used as a fallback.
+Chapter 10 adds Runtime Proxy and sets `HOST=127.0.0.1` so requests enter through the proxy in the same pod. The proxy validates MCP access and performs downstream exchange using the service identity. Chapter 11 grants that identity the missing exchange permissions.
 
 `GET /openapi.json` describes `POST /tools/get_k8s_docs`, `POST /tools/post_k8s_doc`, and `POST /tools/delete_k8s_doc` for Open WebUI and the tutorial AI Client Gateway. Each endpoint accepts a JSON object of tool arguments and returns the same JSON-RPC tool result as `/mcp`. The metadata maps operation IDs to `x-athenz-required-scope`, combining `ACCESS_MCP_REQUIRED_SCOPE` (default `mcp:role.mcp-accessor`) with the API role. Runtime Proxy's configured `MCP_TOOL_SCOPES` maps these HTTP tool requests to MCP calls before publishing their token files.
 
