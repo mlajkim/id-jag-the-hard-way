@@ -1,8 +1,8 @@
 # Background
 
 - https://github.com/mlajkim/id-jag-the-hard-way/issues/287
+- https://github.com/mlajkim/id-jag-the-hard-way/issues/216
 
 ## What's done?
 
-<!-- Summarize the concrete changes in this PR. Keep the PR small and focused. -->
-
+Tid
