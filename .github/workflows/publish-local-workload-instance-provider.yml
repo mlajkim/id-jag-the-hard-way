@@ -8,7 +8,7 @@ on:
   push:
     branches: ["main"]
     paths:
-      - "local_workload_instance_provider/**"
+      - "components/local_workload_instance_provider/**"
       - ".github/workflows/publish-local-workload-instance-provider.yml"
       - ".github/workflows/build-multiarch-image.yml"
       - ".github/scripts/check-container.sh"
@@ -16,7 +16,7 @@ on:
   pull_request:
     branches: ["main"]
     paths:
-      - "local_workload_instance_provider/**"
+      - "components/local_workload_instance_provider/**"
       - ".github/workflows/publish-local-workload-instance-provider.yml"
       - ".github/workflows/build-multiarch-image.yml"
       - ".github/scripts/check-container.sh"
@@ -32,7 +32,7 @@ jobs:
     uses: ./.github/workflows/build-multiarch-image.yml
     with:
       image: local-workload-instance-provider
-      context: ./local_workload_instance_provider
+      context: ./components/local_workload_instance_provider
       java-build: |
         make build
     secrets:

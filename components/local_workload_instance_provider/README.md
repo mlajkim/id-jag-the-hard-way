@@ -2,7 +2,7 @@
 
 This standalone Maven module builds a class-based Athenz Copper Argos provider that accepts an OIDC ID token as instance attestation data. It is not deployed or registered by default.
 
-The [`athenzd` test procedure](../faqs/athenzd/test-athenzd-with-idthw.md) mounts the published JAR into ZTS with an init container, registers the provider, and configures its launch policies. With `identity.mode: copperargos`, `athenzd` generates a private key and CSR locally, submits the cached ID token to ZTS `POST /zts/v1/instance`, and writes the returned X.509 service certificate and signer chain. The private key never leaves the workstation.
+The [`athenzd` test procedure](../../faqs/athenzd/test-athenzd-with-idthw.md) mounts the published JAR into ZTS with an init container, registers the provider, and configures its launch policies. With `identity.mode: copperargos`, `athenzd` generates a private key and CSR locally, submits the cached ID token to ZTS `POST /zts/v1/instance`, and writes the returned X.509 service certificate and signer chain. The private key never leaves the workstation.
 
 ## Build
 
@@ -26,7 +26,7 @@ make test
 
 ## Published image
 
-The [publish workflow](../.github/workflows/publish-local-workload-instance-provider.yml) packages the tested JAR as:
+The [publish workflow](../../.github/workflows/publish-local-workload-instance-provider.yml) packages the tested JAR as:
 
 ```text
 ghcr.io/<repository-owner>/local-workload-instance-provider

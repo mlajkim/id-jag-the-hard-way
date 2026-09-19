@@ -28,7 +28,7 @@ The repository contains these runtime components and supporting plugins:
 
 7. **`components/keycloak_token_exchange_provider/`** — Java 11 Maven Keycloak plugin that enables ID token delegation from Keycloak to Athenz.
 
-8. **`local_workload_instance_provider/`** — Standalone Java 17 Maven plugin for the optional local Copper Argos flow. It validates an OIDC ID token as workload attestation and restricts certificate enrollment to the authenticated user's Athenz home-domain subtree. It is not deployed by default; the `athenzd` FAQ mounts and registers it for testing.
+8. **`components/local_workload_instance_provider/`** — Standalone Java 17 Maven plugin for the optional local Copper Argos flow. It validates an OIDC ID token as workload attestation and restricts certificate enrollment to the authenticated user's Athenz home-domain subtree. It is not deployed by default; the `athenzd` FAQ mounts and registers it for testing.
 
 9. **`athenz_dist/`** — Git submodule pointing to `athenz-community/athenz-distribution`. Acts as the authorization server (ZMS + ZTS) for the tutorial.
 
@@ -101,7 +101,7 @@ make -C components/athenzd build test
 make -C components/keycloak_token_exchange_provider build
 
 # Local workload instance provider — build and test; deployment is opt-in through the athenzd FAQ
-make -C local_workload_instance_provider build
+make -C components/local_workload_instance_provider build
 
 # Local GenAI proxy (port 64443 → configured OpenAI-compatible gateway)
 OPENAI_CODEX_API_KEY='<upstream API key>' make -C genai_proxy local
@@ -130,7 +130,7 @@ The provider Dockerfiles are export-only — they copy their built JARs into a m
 | `components/idthw_hub`             | TypeScript | Next.js 16                              |
 | `components/athenzd`               | Go 1.25    | Cobra, Viper                            |
 | `components/keycloak_token_exchange_provider` | Java 11 | Maven, Keycloak SPI                  |
-| `local_workload_instance_provider` | Java 17    | Maven, Athenz InstanceProvider SPI      |
+| `components/local_workload_instance_provider` | Java 17    | Maven, Athenz InstanceProvider SPI      |
 | `genai_proxy`                       | TypeScript | Node.js 22 built-in HTTP/fetch APIs     |
 
 ## Key Architectural Concepts

@@ -977,7 +977,7 @@ No. Cleanup removes only the child service and child domain created by this test
 
 # Reference
 
-- [Local workload instance provider](../../local_workload_instance_provider/README.md)
+- [Local workload instance provider](../../components/local_workload_instance_provider/README.md)
 - [Local workload provider publish workflow](../../.github/workflows/publish-local-workload-instance-provider.yml)
 - [Make Keycloak HTTPS for ZTS User Certificates](../make-keycloak-https.md)
 - [`athenzd` README](../../components/athenzd/README.md)
