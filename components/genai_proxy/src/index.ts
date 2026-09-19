@@ -9,7 +9,7 @@ const host = process.env.HOST ?? "0.0.0.0"
 const upstreamBaseUrl = requiredEnvironmentVariable("GENAI_UPSTREAM_BASE_URL")
 const upstreamApiKey = requiredEnvironmentVariable("OPENAI_CODEX_API_KEY")
 const publicKeyPath = process.env.ATHENZ_PUBLIC_KEY_PATH
-  ?? fileURLToPath(new URL("../../athenz_dist/keys/zts.public.pem", import.meta.url))
+  ?? fileURLToPath(new URL("../../../athenz_dist/keys/zts.public.pem", import.meta.url))
 const usageDataPath = process.env.USAGE_DATA_PATH
 
 const authenticate = createTokenVerifier({ publicKey: readFileSync(publicKeyPath) })

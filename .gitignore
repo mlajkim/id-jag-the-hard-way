@@ -45,7 +45,7 @@ keys/
 
 tools/config.local.yaml
 tools/.port-forward.pid
-genai_proxy/.env.local
+components/genai_proxy/.env.local
 
 # Local artifacts left behind after applications were moved or removed.
 mcp_hub/

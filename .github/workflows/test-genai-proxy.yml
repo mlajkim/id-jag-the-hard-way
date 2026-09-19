@@ -4,13 +4,13 @@ on:
   push:
     branches: ["main"]
     paths:
-      - "genai_proxy/**"
+      - "components/genai_proxy/**"
       - "tools/config.yaml"
       - ".github/workflows/test-genai-proxy.yml"
   pull_request:
     branches: ["main"]
     paths:
-      - "genai_proxy/**"
+      - "components/genai_proxy/**"
       - "tools/config.yaml"
       - ".github/workflows/test-genai-proxy.yml"
   workflow_dispatch:
@@ -21,7 +21,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: genai_proxy
+        working-directory: components/genai_proxy
 
     steps:
       - uses: actions/checkout@v4
