@@ -13,8 +13,9 @@ The architecture implements the [ID-JAG specification](https://techblog.lycorp.c
 The repository contains these runtime components and supporting plugins:
 
 1. **`components/api_server/`** — Legacy Java 17 (Maven) REST API. The core tutorial now uses `components/idthw-demo-api/`, which validates Athenz access tokens and enforces per-operation scopes directly. The legacy API directory also contains two sub-services:
-   - **`components/api_server/mcp/`** — Node.js/TypeScript MCP (Model Context Protocol) server that performs token exchange with Athenz ZTS before calling the API server.
-   - **`components/api_server/authorization_proxy/`** — Legacy Spring Boot 3.2.5 proxy that evaluates Athenz policies. The core tutorial uses `components/mcp-runtime-proxy/` with OpenAPI discovery enabled, while retaining the existing MCP adapter and AI Client Gateway.
+   - **`components/idthw-demo-api-mcp/`** — Core tutorial and Hub MCP server. Chapter 08 forwards the learner's API token for a successful call; chapter 10 switches to request-specific token files supplied by Runtime Proxy; chapter 11 grants downstream exchange permissions.
+   - **`components/api_server/mcp/`** — Legacy Node.js/TypeScript MCP adapter that performs its own token exchange; no longer used by the core tutorial.
+   - **`components/api_server/authorization_proxy/`** — Legacy Spring Boot 3.2.5 proxy that evaluates Athenz policies. The core tutorial uses `components/mcp-runtime-proxy/` for validation and downstream exchange, with OpenAPI discovery for the existing AI Client Gateway.
 
 2. **`components/ai_client_gateway/`** — Node.js/TypeScript Express proxy that intercepts AI client requests, converts ID tokens to ID-JAG tokens via Athenz, and injects the appropriate access token before forwarding to the MCP server.
 
@@ -136,7 +137,7 @@ The provider Dockerfiles are export-only — they copy their built JARs into a m
 ## Key Architectural Concepts
 
 - **ID-JAG token**: An identity assertion token that carries the delegated identity of a human user to an AI agent. The gateway converts IdP-issued ID tokens into ID-JAG tokens via Athenz.
-- **Token exchange chain**: AI agent → ID-JAG → Athenz AT → MCP server → token exchange → scoped AT → API server. Each hop re-narrows the permission scope.
+- **Token exchange chain**: AI Client Gateway obtains ID-JAG and an MCP-audience Athenz AT. MCP Runtime Proxy validates and exchanges it for a scoped API AT, supplied to the MCP application through a request-specific file. The gateway holds the ID token; the AI client holds its gateway session token.
 - **Athenz ZTS/ZMS**: The authorization server. ZMS manages roles and policies; ZTS issues tokens after checking membership and the applicable issuance/exchange policies. The tutorial's API and MCP Runtime Proxy validate signed scopes directly.
 - **Self-signed certs**: Local development uses self-signed certificates. Keys and cert directories are gitignored. Maven SSL flags are set in all `make local` targets.
 

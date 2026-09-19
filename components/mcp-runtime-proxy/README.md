@@ -48,6 +48,7 @@ For new Hub-managed servers, Runtime Proxy also manages the selected Athenz serv
 | `MCP_READINESS_PATH` | `/mcp` | MCP endpoint used by the readiness probe |
 | `MCP_READINESS_TIMEOUT_MS` | `4000` | Total timeout for the MCP readiness lifecycle |
 | `MCP_PUBLIC_OPENAPI_ENABLED` | `false` | Allow public `GET /openapi.json` and CORS preflight for the tutorial adapter; keep MCP discovery public even with an old token |
+| `MCP_TOOL_SCOPES` | Unset | JSON object mapping tool names to fully qualified downstream scopes; requires token-file exchange. For direct tutorial clients, selects the scope without a Gateway header and rejects unconfigured tools or conflicting headers |
 | `LOG_FORMAT` | `text` | Log output format: readable `text` or structured `json` |
 | `NO_COLOR` | Unset | Disable terminal log colors when set |
 | `ATHENZ_JWKS_URL` | `https://athenz-zts-server.athenz:4443/zts/v1/oauth2/keys?rfc=true` | ZTS signing-key endpoint |
@@ -81,7 +82,9 @@ Hub-managed deployments set the audience to `mcp-hub.mcps.<project>`, require `m
 
 The incoming path and query string are appended to `MCP_TARGET_URL`. For example, `/mcp` is forwarded to `http://127.0.0.1:8080/mcp` with request and response streaming preserved.
 
-The core tutorial uses the existing AI Client Gateway and MCP adapter with `MCP_PUBLIC_OPENAPI_ENABLED=true`. Tool routes still require the accessor scope. Public MCP methods are recognized only on the configured MCP path (`MCP_READINESS_PATH`, default `/mcp`). The adapter performs downstream token exchange, so `ATHENZ_TOKEN_FILE_EXCHANGE_ENABLED` remains `false`; Runtime Proxy needs no service identity or token-file volume in this flow.
+The core tutorial uses `idthw-demo-api-mcp` with `MCP_PUBLIC_OPENAPI_ENABLED=true`, `ATHENZ_TOKEN_FILE_EXCHANGE_ENABLED=true`, and `MCP_TOOL_SCOPES` mapping each document tool to its API role. Public MCP methods are recognized only on the configured MCP path (`MCP_READINESS_PATH`, default `/mcp`). The proxy selects the scope from the tool name, checks it against the verified token, and performs downstream exchange using the certificate mounted only in the proxy. The MCP container mounts the shared token-file volume read-only and listens on loopback. No identity refresh is enabled for the manually issued tutorial certificate.
+
+With `MCP_TOOL_SCOPES` configured, `POST /tools/<tool-name>` accepts a JSON object of tool arguments for OpenAPI clients. The proxy applies the same access and scope checks, translates it into `tools/call` on the configured MCP path, and returns the MCP JSON-RPC result. With this option unset, Hub-managed deployments continue selecting scopes through the Gateway's internal header.
 
 `GET /healthz` is a process liveness check. `GET /readyz` performs an MCP-standard lifecycle against the colocated server: `initialize`, `notifications/initialized`, `ping`, and `tools/list`, followed by best-effort session cleanup. It returns `503` until that lifecycle succeeds, so Kubernetes readiness reflects the MCP protocol rather than only the proxy process.
 

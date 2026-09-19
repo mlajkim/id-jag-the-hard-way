@@ -4,7 +4,7 @@ import {
   createRemoteJwksKeyResolver,
 } from "./auth.ts"
 import { runtimeProxyLogger } from "./logger.ts"
-import { createRuntimeProxyServer } from "./proxy.ts"
+import { createRuntimeProxyServer, toolScopesFromEnvironment } from "./proxy.ts"
 import {
   serviceIdentityConfigFromEnvironment,
   startServiceIdentityManager,
@@ -54,6 +54,7 @@ const server = createRuntimeProxyServer(
     path: readinessPath,
     timeoutMs: readinessTimeoutMs,
     publicOpenApi: process.env.MCP_PUBLIC_OPENAPI_ENABLED === "true",
+    toolScopes: toolScopesFromEnvironment(process.env.MCP_TOOL_SCOPES),
   },
 )
 

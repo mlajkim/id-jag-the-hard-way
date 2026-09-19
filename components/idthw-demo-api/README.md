@@ -18,6 +18,8 @@ When enabled, the API verifies RS256 access tokens against trusted ZTS signing k
 
 In this mode, both `scope` and `scp` accept strings or arrays. Short role names such as `docs-getter` are accepted only when `api` is the sole audience. Missing or invalid tokens receive `401`, insufficient scopes receive `403`, and unavailable signing keys receive `503`.
 
+If Node.js cannot trust the ZTS HTTPS certificate, protected requests return `503` with `error: "zts_ca_untrusted"` and instructions to mount the CA certificate and configure `NODE_EXTRA_CA_CERTS`. The API keeps running and `/healthz` remains available. The CA setting is optional when ZTS already uses a certificate trusted by Node.js.
+
 The API needs no local policy files or service certificate. ZTS controls token issuance; the API enforces the issued scopes. Removing role membership does not revoke an already-issued token before its expiry.
 
 Documents are stored in memory, start with the same two sample documents as the Java API, and reset on restart. Creation requires nonempty `name` and `content` strings and a JSON body of at most 64 KiB. `GET /healthz` is public and reports the active mode, for example `{ "ok": true, "accessTokenEnabled": false }`. It does not check ZTS availability. The startup log also reports `accessTokenEnabled`. Request logs contain HTTP methods, status codes, and durations; they do not include tokens or request bodies.

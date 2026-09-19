@@ -51,6 +51,9 @@ export function createRuntimeProxyServer(
   if (target.username || target.password) {
     throw new Error("MCP_TARGET_URL must not contain credentials")
   }
+  if (readiness.toolScopes && !tokenPublisher) {
+    throw new Error("MCP_TOOL_SCOPES requires ATHENZ_TOKEN_FILE_EXCHANGE_ENABLED=true")
+  }
 
   const server = http.createServer((request, response) => {
     void handleRequest(request, response, target, accessTokenVerifier, logger, tokenPublisher, readiness)
@@ -114,7 +117,38 @@ async function handleRequest(
     }
 
     let bufferedBody = authorization.bufferedBody
-    const downstreamScope = downstreamScopeHeader(request.headers)
+    let upstreamUrl = buildUpstreamUrl(target, requestUrl)
+    let downstreamScope = downstreamScopeHeader(request.headers)
+    let toolCall: ReturnType<typeof parseToolCall> | undefined
+    if (readiness.toolScopes && authorization.accessTokenVerified) {
+      const mcpPath = readiness.path ?? DEFAULT_MCP_READINESS_PATH
+      const httpToolName = requestUrl.pathname.startsWith("/tools/")
+        ? requestUrl.pathname.slice("/tools/".length)
+        : undefined
+      if (request.method === "POST" && (requestUrl.pathname === mcpPath || httpToolName !== undefined)) {
+        bufferedBody ??= await readRequestBody(request)
+        if (httpToolName !== undefined) {
+          const args: unknown = JSON.parse(bufferedBody.toString("utf8"))
+          if (!isRecord(args)) throw downstreamDenied("Tool arguments must be a JSON object.")
+          bufferedBody = Buffer.from(JSON.stringify({
+            jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: httpToolName, arguments: args },
+          }))
+          upstreamUrl = buildUpstreamUrl(target, new URL(mcpPath, requestUrl))
+        }
+        if (!publicMcpMethod(bufferedBody)) {
+          toolCall = parseToolCall(bufferedBody)
+          const configuredScope = Object.hasOwn(readiness.toolScopes, toolCall.toolName)
+            ? readiness.toolScopes[toolCall.toolName]
+            : undefined
+          if (!configuredScope) throw downstreamDenied("No downstream scope is configured for this tool.")
+          if (downstreamScope !== undefined
+            && normalizedScopes(downstreamScope).join(" ") !== normalizedScopes(configuredScope).join(" ")) {
+            throw downstreamDenied("The downstream scope header does not match the configured tool scope.")
+          }
+          downstreamScope = configuredScope
+        }
+      }
+    }
     if (downstreamScope !== undefined) {
       if (!authorization.accessTokenVerified) {
         throw downstreamDenied("A downstream Athenz scope is allowed only for a protected MCP tool call.")
@@ -127,7 +161,7 @@ async function handleRequest(
         )
       }
       bufferedBody ??= await readRequestBody(request)
-      const toolCall = parseToolCall(bufferedBody)
+      toolCall ??= parseToolCall(bufferedBody)
       assertGrantedDownstreamScopes(downstreamScope, authorization.verification)
       publication = await tokenPublisher.publish({
         requestId,
@@ -146,7 +180,7 @@ async function handleRequest(
     const upstreamStatus = await proxyRequest(
       request,
       response,
-      buildUpstreamUrl(target, requestUrl),
+      upstreamUrl,
       bufferedBody,
     )
     const completionLevel = upstreamStatus >= 500 ? "error" : upstreamStatus >= 400 ? "warn" : "info"
@@ -218,9 +252,25 @@ async function handleRequest(
 }
 
 export type RuntimeProxyOptions = {
+  toolScopes?: Record<string, string>
   publicOpenApi?: boolean
   path?: string
   timeoutMs?: number
+}
+
+export function toolScopesFromEnvironment(value: string | undefined): Record<string, string> | undefined {
+  if (value === undefined) return undefined
+  const parsed: unknown = JSON.parse(value)
+  if (!isRecord(parsed) || Object.keys(parsed).length === 0) {
+    throw new Error("MCP_TOOL_SCOPES must be a non-empty JSON object of tool names to scopes")
+  }
+  for (const [name, scope] of Object.entries(parsed)) {
+    if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(name) || typeof scope !== "string") {
+      throw new Error("MCP_TOOL_SCOPES contains an invalid tool name or scope")
+    }
+    normalizedScopes(scope)
+  }
+  return parsed as Record<string, string>
 }
 
 async function probeMcpReadiness(

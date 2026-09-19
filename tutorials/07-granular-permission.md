@@ -209,4 +209,4 @@ You successfully fetched an X.509 certificate for the non-admin service identity
 
 ![Learner requests a docs-getter access token and calls the protected API](./assets/core_07_learner_access.svg)
 
-Next: [MCP Server for Resource Server](./08-mcp-server-for-resource-server.md)
+The learner can now retrieve documents with a scoped access token. In the next chapter, you will expose the API through an MCP server. Next: [MCP Server for Resource Server](./08-mcp-server-for-resource-server.md)

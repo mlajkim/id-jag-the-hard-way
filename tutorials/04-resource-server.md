@@ -125,12 +125,10 @@ The API now returns `401 Unauthorized`. This failure is intentional: token enfor
 
 ![The API rejects a document request without an access token](./assets/04_arc_get_docs_from_api_server_unauthorized.svg)
 
-Keep token enforcement enabled for the remaining chapters.
+Keep token enforcement enabled.
 
 <a id="learn-whats-next"></a>
 
 ## Next Steps
 
-The API now requires an access token. In the next chapter, you will deploy [Athenz](https://github.com/AthenZ/athenz) as the authorization server. Then, in [Access Token](./06-access-token.md), you will configure the API to trust Athenz, obtain a token, and retry the request successfully.
-
-Next: [Authorization Server](./05-authorization-server.md)
+The API now requires an access token. In the next chapter, you will deploy Athenz as the authorization server. Next: [Authorization Server](./05-authorization-server.md)

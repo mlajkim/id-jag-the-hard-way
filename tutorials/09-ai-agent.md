@@ -1,12 +1,12 @@
 |                     Previous                     |   Current    |                   Next                   |
 |:------------------------------------------------:|:------------:|:----------------------------------------:|
-| [MCP Server for Resource Server](./08-mcp-server-for-resource-server.md) | **AI agent** | [Token Exchange](./10-token-exchange.md) |
+| [MCP Server for Resource Server](./08-mcp-server-for-resource-server.md) | **AI agent** | [Protect MCP Server](./10-protect-mcp-server.md) |
 
 # AI Agent: Claude
 
 ![10_claude](./assets/10_claude.png)
 
-Connect Claude Code to the MCP server with the following steps. You will provide an Athenz access token in the `Authorization` header and observe the expected token exchange failure.
+Connect Claude Code to the MCP server with the following steps. You will provide an Athenz access token in the `Authorization` header and retrieve documents successfully.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
@@ -57,10 +57,10 @@ Create `.mcp.json` before launching Claude Code so it can load the MCP server co
 > The MCP URL below points at `localhost` because `./tools/keep-k8s-port-forward.sh` forwards your local machine to the Kubernetes service. Keep the port-forwarder running in one terminal, then run this in another terminal before launching Claude:
 >
 > ```sh
-> ./tools/wait-readiness.sh mcp
+> kubectl rollout status deploy/mcp -n mcp
 > ```
 >
-> If Claude says the port-forward connection dropped, restart `./tools/keep-k8s-port-forward.sh`, wait for `mcp` again, and retry.
+> If Claude says the port-forward connection dropped, restart `./tools/keep-k8s-port-forward.sh`, wait for the MCP deployment again, and retry.
 
 Get the access token:
 
@@ -165,20 +165,12 @@ get docs from k8s doc server!
 ![ask_k8s_docs_server_in_claude](./assets/10_ask_k8s_docs_server_in_claude.png)
 
 
-This will intentionally fail — the request will return a `No Permission to Token Exchange` error, similar to:
-
-![10_claude_says_no_access_for_token_exchange](./assets/10_claude_says_no_access_for_token_exchange.png)
-
-This is expected. The MCP server received your access token and tried to exchange it for a token to call the API on your behalf. Both tokens use audience `api` and the `docs-getter` scope at this stage; the missing permission is for the exchange itself.
-
-<a id="whats-happened"></a>
+The `get_k8s_docs` tool succeeds and returns the API's documents. Its structured result contains `status: 200` and `ok: true`.
 
 ## Understand the Result
 
-We successfully connected Claude Code to the MCP server with an Athenz access token. However, the MCP server's token exchange step is not yet authorized.
+Claude Code sends the learner's API access token to `idthw-demo-api-mcp`. In `forward` mode, MCP passes that token to the API, which validates audience `api` and scope `docs-getter` before returning documents.
 
-![An AI agent reaches the MCP server, but Athenz rejects its token exchange](./assets/core_09_exchange_denied.svg)
+![The AI client retrieves documents through MCP](./assets/core_09_mcp_success.svg)
 
-In the next tutorial we will fix this by granting the MCP server permission to exchange tokens.
-
-Next: [Token Exchange](./10-token-exchange.md)
+The MCP endpoint does not yet validate incoming tokens itself. In the next chapter, you will add Runtime Proxy to protect tool execution. Next: [Protect MCP Server](./10-protect-mcp-server.md)

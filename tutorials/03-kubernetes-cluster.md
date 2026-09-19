@@ -70,4 +70,4 @@ kubectl get ns
 # local-path-storage   Active   15s
 ```
 
-Next: [Resource Server](./04-resource-server.md)
+The Kubernetes cluster is running. In the next chapter, you will deploy a document API and test access to it. Next: [Resource Server](./04-resource-server.md)

@@ -129,23 +129,23 @@ env \
 
 ## Step 5. Import K8s API Docs Server
 
-MCP Hub discovers servers from Kubernetes labels and annotations. Add the MCP Hub metadata to the existing `mcp` deployment in the `api` namespace:
+MCP Hub discovers servers from Kubernetes labels and annotations. Add the MCP Hub metadata to the existing `mcp` deployment in the `mcp` namespace:
 
 ```sh
 _core_mcp_proxy_port=$(./tools/port.sh mcp)
 
-kubectl label deploy mcp -n api \
+kubectl label deploy mcp -n mcp \
   app.kubernetes.io/part-of=mcp-hub \
   mcp.idthw.dev/project=k8s-docs-server \
   --overwrite
 
-kubectl annotate deploy mcp -n api \
+kubectl annotate deploy mcp -n mcp \
   mcp.idthw.dev/id="k8s-docs-server" \
   mcp.idthw.dev/access-scope="api:role.mcp-accessor api:role.docs-getter" \
   mcp.idthw.dev/alias="K8s API Docs Server" \
   mcp.idthw.dev/description="MCP server for Kubernetes API docs used by ID-JAG tutorials" \
   mcp.idthw.dev/public-url="http://127.0.0.1:${_core_mcp_proxy_port}" \
-  mcp.idthw.dev/upstream-url="http://mcp.api:8081/mcp" \
+  mcp.idthw.dev/upstream-url="http://mcp.mcp:8081/mcp" \
   mcp.idthw.dev/transport="streamable-http" \
   --overwrite
 ```

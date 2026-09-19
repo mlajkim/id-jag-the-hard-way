@@ -1,6 +1,6 @@
 |               Previous               |    Current     |                   Next                   |
 |:------------------------------------:|:--------------:|:----------------------------------------:|
-| [AI Agent](../09-ai-agent.md) | **Open WebUI** | [Token Exchange](./10-token-exchange.md) |
+| [AI Agent](../09-ai-agent.md) | **Open WebUI** | [Protect MCP Server](./10-protect-mcp-server.md) |
 
 # Open WebUI
 
@@ -16,7 +16,7 @@
 >
 > To use hosted model inference, choose [Claude Code](../09-ai-agent.md) or [Codex CLI](../codex/09-ai-agent.md). Those clients run locally, but do not require Ollama or a local model for their hosted-model setup.
 
-Install Open WebUI and connect it to the MCP service with the following steps. The first document request will fail because token exchange is not yet authorized.
+Install Open WebUI and connect it to the MCP service with the following steps. The first document request succeeds using the learner's API access token.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
@@ -76,7 +76,7 @@ Deploy Open WebUI:
 >
 > ```sh
 > docker pull ghcr.io/open-webui/open-webui:main
-> kind load docker-image ghcr.io/open-webui/open-webui:main
+> kind load docker-image --name "${KIND_CLUSTER_NAME:-$(kubectl config current-context | sed 's/^kind-//')}" ghcr.io/open-webui/open-webui:main
 > ```
 
 ```sh
@@ -179,25 +179,26 @@ Get access token again:
 
 ```sh
 _scope="api:role.docs-getter"
-_root_user_at=$(./tools/athenz/fetch-access-token.sh \
-  "./athenz_dist/certs/athenz_admin.cert.pem" \
-  "./athenz_dist/keys/athenz_admin.private.pem" \
+_my_access_token=$(./tools/athenz/fetch-access-token.sh \
+  "./keys/idjag-learner.crt" \
+  "./keys/idjag-learner.key" \
   "${_scope}" \
-  "./keys/api_docs-getter.jwt")
+  "./keys/idjag-learner.jwt")
 
-cat "./keys/api_docs-getter.jwt"
+cat "./keys/idjag-learner.jwt"
 ```
 
 Go to `User Icon` > `Admin Panel` > `Settings` > `Integrations` > `Manage Tool Servers` > `+ Icon` to register the MCP server as a tool server.
 
 - Name: `API MCP Server`
 - Description: `MCP server for API that holds documentation`
-- URL: `http://mcp.api:8081`
+- URL: `http://mcp.mcp:8081`
+- OpenAPI spec: `/openapi.json`
 - Auth type: `Bearer`
 - API Key: `<the access token you just fetched>`
 - Access: Change to `Public`
 
-![10_api_mcp_server_in_open_webui](./assets/10_api_mcp_server_in_open_webui.png)
+The OpenAPI operations are `POST /tools/get_k8s_docs`, `POST /tools/post_k8s_doc`, and `POST /tools/delete_k8s_doc`. Each operation takes the tool arguments as a JSON object.
 
 Before we ask the AI agent, let's quickly add the tool as the default tool server, so that you do not have to manually add the tool every time.
 
@@ -222,26 +223,18 @@ Follow the steps below to verify the setup.
 > Make sure that the tool we just created is selected
 > ![10_tool_selected](./assets/10_tool_selected.png)
 
-Finally, ask the AI agent the following (It is expected to fail):
+Ask the client to retrieve documents:
 
+```text
+get docs from k8s doc server!
 ```
-get docs!
-```
 
-![10_deliberate_failure_no_permission_to_token_impersonation](./assets/10_deliberate_failure_no_permission_to_token_impersonation.png)
-
-<a id="whats-happened"></a>
+The `get_k8s_docs` tool succeeds and returns the API's documents. Its structured result contains `status: 200` and `ok: true`.
 
 ## Understand the Result
 
-![10_arc_failed_to_token_exchange](./assets/10_arc_failed_to_token_exchange.svg)
+Open WebUI sends the learner's API access token to `idthw-demo-api-mcp`. In `forward` mode, MCP passes that token to the API, which validates audience `api` and scope `docs-getter` before returning documents.
 
-We were able to successfully install the AI client, using:
+![The AI client retrieves documents through MCP](../assets/core_09_mcp_success.svg)
 
-- Open WebUI as an LLM Front-end (for human interaction)
-- Ollama as a Local LLM Provider
-- Gemma 4 `gemma4:e4b` as the model
-
-Open WebUI sent the learner's API access token to the MCP server. The MCP server tried to exchange that token before calling the API, but ZTS rejected the exchange because the MCP service lacks exchange permission. You will grant that permission in the next chapter.
-
-Next: [Token Exchange](./10-token-exchange.md)
+The MCP endpoint does not yet validate incoming tokens itself. In the next chapter, you will add Runtime Proxy to protect tool execution. Next: [Protect MCP Server](./10-protect-mcp-server.md)

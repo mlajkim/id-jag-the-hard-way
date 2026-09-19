@@ -13,6 +13,15 @@ export class AccessTokenError extends Error {
 
 export type AccessTokenVerifier = (authorization: string | undefined, requiredScope: string) => Promise<void>
 
+const untrustedCertificateCodes = new Set([
+  "DEPTH_ZERO_SELF_SIGNED_CERT",
+  "SELF_SIGNED_CERT_IN_CHAIN",
+  "UNABLE_TO_VERIFY_LEAF_SIGNATURE",
+  "UNABLE_TO_GET_ISSUER_CERT_LOCALLY",
+  "UNABLE_TO_GET_ISSUER_CERT",
+  "CERT_UNTRUSTED",
+])
+
 export function createAccessTokenVerifier({
   jwksUrl,
   expectedIssuer,
@@ -45,6 +54,10 @@ export function createAccessTokenVerifier({
           return await keys(header, token)
         } catch (error) {
           if (error instanceof errors.JWKSNoMatchingKey || error instanceof errors.JWKSMultipleMatchingKeys) throw error
+          if (isUntrustedCertificate(error)) {
+            throw new AccessTokenError(503, "zts_ca_untrusted",
+              "Cannot verify the ZTS HTTPS certificate. Mount the CA certificate that signed it, set NODE_EXTRA_CA_CERTS to its path, and restart the API.")
+          }
           throw new AccessTokenError(503, "authentication_unavailable", "Unable to load ZTS signing keys.")
         }
       }, {
@@ -71,6 +84,16 @@ export function createAccessTokenVerifier({
       throw new AccessTokenError(403, "insufficient_scope", `Access token must grant ${requiredScope}.`)
     }
   }
+}
+
+function isUntrustedCertificate(error: unknown): boolean {
+  const seen = new Set<Error>()
+  while (error instanceof Error && !seen.has(error)) {
+    seen.add(error)
+    if ("code" in error && typeof error.code === "string" && untrustedCertificateCodes.has(error.code)) return true
+    error = error.cause
+  }
+  return false
 }
 
 function scopeValues(value: unknown): string[] {
