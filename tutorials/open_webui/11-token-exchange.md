@@ -18,4 +18,6 @@ Runtime Proxy validates the learner's MCP token, exchanges it for an API token, 
 
 ![Runtime Proxy exchanges the token before MCP calls the API](../assets/core_11_exchange_allowed.svg)
 
-Open WebUI can now retrieve documents through the protected MCP service. In the next chapter, you will deploy Keycloak so users can sign in and receive an ID token. Next: [Identity Provider](./12-identity-provider.md)
+Open WebUI can now retrieve documents through the protected MCP service. In the next chapter, you will deploy Keycloak so users can sign in and receive an ID token.
+
+Next: [Identity Provider](./12-identity-provider.md)

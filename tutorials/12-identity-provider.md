@@ -219,4 +219,6 @@ At this point, Keycloak is running and configured, but our Authorization Server 
 
 ## Next Steps
 
-Keycloak is ready, but Athenz does not yet trust its ID tokens. In the next chapter, you will configure Athenz to accept and verify them. Next: [Trusted Identity Provider](./13-trusted-identity-provider.md)
+Keycloak is ready, but Athenz does not yet trust its ID tokens. In the next chapter, you will configure Athenz to accept and verify them.
+
+Next: [Trusted Identity Provider](./13-trusted-identity-provider.md)

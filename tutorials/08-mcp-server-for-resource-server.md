@@ -121,4 +121,6 @@ At this stage MCP does not validate incoming tokens itself; the API enforces doc
 
 ## Next Steps
 
-We have successfully retrieved documents by calling the MCP tool directly. In the next chapter, we will connect an AI client and ask it to retrieve the same documents through that tool. Next: [AI Agent](./09-ai-agent.md)
+We have successfully retrieved documents by calling the MCP tool directly. In the next chapter, we will connect an AI client and ask it to retrieve the same documents through that tool.
+
+Next: [AI Agent](./09-ai-agent.md)

@@ -225,4 +225,6 @@ The pod is ready and discovery works. The protected document request is delibera
 
 ## Next Steps
 
-MCP access now passes, but Athenz rejects the downstream token exchange. In the next chapter, you will grant the service exchange permissions and retry the request. Next: [Token Exchange](./11-token-exchange.md)
+MCP access now passes, but Athenz rejects the downstream token exchange. In the next chapter, you will grant the service exchange permissions and retry the request.
+
+Next: [Token Exchange](./11-token-exchange.md)

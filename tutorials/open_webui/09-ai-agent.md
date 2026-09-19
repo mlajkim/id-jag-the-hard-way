@@ -237,4 +237,6 @@ Open WebUI sends the learner's API access token to `idthw-demo-api-mcp`. In `for
 
 ![The AI client retrieves documents through MCP](../assets/core_09_mcp_success.svg)
 
-The MCP endpoint does not yet validate incoming tokens itself. In the next chapter, you will add Runtime Proxy to protect tool execution. Next: [Protect MCP Server](./10-protect-mcp-server.md)
+The MCP endpoint does not yet validate incoming tokens itself. In the next chapter, you will add Runtime Proxy to protect tool execution.
+
+Next: [Protect MCP Server](./10-protect-mcp-server.md)

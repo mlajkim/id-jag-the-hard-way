@@ -215,4 +215,6 @@ We installed the `KeycloakTokenExchangeProvider` plugin. It takes a Keycloak ID 
 
 ## Next Steps
 
-Athenz now trusts Keycloak ID tokens. In the next chapter, you will deploy AI Client Gateway to connect Claude Code to Keycloak for sign-in. Next: [AI Client Gateway](./14-ai-client-gateway.md)
+Athenz now trusts Keycloak ID tokens. In the next chapter, you will deploy AI Client Gateway to connect Claude Code to Keycloak for sign-in.
+
+Next: [AI Client Gateway](./14-ai-client-gateway.md)

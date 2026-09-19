@@ -301,4 +301,6 @@ This is expected. Codex reached the AI Client Gateway, and the gateway tried to 
 
 ## Next Steps
 
-Sign-in succeeds, but Athenz rejects the gateway's ID-JAG request. In the next chapter, you will grant the gateway the required exchange permissions and retry the document request. Next: [ID-JAG](./15-id-jag.md)
+Sign-in succeeds, but Athenz rejects the gateway's ID-JAG request. In the next chapter, you will grant the gateway the required exchange permissions and retry the document request.
+
+Next: [ID-JAG](./15-id-jag.md)

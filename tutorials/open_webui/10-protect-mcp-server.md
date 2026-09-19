@@ -12,4 +12,6 @@ Complete [chapter 10's shared deployment and verification steps](../10-protect-m
 4. Grant the learner MCP access and request an MCP-audience token carrying the API scope.
 5. Observe `403 downstream_token_exchange_denied` because the service still lacks exchange permission.
 
-Use the shared chapter's `curl` commands to see both failures independently of the client interface. MCP access now passes, but Athenz rejects the downstream token exchange. In the next chapter, you will grant the service the missing exchange permissions. Next: [Token Exchange — Open WebUI](./11-token-exchange.md)
+Use the shared chapter's `curl` commands to see both failures independently of the client interface. MCP access now passes, but Athenz rejects the downstream token exchange. In the next chapter, you will grant the service the missing exchange permissions.
+
+Next: [Token Exchange — Open WebUI](./11-token-exchange.md)
