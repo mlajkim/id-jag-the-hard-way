@@ -2,7 +2,7 @@ import assert from "node:assert/strict"
 import http, { type Server } from "node:http"
 import test, { type TestContext } from "node:test"
 import { exportJWK, generateKeyPair, SignJWT, type JWTPayload } from "jose"
-import { createAccessTokenVerifier } from "../src/auth.ts"
+import { createAccessTokenVerifier, type AccessTokenVerifier } from "../src/auth.ts"
 import { createConfiguredAccessTokenVerifier } from "../src/config.ts"
 import { createDemoApiServer } from "../src/server.ts"
 
@@ -45,17 +45,21 @@ async function fixture(t: TestContext, jwksStatus = 200, accessTokenEnabled: "tr
     ATHENZ_JWKS_ALLOW_INSECURE_HTTP: "true",
     ATHENZ_EXPECTED_ISSUER: issuer,
   })
+  return { ...await apiFixture(t, verify), keyRequests: () => keyRequests }
+}
+
+async function apiFixture(t: TestContext, verify?: AccessTokenVerifier) {
   const logs: string[] = []
   const server = createDemoApiServer(verify, (line) => logs.push(line))
   const baseUrl = await listen(server)
   t.after(() => close(server))
   return {
-    logs, keyRequests: () => keyRequests,
+    logs,
     async request(method = "GET", path = "/api/docs", accessToken?: string, body?: string) {
       const headers: Record<string, string> = { "content-type": "application/json" }
       if (accessToken !== undefined) headers.authorization = `Bearer ${accessToken}`
       const response = await fetch(baseUrl + path, { method, headers, body })
-      return { status: response.status, headers: response.headers, body: await response.json() as { docs?: unknown[]; error?: string } }
+      return { status: response.status, headers: response.headers, body: await response.json() as { docs?: unknown[]; error?: string; message?: string } }
     },
   }
 }
@@ -189,6 +193,63 @@ test("fails closed when the JWKS endpoint is unavailable", async (t) => {
   assert.equal(response.status, 503)
   assert.equal(response.body.error, "authentication_unavailable")
 })
+
+for (const code of [
+  "DEPTH_ZERO_SELF_SIGNED_CERT", "SELF_SIGNED_CERT_IN_CHAIN", "UNABLE_TO_VERIFY_LEAF_SIGNATURE",
+  "UNABLE_TO_GET_ISSUER_CERT_LOCALLY", "UNABLE_TO_GET_ISSUER_CERT", "CERT_UNTRUSTED",
+]) {
+  test(`explains ZTS CA trust failure ${code} and keeps the API healthy`, async (t) => {
+    const jwksUrl = "https://zts.example.test/keys"
+    const originalFetch = globalThis.fetch
+    let keyRequests = 0
+    t.mock.method(globalThis, "fetch", async (input: string | URL | Request, init?: RequestInit) => {
+      if (String(input) === jwksUrl) {
+        keyRequests++
+        const cause = Object.assign(new Error("untrusted certificate"), { code })
+        throw new TypeError("fetch failed", { cause })
+      }
+      return originalFetch(input, init)
+    })
+    const api = await apiFixture(t, createConfiguredAccessTokenVerifier({
+      ACCESS_TOKEN_ENABLED: "true", ATHENZ_JWKS_URL: jwksUrl,
+    }))
+    assert.equal(keyRequests, 0, "startup must not require a connection to ZTS")
+    assert.equal((await api.request()).status, 401)
+    assert.equal(keyRequests, 0, "missing tokens must not contact ZTS")
+
+    const response = await api.request("GET", "/api/docs", await token())
+    assert.equal(response.status, 503)
+    assert.deepEqual(response.body, {
+      error: "zts_ca_untrusted",
+      message: "Cannot verify the ZTS HTTPS certificate. Mount the CA certificate that signed it, set NODE_EXTRA_CA_CERTS to its path, and restart the API.",
+    })
+    assert.equal(response.headers.has("www-authenticate"), false)
+    assert.equal(keyRequests, 1)
+    const health = await api.request("GET", "/healthz")
+    assert.equal(health.status, 200)
+    assert.deepEqual(health.body, { ok: true, accessTokenEnabled: true })
+    assert.equal(keyRequests, 1, "health checks must not contact ZTS")
+  })
+}
+
+for (const code of ["ECONNREFUSED", "CERT_HAS_EXPIRED", "ERR_TLS_CERT_ALTNAME_INVALID"]) {
+  test(`does not describe ${code} as a missing CA`, async (t) => {
+    const jwksUrl = "https://zts.example.test/keys"
+    const originalFetch = globalThis.fetch
+    t.mock.method(globalThis, "fetch", async (input: string | URL | Request, init?: RequestInit) => {
+      if (String(input) === jwksUrl) {
+        throw new TypeError("fetch failed", { cause: Object.assign(new Error("connection failed"), { code }) })
+      }
+      return originalFetch(input, init)
+    })
+    const api = await apiFixture(t, createConfiguredAccessTokenVerifier({
+      ACCESS_TOKEN_ENABLED: "true", ATHENZ_JWKS_URL: jwksUrl,
+    }))
+    const response = await api.request("GET", "/api/docs", await token())
+    assert.equal(response.status, 503)
+    assert.deepEqual(response.body, { error: "authentication_unavailable", message: "Unable to load ZTS signing keys." })
+  })
+}
 
 test("rejects invalid documents and routes without changing stored data", async (t) => {
   const api = await fixture(t)

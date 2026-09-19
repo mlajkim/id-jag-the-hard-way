@@ -1,6 +1,20 @@
 # IDTHW Demo API MCP
 
-This tutorial MCP demonstrates delegated downstream authorization for a Hub-managed MCP server. It does not perform Athenz token exchange itself and does not need access to the MCP service private key.
+This MCP serves the core tutorial and Hub-managed deployments. It does not perform Athenz token exchange itself and does not need access to the MCP service private key.
+
+## Core tutorial
+
+Chapter 08 explicitly sets `MCP_ACCESS_TOKEN_MODE=forward` to demonstrate a successful document request with the learner's existing API token. This mode forwards the incoming bearer token to the API, which validates it. MCP does not validate that token itself.
+
+Chapter 10 switches to the default `MCP_ACCESS_TOKEN_MODE=token-file` and sets `HOST=127.0.0.1` so requests enter through Runtime Proxy in the same pod. The proxy validates MCP access and performs downstream exchange using the service identity. Chapter 11 grants that identity the missing exchange permissions.
+
+In `token-file` mode, a missing or invalid token-file path fails closed; the incoming bearer header is never used as a fallback.
+
+`GET /openapi.json` describes `POST /tools/get_k8s_docs`, `POST /tools/post_k8s_doc`, and `POST /tools/delete_k8s_doc` for Open WebUI and the tutorial AI Client Gateway. Each endpoint accepts a JSON object of tool arguments and returns the same JSON-RPC tool result as `/mcp`. The metadata maps operation IDs to `x-athenz-required-scope`, combining `ACCESS_MCP_REQUIRED_SCOPE` (default `mcp:role.mcp-accessor`) with the API role. Runtime Proxy's configured `MCP_TOOL_SCOPES` maps these HTTP tool requests to MCP calls before publishing their token files.
+
+Other settings: `PORT` defaults to `8080`, `HOST` to `0.0.0.0`, and `MCP_ACCESS_TOKEN_FILE_DIR` to `/var/run/idthw-access-tokens`.
+
+## Delegated token files
 
 For each protected `tools/call`, MCP Runtime Proxy exchanges the signed-in user's incoming Athenz access token using the MCP service identity. It writes the narrowly scoped result to a unique request file and injects that path at:
 

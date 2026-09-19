@@ -36,8 +36,8 @@ The goal of this FAQ is to register the protected API MCP Server as an agentgate
 Confirm that the protected API MCP Service exists and has a ready endpoint:
 
 ```sh
-kubectl -n api get service mcp
-kubectl -n api get endpointslice \
+kubectl -n mcp get service mcp
+kubectl -n mcp get endpointslice \
   -l kubernetes.io/service-name=mcp
 ```
 
@@ -59,7 +59,7 @@ spec:
     targets:
       - name: api-mcp
         static:
-          host: mcp.api.svc.cluster.local
+          host: mcp.mcp.svc.cluster.local
           port: 8081
           path: /mcp
           protocol: StreamableHTTP
@@ -182,7 +182,7 @@ Agentgateway returns this response as a Server-Sent Event. The `sed` command rem
 Confirm that the protected upstream accepted the same request:
 
 ```sh
-kubectl -n api logs deployment/mcp -c auth-proxy --tail=20
+kubectl -n mcp logs deployment/mcp -c auth-proxy --tail=20
 ```
 
 ```sh
@@ -210,4 +210,4 @@ The `api-mcp` route should show the `http` listener, `/mcp` match, and `agent-ga
 - [Agentgateway MCP server quickstart](https://agentgateway.dev/docs/kubernetes/latest/quickstart/mcp/)
 - [AgentgatewayBackend API reference](https://agentgateway.dev/docs/kubernetes/latest/reference/api/)
 - [Kubernetes HTTPRoute](https://gateway-api.sigs.k8s.io/api-types/httproute/)
-- [Protect MCP Server](../../tutorials/11-protect-mcp-server.md)
+- [Protect MCP Server](../../tutorials/10-protect-mcp-server.md)

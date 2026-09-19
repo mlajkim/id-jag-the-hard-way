@@ -88,6 +88,7 @@ echo "${token}" | jq -R 'split(".") | .[0] | @base64d | fromjson' >&2
 echo "${token}" | jq -R 'split(".") | .[1] | @base64d | fromjson' >&2
 
 if [ -n "${output}" ]; then
+  mkdir -p "$(dirname "${output}")"
   echo "${token}" > "${output}"
 fi
 echo "${token}"

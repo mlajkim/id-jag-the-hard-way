@@ -10,7 +10,7 @@ services:
     key_version: v1
     local_keys_dir: ./keys
     k8s:
-      ns: api
+      ns: mcp
       deployment: mcp
       secret:
         name: api-mcp-cert

@@ -1,81 +1,81 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="2240" height="720" viewBox="0 0 2240 720" role="img" aria-labelledby="title description">
 <title id="title">Athenz, AI client, MCP, and API architecture</title>
 <desc id="description">Athenz, AI client, MCP, and API architecture</desc>
-<defs><marker id="arrow-blue" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="m1 1 9 5-9 5Z" fill="#1a73e8"/></marker>
-<marker id="arrow-green" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="m1 1 9 5-9 5Z" fill="#188038"/></marker>
-<marker id="arrow-red" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="m1 1 9 5-9 5Z" fill="#c5221f"/></marker>
-<marker id="arrow-gray" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="m1 1 9 5-9 5Z" fill="#5f6368"/></marker>
-<marker id="arrow-purple" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="m1 1 9 5-9 5Z" fill="#7b4cc0"/></marker>
-  <g id="human" fill="currentColor"><path d="M12 13a7 7 0 1 1 8 0c6 2 10 7 10 13v4H2v-4c0-6 4-11 10-13Z"/></g>
-  <g id="server" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="26" height="11" rx="3"/><rect x="3" y="18" width="26" height="11" rx="3"/><path d="M18 8.5h5m-5 15h5"/><circle cx="9" cy="8.5" r="1"/><circle cx="9" cy="23.5" r="1"/></g>
-  <g id="shield" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M16 2 29 7v9c0 7-7 12-13 15C10 28 3 23 3 16V7Z"/><path d="m10 16 4 4 9-10"/></g>
-  <g id="key" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><circle cx="10" cy="11" r="7"/><path d="m15 16 13 13m-6-6 4-4m-9-1 4-4"/></g>
-  <g id="agent" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="7" width="26" height="21" rx="6"/><path d="M16 7V2m-5 19h10M9 14h1m12 0h1"/></g>
-  <g id="exchange" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h24m-6-6 6 6-6 6M29 23H5m6-6-6 6 6 6"/></g>
-  <g id="plugin" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v8m12-8v8M7 10h18v7a9 9 0 0 1-18 0Zm9 16v5"/></g>
-  <g id="file" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h13l7 7v21H6Zm13 0v8h7M11 17h10m-10 6h10"/></g>
-  <g id="lock" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="13" width="22" height="17" rx="3"/><path d="M10 13V8a6 6 0 0 1 12 0v5m-6 7v4"/></g></defs>
-<rect width="2240" height="720" rx="20" fill="#fff"/>
+<defs><marker id="arrow-blue" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="m1 1 9 5-9 5Z" fill="#1a73e8" /></marker>
+<marker id="arrow-green" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="m1 1 9 5-9 5Z" fill="#188038" /></marker>
+<marker id="arrow-red" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="m1 1 9 5-9 5Z" fill="#c5221f" /></marker>
+<marker id="arrow-gray" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="m1 1 9 5-9 5Z" fill="#5f6368" /></marker>
+<marker id="arrow-purple" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="m1 1 9 5-9 5Z" fill="#7b4cc0" /></marker>
+  <g id="human" fill="currentColor"><path d="M12 13a7 7 0 1 1 8 0c6 2 10 7 10 13v4H2v-4c0-6 4-11 10-13Z" /></g>
+  <g id="server" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="26" height="11" rx="3" /><rect x="3" y="18" width="26" height="11" rx="3" /><path d="M18 8.5h5m-5 15h5" /><circle cx="9" cy="8.5" r="1" /><circle cx="9" cy="23.5" r="1" /></g>
+  <g id="shield" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M16 2 29 7v9c0 7-7 12-13 15C10 28 3 23 3 16V7Z" /><path d="m10 16 4 4 9-10" /></g>
+  <g id="key" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><circle cx="10" cy="11" r="7" /><path d="m15 16 13 13m-6-6 4-4m-9-1 4-4" /></g>
+  <g id="agent" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="7" width="26" height="21" rx="6" /><path d="M16 7V2m-5 19h10M9 14h1m12 0h1" /></g>
+  <g id="exchange" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h24m-6-6 6 6-6 6M29 23H5m6-6-6 6 6 6" /></g>
+  <g id="plugin" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v8m12-8v8M7 10h18v7a9 9 0 0 1-18 0Zm9 16v5" /></g>
+  <g id="file" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h13l7 7v21H6Zm13 0v8h7M11 17h10m-10 6h10" /></g>
+  <g id="lock" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="13" width="22" height="17" rx="3" /><path d="M10 13V8a6 6 0 0 1 12 0v5m-6 7v4" /></g></defs>
+<rect width="2240" height="720" rx="20" fill="#fff" />
 <g font-family="Arial, Helvetica, sans-serif">
-<rect x="90" y="70" width="360" height="160" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
-<circle cx="127" cy="112" r="23" fill="#e8f0fe"/><use href="#key" transform="translate(114 99) scale(.8125)" color="#1a73e8"/>
+<rect x="90" y="70" width="360" height="160" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5" />
+<circle cx="127" cy="112" r="23" fill="#e8f0fe" /><use href="#key" transform="translate(114 99) scale(.8125)" color="#1a73e8" />
 <text x="163" y="109" text-anchor="start" fill="#202124" font-size="23" font-weight="700">Keycloak</text>
 <text x="270" y="212" text-anchor="middle" fill="#5f6368" font-size="18" font-weight="400">Identity provider</text>
-<rect x="1080" y="30" width="1100" height="315" rx="20" fill="#f8fafd" stroke="#c4d4ee" stroke-width="1.5" stroke-dasharray="6 6"/>
+<rect x="1080" y="30" width="1100" height="315" rx="20" fill="#f8fafd" stroke="#c4d4ee" stroke-width="1.5" stroke-dasharray="6 6" />
 <text x="1102" y="59" text-anchor="start" fill="#1a73e8" font-size="18" font-weight="600">Athenz · Authorization server</text>
-<rect x="1120" y="98" width="490" height="140" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
-<circle cx="1157" cy="140" r="23" fill="#e8f0fe"/><use href="#plugin" transform="translate(1144 127) scale(.8125)" color="#1a73e8"/>
+<rect x="1120" y="98" width="490" height="140" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5" />
+<circle cx="1157" cy="140" r="23" fill="#e8f0fe" /><use href="#plugin" transform="translate(1144 127) scale(.8125)" color="#1a73e8" />
 <text x="1193" y="137" text-anchor="start" fill="#202124" font-size="22" font-weight="700">KeycloakTokenExchangeProvider</text>
-<rect x="1770" y="98" width="370" height="140" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
-<circle cx="1807" cy="140" r="23" fill="#e8f0fe"/><use href="#shield" transform="translate(1794 127) scale(.8125)" color="#1a73e8"/>
+<rect x="1770" y="98" width="370" height="140" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5" />
+<circle cx="1807" cy="140" r="23" fill="#e8f0fe" /><use href="#shield" transform="translate(1794 127) scale(.8125)" color="#1a73e8" />
 <text x="1843" y="137" text-anchor="start" fill="#202124" font-size="23" font-weight="700">Athenz</text>
 <text x="1955" y="220" text-anchor="middle" fill="#5f6368" font-size="18" font-weight="400">Authorization server</text>
-<rect x="1240" y="270" width="250" height="58" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
-<circle cx="1277" cy="299" r="23" fill="#e8f0fe"/><use href="#file" transform="translate(1264 286) scale(.8125)" color="#1a73e8"/>
+<rect x="1240" y="270" width="250" height="58" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5" />
+<circle cx="1277" cy="299" r="23" fill="#e8f0fe" /><use href="#file" transform="translate(1264 286) scale(.8125)" color="#1a73e8" />
 <text x="1313" y="309" text-anchor="start" fill="#202124" font-size="19" font-weight="700">providers.json</text>
 <g transform="translate(0 -320)">
-<rect x="30" y="710" width="300" height="270" rx="20" fill="#faf8fd" stroke="#d8cce9" stroke-width="1.5" stroke-dasharray="6 6"/>
+<rect x="30" y="710" width="300" height="270" rx="20" fill="#faf8fd" stroke="#d8cce9" stroke-width="1.5" stroke-dasharray="6 6" />
 <text x="52" y="739" text-anchor="start" fill="#7b4cc0" font-size="18" font-weight="600">human</text>
-<rect x="360" y="710" width="650" height="270" rx="20" fill="#faf8fd" stroke="#d8cce9" stroke-width="1.5" stroke-dasharray="6 6"/>
+<rect x="360" y="710" width="650" height="270" rx="20" fill="#faf8fd" stroke="#d8cce9" stroke-width="1.5" stroke-dasharray="6 6" />
 <text x="382" y="739" text-anchor="start" fill="#7b4cc0" font-size="18" font-weight="600">ai</text>
-<rect x="1050" y="710" width="1150" height="270" rx="20" fill="#f8fafd" stroke="#c4d4ee" stroke-width="1.5" stroke-dasharray="6 6"/>
+<rect x="1050" y="710" width="1150" height="270" rx="20" fill="#f8fafd" stroke="#c4d4ee" stroke-width="1.5" stroke-dasharray="6 6" />
 <text x="1072" y="739" text-anchor="start" fill="#1a73e8" font-size="18" font-weight="600">api</text>
-<rect x="60" y="778" width="240" height="148" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
-<circle cx="97" cy="820" r="23" fill="#e8f0fe"/><use href="#human" transform="translate(84 807) scale(.8125)" color="#1a73e8"/>
+<rect x="60" y="778" width="240" height="148" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5" />
+<circle cx="97" cy="820" r="23" fill="#e8f0fe" /><use href="#human" transform="translate(84 807) scale(.8125)" color="#1a73e8" />
 <text x="133" y="817" text-anchor="start" fill="#202124" font-size="23" font-weight="700">Human</text>
 <text x="180" y="908" text-anchor="middle" fill="#5f6368" font-size="18" font-weight="400">human.idjag-learner</text>
-<rect x="390" y="778" width="290" height="148" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
-<circle cx="427" cy="820" r="23" fill="#e8f0fe"/><use href="#agent" transform="translate(414 807) scale(.8125)" color="#1a73e8"/>
+<rect x="390" y="778" width="290" height="148" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5" />
+<circle cx="427" cy="820" r="23" fill="#e8f0fe" /><use href="#agent" transform="translate(414 807) scale(.8125)" color="#1a73e8" />
 <text x="463" y="817" text-anchor="start" fill="#202124" font-size="23" font-weight="700">Open WebUI</text>
 <text x="535" y="908" text-anchor="middle" fill="#5f6368" font-size="18" font-weight="400">LLM front-end</text>
 <text x="535" y="960" text-anchor="middle" fill="#5f6368" font-size="17" font-weight="400">Ollama · Gemma 4</text>
-<rect x="770" y="778" width="210" height="148" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
-<circle cx="807" cy="820" r="23" fill="#e8f0fe"/><use href="#exchange" transform="translate(794 807) scale(.8125)" color="#1a73e8"/>
+<rect x="770" y="778" width="210" height="148" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5" />
+<circle cx="807" cy="820" r="23" fill="#e8f0fe" /><use href="#exchange" transform="translate(794 807) scale(.8125)" color="#1a73e8" />
 <text x="843" y="817" text-anchor="start" fill="#202124" font-size="23" font-weight="700">AI Client</text>
 <text x="843" y="844" text-anchor="start" fill="#202124" font-size="23" font-weight="700">Proxy</text>
-<rect x="1080" y="778" width="210" height="148" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
-<circle cx="1117" cy="820" r="23" fill="#e8f0fe"/><use href="#shield" transform="translate(1104 807) scale(.8125)" color="#1a73e8"/>
+<rect x="1080" y="778" width="210" height="148" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5" />
+<circle cx="1117" cy="820" r="23" fill="#e8f0fe" /><use href="#shield" transform="translate(1104 807) scale(.8125)" color="#1a73e8" />
 <text x="1153" y="817" text-anchor="start" fill="#202124" font-size="17.99709724238026" font-weight="700">Authorization</text>
 <text x="1153" y="844" text-anchor="start" fill="#202124" font-size="17.99709724238026" font-weight="700">proxy</text>
-<use href="#lock" transform="translate(1264 787) scale(.5)" color="#5f6368"/>
-<rect x="1390" y="778" width="230" height="148" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
-<circle cx="1427" cy="820" r="23" fill="#e8f0fe"/><use href="#server" transform="translate(1414 807) scale(.8125)" color="#1a73e8"/>
+<use href="#lock" transform="translate(1264 787) scale(.5)" color="#5f6368" />
+<rect x="1390" y="778" width="230" height="148" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5" />
+<circle cx="1427" cy="820" r="23" fill="#e8f0fe" /><use href="#server" transform="translate(1414 807) scale(.8125)" color="#1a73e8" />
 <text x="1463" y="817" text-anchor="start" fill="#202124" font-size="23" font-weight="700">MCP server</text>
-<text x="1505" y="908" text-anchor="middle" fill="#5f6368" font-size="18" font-weight="400">api.api-mcp</text>
-<rect x="1710" y="778" width="190" height="148" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
-<circle cx="1747" cy="820" r="23" fill="#e8f0fe"/><use href="#shield" transform="translate(1734 807) scale(.8125)" color="#1a73e8"/>
+<text x="1505" y="908" text-anchor="middle" fill="#5f6368" font-size="14" font-weight="400">idthw-demo-api-mcp</text>
+<rect x="1710" y="778" width="190" height="148" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5" />
+<circle cx="1747" cy="820" r="23" fill="#e8f0fe" /><use href="#shield" transform="translate(1734 807) scale(.8125)" color="#1a73e8" />
 <text x="1783" y="817" text-anchor="start" fill="#202124" font-size="23" font-weight="700">Athenz</text>
 <text x="1783" y="844" text-anchor="start" fill="#202124" font-size="23" font-weight="700">ZPE</text>
-<use href="#lock" transform="translate(1874 787) scale(.5)" color="#5f6368"/>
-<rect x="2000" y="778" width="170" height="148" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
-<circle cx="2037" cy="820" r="23" fill="#e8f0fe"/><use href="#server" transform="translate(2024 807) scale(.8125)" color="#1a73e8"/>
+<use href="#lock" transform="translate(1874 787) scale(.5)" color="#5f6368" />
+<rect x="2000" y="778" width="170" height="148" rx="16" fill="#fff" stroke="#dadce0" stroke-width="1.5" />
+<circle cx="2037" cy="820" r="23" fill="#e8f0fe" /><use href="#server" transform="translate(2024 807) scale(.8125)" color="#1a73e8" />
 <text x="2073" y="817" text-anchor="start" fill="#202124" font-size="22.641509433962263" font-weight="700">API</text>
 <text x="2073" y="844" text-anchor="start" fill="#202124" font-size="22.641509433962263" font-weight="700">service</text>
-<path d="M1290 850 L1390 850" fill="none" stroke="#5f6368" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-gray)"/>
-<path d="M1900 850 L2000 850" fill="none" stroke="#5f6368" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-gray)"/>
+<path d="M1290 850 L1390 850" fill="none" stroke="#5f6368" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-gray)" />
+<path d="M1900 850 L2000 850" fill="none" stroke="#5f6368" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-gray)" />
 </g>
-<path d="M680 530 L770 530" fill="none" stroke="#1a73e8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-blue)"/>
-<g transform="translate(0 -320)"><rect x="1299.465" y="808" width="81.07" height="27" rx="5" fill="#fff"/><text x="1340" y="828" text-anchor="middle" fill="#5f6368" font-size="17" font-weight="600">Forward</text><rect x="1900.19" y="789" width="99.62" height="44" rx="5" fill="#fff"/><text x="1950" y="806" text-anchor="middle" fill="#5f6368" font-size="14" font-weight="600">Validate AT</text><text x="1950" y="826" text-anchor="middle" fill="#5f6368" font-size="14">Forward</text></g>
-<rect x="684.465" y="488" width="81.07" height="27" rx="5" fill="#fff"/><text x="725" y="508" text-anchor="middle" fill="#1a73e8" font-size="17" font-weight="600">Forward</text>
+<path d="M680 530 L770 530" fill="none" stroke="#1a73e8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-blue)" />
+<g transform="translate(0 -320)"><rect x="1299.465" y="808" width="81.07" height="27" rx="5" fill="#fff" /><text x="1340" y="828" text-anchor="middle" fill="#5f6368" font-size="17" font-weight="600">Forward</text><rect x="1900.19" y="789" width="99.62" height="44" rx="5" fill="#fff" /><text x="1950" y="806" text-anchor="middle" fill="#5f6368" font-size="14" font-weight="600">Validate AT</text><text x="1950" y="826" text-anchor="middle" fill="#5f6368" font-size="14">Forward</text></g>
+<rect x="684.465" y="488" width="81.07" height="27" rx="5" fill="#fff" /><text x="725" y="508" text-anchor="middle" fill="#1a73e8" font-size="17" font-weight="600">Forward</text>
 </g>
 </svg>

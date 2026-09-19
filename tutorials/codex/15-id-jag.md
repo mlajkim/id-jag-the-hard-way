@@ -73,7 +73,7 @@ The response should contain the documents returned by the API.
 
 ## Understand the Result
 
-The logs show each authorization boundary in the chain. The gateway requests `mcp:role.mcp-accessor api:role.docs-getter` with access-token audience `mcp`. The MCP service `mcp.idthw-api-mcp` then exchanges that token for audience `api`, retaining only `api:role.docs-getter`.
+The logs show each authorization boundary in the chain. The gateway requests `mcp:role.mcp-accessor api:role.docs-getter` with access-token audience `mcp`. MCP Runtime Proxy, acting as `mcp.idthw-api-mcp`, then exchanges that token for audience `api`, retaining only `api:role.docs-getter`.
 
 1. The AI Client Gateway resolved the signed-in user's Keycloak ID token, exchanged it for an ID-JAG token, and then fetched an Athenz access token.
 
@@ -96,7 +96,7 @@ kubectl logs -n human deployment/codex-idjag-learner-ai-client-gateway --tail=30
 Inspect the `auth-proxy` container, which runs MCP Runtime Proxy:
 
 ```sh
-kubectl logs -n api deployment/mcp -c auth-proxy --tail=50
+kubectl logs -n mcp deployment/mcp -c auth-proxy --tail=50
 ```
 
 Find an `access token verified` line in the default text logs. It is emitted only after all of those checks pass. Check its `audiences`, `scopes`, `keyId`, and `expiresInSeconds`, then match its `requestId` to a `request completed` line with `upstreamStatus=200`. Short scopes such as `mcp-accessor` are accepted only when `mcp` is the sole audience.
@@ -105,16 +105,16 @@ A public discovery request can also complete successfully, so `request completed
 
 With `LOG_FORMAT=json` set on the `auth-proxy` container, the same events appear as `access_token_verified` and `request_completed`, with `"upstreamStatus":200` in the JSON record. Older Runtime Proxy images also use this JSON format by default.
 
-3. The MCP adapter performs the downstream token exchange. It authenticates as `mcp.idthw-api-mcp` and exchanges the incoming token for an API-specific `docs-getter` access token before calling the API.
+3. MCP Runtime Proxy performs the downstream token exchange as `mcp.idthw-api-mcp`. It writes the API-specific `docs-getter` token to a unique request file and injects the path into the tool call. `idthw-demo-api-mcp` reads that file before calling the API; the proxy removes it after the response.
 
 <details>
-<summary>Confirm the adapter's token exchange</summary>
+<summary>Confirm Runtime Proxy's token exchange</summary>
 
 ```sh
-kubectl logs -n api deployment/mcp -c mcp --tail=20
+kubectl logs -n mcp deployment/mcp -c auth-proxy --tail=20
 ```
 
-Look for a successful `[Token Exchange]` entry requesting `api:role.docs-getter` and granting `docs-getter`.
+Look for `downstream access token published` with scope `api:role.docs-getter`, followed by `downstream access token removed` for the same request. The exchanged token has audience `api`.
 
 </details>
 

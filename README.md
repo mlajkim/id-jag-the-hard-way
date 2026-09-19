@@ -22,7 +22,7 @@ In both flows:
 
 1. **You** sign in and ask the AI agent to retrieve documents.
 2. The **AI Client Gateway** obtains a scoped access token on your behalf and forwards the tool call to the MCP service.
-3. **MCP Runtime Proxy** validates the incoming token. The **MCP server** exchanges it for an API access token and calls the API.
+3. **MCP Runtime Proxy** validates the incoming token and exchanges it for an API access token. The **MCP server** reads that token from a request-specific file and calls the API.
 4. The **Resource Server** validates the exchanged token and checks the scope required by the operation.
 
 <a id="technical-spec"></a>
@@ -61,8 +61,8 @@ The diagram leads with architecture roles. This tutorial uses Keycloak as the Id
 3. The gateway authenticates to Athenz ZTS and requests an ID-JAG for the required MCP and API scopes.
 4. ZTS validates the ID token and checks whether the user and gateway are authorized for those scopes.
 5. The gateway exchanges the ID-JAG for an access token with audience `mcp` and forwards the tool call.
-6. MCP Runtime Proxy validates the token and checks `mcp:role.mcp-accessor` before forwarding the call to the MCP server.
-7. The MCP server exchanges the token for one with audience `api` and scope `api:role.docs-getter`.
+6. MCP Runtime Proxy validates the token, checks `mcp:role.mcp-accessor`, and exchanges it for an API token using the MCP service identity.
+7. The proxy supplies a request-specific token file to `idthw-demo-api-mcp`, which calls the API with audience `api` and scope `api:role.docs-getter`.
 8. The Resource Server validates the exchanged token and checks the required scope before returning documents.
 
 The diagram shows the default Claude Code path. Codex and Open WebUI use their own AI Client Gateway service identities.

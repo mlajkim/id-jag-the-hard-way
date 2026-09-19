@@ -4,7 +4,7 @@
 
 # AI Client Gateway — Codex
 
-Deploy AI Client Gateway between Codex CLI and the MCP service with the following steps. The gateway uses the signed-in user's Keycloak ID token to obtain an Athenz access token. The MCP server performs the later exchange for API access.
+Deploy AI Client Gateway between Codex CLI and the MCP service with the following steps. The gateway uses the signed-in user's Keycloak ID token to obtain an Athenz access token. MCP Runtime Proxy performs the later exchange for API access.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
@@ -128,7 +128,7 @@ kubectl logs deploy/codex-idjag-learner-ai-client-gateway -n human
 
 ```sh
 # 🚀 OpenWebUI OpenAPI Gateway listening on 0.0.0.0:3101
-# 🔗 Upstream API: http://mcp.api:8081
+# 🔗 Upstream API: http://mcp.mcp:8081
 # 🌍 Public Base URL: http://localhost:44444
 # 🔑 Athenz ZTS Endpoint: https://athenz-zts-server.athenz:4443/zts/v1
 ```
@@ -189,7 +189,7 @@ spec:
           imagePullPolicy: Always
           env:
             - name: UPSTREAM_BASE_URL
-              value: "http://mcp.api:8081"
+              value: "http://mcp.mcp:8081"
             - name: ATHENZ_ACCESS_TOKEN_AUDIENCE
               value: "mcp"
             - name: ZTS_URL

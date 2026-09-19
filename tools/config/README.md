@@ -16,7 +16,7 @@ It declares every service identity, role, member, and policy needed for the comp
 ./tools/setup-permissions.sh tools/config/init.yaml
 ```
 
-> **Order note:** run this after the `api` namespace and `mcp` deployment exist. The setup script creates the MCP service's cert secret and restarts its deployment.
+> **Order note:** run this after the `mcp` namespace and `mcp` deployment exist. The setup script creates the MCP service's cert secret and restarts its deployment.
 
 ### What's inside
 

@@ -27,6 +27,6 @@ jobs:
     with:
       image: idthw-demo-api-mcp
       context: ./components/idthw-demo-api-mcp
-      node-checks: npm run check && npm test
+      node-checks: npm run check && npm test && node --experimental-strip-types --test ../mcp-runtime-proxy/test/tutorial.test.ts
     secrets:
       DEPLOY_GHCR_SECRET: ${{ secrets.DEPLOY_GHCR_SECRET }}

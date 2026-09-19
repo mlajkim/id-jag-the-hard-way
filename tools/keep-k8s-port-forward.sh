@@ -121,7 +121,7 @@ _pf athenz  deployment/athenz-zts-server  "${_zts_port}"               4443 &
 _pf athenz  deployment/athenz-ui          "${_athenz_ui_port}"         3000 &
 _pf api     deployment/api-server         "${_api_port}"               8080 &
 _pf mcp-hub service/core-mcp-proxy        "${_core_mcp_proxy_port}"    8080 &
-_pf api     service/mcp                   "${_mcp_port}"               8081 &
+_pf mcp     service/mcp                   "${_mcp_port}"               8081 &
 _pf mcp-hub service/confluence-mcp        "${_confluence_mcp_port}"    9000 &
 _pf mcp-hub service/mcp-gateway           "${_mcp_gateway_port}"       3103 &
 _pf idp     deployment/keycloak           "${_idp_port}"               8080 &

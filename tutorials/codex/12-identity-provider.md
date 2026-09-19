@@ -1,6 +1,6 @@
 |                     Previous                     |           Current            |                              Next                              |
 |:------------------------------------------------:|:----------------------------:|:--------------------------------------------------------------:|
-| [Protect MCP Server](./11-protect-mcp-server.md) | **Identity Provider — Codex** | [Trusted Identity Provider](./13-trusted-identity-provider.md) |
+| [Token Exchange](./11-token-exchange.md) | **Identity Provider — Codex** | [Trusted Identity Provider](./13-trusted-identity-provider.md) |
 
 # Identity Provider — Codex
 

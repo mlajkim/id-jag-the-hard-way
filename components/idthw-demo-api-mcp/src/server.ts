@@ -13,6 +13,7 @@ type JsonRpcMessage = {
 }
 
 type Tool = {
+  scope: string
   description: string
   inputSchema: Record<string, unknown>
   method: "DELETE" | "GET" | "POST"
@@ -25,6 +26,7 @@ type Tool = {
 const tools: Tool[] = [
   {
     name: "get_k8s_docs",
+    scope: "api:role.docs-getter",
     title: "Get Kubernetes Documents",
     description: "Get the list of documents from the protected Kubernetes Docs API.",
     method: "GET",
@@ -33,6 +35,7 @@ const tools: Tool[] = [
   },
   {
     name: "post_k8s_doc",
+    scope: "api:role.docs-poster",
     title: "Post Kubernetes Document",
     description: "Create a document in the protected Kubernetes Docs API.",
     method: "POST",
@@ -50,6 +53,7 @@ const tools: Tool[] = [
   },
   {
     name: "delete_k8s_doc",
+    scope: "api:role.docs-deleter",
     title: "Delete Kubernetes Document",
     description: "Delete a document from the protected Kubernetes Docs API by numeric ID.",
     method: "DELETE",
@@ -66,12 +70,19 @@ const tools: Tool[] = [
 ]
 
 export function createDelegatedK8sDocsMcpServer({
+  accessTokenMode = "token-file",
+  requiredMcpScope = "mcp:role.mcp-accessor",
   tokenDirectory = "/var/run/idthw-access-tokens",
   upstreamBaseUrl,
 }: {
+  accessTokenMode?: "token-file" | "forward"
+  requiredMcpScope?: string
   tokenDirectory?: string
   upstreamBaseUrl: URL
 }) {
+  if (accessTokenMode !== "token-file" && accessTokenMode !== "forward") {
+    throw new Error("MCP_ACCESS_TOKEN_MODE must be token-file or forward")
+  }
   if (upstreamBaseUrl.protocol !== "http:" && upstreamBaseUrl.protocol !== "https:") {
     throw new Error("UPSTREAM_BASE_URL must use HTTP or HTTPS")
   }
@@ -87,7 +98,12 @@ export function createDelegatedK8sDocsMcpServer({
         sendJson(response, 200, { ok: true })
         return
       }
-      if (requestUrl.pathname !== "/mcp") {
+      if (request.method === "GET" && requestUrl.pathname === "/openapi.json") {
+        sendJson(response, 200, openApiSpec(requiredMcpScope))
+        return
+      }
+      const httpTool = tools.find((tool) => requestUrl.pathname === `/tools/${tool.name}`)
+      if (requestUrl.pathname !== "/mcp" && !httpTool) {
         sendJson(response, 404, { error: "not_found" })
         return
       }
@@ -97,7 +113,10 @@ export function createDelegatedK8sDocsMcpServer({
         return
       }
 
-      const message = await readJsonRpcMessage(request)
+      const incoming = await readJsonRpcMessage(request)
+      const message: JsonRpcMessage = httpTool
+        ? { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: httpTool.name, arguments: incoming } }
+        : incoming
       if (!Object.hasOwn(message, "id")) {
         response.statusCode = 202
         response.end()
@@ -160,7 +179,9 @@ export function createDelegatedK8sDocsMcpServer({
 
       // Read immediately before the downstream request so each call uses the
       // request-scoped file published by MCP Runtime Proxy.
-      const accessToken = await readDelegatedAccessToken(params._meta, tool.name, tokenDirectory)
+      const accessToken = accessTokenMode === "forward"
+        ? forwardedAccessToken(request.headers.authorization)
+        : await readDelegatedAccessToken(params._meta, tool.name, tokenDirectory)
       const headers: Record<string, string> = {
         Accept: "application/json, text/plain, */*",
         Authorization: `Bearer ${accessToken}`,
@@ -189,6 +210,32 @@ export function createDelegatedK8sDocsMcpServer({
       sendJson(response, 200, rpcError(responseId, -32603, message))
     }
   })
+}
+
+function forwardedAccessToken(authorization: string | undefined) {
+  const match = /^Bearer (\S+)$/i.exec(authorization ?? "")
+  if (!match) throw new Error("Pass an API access token as Authorization: Bearer <token>.")
+  return match[1]
+}
+
+function openApiSpec(requiredMcpScope: string) {
+  return {
+    openapi: "3.1.0",
+    info: { title: "IDTHW Demo API MCP", version: "0.1.0" },
+    paths: Object.fromEntries(tools.map((tool) => [`/tools/${tool.name}`, {
+      post: {
+        operationId: tool.name,
+        summary: tool.title,
+        description: tool.description,
+        "x-athenz-required-scope": `${requiredMcpScope} ${tool.scope}`,
+        requestBody: {
+          required: true,
+          content: { "application/json": { schema: tool.inputSchema } },
+        },
+        responses: { "200": { description: "MCP tool result with content, structuredContent, and isError" } },
+      },
+    }])),
+  }
 }
 
 function validateArguments(tool: Tool, args: Record<string, unknown>) {

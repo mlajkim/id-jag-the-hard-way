@@ -53,6 +53,14 @@ kubectl -n athenz set env deployment/athenz-zts-server \
 kubectl -n athenz rollout status deployment/athenz-zts-server
 ```
 
+```sh
+# deployment.apps/athenz-zts-server env updated
+# Waiting for deployment "athenz-zts-server" rollout to finish: 0 out of 1 new replicas have been updated...
+# Waiting for deployment "athenz-zts-server" rollout to finish: 0 of 1 updated replicas are available...
+# Waiting for deployment "athenz-zts-server" rollout to finish: 0 of 1 updated replicas are available...
+# deployment "athenz-zts-server" successfully rolled out
+```
+
 This updates the ZTS pod configuration. Each access token will still have one audience; scopes from the other domain remain fully qualified for the next token exchange.
 
 <a id="check-athenz-server-running"></a>

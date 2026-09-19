@@ -67,6 +67,17 @@ kubectl rollout status deploy/api-server -n api
 
 The container is named `idthw-demo-api`, matching the image used in chapter 04. The Deployment and Service are named `api-server`.
 
+If the API cannot trust ZTS's HTTPS certificate, a request with an access token returns `503 Service Unavailable`:
+
+```json
+{
+  "error": "zts_ca_untrusted",
+  "message": "Cannot verify the ZTS HTTPS certificate. Mount the CA certificate that signed it, set NODE_EXTRA_CA_CERTS to its path, and restart the API."
+}
+```
+
+The API pod keeps running and `/healthz` still returns `200 OK`. Apply the CA configuration above to enable token verification.
+
 <a id="create-athenz-role-under-the-api-domain"></a>
 
 ## Create the Document-Reading Role
