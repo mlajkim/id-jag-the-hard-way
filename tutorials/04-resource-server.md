@@ -1,19 +1,19 @@
 |                     Previous                     |    Current     |                         Next                         |
 |:------------------------------------------------:|:--------------:|:----------------------------------------------------:|
-| [Kubernetes Cluster](./03-kubernetes-cluster.md) | **API Server** | [Authorization Server](./05-authorization-server.md) |
+| [Kubernetes Cluster](./03-kubernetes-cluster.md) | **Resource Server** | [Authorization Server](./05-authorization-server.md) |
 
-# API Server
+# Resource Server
 
-Deploy a simple document API and retrieve documents without an access token. We will enable token enforcement later.
+Deploy a simple document API and retrieve documents without an access token. Then enable token enforcement and confirm that the same request is rejected.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
 - [Create the API Namespace](#create-the-api-namespace)
 - [Deploy the API Server](#deploy-the-api-server)
 - [Send a Request to the API Server](#send-a-request-to-the-api-server)
-- [Learn About the API](#learn-about-the-api)
-- [Access Token Mode](#access-token-mode)
 - [Understand the Result](#understand-the-result)
+- [Learn About the API](#learn-about-the-api)
+- [Enable Access Token Enforcement](#enable-access-token-enforcement)
 - [Next Steps](#next-steps)
 
 <!-- /TOC -->
@@ -79,7 +79,13 @@ kubectl exec deploy/api-server -n api \
 # }
 ```
 
-The API returns `200 OK` because access-token enforcement is disabled.
+<a id="learn-whats-happened"></a>
+
+## Understand the Result
+
+The API returns `200 OK` and documents because access-token enforcement is disabled:
+
+![Human requests documents from the API with token enforcement disabled](./assets/core_04_open_api.svg)
 
 ## Learn About the API
 
@@ -90,28 +96,41 @@ It does not use a database. Instead, documents are stored in memory. If you rest
 This makes the server easy to run, easy to reset, and useful for learning how authorization changes the behavior of an API.
 
 <a id="verify-access-token-enforcement"></a>
+<a id="access-token-mode"></a>
 
-## Access Token Mode
+## Enable Access Token Enforcement
 
-`ACCESS_TOKEN_ENABLED` controls access-token enforcement:
+Set `ACCESS_TOKEN_ENABLED=true` to require a valid Athenz access token and the scope for each document operation:
 
-- `false` (default): document requests work without a token.
-- `true`: each document request requires a valid Athenz access token and the scope for that operation.
+```sh
+kubectl set env deploy/api-server -n api ACCESS_TOKEN_ENABLED=true
+kubectl rollout status deploy/api-server -n api
+```
 
-Keep it `false` for now. [Chapter 06](./06-athenz-access-token.md#enable-access-token-enforcement) shows how to configure trust and switch it to `true`.
+Send the same request again without a token:
 
-<a id="learn-whats-happened"></a>
+```sh
+kubectl exec deploy/api-server -n api \
+  -- node -e 'fetch("http://localhost:8080/api/docs").then(async r => console.log(await r.text()))' | jq
+```
 
-## Understand the Result
+```sh
+# {
+#   "error": "missing_access_token",
+#   "message": "Pass an Athenz access token as Authorization: Bearer <token>."
+# }
+```
 
-The API returns documents without an access token:
+The API now returns `401 Unauthorized`. This failure is intentional: token enforcement is enabled, but the request has no access token.
 
-![Human requests documents from the API with token enforcement disabled](./assets/core_04_open_api.svg)
+![The API rejects a document request without an access token](./assets/04_arc_get_docs_from_api_server_unauthorized.svg)
+
+Keep token enforcement enabled for the remaining chapters.
 
 <a id="learn-whats-next"></a>
 
 ## Next Steps
 
-Next, deploy [Athenz](https://github.com/AthenZ/athenz). In chapter 06, you will enable access-token enforcement and use an Athenz token to call the API.
+The API now requires an access token. In the next chapter, you will deploy [Athenz](https://github.com/AthenZ/athenz) as the authorization server. Then, in [Athenz Access Token](./06-athenz-access-token.md), you will configure the API to trust Athenz, obtain a token, and retry the request successfully.
 
 Next: [Authorization Server](./05-authorization-server.md)

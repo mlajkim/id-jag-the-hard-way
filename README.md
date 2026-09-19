@@ -67,22 +67,6 @@ The diagram leads with architecture roles. This tutorial uses Keycloak as the Id
 
 The diagram shows the default Claude Code path. Codex and Open WebUI use their own AI Client Gateway service identities.
 
-## Permission Architecture
-
-![User memberships and gateway and MCP exchange permissions](./tutorials/assets/core_permissions.svg)
-
-The diagram shows the Claude Code path's delegation permissions. These are the checks for the final document retrieval flow:
-
-| Principal or component | Permission or check |
-|---|---|
-| User `human.idjag-learner` | Membership in `mcp:role.mcp-accessor` and `api:role.docs-getter`. |
-| AI Client Gateway | `zts.jag_exchange` permission for both roles. Its service identity depends on the client path. |
-| MCP Runtime Proxy | Validates incoming tokens with audience `mcp` and scope `mcp:role.mcp-accessor`. |
-| MCP service `mcp.idthw-api-mcp` | Source and target exchange permissions to obtain an API token from the incoming MCP token. |
-| Resource Server `api.idthw-api` | Validates exchanged tokens with audience `api` and scope `api:role.docs-getter`. |
-
-Athenz controls token issuance and exchange. The proxy and API enforce the audience and scopes in issued tokens; they do not download Athenz policies. A token can remain usable until it expires after a role membership change.
-
 ## Philosophy
 
 Read about the tutorial's approach to learning through intentional failures:

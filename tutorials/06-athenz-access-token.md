@@ -4,13 +4,12 @@
 
 # Athenz Access Token
 
-Enable access-token enforcement, then request an Athenz token and use it to read documents from the API.
+In chapter 04, you enabled access-token enforcement and saw an unauthenticated request fail. Now configure the API to trust Athenz, request an access token, and use it to read documents.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
 - [Create the API domain](#create-the-api-domain)
 - [Trust the ZTS signing-key endpoint](#trust-the-zts-signing-key-endpoint)
-- [Enable Access Token Enforcement](#enable-access-token-enforcement)
 - [Create the Document-Reading Role](#create-the-document-reading-role)
 - [Understand the required API scopes](#understand-the-required-api-scopes)
 - [Add the Administrator to the Role](#add-the-administrator-to-the-role)
@@ -67,32 +66,6 @@ kubectl rollout status deploy/api-server -n api
 ```
 
 The container is named `idthw-demo-api`, matching the image used in chapter 04. The Deployment and Service are named `api-server`.
-
-## Enable Access Token Enforcement
-
-In chapter 04, the API returned documents without a token. Switch `ACCESS_TOKEN_ENABLED` to `true` to require one:
-
-```sh
-kubectl set env deploy/api-server -n api ACCESS_TOKEN_ENABLED=true
-kubectl rollout status deploy/api-server -n api
-```
-
-Try the document request again without a token:
-
-```sh
-curl -sS http://localhost:14443/api/docs | jq .
-```
-
-```sh
-# {
-#   "error": "missing_access_token",
-#   "message": "Pass an Athenz access token as Authorization: Bearer <token>."
-# }
-```
-
-The API now returns `401 Unauthorized`. Keep token enforcement enabled for the remaining chapters.
-
-![The API rejects a document request without an access token](./assets/04_arc_get_docs_from_api_server_unauthorized.svg)
 
 <a id="create-athenz-role-under-the-api-domain"></a>
 
@@ -210,7 +183,7 @@ _root_user_at=$(./tools/athenz/fetch-access-token.sh \
 
 ## Call the Protected API
 
-The API rejected the unauthenticated request after we enabled token enforcement. Now pass the issued token as `Authorization: Bearer <token>`:
+In chapter 04, the API rejected the request without an access token. Now pass the issued token as `Authorization: Bearer <token>`:
 
 > [!NOTE]
 > If you see `curl: (52) Empty reply from server`, wait a few seconds and try again.

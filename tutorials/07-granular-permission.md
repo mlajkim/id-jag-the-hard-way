@@ -1,6 +1,6 @@
 |                      Previous                      |         Current         |                       Next                       |
 |:--------------------------------------------------:|:-----------------------:|:------------------------------------------------:|
-| [Athenz access token](./06-athenz-access-token.md) | **Granular Permission** | [MCP Server for API](./08-mcp-server-for-api.md) |
+| [Athenz access token](./06-athenz-access-token.md) | **Granular Permission** | [MCP Server for Resource Server](./08-mcp-server-for-resource-server.md) |
 
 # Granular Permission
 
@@ -59,9 +59,9 @@ Use the identity and certificate helper scripts to create a learner identity, `h
 #   ✔  Certificate saved to: ./keys/idjag-learner.crt
 ```
 
-The new `human` domain and `human.idjag-learner` service identity are represented below:
+The new `human` domain and `human.idjag-learner` service identity are shown alongside the protected API in the `api` domain:
 
-![08_create_tld_human](./assets/08_create_tld_human.png)
+![Athenz authorization server above the learner identity in the human domain and the protected Resource Server in the api domain](./assets/core_07_learner_identity.svg)
 
 Open the service page to double-check the learner identity:
 
@@ -209,4 +209,4 @@ You successfully fetched an X.509 certificate for the non-admin service identity
 
 ![Learner requests a docs-getter access token and calls the protected API](./assets/core_07_learner_access.svg)
 
-Next: [MCP Server for API](./08-mcp-server-for-api.md)
+Next: [MCP Server for Resource Server](./08-mcp-server-for-resource-server.md)

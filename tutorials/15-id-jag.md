@@ -11,6 +11,7 @@ Authorize the AI Client Gateway to exchange your Keycloak ID token for an ID-JAG
 - [Grant Permissions to `human.idjag-learner.claude`](#grant-permissions-to-humanidjag-learnerclaude)
 - [Verify](#verify)
 - [Understand the Result](#understand-the-result)
+- [Full Architecture](#full-architecture)
 - [Finally](#finally)
 
 <!-- /TOC -->
@@ -93,8 +94,6 @@ The response should contain the documents returned by the API.
 
 The logs show each authorization boundary in the chain. The gateway requests `mcp:role.mcp-accessor api:role.docs-getter` with access-token audience `mcp`. The MCP service `mcp.idthw-api-mcp` then exchanges that token for audience `api`, retaining only `api:role.docs-getter`.
 
-![Complete core flow from IdP sign-in through the IdP AS and AS to protected API access](./assets/core_15_idjag_flow.svg)
-
 1. The AI Client Gateway resolved the signed-in user's Keycloak ID token, exchanged it for an ID-JAG token, and then fetched an Athenz access token.
 
 ```sh
@@ -149,6 +148,12 @@ kubectl logs -n api deployment/api-server --tail=20
 ```
 
 The proxy checks MCP access, and the API checks document access. The downstream exchange changes the audience from `mcp` to `api` and retains only the document-reading scope.
+
+## Full Architecture
+
+This is the complete architecture you have built, from user sign-in to protected document access:
+
+![Core tutorial architecture: IdP, IdP AS, Authorization Server, AI Agent, gateway, MCP, and Resource Server](./assets/core_15_idjag_flow.svg)
 
 ## Finally
 

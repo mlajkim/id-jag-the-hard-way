@@ -1,6 +1,6 @@
 |             Previous             |         Current          |               Next               |
 |:--------------------------------:|:------------------------:|:--------------------------------:|
-| [API Server](./04-api-server.md) | **Authorization Server** | [Athenz access token](./06-athenz-access-token.md) |
+| [Resource Server](./04-resource-server.md) | **Authorization Server** | [Athenz access token](./06-athenz-access-token.md) |
 
 # Authorization Server
 

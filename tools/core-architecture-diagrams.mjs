@@ -21,6 +21,16 @@ export function addCoreDiagrams(add) {
     save('04_open_api', d)
   }
 
+  {
+    const d = new Architecture(1000, 744, 'Learner identity and protected API in separate Athenz domains', 'Athenz is the Authorization Server. The human domain contains the new learner identity human.idjag-learner. The api domain contains the protected Resource Server api.idthw-api. The learner has not yet been granted the document-reading role.')
+    auth(d, 360, 64)
+    const human = d.card('human', 112, 448, 'Human', { sub: ['human.idjag-learner'] })
+    const api = resource(d, 608, 448, { tag: 'protected' })
+    d.group([human], 'DOMAIN · human')
+    d.group([api], 'DOMAIN · api')
+    save('07_learner_identity', d)
+  }
+
   for (const learner of [false, true]) {
     const d = new Architecture(1240, 688, 'Certificate authentication and protected API access')
     const human = d.card('human', 64, 376, 'Human', { sub: [learner ? 'human.idjag-learner' : 'user.athenz_admin'] })
@@ -133,15 +143,15 @@ export function addCoreDiagrams(add) {
     const d = new Architecture(1432, 728, 'Sign-in succeeds before ID-JAG delegation is denied')
     const human = d.card('human', 64, 64, 'Human')
     const idp = provider(d, 480, 64)
+    const zts = identityAS(d, 1088, 64)
     const client = agent(d, 64, 440)
     const gateway = d.card('gateway', 480, 440, ['AI Client', 'Gateway'], { sub: ['human.idjag-learner.claude'] })
-    const zts = identityAS(d, 1088, 440)
     d.edge([human.right(.44), idp.left(.44)], { label: 'Login', at: [412, 124] })
     d.edge([human.bottom(), client.top()], { label: 'Prompt', at: [204, 360] })
     d.edge([idp.bottom(), gateway.top()], { tone: 'green', dash: true, label: 'ID token', at: [700, 356] })
     d.edge([client.right(.4), gateway.left(.4)], { label: 'MCP', at: [412, 488] })
-    d.edge([gateway.right(.4), zts.left(.4)], { label: 'ID token → ID-JAG', at: [924, 488] })
-    d.edge([zts.left(.74), gateway.right(.74)], { tone: 'red', dash: true, label: 'Permission denied', secondary: 'zts.jag_exchange', at: [924, 630] })
+    d.edge([gateway.right(.4), [1158, 520], zts.bottom(.25)], { label: 'ID token → ID-JAG', at: [924, 488] })
+    d.edge([zts.bottom(.75), [1298, 588], gateway.right(.74)], { tone: 'red', dash: true, label: 'Permission denied', secondary: 'zts.jag_exchange', at: [924, 630] })
     save('14_idjag_denied', d)
   }
 

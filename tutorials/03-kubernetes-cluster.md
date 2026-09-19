@@ -1,6 +1,6 @@
 |                Previous                |        Current         |               Next               |
 |:--------------------------------------:|:----------------------:|:--------------------------------:|
-| [Prerequisites](./02-prerequisites.md) | **Kubernetes Cluster** | [API Server](./04-api-server.md) |
+| [Prerequisites](./02-prerequisites.md) | **Kubernetes Cluster** | [Resource Server](./04-resource-server.md) |
 
 # Kubernetes Cluster
 
@@ -70,4 +70,4 @@ kubectl get ns
 # local-path-storage   Active   15s
 ```
 
-Next: [API Server](./04-api-server.md)
+Next: [Resource Server](./04-resource-server.md)

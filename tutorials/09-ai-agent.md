@@ -1,6 +1,6 @@
 |                     Previous                     |   Current    |                   Next                   |
 |:------------------------------------------------:|:------------:|:----------------------------------------:|
-| [MCP Server for API](./08-mcp-server-for-api.md) | **AI agent** | [Token Exchange](./10-token-exchange.md) |
+| [MCP Server for Resource Server](./08-mcp-server-for-resource-server.md) | **AI agent** | [Token Exchange](./10-token-exchange.md) |
 
 # AI Agent: Claude
 
