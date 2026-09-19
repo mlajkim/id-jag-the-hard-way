@@ -63,4 +63,4 @@ Keep the tutorial and terminal visible side by side so you can read a step, run 
 
 The results of this tutorial should not be considered production-ready. The goal is to learn the architecture, not to ship a hardened production platform.
 
-Next: [Kubernetes Cluster](./03-kubernetes-cluster.md)
+The required tools are ready. In the next chapter, you will create a local Kubernetes cluster. Next: [Kubernetes Cluster](./03-kubernetes-cluster.md)

@@ -201,6 +201,7 @@ The MCP role permits tool execution. The API role permits the later exchange int
 Send the new token:
 
 ```sh
+_mcp_port=$(./tools/port.sh mcp)
 curl -sS -w '\nHTTP %{http_code}\n' "http://localhost:${_mcp_port}/mcp" \
   -H 'Content-Type: application/json' \
   -H "Authorization: Bearer ${_my_access_token}" \
@@ -224,6 +225,4 @@ The pod is ready and discovery works. The protected document request is delibera
 
 ## Next Steps
 
-Grant the service exchange permissions and repeat the same request.
-
-Next: [Token Exchange](./11-token-exchange.md)
+MCP access now passes, but Athenz rejects the downstream token exchange. In the next chapter, you will grant the service exchange permissions and retry the request. Next: [Token Exchange](./11-token-exchange.md)

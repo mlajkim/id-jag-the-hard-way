@@ -4,7 +4,7 @@
 
 # Identity Provider
 
-Deploy [Keycloak](https://www.keycloak.org/) as an identity provider (IdP) with the following steps. Users will sign in to obtain an ID token for the later ID-JAG exchange.
+Deploy [Keycloak](https://www.keycloak.org/) as an identity provider (IdP) with the following steps. Users will sign in to obtain an ID token.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
@@ -219,6 +219,4 @@ At this point, Keycloak is running and configured, but our Authorization Server 
 
 ## Next Steps
 
-We have set up the Identity Provider. Now we need to configure Athenz to accept and verify tokens issued by Keycloak.
-
-Next: [Trusted Identity Provider](./13-trusted-identity-provider.md)
+Keycloak is ready, but Athenz does not yet trust its ID tokens. In the next chapter, you will configure Athenz to accept and verify them. Next: [Trusted Identity Provider](./13-trusted-identity-provider.md)

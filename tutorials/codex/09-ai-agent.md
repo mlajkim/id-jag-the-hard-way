@@ -96,7 +96,7 @@ cat .codex/config.toml
 
 ```toml
 [mcp_servers.id-jag-the-hard-way-mcp]
-url = "http://localhost:24443/mcp"
+url = "http://localhost:<your_port>/mcp"
 http_headers = { Authorization = "Bearer <redacted-access-token>" }
 
 [mcp_servers.id-jag-the-hard-way-mcp.tools.get_k8s_docs]
@@ -139,6 +139,4 @@ Codex CLI sends the learner's API access token to `idthw-demo-api-mcp`. In `forw
 
 ![The AI client retrieves documents through MCP](../assets/core_09_mcp_success.svg)
 
-The MCP endpoint does not yet validate incoming tokens itself. Next, add Runtime Proxy and observe the deliberate authorization failures.
-
-Next: [Protect MCP Server](./10-protect-mcp-server.md)
+The MCP endpoint does not yet validate incoming tokens itself. In the next chapter, you will add Runtime Proxy to protect tool execution. Next: [Protect MCP Server](./10-protect-mcp-server.md)

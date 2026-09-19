@@ -58,4 +58,4 @@ git submodule update --init --recursive
 
 Run tutorial commands from the repository root, including when you open another terminal. You can choose a different directory name or location when cloning, but relative paths in the commands assume the repository root.
 
-Next: [Prerequisites](./02-prerequisites.md)
+The repository and its submodules are ready. In the next chapter, you will check the tools needed to run the tutorial. Next: [Prerequisites](./02-prerequisites.md)

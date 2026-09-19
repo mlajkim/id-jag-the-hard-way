@@ -295,6 +295,4 @@ The user is signed in, and the gateway authenticates to ZTS as `ai.open-webui`. 
 
 ## Next Steps
 
-In the next chapter, you will grant the gateway ID-JAG exchange permission for the MCP and API roles, then retry the document request.
-
-Next: [ID-JAG](./15-id-jag.md)
+Sign-in succeeds, but Athenz rejects the gateway's ID-JAG request. In the next chapter, you will grant the gateway the required exchange permissions and retry the document request. Next: [ID-JAG](./15-id-jag.md)

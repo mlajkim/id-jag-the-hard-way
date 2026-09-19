@@ -49,7 +49,7 @@ kubectl rollout status deploy/mcp -n mcp
 
 The container listens on `8080`; the Service keeps port `8081` for the tutorial's port-forwarder and gateway. Keep `./tools/keep-k8s-port-forward.sh` running in another terminal.
 
-The default mode is `token-file`. Chapter 10 switches back to that mode when Runtime Proxy starts handling downstream exchange.
+The default mode is `token-file`.
 
 ## Discover the Tools
 
@@ -93,6 +93,7 @@ _my_access_token=$(./tools/athenz/fetch-access-token.sh \
 Call the document tool:
 
 ```sh
+_mcp_port=$(./tools/port.sh mcp)
 curl -sS "http://localhost:${_mcp_port}/mcp" \
   -H 'Content-Type: application/json' \
   -H "Authorization: Bearer ${_my_access_token}" \
@@ -120,6 +121,4 @@ At this stage MCP does not validate incoming tokens itself; the API enforces doc
 
 ## Next Steps
 
-Connect an AI client and repeat the successful tool call. Chapter 10 will add MCP protection; chapter 11 will authorize downstream token exchange.
-
-Next: [AI Agent](./09-ai-agent.md)
+We have successfully retrieved documents by calling the MCP tool directly. In the next chapter, we will connect an AI client and ask it to retrieve the same documents through that tool. Next: [AI Agent](./09-ai-agent.md)

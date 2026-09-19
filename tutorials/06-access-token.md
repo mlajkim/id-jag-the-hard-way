@@ -117,7 +117,7 @@ The API validates the token's signature against trusted ZTS signing keys, its ex
 
 The API accepts `scope` or `scp` claims and also accepts short role names, such as `docs-getter`, when `api` is the sole audience. A read token cannot create or delete documents.
 
-These mappings live in the API; it does not download or evaluate Athenz action/resource policies. ZTS still controls token issuance, and later chapters configure the policies needed for token exchange and ID-JAG. Removing role membership stops new grants after ZTS observes the change; an already-issued token can remain usable until it expires.
+These mappings live in the API; it does not download or evaluate Athenz action/resource policies. ZTS controls token issuance. Removing role membership stops new grants after ZTS observes the change; an already-issued token can remain usable until it expires.
 
 <a id="add-root-user-as-a-member"></a>
 
@@ -232,6 +232,4 @@ We have successfully retrieved an Athenz access token as `user.athenz_admin` and
 
 ## Next Steps
 
-The administrator can also manage Athenz domains and policies. Routine API calls do not need those privileges. In the next chapter, you will create a dedicated learner identity and grant it the document-reading role.
-
-Next: [Granular Permission](./07-granular-permission.md)
+The administrator can also manage Athenz domains and policies. Routine API calls do not need those privileges. In the next chapter, you will create a dedicated learner identity and grant it the document-reading role. Next: [Granular Permission](./07-granular-permission.md)

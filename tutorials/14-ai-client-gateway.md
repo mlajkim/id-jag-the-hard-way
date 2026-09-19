@@ -327,6 +327,4 @@ The sign-in succeeded, but Athenz rejected the delegation request. The gateway s
 
 ## Next Steps
 
-In the next chapter, you will grant `human.idjag-learner.claude` permission to request an ID-JAG for the MCP and API scopes on the learner's behalf.
-
-Next: [ID-JAG](./15-id-jag.md)
+Sign-in succeeds, but Athenz rejects the gateway's ID-JAG request. In the next chapter, you will grant the gateway the required exchange permissions and retry the document request. Next: [ID-JAG](./15-id-jag.md)
