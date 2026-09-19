@@ -6,7 +6,7 @@
 
 ![10_claude](./assets/10_claude.png)
 
-Connect Claude Code to the MCP server with the following steps. You will provide an Athenz access token in the `Authorization` header and retrieve documents successfully.
+Connect Claude Code to the MCP server and verify that it discovers the document tools.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
@@ -16,6 +16,7 @@ Connect Claude Code to the MCP server with the following steps. You will provide
 - [Connect to the MCP Server](#connect-to-the-mcp-server)
 - [Verify](#verify)
 - [Understand the Result](#understand-the-result)
+- [Next Steps](#next-steps)
 
 <!-- /TOC -->
 
@@ -62,34 +63,17 @@ Create `.mcp.json` before launching Claude Code so it can load the MCP server co
 >
 > If Claude says the port-forward connection dropped, restart `./tools/keep-k8s-port-forward.sh`, wait for the MCP deployment again, and retry.
 
-Get the access token:
-
-```sh
-_scope="api:role.docs-getter"
-_my_access_token=$(./tools/athenz/fetch-access-token.sh \
-  "./keys/idjag-learner.crt" \
-  "./keys/idjag-learner.key" \
-  "${_scope}" \
-  "./keys/idjag-learner.jwt")
-
-cat "./keys/idjag-learner.jwt"
-```
-
 Create `.mcp.json` at the root of this project:
 
 ```sh
 _mcp_port=$(./tools/port.sh mcp)
-_at=$(cat ./keys/idjag-learner.jwt)
 
 cat > .mcp.json <<EOF
 {
   "mcpServers": {
     "id-jag-the-hard-way-mcp": {
       "type": "http",
-      "url": "http://localhost:${_mcp_port}/mcp",
-      "headers": {
-        "Authorization": "Bearer ${_at}"
-      }
+      "url": "http://localhost:${_mcp_port}/mcp"
     }
   }
 }
@@ -107,10 +91,7 @@ cat .mcp.json
   "mcpServers": {
     "id-jag-the-hard-way-mcp": {
       "type": "http",
-      "url": "http://localhost:<your_port>/mcp",
-      "headers": {
-        "Authorization": "Bearer <redacted-access-token>"
-      }
+      "url": "http://localhost:<your_port>/mcp"
     }
   }
 }
@@ -154,25 +135,20 @@ You can see that you are `✅ Connected` for the `id-jag-the-hard-way-mcp`:
 
 ## Verify
 
-Call the document retrieval tool through `id-jag-the-hard-way-mcp`:
+Open `/mcp`, select `id-jag-the-hard-way-mcp`, and confirm that the server is connected and advertises these tools:
 
-Hit `Esc` one time to go back to the prompt dialog, then type this prompt into Claude Code:
-
-```text
-get docs from k8s doc server!
-```
-
-![ask_k8s_docs_server_in_claude](./assets/10_ask_k8s_docs_server_in_claude.png)
-
-
-The `get_k8s_docs` tool succeeds and returns the API's documents. Its structured result contains `status: 200` and `ok: true`.
+- `get_k8s_docs`
+- `post_k8s_doc`
+- `delete_k8s_doc`
 
 ## Understand the Result
 
-Claude Code sends the learner's API access token to `idthw-demo-api-mcp`. In `forward` mode, MCP passes that token to the API, which validates audience `api` and scope `docs-getter` before returning documents.
+Claude Code can connect to `idthw-demo-api-mcp` and discover its document tools without an access token. Discovery reads tool definitions; it does not retrieve documents from the protected API.
 
-![The AI client retrieves documents through MCP](./assets/core_09_mcp_success.svg)
+![The AI client connects to MCP and discovers the tools](./assets/core_09_mcp_success.svg)
 
-The MCP endpoint does not yet validate incoming tokens itself. In the next chapter, you will add Runtime Proxy to protect tool execution.
+## Next Steps
+
+The AI client can now discover the MCP tools. In the next chapter, we will add Runtime Proxy to validate access tokens before allowing tool execution.
 
 Next: [Protect MCP Server](./10-protect-mcp-server.md)

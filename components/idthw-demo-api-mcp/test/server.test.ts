@@ -28,7 +28,37 @@ test("supports stateless initialization and tool discovery", async (t) => {
   )
 })
 
-test("reads the request-scoped token file and forwards it to K8s Docs", async (t) => {
+test("uses the startup API token for MCP and HTTP tool calls", async (t) => {
+  const receivedAuthorizations: string[] = []
+  const upstream = http.createServer((request, response) => {
+    receivedAuthorizations.push(request.headers.authorization ?? "")
+    response.setHeader("content-type", "application/json")
+    response.end(JSON.stringify({ docs: [{ id: 1, name: "Example" }] }))
+  })
+  const upstreamPort = await listen(upstream)
+  t.after(() => close(upstream))
+  const server = createDelegatedK8sDocsMcpServer({
+    apiAccessToken: "startup.api.fixture",
+    upstreamBaseUrl: new URL(`http://127.0.0.1:${upstreamPort}`),
+  })
+  const port = await listen(server)
+  t.after(() => close(server))
+
+  const result = await callMcp(port, {
+    jsonrpc: "2.0", id: 1, method: "tools/call",
+    params: { name: "get_k8s_docs", arguments: {}, _meta: { progressToken: "progress-1" } },
+  }, { authorization: "Bearer incoming.client.fixture" })
+  assert.equal(result.result.isError, false)
+  assert.deepEqual(result.result.structuredContent.data.docs, [{ id: 1, name: "Example" }])
+
+  const httpResult = await fetch(`http://127.0.0.1:${port}/tools/get_k8s_docs`, {
+    method: "POST", headers: { "content-type": "application/json" }, body: "{}",
+  })
+  assert.equal((await httpResult.json() as any).result.isError, false)
+  assert.deepEqual(receivedAuthorizations, ["Bearer startup.api.fixture", "Bearer startup.api.fixture"])
+})
+
+test("prefers the request-scoped token file over the startup token and rereads it for each call", async (t) => {
   const tokenDirectory = await mkdtemp(join(tmpdir(), "delegated-mcp-token-test-"))
   t.after(() => rm(tokenDirectory, { recursive: true, force: true }))
   const tokenFile = await writeToolToken(tokenDirectory, "get_k8s_docs", "12345678-1234-1234-1234-123456789abc.jwt", "first.test.token")
@@ -42,6 +72,7 @@ test("reads the request-scoped token file and forwards it to K8s Docs", async (t
   const upstreamPort = await listen(upstream)
   t.after(() => close(upstream))
   const server = createDelegatedK8sDocsMcpServer({
+    apiAccessToken: "startup.api.fixture",
     tokenDirectory,
     upstreamBaseUrl: new URL(`http://127.0.0.1:${upstreamPort}`),
   })
@@ -55,6 +86,40 @@ test("reads the request-scoped token file and forwards it to K8s Docs", async (t
   await writeFile(tokenFile, "second.test.token\n", { encoding: "utf8", mode: 0o640 })
   await callMcp(port, toolCall("get_k8s_docs", tokenFile))
   assert.deepEqual(receivedAuthorizations, ["Bearer first.test.token", "Bearer second.test.token"])
+})
+
+test("invalid request token files never fall back to the startup token", async (t) => {
+  const tokenDirectory = await mkdtemp(join(tmpdir(), "delegated-mcp-no-fallback-test-"))
+  t.after(() => rm(tokenDirectory, { recursive: true, force: true }))
+  const invalidFile = await writeToolToken(tokenDirectory, "get_k8s_docs", "12345678-1234-1234-1234-123456789abc.jwt", "invalid fixture")
+  let upstreamCalls = 0
+  const upstream = http.createServer((_request, response) => {
+    upstreamCalls++
+    response.end("must not be called")
+  })
+  const upstreamPort = await listen(upstream)
+  t.after(() => close(upstream))
+  const server = createDelegatedK8sDocsMcpServer({
+    apiAccessToken: "startup.api.fixture",
+    tokenDirectory,
+    upstreamBaseUrl: new URL(`http://127.0.0.1:${upstreamPort}`),
+  })
+  const port = await listen(server)
+  t.after(() => close(server))
+
+  for (const path of [
+    null, 7, "", "/tmp/outside/12345678-1234-1234-1234-123456789abc.jwt",
+    join(tokenDirectory, "post_k8s_doc", "12345678-1234-1234-1234-123456789abc.jwt"),
+    join(tokenDirectory, "get_k8s_docs", "22345678-1234-1234-1234-123456789abc.jwt"),
+    invalidFile,
+  ]) {
+    const result = await callMcp(port, {
+      jsonrpc: "2.0", id: 1, method: "tools/call",
+      params: { name: "get_k8s_docs", arguments: {}, _meta: { [MCP_ACCESS_TOKEN_FILE_META_KEY]: path } },
+    })
+    assert.equal(result.error.code, -32603)
+  }
+  assert.equal(upstreamCalls, 0)
 })
 
 test("maps post and delete tools onto the protected Docs API", async (t) => {
@@ -144,10 +209,10 @@ async function writeToolToken(root: string, tool: string, filename: string, toke
   return path
 }
 
-async function callMcp(port: number, body: unknown) {
+async function callMcp(port: number, body: unknown, headers: Record<string, string> = {}) {
   const response = await fetch(`http://127.0.0.1:${port}/mcp`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", ...headers },
     body: JSON.stringify(body),
   })
   return await response.json() as any

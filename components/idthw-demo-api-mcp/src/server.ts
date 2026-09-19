@@ -1,5 +1,5 @@
 import http, { type IncomingMessage, type ServerResponse } from "node:http"
-import { readDelegatedAccessToken } from "./tokenFile.ts"
+import { MCP_ACCESS_TOKEN_FILE_META_KEY, readDelegatedAccessToken } from "./tokenFile.ts"
 
 const MAX_REQUEST_BYTES = 64 * 1024
 const UPSTREAM_TIMEOUT_MS = 10_000
@@ -70,19 +70,16 @@ const tools: Tool[] = [
 ]
 
 export function createDelegatedK8sDocsMcpServer({
-  accessTokenMode = "token-file",
+  apiAccessToken,
   requiredMcpScope = "mcp:role.mcp-accessor",
   tokenDirectory = "/var/run/idthw-access-tokens",
   upstreamBaseUrl,
 }: {
-  accessTokenMode?: "token-file" | "forward"
+  apiAccessToken?: string
   requiredMcpScope?: string
   tokenDirectory?: string
   upstreamBaseUrl: URL
 }) {
-  if (accessTokenMode !== "token-file" && accessTokenMode !== "forward") {
-    throw new Error("MCP_ACCESS_TOKEN_MODE must be token-file or forward")
-  }
   if (upstreamBaseUrl.protocol !== "http:" && upstreamBaseUrl.protocol !== "https:") {
     throw new Error("UPSTREAM_BASE_URL must use HTTP or HTTPS")
   }
@@ -177,11 +174,15 @@ export function createDelegatedK8sDocsMcpServer({
       const upstreamUrl = new URL(tool.path(args), upstreamBaseUrl)
       const bodyValue = tool.requestBody?.(args)
 
-      // Read immediately before the downstream request so each call uses the
-      // request-scoped file published by MCP Runtime Proxy.
-      const accessToken = accessTokenMode === "forward"
-        ? forwardedAccessToken(request.headers.authorization)
-        : await readDelegatedAccessToken(params._meta, tool.name, tokenDirectory)
+      // A request-specific token takes precedence over the startup token.
+      // Invalid file metadata must fail rather than fall back to another identity.
+      let accessToken = apiAccessToken?.trim()
+      if (Object.hasOwn(recordValue(params._meta), MCP_ACCESS_TOKEN_FILE_META_KEY)) {
+        accessToken = await readDelegatedAccessToken(params._meta, tool.name, tokenDirectory)
+      }
+      if (!accessToken) {
+        throw new Error("Set API_ACCESS_TOKEN or supply token file metadata from MCP Runtime Proxy to call the API.")
+      }
       const headers: Record<string, string> = {
         Accept: "application/json, text/plain, */*",
         Authorization: `Bearer ${accessToken}`,
@@ -210,12 +211,6 @@ export function createDelegatedK8sDocsMcpServer({
       sendJson(response, 200, rpcError(responseId, -32603, message))
     }
   })
-}
-
-function forwardedAccessToken(authorization: string | undefined) {
-  const match = /^Bearer (\S+)$/i.exec(authorization ?? "")
-  if (!match) throw new Error("Pass an API access token as Authorization: Bearer <token>.")
-  return match[1]
 }
 
 function openApiSpec(requiredMcpScope: string) {

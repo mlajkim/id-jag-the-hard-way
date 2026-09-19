@@ -4,12 +4,8 @@ const port = parsePort(process.env.PORT ?? "8080")
 const host = process.env.HOST ?? "0.0.0.0"
 const upstreamBaseUrl = new URL(process.env.UPSTREAM_BASE_URL ?? "http://api-server.api:8080")
 const tokenDirectory = process.env.MCP_ACCESS_TOKEN_FILE_DIR ?? "/var/run/idthw-access-tokens"
-const accessTokenMode = process.env.MCP_ACCESS_TOKEN_MODE ?? "token-file"
-if (accessTokenMode !== "token-file" && accessTokenMode !== "forward") {
-  throw new Error("MCP_ACCESS_TOKEN_MODE must be token-file or forward")
-}
 const server = createDelegatedK8sDocsMcpServer({
-  accessTokenMode,
+  apiAccessToken: process.env.API_ACCESS_TOKEN,
   requiredMcpScope: process.env.ACCESS_MCP_REQUIRED_SCOPE ?? "mcp:role.mcp-accessor",
   tokenDirectory,
   upstreamBaseUrl,
@@ -19,7 +15,6 @@ server.listen(port, host, () => {
   console.log(JSON.stringify({
     component: "idthw-demo-api-mcp",
     event: "server_started",
-    accessTokenMode,
     listenAddress: `${host}:${port}`,
     upstream: upstreamBaseUrl.origin,
   }))

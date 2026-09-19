@@ -8,7 +8,7 @@ Complete the shared [Authorize the Downstream Exchange](../11-token-exchange.md#
 
 ## Update the Client
 
-Open **Admin Panel > Settings > Integrations > Manage Tool Servers** and edit `API MCP Server`. Replace the bearer API key with the learner's MCP-audience token saved in `./keys/idjag-learner.jwt`. Keep the URL `http://mcp.mcp:8081` and OpenAPI spec `/openapi.json`.
+Open **Admin Panel > Settings > Integrations > Manage Tool Servers** and edit `API MCP Server`. Set the auth type to `Bearer` and use the learner's MCP-audience token saved in `./keys/idjag-learner.jwt` as the API key. Keep the URL `http://mcp.mcp:8081` and OpenAPI spec `/openapi.json`.
 
 Start a new chat, select the document tool, and ask `get docs!`.
 
