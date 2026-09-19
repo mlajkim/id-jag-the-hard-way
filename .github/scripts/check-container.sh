@@ -108,10 +108,6 @@ case "$component" in
     start
     node_http 8080 /health 200
     ;;
-  idjag-ui)
-    start
-    node_http 3000 /favicon.ico 200
-    ;;
   ai-client-gateway)
     # Full startup requires deployment credentials. Exercise the TypeScript
     # runtime and native esbuild dependency without provisioning an identity.

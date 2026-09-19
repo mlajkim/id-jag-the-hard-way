@@ -1,6 +1,6 @@
 # Athenz permission model for the ID-JAG demo.
 # Edit this file to change services, roles, members, and policies.
-# Apply with: make -C ui setup-permissions
+# Apply with: ./tools/setup-permissions.sh tools/config/init.yaml
 
 domain: api
 
@@ -79,18 +79,6 @@ roles:
     policies:
       - allow: zts.jag_exchange
         on: role.mcp-accessor
-
-  # jag-exchanging-uis: Next.js UI => exchange into docs roles on the user's behalf
-  - name: jag-exchanging-uis
-    members:
-      - org.idjag-ui
-    policies:
-      - allow: zts.jag_exchange
-        on: role.docs-getter
-      - allow: zts.jag_exchange
-        on: role.docs-poster
-      - allow: zts.jag_exchange
-        on: role.docs-deleter
 
   # to-api-exchanger: MCP server => exchange inbound tokens issued for the api domain
   - name: to-api-exchanger
