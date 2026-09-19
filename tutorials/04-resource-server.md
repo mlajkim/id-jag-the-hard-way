@@ -131,6 +131,6 @@ Keep token enforcement enabled for the remaining chapters.
 
 ## Next Steps
 
-The API now requires an access token. In the next chapter, you will deploy [Athenz](https://github.com/AthenZ/athenz) as the authorization server. Then, in [Athenz Access Token](./06-athenz-access-token.md), you will configure the API to trust Athenz, obtain a token, and retry the request successfully.
+The API now requires an access token. In the next chapter, you will deploy [Athenz](https://github.com/AthenZ/athenz) as the authorization server. Then, in [Access Token](./06-access-token.md), you will configure the API to trust Athenz, obtain a token, and retry the request successfully.
 
 Next: [Authorization Server](./05-authorization-server.md)

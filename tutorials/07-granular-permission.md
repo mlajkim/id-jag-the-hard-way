@@ -1,6 +1,6 @@
 |                      Previous                      |         Current         |                       Next                       |
 |:--------------------------------------------------:|:-----------------------:|:------------------------------------------------:|
-| [Athenz access token](./06-athenz-access-token.md) | **Granular Permission** | [MCP Server for Resource Server](./08-mcp-server-for-resource-server.md) |
+| [Access Token](./06-access-token.md) | **Granular Permission** | [MCP Server for Resource Server](./08-mcp-server-for-resource-server.md) |
 
 # Granular Permission
 

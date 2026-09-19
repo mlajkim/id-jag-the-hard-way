@@ -1,8 +1,8 @@
 |             Previous             |         Current         |                        Next                        |
 |:--------------------------------:|:-----------------------:|:--------------------------------------------------:|
-| [Authorization Server](./05-authorization-server.md) | **Athenz access token** | [Granular Permission](./07-granular-permission.md) |
+| [Authorization Server](./05-authorization-server.md) | **Access Token** | [Granular Permission](./07-granular-permission.md) |
 
-# Athenz Access Token
+# Access Token
 
 In chapter 04, you enabled access-token enforcement and saw an unauthenticated request fail. Now configure the API to trust Athenz, request an access token, and use it to read documents.
 
