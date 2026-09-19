@@ -99,6 +99,8 @@ get docs from k8s doc server!
 
 The client can still initialize and list the available tools. The tool call fails because protected requests require `mcp:role.mcp-accessor`, while the current token has audience `api` and only grants `docs-getter`. The proxy rejects that audience before checking the MCP scope.
 
+![MCP Runtime Proxy rejects a tool call with an API-audience token](./assets/core_11_mcp_rejected.svg)
+
 You can also see from the log of the `auth-proxy` container that the request was rejected:
 
 ```sh
@@ -229,6 +231,8 @@ kubectl logs deploy/mcp -n api -c auth-proxy
 ## Review the Result
 
 MCP Runtime Proxy now validates tokens in front of the MCP adapter. Any client can initialize and list tools without an Athenz access role. Protected methods such as `tools/call` reach the MCP server only when the caller's access token carries the `mcp:role.mcp-accessor` scope.
+
+![Runtime Proxy validates MCP access before the adapter exchanges for API access](./assets/core_11_protected_mcp.svg)
 
 <a id="whats-next"></a>
 

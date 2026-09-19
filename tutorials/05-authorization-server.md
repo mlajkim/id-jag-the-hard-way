@@ -1,6 +1,6 @@
 |             Previous             |         Current          |               Next               |
 |:--------------------------------:|:------------------------:|:--------------------------------:|
-| [API Server](./04-api-server.md) | **Authorization Server** | [Athenz access token](./06-athenz-access-token.md) |
+| [Resource Server](./04-resource-server.md) | **Authorization Server** | [Access Token](./06-access-token.md) |
 
 # Authorization Server
 
@@ -136,4 +136,4 @@ _athenz_ui_port=$(./tools/port.sh athenz-ui)
 
 In the next tutorial, we will create the API domain and request a scoped access token:
 
-Next: [Athenz access token](./06-athenz-access-token.md)
+Next: [Access Token](./06-access-token.md)

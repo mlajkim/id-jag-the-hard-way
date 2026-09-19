@@ -1,10 +1,10 @@
 |             Previous             |         Current         |                        Next                        |
 |:--------------------------------:|:-----------------------:|:--------------------------------------------------:|
-| [Authorization Server](./05-authorization-server.md) | **Athenz access token** | [Granular Permission](./07-granular-permission.md) |
+| [Authorization Server](./05-authorization-server.md) | **Access Token** | [Granular Permission](./07-granular-permission.md) |
 
-# Athenz Access Token
+# Access Token
 
-Request an Athenz access token and use it to read documents from the API with the following steps:
+In chapter 04, you enabled access-token enforcement and saw an unauthenticated request fail. Now configure the API to trust Athenz, request an access token, and use it to read documents.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
@@ -183,24 +183,7 @@ _root_user_at=$(./tools/athenz/fetch-access-token.sh \
 
 ## Call the Protected API
 
-Last time we tried to access the `docs` resource of the API server, but we got a 401 Unauthorized error:
-
-```sh
-curl -sS -k http://localhost:14443/api/docs | jq .
-```
-
-> [!NOTE]
-> If you see `curl: (52) Empty reply from server` or `curl: (7) Failed to connect to localhost port 14443`, wait a few seconds and try again. Check that the API Deployment is ready and the port-forwarder is running. Once connected, the API should return the missing-token response below.
-
-```sh
-# {
-#   "error": "missing_access_token",
-#   "message": "Pass an Athenz access token as Authorization: Bearer <token>."
-# }
-```
-
-
-With the access token, let's see if we can access it now. Pass it as `Authorization: Bearer <token>`:
+In chapter 04, the API rejected the request without an access token. Now pass the issued token as `Authorization: Bearer <token>`:
 
 > [!NOTE]
 > If you see `curl: (52) Empty reply from server`, wait a few seconds and try again.
@@ -232,7 +215,7 @@ curl -sS -k -H "Authorization: Bearer $_root_user_at" http://localhost:14443/api
 
 We have successfully retrieved an Athenz access token as `user.athenz_admin` and used it to access the protected API.
 
-![07_arc_get_athenz_at_and_pass_api_req](./assets/07_arc_get_athenz_at_and_pass_api_req.png)
+![Administrator requests an Athenz access token and calls the protected API](./assets/core_06_admin_access.svg)
 
 <a id="whats-next"></a>
 

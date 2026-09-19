@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="440" viewBox="0 0 1440 440" role="img" aria-labelledby="title description">
+  <title id="title">Access token required</title>
+  <desc id="description">Step 1: a human API client sends GET /api/docs without an Authorization header. The document API requires an Athenz access token. Step 2: it returns 401 Unauthorized with the error missing_access_token. No documents are returned.</desc>
+
+  <defs>
+    <marker id="request-arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="m1 1 9 5-9 5Z" fill="#1a73e8"/>
+    </marker>
+    <marker id="response-arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="m1 1 9 5-9 5Z" fill="#c5221f"/>
+    </marker>
+    <g id="lock" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="4" y="10" width="16" height="11" rx="2.5"/>
+      <path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2"/>
+    </g>
+    <g id="server" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="26" height="11" rx="3"/>
+      <rect x="3" y="18" width="26" height="11" rx="3"/>
+      <path d="M18 8.5h5M18 23.5h5"/>
+      <circle cx="9" cy="8.5" r="1.5" fill="currentColor" stroke="none"/>
+      <circle cx="9" cy="23.5" r="1.5" fill="currentColor" stroke="none"/>
+    </g>
+  </defs>
+
+  <rect width="1440" height="440" rx="24" fill="#fff"/>
+
+  <g font-family="Arial, Helvetica, sans-serif">
+    <!-- Client. The head and shoulders form one continuous silhouette. -->
+    <g id="human-client">
+      <rect x="64" y="88" width="280" height="264" rx="20" fill="#fff" stroke="#dadce0" stroke-width="1.5"/>
+      <circle cx="204" cy="184" r="56" fill="#e8f0fe"/>
+      <path d="M197 176a18 18 0 1 1 14 0c17 4 29 19 29 37v8h-72v-8c0-18 12-33 29-37Z" fill="#1a73e8"/>
+      <text x="204" y="296" text-anchor="middle" fill="#202124" font-size="26" font-weight="700">Human</text>
+    </g>
+
+    <!-- Protected resource. -->
+    <g id="protected-api">
+      <rect x="1096" y="88" width="280" height="264" rx="20" fill="#f8fafd" stroke="#c4d4ee" stroke-width="1.5"/>
+      <circle cx="1236" cy="184" r="56" fill="#e8f0fe"/>
+      <use href="#server" transform="translate(1212 160) scale(1.5)" color="#1a73e8"/>
+      <use href="#lock" x="1330" y="107" color="#5f6368"/>
+      <text x="1236" y="296" text-anchor="middle" fill="#202124" font-size="26" font-weight="700">API service</text>
+    </g>
+
+    <!-- Request. -->
+    <g id="request">
+      <text x="720" y="124" text-anchor="middle" fill="#174ea6" font-family="'SFMono-Regular', Consolas, 'Liberation Mono', monospace" font-size="26" font-weight="700">GET /api/docs</text>
+      <text x="720" y="156" text-anchor="middle" fill="#5f6368" font-size="20">No access token</text>
+      <path d="M344 190H1094" fill="none" stroke="#1a73e8" stroke-width="3" marker-end="url(#request-arrow)"/>
+      <circle cx="344" cy="190" r="4.5" fill="#fff" stroke="#1a73e8" stroke-width="2"/>
+    </g>
+
+    <!-- Response. -->
+    <g id="response">
+      <text x="720" y="275" text-anchor="middle" fill="#a50e0e" font-family="'SFMono-Regular', Consolas, 'Liberation Mono', monospace" font-size="26" font-weight="700">401 Unauthorized</text>
+      <path d="M1096 306H346" fill="none" stroke="#c5221f" stroke-width="2.5" stroke-dasharray="8 6" marker-end="url(#response-arrow)"/>
+      <circle cx="1096" cy="306" r="4.5" fill="#fff" stroke="#c5221f" stroke-width="2"/>
+    </g>
+  </g>
+</svg>

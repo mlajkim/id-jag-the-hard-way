@@ -10,7 +10,7 @@ AI Client Gateway connects AI clients to protected MCP services in [ID-JAG The H
 4. ZTS validates the ID token and checks whether the user and gateway are authorized for the requested scopes.
 5. The gateway exchanges the ID-JAG for an access token and forwards the request to `UPSTREAM_BASE_URL` with that token.
 
-![arc_ai_cleint_gateway](./assets/arc_ai_client_gateway.png)
+![arc_ai_cleint_gateway](./assets/arc_ai_client_gateway.svg)
 
 The [main architecture diagram](../../README.md#full-architecture) shows the downstream flow: MCP Runtime Proxy validates the token, and the MCP server exchanges it for an API-specific token.
 

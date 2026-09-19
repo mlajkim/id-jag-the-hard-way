@@ -23,7 +23,7 @@ In both flows:
 1. **You** sign in and ask the AI agent to retrieve documents.
 2. The **AI Client Gateway** obtains a scoped access token on your behalf and forwards the tool call to the MCP service.
 3. **MCP Runtime Proxy** validates the incoming token. The **MCP server** exchanges it for an API access token and calls the API.
-4. The **API server** validates the exchanged token and checks the scope required by the operation.
+4. The **Resource Server** validates the exchanged token and checks the scope required by the operation.
 
 <a id="technical-spec"></a>
 
@@ -52,9 +52,9 @@ The tutorial uses the following components:
 
 ## Full Architecture
 
-The completed tutorial uses this token flow. Keycloak authenticates the user; Athenz authorizes the gateway and MCP server to exchange tokens on that user's behalf.
+The diagram leads with architecture roles. This tutorial uses Keycloak as the IdP and Athenz for both the IdP AS (ID-JAG issuance) and Authorization Server (AS, access-token issuance and exchange). Other products can fill these roles if they support the required protocols and policies.
 
-![full_architecture](./assets/full_architecture.png)
+![Core tutorial architecture: IdP, IdP AS, Authorization Server, AI Agent, gateway, MCP, and Resource Server](./tutorials/assets/core_15_idjag_flow.svg)
 
 1. The user signs in through Keycloak and sends a prompt to the AI client.
 2. AI Client Gateway resolves the user's ID token from the signed-in session.
@@ -63,25 +63,9 @@ The completed tutorial uses this token flow. Keycloak authenticates the user; At
 5. The gateway exchanges the ID-JAG for an access token with audience `mcp` and forwards the tool call.
 6. MCP Runtime Proxy validates the token and checks `mcp:role.mcp-accessor` before forwarding the call to the MCP server.
 7. The MCP server exchanges the token for one with audience `api` and scope `api:role.docs-getter`.
-8. The API validates the exchanged token and checks the required scope before returning documents.
+8. The Resource Server validates the exchanged token and checks the required scope before returning documents.
 
-The diagram groups the gateway with the requesting agent. The tutorial's MCP service identity is `mcp.idthw-api-mcp`; the image still shows its earlier name.
-
-## Permission Architecture
-
-![Permission - ID-JAG The Hard Way](./assets/permission-id-jag-the-hard-way-permission-architecture.png)
-
-The diagram illustrates the delegation relationships. The table below uses the current domain names and scope checks for the final document retrieval flow:
-
-| Principal or component | Permission or check |
-|---|---|
-| User `human.idjag-learner` | Membership in `mcp:role.mcp-accessor` and `api:role.docs-getter`. |
-| AI Client Gateway | `zts.jag_exchange` permission for both roles. Its service identity depends on the client path. |
-| MCP Runtime Proxy | Validates incoming tokens with audience `mcp` and scope `mcp:role.mcp-accessor`. |
-| MCP service `mcp.idthw-api-mcp` | Source and target exchange permissions to obtain an API token from the incoming MCP token. |
-| API server | Validates exchanged tokens with audience `api` and scope `api:role.docs-getter`. |
-
-Athenz controls token issuance and exchange. The proxy and API enforce the audience and scopes in issued tokens; they do not download Athenz policies. A token can remain usable until it expires after a role membership change.
+The diagram shows the default Claude Code path. Codex and Open WebUI use their own AI Client Gateway service identities.
 
 ## Philosophy
 

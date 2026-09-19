@@ -1,19 +1,19 @@
 |                     Previous                     |    Current     |                         Next                         |
 |:------------------------------------------------:|:--------------:|:----------------------------------------------------:|
-| [Kubernetes Cluster](./03-kubernetes-cluster.md) | **API Server** | [Authorization Server](./05-authorization-server.md) |
+| [Kubernetes Cluster](./03-kubernetes-cluster.md) | **Resource Server** | [Authorization Server](./05-authorization-server.md) |
 
-# API Server
+# Resource Server
 
-In this tutorial, we will deploy a simple document API, check that it is running, and confirm that requests without an access token are rejected by following these steps:
+Deploy a simple document API and retrieve documents without an access token. Then enable token enforcement and confirm that the same request is rejected.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
 - [Create the API Namespace](#create-the-api-namespace)
 - [Deploy the API Server](#deploy-the-api-server)
 - [Send a Request to the API Server](#send-a-request-to-the-api-server)
-- [Learn About the API](#learn-about-the-api)
-- [Verify Access Token Enforcement](#verify-access-token-enforcement)
 - [Understand the Result](#understand-the-result)
+- [Learn About the API](#learn-about-the-api)
+- [Enable Access Token Enforcement](#enable-access-token-enforcement)
 - [Next Steps](#next-steps)
 
 <!-- /TOC -->
@@ -37,6 +37,7 @@ kubectl create ns api
 ```sh
 kubectl create deploy api-server -n api \
   --image=ghcr.io/mlajkim/idthw-demo-api:latest
+kubectl set env deploy/api-server -n api ACCESS_TOKEN_ENABLED=false
 ```
 
 
@@ -62,16 +63,29 @@ kubectl rollout status deploy/api-server -n api
 # deployment "api-server" successfully rolled out
 ```
 
-Check the public health endpoint. The image includes Node.js, so we can use its built-in `fetch`:
+Request documents without an access token:
 
 ```sh
 kubectl exec deploy/api-server -n api \
-  -- node -e 'fetch("http://localhost:8080/healthz").then(async r => console.log(await r.text()))' | jq
+  -- node -e 'fetch("http://localhost:8080/api/docs").then(async r => console.log(await r.text()))' | jq
 ```
 
 ```sh
-# { "ok": true }
+# {
+#   "docs": [
+#     { "id": 1, "name": "first default doc", "content": "hello world" },
+#     { "id": 2, "name": "second default doc", "content": "how are you?" }
+#   ]
+# }
 ```
+
+<a id="learn-whats-happened"></a>
+
+## Understand the Result
+
+The API returns `200 OK` and documents because access-token enforcement is disabled:
+
+![Human requests documents from the API with token enforcement disabled](./assets/core_04_open_api.svg)
 
 ## Learn About the API
 
@@ -81,11 +95,19 @@ It does not use a database. Instead, documents are stored in memory. If you rest
 
 This makes the server easy to run, easy to reset, and useful for learning how authorization changes the behavior of an API.
 
-## Verify Access Token Enforcement
+<a id="verify-access-token-enforcement"></a>
+<a id="access-token-mode"></a>
 
-In an enterprise environment, you usually do not want to expose an API server without authentication or authorization, even if the server is only reachable internally.
+## Enable Access Token Enforcement
 
-The API requires a valid access token and the appropriate scope for every document operation. Send a request to list documents without a token — this will intentionally return an error:
+Set `ACCESS_TOKEN_ENABLED=true` to require a valid Athenz access token and the scope for each document operation:
+
+```sh
+kubectl set env deploy/api-server -n api ACCESS_TOKEN_ENABLED=true
+kubectl rollout status deploy/api-server -n api
+```
+
+Send the same request again without a token:
 
 ```sh
 kubectl exec deploy/api-server -n api \
@@ -99,22 +121,16 @@ kubectl exec deploy/api-server -n api \
 # }
 ```
 
-The `401 Unauthorized` response is expected.
+The API now returns `401 Unauthorized`. This failure is intentional: token enforcement is enabled, but the request has no access token.
 
-The API starts with token enforcement enabled. Each document endpoint checks the token and its required scope.
+![The API rejects a document request without an access token](./assets/04_arc_get_docs_from_api_server_unauthorized.svg)
 
-<a id="learn-whats-happened"></a>
-
-## Understand the Result
-
-The document request is rejected because it has no access token:
-
-![04_arc_get_docs_from_api_server_unauthorized](./assets/04_arc_get_docs_from_api_server_unauthorized.png)
+Keep token enforcement enabled for the remaining chapters.
 
 <a id="learn-whats-next"></a>
 
 ## Next Steps
 
-To call the document endpoint, you need an access token from a trusted authorization server. In the next chapter, you will deploy [Athenz](https://github.com/AthenZ/athenz), then use it to issue tokens for the API in the chapters that follow.
+The API now requires an access token. In the next chapter, you will deploy [Athenz](https://github.com/AthenZ/athenz) as the authorization server. Then, in [Access Token](./06-access-token.md), you will configure the API to trust Athenz, obtain a token, and retry the request successfully.
 
 Next: [Authorization Server](./05-authorization-server.md)

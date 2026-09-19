@@ -7,7 +7,7 @@ const scopes: Record<string, string> = {
   DELETE: "api:role.docs-deleter",
 }
 
-export function createDemoApiServer(verify: AccessTokenVerifier, log: (line: string) => void = console.log) {
+export function createDemoApiServer(verify?: AccessTokenVerifier, log: (line: string) => void = console.log) {
   const docs = new Map([
     [1, { id: 1, name: "first default doc", content: "hello world" }],
     [2, { id: 2, name: "second default doc", content: "how are you?" }],
@@ -18,7 +18,7 @@ export function createDemoApiServer(verify: AccessTokenVerifier, log: (line: str
     const path = (request.url ?? "/").split("?", 1)[0]
     const method = request.method ?? "GET"
     if (method === "GET" && path === "/healthz") {
-      sendJson(response, 200, { ok: true })
+      sendJson(response, 200, { ok: true, accessTokenEnabled: verify !== undefined })
       return
     }
     const startedAt = Date.now()
@@ -36,7 +36,7 @@ export function createDemoApiServer(verify: AccessTokenVerifier, log: (line: str
         response.setHeader("allow", allowed.join(", "))
         return sendJson(response, 405, { error: "method_not_allowed" })
       }
-      await verify(request.headers.authorization, scopes[method])
+      if (verify) await verify(request.headers.authorization, scopes[method])
 
       if (method === "GET") {
         return sendJson(response, 200, { docs: [...docs.values()] })

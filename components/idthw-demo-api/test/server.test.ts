@@ -3,6 +3,7 @@ import http, { type Server } from "node:http"
 import test, { type TestContext } from "node:test"
 import { exportJWK, generateKeyPair, SignJWT, type JWTPayload } from "jose"
 import { createAccessTokenVerifier } from "../src/auth.ts"
+import { createConfiguredAccessTokenVerifier } from "../src/config.ts"
 import { createDemoApiServer } from "../src/server.ts"
 
 // Test-only keys and tokens are generated in memory; no deployed credentials are used.
@@ -29,7 +30,7 @@ async function close(server: Server) {
   await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
 }
 
-async function fixture(t: TestContext, jwksStatus = 200) {
+async function fixture(t: TestContext, jwksStatus = 200, accessTokenEnabled: "true" | "false" | null = "true") {
   let keyRequests = 0
   const jwks = http.createServer((_request, response) => {
     keyRequests++
@@ -38,7 +39,12 @@ async function fixture(t: TestContext, jwksStatus = 200) {
   })
   const jwksUrl = new URL(await listen(jwks))
   t.after(() => close(jwks))
-  const verify = createAccessTokenVerifier({ jwksUrl, allowInsecureHttp: true, expectedIssuer: issuer })
+  const verify = createConfiguredAccessTokenVerifier({
+    ACCESS_TOKEN_ENABLED: accessTokenEnabled ?? undefined,
+    ATHENZ_JWKS_URL: jwksUrl.href,
+    ATHENZ_JWKS_ALLOW_INSECURE_HTTP: "true",
+    ATHENZ_EXPECTED_ISSUER: issuer,
+  })
   const logs: string[] = []
   const server = createDemoApiServer(verify, (line) => logs.push(line))
   const baseUrl = await listen(server)
@@ -54,9 +60,38 @@ async function fixture(t: TestContext, jwksStatus = 200) {
   }
 }
 
-test("starts without signing keys, exposes health, and requires a bearer token", async (t) => {
+for (const mode of [null, "false"] as const) {
+  test(`serves documents without tokens when ACCESS_TOKEN_ENABLED is ${mode ?? "unset"}`, async (t) => {
+    const api = await fixture(t, 503, mode)
+    assert.deepEqual((await api.request("GET", "/healthz")).body, { ok: true, accessTokenEnabled: false })
+    const read = await api.request()
+    assert.equal(read.status, 200)
+    assert.equal(read.body.docs?.length, 2)
+    assert.equal(read.headers.has("www-authenticate"), false)
+    const created = await api.request("POST", "/api/docs", undefined, JSON.stringify({ name: "Guide", content: "Hello" }))
+    assert.equal(created.status, 201)
+    assert.equal((await api.request()).body.docs?.length, 3)
+    assert.equal((await api.request("DELETE", "/api/docs/3")).status, 200)
+    assert.equal((await api.request()).body.docs?.length, 2)
+    assert.equal((await api.request("POST", "/api/docs", undefined, "{}")).status, 400)
+    assert.equal(api.keyRequests(), 0, "open mode must not contact ZTS")
+  })
+}
+
+test("validates the mode and initializes ZTS verification only when enabled", () => {
+  assert.equal(createConfiguredAccessTokenVerifier({ ATHENZ_JWKS_URL: "not a URL" }), undefined)
+  assert.equal(createConfiguredAccessTokenVerifier({ ACCESS_TOKEN_ENABLED: "false", ATHENZ_JWKS_URL: "not a URL" }), undefined)
+  assert.throws(() => createConfiguredAccessTokenVerifier({ ACCESS_TOKEN_ENABLED: "true", ATHENZ_JWKS_URL: "not a URL" }))
+  for (const mode of ["", "TRUE", "1", "yes", "flase"]) {
+    assert.throws(() => createConfiguredAccessTokenVerifier({ ACCESS_TOKEN_ENABLED: mode }), /ACCESS_TOKEN_ENABLED must be true or false/)
+  }
+})
+
+test("enabled mode exposes health and requires a bearer token before fetching signing keys", async (t) => {
   const api = await fixture(t)
-  assert.equal((await api.request("GET", "/healthz")).status, 200)
+  const health = await api.request("GET", "/healthz")
+  assert.equal(health.status, 200)
+  assert.deepEqual(health.body, { ok: true, accessTokenEnabled: true })
   const denied = await api.request()
   assert.equal(denied.status, 401)
   assert.match(denied.headers.get("www-authenticate") ?? "", /^Bearer /)

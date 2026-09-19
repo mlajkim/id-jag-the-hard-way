@@ -1,10 +1,10 @@
 |                      Previous                      |        Current         |             Next             |
 |:--------------------------------------------------:|:----------------------:|:----------------------------:|
-| [Granular Permission](./07-granular-permission.md) | **MCP Server for API** | [AI Agent](./09-ai-agent.md) |
+| [Granular Permission](./07-granular-permission.md) | **MCP Server for Resource Server** | [AI Agent](./09-ai-agent.md) |
 
-# MCP Server for API
+# MCP Server for Resource Server
 
-Deploy an MCP server that exposes the document API as tools for an AI client with the following steps:
+Deploy an MCP server that exposes the resource server's document API as tools for an AI client with the following steps:
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
@@ -175,12 +175,9 @@ kubectl logs deploy/mcp -n api
 
 ## Review the Result
 
-We have created a running MCP Server for API with service identity `mcp.idthw-api-mcp`. Its OpenAPI metadata advertises `mcp:role.mcp-accessor` together with the `api` role required by each tool.
+We have created a running MCP server with service identity `mcp.idthw-api-mcp`. Its OpenAPI metadata advertises `mcp:role.mcp-accessor` together with the `api` role required by each tool.
 
-```mermaid
-flowchart LR
-    MCP["MCP domain: mcp<br/>Service: mcp.idthw-api-mcp"] -->|Exchanged access token| API["API domain: api<br/>Scope: api:role.docs-getter"]
-```
+![MCP adapter calls the API with an exchanged access token](./assets/core_08_mcp_api.svg)
 
 <a id="whats-next"></a>
 

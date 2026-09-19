@@ -138,8 +138,6 @@ kubectl logs deploy/claude-idjag-learner-ai-client-gateway -n human
 # 🔑 Athenz ZTS Endpoint: https://athenz-zts-server.athenz:4443/zts/v1
 ```
 
-![AI Client Gateway deployed](./assets/15_ai_client_agent_installed_and_used.png)
-
 <a id="deploy-the-human-gateway"></a>
 
 ## Create the Keycloak Client Secret
@@ -245,6 +243,8 @@ kubectl logs deploy/claude-idjag-learner-ai-client-gateway -n human --tail=5
 # 🔑 Athenz ZTS Endpoint: https://athenz-zts-server.athenz:4443/zts/v1
 ```
 
+![AI Client Gateway connects the AI agent, IdP, IdP AS, AS, and the protected MCP route](./assets/core_14_gateway_route.svg)
+
 <a id="verification-prerequisite"></a>
 
 ## Sign Out of Keycloak
@@ -320,6 +320,8 @@ After signing in, you will see the authentication succeed but the MCP connection
 ![15_got_new_credential_but_reconnection_failed](./assets/15_got_new_credential_but_reconnection_failed.png)
 
 The sign-in succeeded, but Athenz rejected the delegation request. The gateway service, `human.idjag-learner.claude`, needs `zts.jag_exchange` permission for the requested MCP and API roles. The learner's own role memberships do not grant that permission to the gateway.
+
+![IdP sign-in succeeds, but the IdP AS denies the gateway's ID-JAG request](./assets/core_14_idjag_denied.svg)
 
 <a id="whats-next"></a>
 

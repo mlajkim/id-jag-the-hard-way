@@ -1,6 +1,6 @@
 |                     Previous                     |   Current    |                   Next                   |
 |:------------------------------------------------:|:------------:|:----------------------------------------:|
-| [MCP Server for API](./08-mcp-server-for-api.md) | **AI agent** | [Token Exchange](./10-token-exchange.md) |
+| [MCP Server for Resource Server](./08-mcp-server-for-resource-server.md) | **AI agent** | [Token Exchange](./10-token-exchange.md) |
 
 # AI Agent: Claude
 
@@ -176,6 +176,8 @@ This is expected. The MCP server received your access token and tried to exchang
 ## Understand the Result
 
 We successfully connected Claude Code to the MCP server with an Athenz access token. However, the MCP server's token exchange step is not yet authorized.
+
+![An AI agent reaches the MCP server, but Athenz rejects its token exchange](./assets/core_09_exchange_denied.svg)
 
 In the next tutorial we will fix this by granting the MCP server permission to exchange tokens.
 
