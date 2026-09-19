@@ -4,12 +4,12 @@ on:
   push:
     branches: ["main"]
     paths:
-      - "local_workload_instance_provider/**"
+      - "components/local_workload_instance_provider/**"
       - ".github/workflows/test-local-workload-instance-provider.yml"
   pull_request:
     branches: ["main"]
     paths:
-      - "local_workload_instance_provider/**"
+      - "components/local_workload_instance_provider/**"
       - ".github/workflows/test-local-workload-instance-provider.yml"
   workflow_dispatch:
 
@@ -19,7 +19,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: local_workload_instance_provider
+        working-directory: components/local_workload_instance_provider
 
     steps:
       - uses: actions/checkout@v4
@@ -29,7 +29,7 @@ jobs:
           java-version: "17"
           distribution: temurin
           cache: maven
-          cache-dependency-path: local_workload_instance_provider/pom.xml
+          cache-dependency-path: components/local_workload_instance_provider/pom.xml
 
       - name: Build and test
         run: make build
