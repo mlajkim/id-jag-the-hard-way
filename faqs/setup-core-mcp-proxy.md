@@ -88,7 +88,7 @@ kubectl create namespace mcp-hub --dry-run=client -o yaml | kubectl apply -f -
 `core-mcp-proxy` needs read-only access to deployments and services across namespaces because registered MCP workloads may run outside `mcp-hub`.
 
 ```sh
-kubectl apply -f core_mcp_proxy/kubernetes/core-mcp-proxy.yaml
+kubectl apply -f components/core_mcp_proxy/kubernetes/core-mcp-proxy.yaml
 ```
 
 ```sh
@@ -105,14 +105,14 @@ The normal tutorial path should use the published GHCR image:
 ghcr.io/mlajkim/core-mcp-proxy:latest
 ```
 
-The image is built by GitHub Actions from `core_mcp_proxy/`. After a change lands on `main`, the workflow publishes the `latest` tag.
+The image is built by GitHub Actions from `components/core_mcp_proxy/`. After a change lands on `main`, the workflow publishes the `latest` tag.
 
 ## Deploy the Proxy
 
 The same manifest deploys `core-mcp-proxy` and its Service into `mcp-hub`. It intentionally leaves `MCP_HUB_NAMESPACE` unset so discovery is cluster-wide:
 
 ```sh
-kubectl apply -f core_mcp_proxy/kubernetes/core-mcp-proxy.yaml
+kubectl apply -f components/core_mcp_proxy/kubernetes/core-mcp-proxy.yaml
 ```
 
 Expose the Service locally with the shared port-forward helper. It uses the configured `core-mcp-proxy` port from `tools/config.yaml`, which defaults to `24442`:

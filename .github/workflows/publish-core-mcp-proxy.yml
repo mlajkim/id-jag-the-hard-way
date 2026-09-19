@@ -4,14 +4,14 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - "core_mcp_proxy/**"
+      - "components/core_mcp_proxy/**"
       - ".github/workflows/publish-core-mcp-proxy.yml"
       - ".github/workflows/build-multiarch-image.yml"
       - ".github/scripts/check-container.sh"
   pull_request:
     branches: [ "main" ]
     paths:
-      - "core_mcp_proxy/**"
+      - "components/core_mcp_proxy/**"
       - ".github/workflows/publish-core-mcp-proxy.yml"
       - ".github/workflows/build-multiarch-image.yml"
       - ".github/scripts/check-container.sh"
@@ -26,7 +26,7 @@ jobs:
     uses: ./.github/workflows/build-multiarch-image.yml
     with:
       image: core-mcp-proxy
-      context: ./core_mcp_proxy
+      context: ./components/core_mcp_proxy
       node-checks: npm run check
     secrets:
       DEPLOY_GHCR_SECRET: ${{ secrets.DEPLOY_GHCR_SECRET }}
