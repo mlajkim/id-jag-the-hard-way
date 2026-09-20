@@ -28,7 +28,7 @@ export function createMcpSuccessDiagram() {
 export function createMcpRejectedDiagram() {
   const d = new Architecture(1840, 424,
     'Runtime Proxy rejects a tool call before it reaches MCP or the API',
-    'The AI agent calls get_k8s_docs without an access token. MCP Runtime Proxy returns 401 Unauthorized with missing_access_token. The proxy and MCP server run in the same pod. The MCP server and Resource Server are shown for context but are not called; their downstream connections are gray and dashed.')
+    'The AI agent calls get_k8s_docs without a valid access token for MCP. MCP Runtime Proxy returns 401 Unauthorized for a missing or invalid token, including a token issued for the API audience. The proxy and MCP server run in the same pod. The MCP server and Resource Server are shown for context but are not called; their downstream connections are gray and dashed.')
   const client = d.card('client', 48, 112, 'AI Agent', { sub: ['Claude Code, Codex,', 'Open WebUI'] })
   const proxy = d.card('proxy', 536, 112, ['MCP Runtime', 'Proxy'], { tag: 'mcp' })
   const mcp = d.card('mcp', 1024, 112, 'MCP server', { sub: ['idthw-demo-api-mcp'], inactive: true })
@@ -36,7 +36,7 @@ export function createMcpRejectedDiagram() {
   d.group([proxy, mcp], 'MCP POD')
 
   d.edge([client.right(.3), proxy.left(.3)], {
-    label: 'get_k8s_docs', secondary: 'No access token', at: [432, 135], size: 17
+    label: 'get_k8s_docs', secondary: 'No valid MCP AT', at: [432, 135], size: 17
   })
   d.edge([proxy.left(.74), client.right(.74)], {
     tone: 'red', dash: true, label: '401 Unauthorized', at: [432, 294], size: 17
