@@ -6,14 +6,14 @@ This MCP serves the core tutorial and Hub-managed deployments. It does not perfo
 
 The MCP server calls the resource server with an API access token supplied in either of two ways:
 
-- Set `API_ACCESS_TOKEN` at startup for direct use. All tool calls use that token's permissions until it expires.
+- Send an API access token in each request's `Authorization: Bearer <token>` header for direct use. Both `/mcp` tool calls and `/tools/<tool>` HTTP requests forward that token to the API.
 - Let Runtime Proxy supply a request-specific token file after exchange. The MCP server reads that file immediately before calling the API.
 
-No mode switch is needed. A request-specific file takes precedence over `API_ACCESS_TOKEN`; an invalid or unreadable file fails the call without falling back to the startup token. The incoming client's bearer header is never forwarded to the API. Leave `API_ACCESS_TOKEN` unset in deployments where Runtime Proxy supplies tokens for each user.
+No mode switch is needed. A request-specific file takes precedence over the bearer header; an invalid or unreadable file fails the call without falling back to the incoming token. Runtime Proxy keeps the original MCP-audience bearer header, so the exchanged API token must take precedence. The MCP server never reads an access token from an environment variable or retains it for another request. The API validates the supplied token's audience and permissions.
 
 ## Core tutorial
 
-Chapter 08 deploys the MCP server and verifies initialization and tool discovery without a proxy or access token. Chapter 09 connects an AI client to discover the tools. Document retrieval requires a supplied API token.
+Chapter 08 deploys the MCP server and verifies initialization and tool discovery without a proxy or access token. Chapter 09 connects an AI client; the Codex path sends the learner's API token in the Authorization header to retrieve documents. Document retrieval requires an API-audience token with the requested tool's permission.
 
 Chapter 10 adds Runtime Proxy and sets `HOST=127.0.0.1` so requests enter through the proxy in the same pod. The proxy validates MCP access and performs downstream exchange using the service identity. Chapter 11 grants that identity the missing exchange permissions.
 

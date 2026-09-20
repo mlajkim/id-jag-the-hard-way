@@ -244,7 +244,7 @@ curl -sS -w '\nHTTP %{http_code}\n' "http://localhost:${_mcp_port}/mcp" \
 # HTTP 401
 ```
 
-The AI client can still connect and discover tools. If you ask it to retrieve documents, Runtime Proxy rejects the tool call because the client has no access token.
+The AI client can still connect and discover tools. Runtime Proxy rejects tool calls without a token. The API-audience token configured in Codex in chapter 09 also fails the proxy's MCP audience check; the next steps issue an MCP-audience token.
 
 ![Runtime Proxy rejects a tool call without an access token](../assets/core_10_mcp_rejected.svg)
 

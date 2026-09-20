@@ -70,12 +70,10 @@ const tools: Tool[] = [
 ]
 
 export function createDelegatedK8sDocsMcpServer({
-  apiAccessToken,
   requiredMcpScope = "mcp:role.mcp-accessor",
   tokenDirectory = "/var/run/idthw-access-tokens",
   upstreamBaseUrl,
 }: {
-  apiAccessToken?: string
   requiredMcpScope?: string
   tokenDirectory?: string
   upstreamBaseUrl: URL
@@ -174,15 +172,12 @@ export function createDelegatedK8sDocsMcpServer({
       const upstreamUrl = new URL(tool.path(args), upstreamBaseUrl)
       const bodyValue = tool.requestBody?.(args)
 
-      // A request-specific token takes precedence over the startup token.
-      // Invalid file metadata must fail rather than fall back to another identity.
-      let accessToken = apiAccessToken?.trim()
-      if (Object.hasOwn(recordValue(params._meta), MCP_ACCESS_TOKEN_FILE_META_KEY)) {
-        accessToken = await readDelegatedAccessToken(params._meta, tool.name, tokenDirectory)
-      }
-      if (!accessToken) {
-        throw new Error("Set API_ACCESS_TOKEN or supply token file metadata from MCP Runtime Proxy to call the API.")
-      }
+      // Runtime Proxy supplies an exchanged API token in a request-specific file.
+      // Direct clients supply an API token in the Authorization header instead.
+      // Invalid file metadata must fail rather than fall back to the incoming token.
+      const accessToken = Object.hasOwn(recordValue(params._meta), MCP_ACCESS_TOKEN_FILE_META_KEY)
+        ? await readDelegatedAccessToken(params._meta, tool.name, tokenDirectory)
+        : requestAccessToken(request.headers.authorization)
       const headers: Record<string, string> = {
         Accept: "application/json, text/plain, */*",
         Authorization: `Bearer ${accessToken}`,
@@ -211,6 +206,14 @@ export function createDelegatedK8sDocsMcpServer({
       sendJson(response, 200, rpcError(responseId, -32603, message))
     }
   })
+}
+
+function requestAccessToken(authorization: string | undefined) {
+  const match = /^Bearer +([A-Za-z0-9._~+\/-]+=*)$/i.exec(authorization ?? "")
+  if (!match) {
+    throw new Error("Pass an API access token as Authorization: Bearer <token>, or supply token file metadata from MCP Runtime Proxy to call the API.")
+  }
+  return match[1]
 }
 
 function openApiSpec(requiredMcpScope: string) {

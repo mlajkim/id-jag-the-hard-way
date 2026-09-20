@@ -9,7 +9,7 @@
 > [!NOTE]
 > Codex CLI runs on your machine. With OpenAI-hosted models, model inference runs remotely, so this path does not require a local model runtime such as Ollama.
 
-Install Codex CLI, connect it to the MCP server, and verify that it discovers the document tools.
+Install Codex CLI, connect it to the MCP server, and retrieve documents using the learner's API access token.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
@@ -60,6 +60,8 @@ Choose **Sign in with ChatGPT** or another available authentication method. See 
 ## Add the MCP Server to Codex
 
 Create a local Codex config file using the saved access token and append the provided settings:
+
+Use the token from chapter 07 with audience `api` and scope `api:role.docs-getter`. The MCP server forwards the bearer token from each request to the API. No access token is configured in the MCP server's environment.
 
 ```sh
 _mcp_port=$(./tools/port.sh mcp)
@@ -128,20 +130,22 @@ Confirm that the MCP status shows `id-jag-the-hard-way-mcp` connected with all t
 ## Verify Working
 
 
-Run the following:
+Ask Codex to call the document tool:
 
 ```sh
 Get docs with id-jag-the-hard-way-mcp
 ```
 
+The tool should return status `200` and the document list. If the API rejects an expired token, repeat chapter 07's token issuance step, update the bearer header in the Codex config, and restart Codex.
+
 ## Understand the Result
 
-Codex CLI can connect to `idthw-demo-api-mcp` and discover its document tools without an access token. Discovery reads tool definitions; it does not retrieve documents from the protected API.
+Discovery reads tool definitions without calling the API. When Codex calls `get_k8s_docs`, the MCP server forwards the API token from that request's Authorization header. The API validates the token and its document-read permission.
 
 ![The AI client connects to MCP and discovers the tools](../assets/core_09_mcp_success.svg)
 
 ## Next Steps
 
-The AI client can now discover the MCP tools. In the next chapter, we will add Runtime Proxy to validate access tokens before allowing tool execution.
+The AI client can now retrieve documents through MCP. In the next chapter, we will add Runtime Proxy to validate access tokens before allowing tool execution.
 
 Next: [Protect MCP Server](./10-protect-mcp-server.md)
