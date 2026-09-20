@@ -175,53 +175,24 @@ Look for "access denied" with `code=missing_access_token` and `status=401`. The 
 
 The first failure confirms that Runtime Proxy protects tool calls. Now set up the MCP domain and the identities needed to proceed. Runtime Proxy needs a service identity to authenticate downstream token exchange requests to ZTS. The MCP application itself will not mount the private key. Create the service `idthw-api-mcp` under the Athenz top-level domain (TLD) `mcp`. Its principal is `mcp.idthw-api-mcp`; the API keeps the `api` domain. Athenz domains and Kubernetes namespaces are independent, even when both are named `mcp`.
 
-Create the MCP domain:
+Use the identity and certificate helper scripts to create the MCP service identity, `mcp.idthw-api-mcp`:
 
 ```sh
 ./tools/athenz/create-tld.sh "mcp"
-```
-
-Generate a key pair for the service:
-
-```sh
 ./tools/athenz/create-private-key.sh "./keys/api-mcp"
+./tools/athenz/create-service.sh "mcp" "idthw-api-mcp" "./keys/api-mcp.public.key"
+./tools/athenz/enable-cert-provider.sh "mcp" "idthw-api-mcp"
+./tools/athenz/fetch-cert.sh "mcp" "idthw-api-mcp" "./keys/api-mcp.key" "v1"
 ```
 
 ```sh
 #   ·  Generating RSA key pair for: ./keys/api-mcp...
 #   ✔  Keys generated: ./keys/api-mcp.key, ./keys/api-mcp.public.key
-```
-
-Register the service with its public key:
-
-```sh
-./tools/athenz/create-service.sh "mcp" "idthw-api-mcp" "./keys/api-mcp.public.key"
-```
-
-```sh
 #   ·  Registering Service: mcp.idthw-api-mcp...
 #   ✔  Service registered: mcp.idthw-api-mcp
-```
-
-Allow ZTS to issue a certificate for this service:
-
-```sh
-./tools/athenz/enable-cert-provider.sh "mcp" "idthw-api-mcp"
-```
-
-```sh
 #   ·  Enabling ZTS Certificate Provider for mcp.idthw-api-mcp...
 # [Template(s) successfully applied to domain]
 #   ✔  ZTS Certificate Provider enabled for mcp.idthw-api-mcp
-```
-
-Request the service certificate:
-
-```sh
-./tools/athenz/fetch-cert.sh "mcp" "idthw-api-mcp" "./keys/api-mcp.key" "v1"
-```
-
-```sh
 #   ·  Fetching X.509 Certificate for mcp.idthw-api-mcp...
 #   ✔  Certificate saved to: ./keys/api-mcp.crt
 ```
