@@ -109,7 +109,7 @@ Codex should connect and discover the three document tools.
 
 ## Verify
 
-Confirm that Codex connects to `id-jag-the-hard-way-mcp` and discovers these tools:
+Confirm that the MCP status shows `id-jag-the-hard-way-mcp` connected with all three document tools:
 
 ```sh
 /mcp verbose
@@ -119,7 +119,7 @@ Confirm that Codex connects to `id-jag-the-hard-way-mcp` and discovers these too
 # 🔌  MCP Tools
 
 #   • id-jag-the-hard-way-mcp: connected (3 tools)
-#     • Auth: Unsupported
+#     • Auth: Bearer token
 #     • Tools: delete_k8s_doc, get_k8s_docs, post_k8s_doc
 #     • Resources: (none)
 #     • Resource templates: (none)
