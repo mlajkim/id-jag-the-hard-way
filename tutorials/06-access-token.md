@@ -194,7 +194,7 @@ _root_user_at=$(./tools/athenz/fetch-access-token.sh \
 
 ## Call the Protected API
 
-In chapter 04, the API rejected the request without an access token. Now pass the issued token as `Authorization: Bearer <token>`:
+In chapter 04, the API rejected the request without an access token. Now pass the token from the previous step as `Authorization: Bearer <token>`:
 
 > [!NOTE]
 > If you see `curl: (52) Empty reply from server`, wait a few seconds and try again.

@@ -13,14 +13,14 @@ const toolScopes = { get_k8s_docs: "api:role.docs-getter" }
 const call = { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "get_k8s_docs", arguments: {} } }
 const quietLogger = { info() {}, warn() {}, error() {} }
 
-test("tutorial: discover MCP, reject MCP access, deny exchange, then return documents", { timeout: 5000 }, async (t) => {
+test("tutorial: use an API bearer token directly, then require MCP access and exchange through Runtime Proxy", { timeout: 5000 }, async (t) => {
   const directory = await mkdtemp(join(tmpdir(), "idthw-tutorial-test-"))
   t.after(() => rm(directory, { recursive: true, force: true }))
   const apiHeaders: string[] = []
   const api = http.createServer((request, response) => {
     apiHeaders.push(request.headers.authorization ?? "")
     response.setHeader("content-type", "application/json")
-    const allowed = request.headers.authorization === "Bearer delegated.api.fixture"
+    const allowed = ["Bearer learner.api.fixture", "Bearer delegated.api.fixture"].includes(request.headers.authorization ?? "")
     response.statusCode = allowed ? 200 : 401
     response.end(JSON.stringify(allowed ? { docs: [{ id: 1, name: "Example" }] } : { error: "invalid_access_token" }))
   })
@@ -38,12 +38,13 @@ test("tutorial: discover MCP, reject MCP access, deny exchange, then return docu
   assert.equal(openApi.paths["/tools/get_k8s_docs"].post.operationId, "get_k8s_docs")
   assert.equal(openApi.paths["/tools/get_k8s_docs"].post["x-athenz-required-scope"], "mcp:role.mcp-accessor api:role.docs-getter")
   const httpResult = await post(mcpPort, "/tools/get_k8s_docs", {}, "learner.api.fixture")
-  assert.match((await httpResult.json() as any).error.message, /metadata|token file/)
+  assert.equal((await httpResult.json() as any).result.structuredContent.status, 200)
   const missing = await post(mcpPort, "/mcp", call)
   assert.match((await missing.json() as any).error.message, /metadata|token file/)
   const direct = await post(mcpPort, "/mcp", call, "learner.api.fixture")
-  assert.match((await direct.json() as any).error.message, /metadata|token file/)
-  assert.equal(apiHeaders.length, 0, "document calls must never fall back to the bearer header")
+  assert.equal((await direct.json() as any).result.structuredContent.status, 200)
+  assert.deepEqual(apiHeaders, ["Bearer learner.api.fixture", "Bearer learner.api.fixture"])
+  apiHeaders.length = 0
 
   let exchangeAllowed = false
   let exchanges = 0
@@ -107,6 +108,61 @@ test("tutorial: discover MCP, reject MCP access, deny exchange, then return docu
   const unknown = await post(port, "/mcp", { ...call, params: { name: "unconfigured", arguments: {} } }, "learner.mcp.fixture")
   assert.equal(unknown.status, 403)
   assert.equal(exchanges, before)
+})
+
+test("Hub: the downstream scope header exchanges the caller token and MCP uses the published API token", { timeout: 5000 }, async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), "idthw-hub-mcp-test-"))
+  t.after(() => rm(directory, { recursive: true, force: true }))
+  const apiHeaders: string[] = []
+  const api = http.createServer((request, response) => {
+    apiHeaders.push(request.headers.authorization ?? "")
+    const allowed = request.headers.authorization === "Bearer delegated.api.fixture"
+    response.statusCode = allowed ? 200 : 401
+    response.setHeader("content-type", "application/json")
+    response.end(JSON.stringify(allowed ? { docs: [{ id: 1, name: "Hub document" }] } : { error: "wrong_token" }))
+  })
+  const apiPort = await listen(api)
+  t.after(() => close(api))
+  const mcp = createDelegatedK8sDocsMcpServer({
+    upstreamBaseUrl: new URL(`http://127.0.0.1:${apiPort}`), tokenDirectory: directory,
+  })
+  const mcpPort = await listen(mcp)
+  t.after(() => close(mcp))
+  const publisher = createAthenzTokenFilePublisher({
+    endpoint: new URL("https://zts.example.test/token"),
+    caPath: "unused", certificatePath: "unused", keyPath: "unused", timeoutMs: 1000,
+    outputDirectory: directory,
+  }, { exchange: async (_config, source, scope, audience) => {
+    assert.equal(source, "hub.mcp.fixture")
+    assert.equal(scope, "api:role.docs-getter")
+    assert.equal(audience, "api")
+    return "delegated.api.fixture"
+  } })
+  const cleanupComplete = Promise.withResolvers<void>()
+  const proxy = createRuntimeProxyServer(new URL(`http://127.0.0.1:${mcpPort}`), {
+    verify: async (authorization) => {
+      assert.equal(authorization, "Bearer hub.mcp.fixture")
+      return {
+        audiences: ["mcp-hub.mcps.k8s-docs-server"], keyId: "fixture", expiresAt: "2099-01-01", expiresInSeconds: 3600,
+        scopes: ["mcp-hub.mcps.k8s-docs-server:role.accessor", "api:role.docs-getter"],
+      }
+    },
+  }, {
+    ...quietLogger,
+    info(event: string) {
+      if (event === "downstream_access_token_removed") cleanupComplete.resolve()
+    },
+  }, publisher)
+  const port = await listen(proxy)
+  t.after(() => close(proxy))
+
+  const response = await post(port, "/mcp", call, "hub.mcp.fixture", { "x-idthw-mcp-downstream-scope": "api:role.docs-getter" })
+  const result = await response.json() as any
+  assert.equal(result.result.isError, false)
+  assert.deepEqual(result.result.structuredContent.data, { docs: [{ id: 1, name: "Hub document" }] })
+  assert.deepEqual(apiHeaders, ["Bearer delegated.api.fixture"])
+  await cleanupComplete.promise
+  assert.deepEqual(await readdir(join(directory, "get_k8s_docs")), [])
 })
 
 test("configured tool scopes reject invalid deployment configuration", () => {

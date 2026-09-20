@@ -8,15 +8,22 @@ Complete the shared [Authorize the Downstream Exchange](../11-token-exchange.md#
 
 ## Update the Client
 
-For the tutorial configuration from chapter 09, refresh `.codex/config.toml` with the MCP-audience token saved by the shared chapter. If you have added unrelated settings, update just this server's `http_headers` entry instead of replacing the file:
+For the tutorial configuration from chapter 09, fetch a fresh MCP-audience token and update `.codex/config.toml` in the same block. If you have added unrelated settings, update just this server's `http_headers` entry instead of replacing the file:
 
 ```sh
 _mcp_port=$(./tools/port.sh mcp)
-_at=$(cat ./keys/idjag-learner.jwt)
+_scope="mcp:role.mcp-accessor api:role.docs-getter"
+_my_access_token=$(./tools/athenz/fetch-access-token.sh \
+  "./keys/idjag-learner.crt" \
+  "./keys/idjag-learner.key" \
+  "${_scope}" \
+  "./keys/idjag-learner.jwt" \
+  --audience mcp)
+
 cat > .codex/config.toml <<EOF
 [mcp_servers.id-jag-the-hard-way-mcp]
 url = "http://localhost:${_mcp_port}/mcp"
-http_headers = { Authorization = "Bearer ${_at}" }
+http_headers = { Authorization = "Bearer ${_my_access_token}" }
 EOF
 cat .codex/settings.toml >> .codex/config.toml
 ```

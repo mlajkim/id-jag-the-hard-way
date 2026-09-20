@@ -46,7 +46,7 @@ The tutorial uses the following components:
     <td><strong>AI clients</strong><br>Claude, Codex, and Open WebUI drive MCP tool calls.</td>
     <td><strong>Runtime</strong><br>Kubernetes hosts the API, MCP, gateway, and authorization components.</td>
     <td><strong>Authorization</strong><br>Athenz ZMS/ZTS evaluates policy, issues ID-JAG, and mints scoped access tokens.</td>
-    <td><strong>Identity</strong><br>Keycloak provides the signed-in human identity through OIDC.</td>
+    <td><strong>Identity Provider (IdP)</strong><br>Keycloak provides the signed-in human identity through OIDC.</td>
   </tr>
 </table>
 

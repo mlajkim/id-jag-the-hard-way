@@ -22,6 +22,9 @@ Keep the MCP deployment in `mcp` and the resource server in `api`:
 
 ```sh
 kubectl create ns mcp
+```
+
+```sh
 # namespace/mcp created
 ```
 
@@ -32,6 +35,9 @@ Deploy the MCP server with its default configuration:
 ```sh
 kubectl create deploy mcp -n mcp \
   --image=ghcr.io/mlajkim/idthw-demo-api-mcp:latest
+```
+
+```sh
 # deployment.apps/mcp created
 ```
 
@@ -39,6 +45,9 @@ Expose the container's port `8080` through a Service on port `8081`:
 
 ```sh
 kubectl expose deploy mcp -n mcp --port 8081 --target-port 8080 --name mcp
+```
+
+```sh
 # service/mcp exposed
 ```
 
@@ -46,6 +55,9 @@ Wait for the MCP server to be ready:
 
 ```sh
 kubectl rollout status deploy/mcp -n mcp
+```
+
+```sh
 # deployment "mcp" successfully rolled out
 ```
 
@@ -61,7 +73,14 @@ curl -sS "http://localhost:${_mcp_port}/mcp" \
   -H 'Content-Type: application/json' \
   -H 'Accept: application/json, text/event-stream' \
   -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"tutorial","version":"1.0"}}}' | jq '.result.serverInfo'
-# { "name": "idthw-demo-api-mcp", "title": "IDTHW Demo API MCP", "version": "0.1.0" }
+```
+
+```sh
+# {
+#   "name": "idthw-demo-api-mcp",
+#   "title": "IDTHW Demo API MCP",
+#   "version": "0.1.0"
+# }
 ```
 
 Notify the server that initialization is complete:
@@ -80,6 +99,9 @@ _mcp_port=$(./tools/port.sh mcp)
 curl -sS "http://localhost:${_mcp_port}/mcp" \
   -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' | jq '.result.tools[].name'
+```
+
+```sh
 # "get_k8s_docs"
 # "post_k8s_doc"
 # "delete_k8s_doc"

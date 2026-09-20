@@ -6,6 +6,7 @@ COPY package.json ./
 COPY src ./src
 
 ENV NODE_ENV=production \
+    HOST=127.0.0.1 \
     PORT=8080 \
     UPSTREAM_BASE_URL=http://api-server.api:8080
 

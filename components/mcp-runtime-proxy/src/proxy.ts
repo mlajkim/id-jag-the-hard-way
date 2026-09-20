@@ -196,6 +196,7 @@ async function handleRequest(
         accessTokenPresent: Boolean(request.headers.authorization),
         code: error.code,
         durationMs: Date.now() - startedAt,
+        message: error.message,
         status: error.status,
       })
       sendAccessTokenError(response, error)

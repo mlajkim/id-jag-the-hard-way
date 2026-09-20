@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import http, { type Server } from "node:http"
 import test from "node:test"
-import { AccessTokenError, JwksUnavailableError } from "../src/auth.ts"
+import { AccessTokenError, createAthenzAccessTokenVerifier, JwksUnavailableError } from "../src/auth.ts"
 import { createRuntimeProxyServer } from "../src/proxy.ts"
 import { MCP_ACCESS_TOKEN_FILE_META_KEY } from "../src/tokenExchange.ts"
 
@@ -419,6 +419,51 @@ test("rejects an ungranted downstream scope without publishing or forwarding", a
   assert.equal(upstreamCalls, 0)
   assert.equal(publisherCalls, 0)
 })
+
+for (const [expectedAudience, requiredScope] of [
+  ["mcp", "mcp:role.mcp-accessor"],
+  ["mcp-hub.mcps.example", "mcp-hub.mcps.example:role.docs-accessor"],
+]) {
+  test(`reports configured token requirements in the missing-token response and log for ${expectedAudience}`, async (t) => {
+    let upstreamCalls = 0
+    const warnings: Array<{ event: string; fields: Record<string, unknown> }> = []
+    const upstream = http.createServer((_request, response) => {
+      upstreamCalls += 1
+      response.end("must not be called")
+    })
+    const upstreamPort = await listen(upstream)
+    t.after(() => close(upstream))
+    const proxy = createRuntimeProxyServer(
+      new URL(`http://127.0.0.1:${upstreamPort}`),
+      createAthenzAccessTokenVerifier({
+        expectedAudience,
+        requiredScope,
+        resolveSigningKey: async () => assert.fail("A missing token must fail before fetching signing keys"),
+      }),
+      {
+        info() {},
+        error() {},
+        warn: (event, fields = {}) => warnings.push({ event, fields }),
+      },
+    )
+    const proxyPort = await listen(proxy)
+    t.after(() => close(proxy))
+    const response = await fetch(`http://127.0.0.1:${proxyPort}/mcp`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "get_k8s_docs", arguments: {} } }),
+    })
+    const message = `Pass an Athenz access token with aud=${expectedAudience} and scope=${requiredScope} as Authorization: Bearer <token>.`
+    assert.equal(response.status, 401)
+    assert.deepEqual(await response.json(), { error: "missing_access_token", message })
+    assert.equal(upstreamCalls, 0)
+    assert.equal(warnings.length, 1)
+    assert.equal(warnings[0].event, "access_denied")
+    assert.equal(warnings[0].fields.message, message)
+    assert.equal(warnings[0].fields.code, "missing_access_token")
+    assert.equal(warnings[0].fields.status, 401)
+  })
+}
 
 test("logs safe verified access-token metadata without logging the raw token", async (t) => {
   const logs: Array<{ event: string; fields: Record<string, unknown>; level: string }> = []

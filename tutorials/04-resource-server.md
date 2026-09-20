@@ -37,7 +37,6 @@ kubectl create ns api
 ```sh
 kubectl create deploy api-server -n api \
   --image=ghcr.io/mlajkim/idthw-demo-api:latest
-kubectl set env deploy/api-server -n api ACCESS_TOKEN_ENABLED=false
 ```
 
 

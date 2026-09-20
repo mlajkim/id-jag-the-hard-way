@@ -61,7 +61,7 @@ export function createAthenzAccessTokenVerifier({
 
   return {
     async verify(authorization) {
-      const token = bearerToken(authorization)
+      const token = bearerToken(authorization, expectedAudience, requiredScope)
       const parsed = parseJwt(token)
       let signingKey = await resolveSigningKey(parsed.header.kid)
       let signatureValid = verifySignature(parsed, signingKey)
@@ -161,12 +161,12 @@ export function createRemoteJwksKeyResolver({
   }
 }
 
-function bearerToken(authorization: string | undefined) {
+function bearerToken(authorization: string | undefined, expectedAudience: string, requiredScope: string) {
   if (!authorization) {
     throw new AccessTokenError(
       401,
       "missing_access_token",
-      "Pass an Athenz access token as Authorization: Bearer <token>.",
+      `Pass an Athenz access token with aud=${expectedAudience} and scope=${requiredScope} as Authorization: Bearer <token>.`,
     )
   }
   const match = /^Bearer ([A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)$/i.exec(authorization)

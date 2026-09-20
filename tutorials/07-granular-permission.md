@@ -177,7 +177,7 @@ _my_access_token=$(./tools/athenz/fetch-access-token.sh \
 
 ## Call the Protected API
 
-Finally, send a request to the protected API server with the learner token:
+Finally, send a request to the protected API server with the learner token from the previous step:
 
 ```sh
 curl -sS -k -H "Authorization: Bearer $_my_access_token" http://localhost:14443/api/docs | jq .
