@@ -4,7 +4,13 @@
 
 # Protect MCP Server
 
-In the previous chapter, the AI client retrieved documents with an Athenz access token (AT). Just as we protected the API server with an AT, we also want to protect the MCP server. In this chapter, we will deploy a component called `MCP Runtime Proxy` to validate ATs before allowing tool calls.
+In the previous chapter, the AI client retrieved documents with an Athenz access token (AT). Just as we protected the API server with an AT, we also want to protect the MCP server.
+
+The [MCP authorization specification](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization#access-token-privilege-restriction) states:
+
+> *If the MCP server makes requests to upstream APIs, it may act as an OAuth client to them. The access token used at the upstream API is a separate token, issued by the upstream authorization server. The MCP server **MUST NOT** pass through the token it received from the MCP client.*
+
+In this chapter, we will deploy `MCP Runtime Proxy` to require an AT with audience `mcp` and scope `mcp:role.mcp-accessor` before allowing tool calls. The proxy will attempt to exchange that AT for a separate API AT with audience `api` and scope `api:role.docs-getter`.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
@@ -141,7 +147,7 @@ curl -sS -w '\nHTTP %{http_code}\n' "http://localhost:${_mcp_port}/mcp" \
 ```
 
 ```sh
-# {"error":"missing_access_token","message":"Pass an Athenz access token as Authorization: Bearer <token>."}
+# {"error":"missing_access_token","message":"Pass an Athenz access token with aud=mcp and scope=mcp:role.mcp-accessor as Authorization: Bearer <token>."}
 # HTTP 401
 ```
 
@@ -153,9 +159,17 @@ Check the proxy log:
 kubectl logs deploy/mcp -n mcp -c auth-proxy --tail=30
 ```
 
-Look for "access denied" with `code=missing_access_token` and `status=401`. The request stops at MCP access validation, before any downstream exchange or API call.
+Sample output:
 
-![Runtime Proxy rejects a tool call without an access token](./assets/core_10_mcp_rejected.svg)
+```text
+2026-09-20T07:17:00.597Z ✓ INFO  [mcp-runtime-proxy] [server] server started | expectedAudience=mcp listenAddress=0.0.0.0:8082 requiredScope=mcp:role.mcp-accessor readinessPath=/mcp readinessTimeoutMs=4000 target=http://127.0.0.1:8080/
+2026-09-20T07:17:36.826Z → INFO  [mcp-runtime-proxy] [request] request received | requestId=e6289ff0-1e87-4e67-86ce-b4d0fedfa06b method=POST path=/mcp accessTokenPresent=false
+2026-09-20T07:17:36.827Z ! WARN  [mcp-runtime-proxy] [auth] access denied | requestId=e6289ff0-1e87-4e67-86ce-b4d0fedfa06b method=POST path=/mcp accessTokenPresent=false code=missing_access_token durationMs=1 message="Pass an Athenz access token with aud=mcp and scope=mcp:role.mcp-accessor as Authorization: Bearer <token>." status=401
+```
+
+Look for "access denied" with `code=missing_access_token` and `status=401`. The message tells you to use `aud=mcp` and `scope=mcp:role.mcp-accessor`. The request stops at MCP access validation, before any downstream exchange or API call.
+
+![Runtime Proxy returns 401 to the AI agent; the MCP server and API are not called](./assets/core_10_mcp_rejected.svg)
 
 ## Create the MCP Service Identity
 
