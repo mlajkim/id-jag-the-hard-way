@@ -18,6 +18,7 @@ Install Codex CLI, connect it to the MCP server, and verify that it discovers th
 - [Add the MCP Server to Codex](#add-the-mcp-server-to-codex)
 - [Connect to the MCP Server](#connect-to-the-mcp-server)
 - [Verify](#verify)
+- [Verify Working](#verify-working)
 - [Understand the Result](#understand-the-result)
 - [Next Steps](#next-steps)
 
@@ -58,14 +59,16 @@ Choose **Sign in with ChatGPT** or another available authentication method. See 
 
 ## Add the MCP Server to Codex
 
-Create a local Codex config file and append the provided settings:
+Create a local Codex config file using the saved access token and append the provided settings:
 
 ```sh
 _mcp_port=$(./tools/port.sh mcp)
+_at=$(cat ./keys/idjag-learner.jwt)
 
 cat > .codex/config.toml <<EOF
 [mcp_servers.id-jag-the-hard-way-mcp]
 url = "http://localhost:${_mcp_port}/mcp"
+http_headers = { Authorization = "Bearer ${_at}" }
 EOF
 
 cat .codex/settings.toml >> .codex/config.toml
@@ -77,18 +80,19 @@ Check the created config file:
 cat .codex/config.toml
 ```
 
-```toml
-[mcp_servers.id-jag-the-hard-way-mcp]
-url = "http://localhost:<your_port>/mcp"
+```sh
+# [mcp_servers.id-jag-the-hard-way-mcp]
+# url = "http://localhost:<your_port>/mcp"
+# http_headers = { Authorization = "Bearer <your_access_token>" }
 
-[mcp_servers.id-jag-the-hard-way-mcp.tools.get_k8s_docs]
-approval_mode = "approve"
+# [mcp_servers.id-jag-the-hard-way-mcp.tools.get_k8s_docs]
+# approval_mode = "approve"
 
-[mcp_servers.id-jag-the-hard-way-mcp.tools.delete_k8s_doc]
-approval_mode = "approve"
+# [mcp_servers.id-jag-the-hard-way-mcp.tools.delete_k8s_doc]
+# approval_mode = "approve"
 
-[mcp_servers.id-jag-the-hard-way-mcp.tools.post_k8s_doc]
-approval_mode = "approve"
+# [mcp_servers.id-jag-the-hard-way-mcp.tools.post_k8s_doc]
+# approval_mode = "approve"
 ```
 
 <a id="connect-to-mcp-server"></a>
@@ -107,9 +111,28 @@ Codex should connect and discover the three document tools.
 
 Confirm that Codex connects to `id-jag-the-hard-way-mcp` and discovers these tools:
 
-- `get_k8s_docs`
-- `post_k8s_doc`
-- `delete_k8s_doc`
+```sh
+/mcp verbose
+```
+
+```sh
+# 🔌  MCP Tools
+
+#   • id-jag-the-hard-way-mcp: connected (3 tools)
+#     • Auth: Unsupported
+#     • Tools: delete_k8s_doc, get_k8s_docs, post_k8s_doc
+#     • Resources: (none)
+#     • Resource templates: (none)
+```
+
+## Verify Working
+
+
+Run the following:
+
+```sh
+Get docs with id-jag-the-hard-way-mcp
+```
 
 ## Understand the Result
 

@@ -35,6 +35,9 @@ Generate a key pair for the service:
 
 ```sh
 ./tools/athenz/create-private-key.sh "./keys/api-mcp"
+```
+
+```sh
 #   ·  Generating RSA key pair for: ./keys/api-mcp...
 #   ✔  Keys generated: ./keys/api-mcp.key, ./keys/api-mcp.public.key
 ```
@@ -43,6 +46,9 @@ Register the service with its public key:
 
 ```sh
 ./tools/athenz/create-service.sh "mcp" "idthw-api-mcp" "./keys/api-mcp.public.key"
+```
+
+```sh
 #   ·  Registering Service: mcp.idthw-api-mcp...
 #   ✔  Service registered: mcp.idthw-api-mcp
 ```
@@ -51,6 +57,9 @@ Allow ZTS to issue a certificate for this service:
 
 ```sh
 ./tools/athenz/enable-cert-provider.sh "mcp" "idthw-api-mcp"
+```
+
+```sh
 #   ·  Enabling ZTS Certificate Provider for mcp.idthw-api-mcp...
 # [Template(s) successfully applied to domain]
 #   ✔  ZTS Certificate Provider enabled for mcp.idthw-api-mcp
@@ -60,6 +69,9 @@ Request the service certificate:
 
 ```sh
 ./tools/athenz/fetch-cert.sh "mcp" "idthw-api-mcp" "./keys/api-mcp.key" "v1"
+```
+
+```sh
 #   ·  Fetching X.509 Certificate for mcp.idthw-api-mcp...
 #   ✔  Certificate saved to: ./keys/api-mcp.crt
 ```
@@ -75,6 +87,9 @@ kubectl -n mcp create secret generic api-mcp-cert \
   --from-file=api-mcp.crt=./keys/api-mcp.crt \
   --from-file=api-mcp.key=./keys/api-mcp.key \
   --from-file=ca.crt=./athenz_dist/certs/ca.cert.pem
+```
+
+```sh
 # secret/api-mcp-cert created
 ```
 
@@ -120,6 +135,9 @@ spec:
             secretName: api-mcp-cert
 EOF
 )"
+```
+
+```sh
 # deployment.apps/mcp patched
 ```
 
@@ -152,6 +170,9 @@ spec:
             medium: Memory
 EOF
 )"
+```
+
+```sh
 # deployment.apps/mcp patched
 ```
 
@@ -165,6 +186,9 @@ kubectl set env deploy/mcp -n mcp --containers=auth-proxy \
   ATHENZ_TOKEN_EXCHANGE_CERT_PATH=/var/run/athenz/api-mcp.crt \
   ATHENZ_TOKEN_EXCHANGE_KEY_PATH=/var/run/athenz/api-mcp.key \
   MCP_TOOL_SCOPES='{"get_k8s_docs":"api:role.docs-getter","post_k8s_doc":"api:role.docs-poster","delete_k8s_doc":"api:role.docs-deleter"}'
+```
+
+```sh
 # deployment.apps/mcp env updated
 ```
 
@@ -176,6 +200,9 @@ Bind the MCP server to loopback so only Runtime Proxy listens on the pod's netwo
 
 ```sh
 kubectl set env deploy/mcp -n mcp --containers=idthw-demo-api-mcp HOST=127.0.0.1
+```
+
+```sh
 # deployment.apps/mcp env updated
 ```
 
@@ -183,6 +210,9 @@ Wait for both containers to be ready:
 
 ```sh
 kubectl rollout status deploy/mcp -n mcp
+```
+
+```sh
 # deployment "mcp" successfully rolled out
 ```
 
@@ -190,6 +220,9 @@ Point the Service at Runtime Proxy on `8082`, keeping its public port `8081`:
 
 ```sh
 kubectl patch svc mcp -n mcp --patch '{"spec":{"ports":[{"port":8081,"targetPort":8082}]}}'
+```
+
+```sh
 # service/mcp patched
 ```
 
@@ -204,6 +237,9 @@ _mcp_port=$(./tools/port.sh mcp)
 curl -sS -w '\nHTTP %{http_code}\n' "http://localhost:${_mcp_port}/mcp" \
   -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"get_k8s_docs","arguments":{}}}'
+```
+
+```sh
 # {"error":"missing_access_token","message":"Pass an Athenz access token as Authorization: Bearer <token>."}
 # HTTP 401
 ```
@@ -259,6 +295,9 @@ curl -sS -w '\nHTTP %{http_code}\n' "http://localhost:${_mcp_port}/mcp" \
   -H 'Content-Type: application/json' \
   -H "Authorization: Bearer ${_my_access_token}" \
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"get_k8s_docs","arguments":{}}}'
+```
+
+```sh
 # {"error":"downstream_token_exchange_denied","message":"Athenz denied the downstream token exchange."}
 # HTTP 403
 ```
@@ -267,8 +306,9 @@ This time MCP access passes. Runtime Proxy authenticates as `mcp.idthw-api-mcp` 
 
 ```sh
 kubectl logs deploy/mcp -n mcp -c auth-proxy
-# Look for "access token verified", then "downstream token exchange failed" with status=403.
 ```
+
+Look for "access token verified", then "downstream token exchange failed" with status=403.
 
 ![MCP access passes, but Athenz denies Runtime Proxy's downstream exchange](./assets/core_10_exchange_denied.svg)
 

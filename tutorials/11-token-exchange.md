@@ -60,6 +60,9 @@ curl -sS "http://localhost:${_mcp_port}/mcp" \
   -H "Authorization: Bearer ${_my_access_token}" \
   -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"get_k8s_docs","arguments":{}}}' \
   | jq '.result.structuredContent'
+```
+
+```sh
 # {
 #   "status": 200,
 #   "ok": true,
@@ -112,9 +115,9 @@ The client now retrieves documents through the protected MCP service. For other 
 
 ```sh
 kubectl logs deploy/mcp -n mcp -c auth-proxy
-# Look for "access token verified", "downstream access token published",
-# "request completed", and "downstream access token removed" with the same requestId.
 ```
+
+Look for "access token verified", "downstream access token published", "request completed", and "downstream access token removed" with the same requestId.
 
 The exchanged token grants only `api:role.docs-getter`. The MCP container has read-only access to the token directory and no service private key.
 
