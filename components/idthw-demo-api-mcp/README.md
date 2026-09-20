@@ -15,11 +15,11 @@ No mode switch is needed. A request-specific file takes precedence over the bear
 
 Chapter 08 deploys the MCP server and verifies initialization and tool discovery without a proxy or access token. Chapter 09 connects Claude Code, Codex, or Open WebUI; each path fetches a fresh learner API token and sends it in the Authorization header to retrieve documents. Document retrieval requires an API-audience token with the requested tool's permission.
 
-Chapter 10 adds Runtime Proxy and sets `HOST=127.0.0.1` so requests enter through the proxy in the same pod. The proxy validates MCP access and performs downstream exchange using the service identity. Chapter 11 grants that identity the missing exchange permissions.
+Chapter 10 adds Runtime Proxy. The MCP server listens on loopback by default, so requests enter through the proxy in the same pod. The proxy validates MCP access and performs downstream exchange using the service identity. Chapter 11 grants that identity the missing exchange permissions.
 
 `GET /openapi.json` describes `POST /tools/get_k8s_docs`, `POST /tools/post_k8s_doc`, and `POST /tools/delete_k8s_doc` for Open WebUI and the tutorial AI Client Gateway. Each endpoint accepts a JSON object of tool arguments and returns the same JSON-RPC tool result as `/mcp`. The metadata maps operation IDs to `x-athenz-required-scope`, combining `ACCESS_MCP_REQUIRED_SCOPE` (default `mcp:role.mcp-accessor`) with the API role. Runtime Proxy's configured `MCP_TOOL_SCOPES` maps these HTTP tool requests to MCP calls before publishing their token files.
 
-Other settings: `PORT` defaults to `8080`, `HOST` to `0.0.0.0`, and `MCP_ACCESS_TOKEN_FILE_DIR` to `/var/run/idthw-access-tokens`.
+Other settings: `PORT` defaults to `8080`, `HOST` to `127.0.0.1`, and `MCP_ACCESS_TOKEN_FILE_DIR` to `/var/run/idthw-access-tokens`. Deployments that need direct access through the pod's network interface must explicitly set `HOST=0.0.0.0` in their own configuration.
 
 ## Delegated token files
 
@@ -60,6 +60,8 @@ Access management: MCP Hub / Athenz
 ```
 
 Set `UPSTREAM_BASE_URL` only when the protected API is not available at the default `http://api-server.api:8080`.
+
+Hub-managed access works with the default loopback binding because Runtime Proxy runs in the same pod. For a server-managed deployment without Runtime Proxy, add `HOST=0.0.0.0` to that server's environment variables in Hub so its Kubernetes Service can reach it.
 
 ## Local checks
 

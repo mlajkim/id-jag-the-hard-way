@@ -177,6 +177,15 @@ However, the credentials are up to you.
 
 ## Register MCP Server as a Tool Server in Open WebUI
 
+The MCP server listens on the pod's loopback address by default. Keep `./tools/keep-k8s-port-forward.sh` running so Open WebUI can reach MCP through your host. With Docker Desktop, print the URL to use:
+
+```sh
+_mcp_port=$(./tools/port.sh mcp)
+echo "http://host.docker.internal:${_mcp_port}"
+```
+
+If your Docker setup uses a different host address for Ollama, use that address here with the MCP port printed above.
+
 Fetch a fresh access token with audience `api` and scope `api:role.docs-getter` using the learner identity from chapter 07:
 
 ```sh
@@ -192,7 +201,7 @@ Go to `User Icon` > `Admin Panel` > `Settings` > `Integrations` > `Manage Tool S
 
 - Name: `API MCP Server`
 - Description: `MCP server for API that holds documentation`
-- URL: `http://mcp.mcp:8081`
+- URL: Use the host URL printed above (normally `http://host.docker.internal:24443`)
 - OpenAPI spec: `/openapi.json`
 - Auth type: `Bearer`
 - API key: Paste the freshly issued token saved in `./keys/idjag-learner.jwt`, without the `Bearer ` prefix

@@ -32,10 +32,6 @@ spec:
   template:
     spec:
       containers:
-        - name: idthw-demo-api-mcp
-          env:
-            - name: HOST
-              value: "127.0.0.1"
         - name: auth-proxy
           image: ghcr.io/mlajkim/mcp-runtime-proxy:latest
           imagePullPolicy: Always
@@ -64,7 +60,7 @@ EOF
 # deployment.apps/mcp patched
 ```
 
-Both containers share the pod's network. `HOST=127.0.0.1` makes the MCP app listen only on loopback, where Runtime Proxy can reach it at `http://127.0.0.1:8080`. This prevents callers from bypassing the proxy through the MCP app's port. The proxy listens on `8082`.
+Both containers share the pod's network. Runtime Proxy listens on `8082` and reaches the MCP app at its default loopback address, `http://127.0.0.1:8080`.
 
 The proxy reads `/var/run/athenz/ca.crt` at startup. Until you mount the CA in the next step, its container will exit and restart; wait for readiness after that step.
 

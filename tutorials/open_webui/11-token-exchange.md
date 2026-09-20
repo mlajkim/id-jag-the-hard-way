@@ -20,7 +20,7 @@ _my_access_token=$(./tools/athenz/fetch-access-token.sh \
   --audience mcp)
 ```
 
-Open **Admin Panel > Settings > Integrations > Manage Tool Servers** and edit `API MCP Server`. Set the auth type to `Bearer` and use the freshly issued token saved in `./keys/idjag-learner.jwt` as the API key. Keep the URL `http://mcp.mcp:8081` and OpenAPI spec `/openapi.json`.
+Open **Admin Panel > Settings > Integrations > Manage Tool Servers** and edit `API MCP Server`. Set the auth type to `Bearer` and use the freshly issued token saved in `./keys/idjag-learner.jwt` as the API key. Change the URL to `http://mcp.mcp:8081`, which now reaches Runtime Proxy through the Kubernetes Service, and keep the OpenAPI spec `/openapi.json`.
 
 Start a new chat, select the document tool, and ask `get docs!`.
 
