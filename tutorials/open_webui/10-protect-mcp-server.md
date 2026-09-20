@@ -244,7 +244,7 @@ curl -sS -w '\nHTTP %{http_code}\n' "http://localhost:${_mcp_port}/mcp" \
 # HTTP 401
 ```
 
-The AI client can still connect and discover tools. If you ask it to retrieve documents, Runtime Proxy rejects the tool call because the client has no access token.
+The AI client can still connect and discover tools. Runtime Proxy rejects tool calls without a token. The API-audience token configured in Open WebUI in chapter 09 also fails the proxy's MCP audience check; the next steps issue an MCP-audience token.
 
 ![Runtime Proxy rejects a tool call without an access token](../assets/core_10_mcp_rejected.svg)
 
@@ -287,10 +287,18 @@ The MCP role permits tool execution. The API role permits the later exchange int
 
 ## Verify Token Exchange Is Denied
 
-Send the new token:
+Fetch a fresh MCP-audience token and send the tool request:
 
 ```sh
 _mcp_port=$(./tools/port.sh mcp)
+_scope="mcp:role.mcp-accessor api:role.docs-getter"
+_my_access_token=$(./tools/athenz/fetch-access-token.sh \
+  "./keys/idjag-learner.crt" \
+  "./keys/idjag-learner.key" \
+  "${_scope}" \
+  "./keys/idjag-learner.jwt" \
+  --audience mcp)
+
 curl -sS -w '\nHTTP %{http_code}\n' "http://localhost:${_mcp_port}/mcp" \
   -H 'Content-Type: application/json' \
   -H "Authorization: Bearer ${_my_access_token}" \

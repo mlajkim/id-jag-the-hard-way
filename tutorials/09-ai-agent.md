@@ -6,7 +6,7 @@
 
 ![10_claude](./assets/10_claude.png)
 
-Connect Claude Code to the MCP server and verify that it discovers the document tools.
+Connect Claude Code to the MCP server and retrieve documents using the learner's API access token.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
@@ -15,6 +15,7 @@ Connect Claude Code to the MCP server and verify that it discovers the document 
 - [Sign In to Claude](#sign-in-to-claude)
 - [Connect to the MCP Server](#connect-to-the-mcp-server)
 - [Verify](#verify)
+- [Verify Working](#verify-working)
 - [Understand the Result](#understand-the-result)
 - [Next Steps](#next-steps)
 
@@ -63,7 +64,18 @@ Create `.mcp.json` before launching Claude Code so it can load the MCP server co
 >
 > If Claude says the port-forward connection dropped, restart `./tools/keep-k8s-port-forward.sh`, wait for the MCP deployment again, and retry.
 
-Create `.mcp.json` at the root of this project:
+Fetch a fresh API access token in case the token from the previous chapter has expired:
+
+```sh
+_scope="api:role.docs-getter"
+_my_access_token=$(./tools/athenz/fetch-access-token.sh \
+  "./keys/idjag-learner.crt" \
+  "./keys/idjag-learner.key" \
+  "${_scope}" \
+  "./keys/idjag-learner.jwt")
+```
+
+Create `.mcp.json` at the root of this project using the fresh token. The MCP server forwards this bearer token from each request to the API:
 
 ```sh
 _mcp_port=$(./tools/port.sh mcp)
@@ -73,7 +85,8 @@ cat > .mcp.json <<EOF
   "mcpServers": {
     "id-jag-the-hard-way-mcp": {
       "type": "http",
-      "url": "http://localhost:${_mcp_port}/mcp"
+      "url": "http://localhost:${_mcp_port}/mcp",
+      "headers": { "Authorization": "Bearer ${_my_access_token}" }
     }
   }
 }
@@ -91,18 +104,28 @@ cat .mcp.json
   "mcpServers": {
     "id-jag-the-hard-way-mcp": {
       "type": "http",
-      "url": "http://localhost:<your_port>/mcp"
+      "url": "http://localhost:<your_port>/mcp",
+      "headers": { "Authorization": "Bearer <your_access_token>" }
     }
   }
 }
 ```
 
 > [!TIP]
-> If you already launched Claude Code and forgot to create `.mcp.json` first, you can add the MCP server without restarting by running this command in your shell:
+> If you already launched Claude Code and forgot to create `.mcp.json` first, this block fetches a fresh token and registers the MCP server from your shell:
 >
 > ```sh
 > _mcp_port=$(./tools/port.sh mcp)
-> claude mcp add --transport http --scope project id-jag-the-hard-way-mcp "http://localhost:${_mcp_port}/mcp"
+> _scope="api:role.docs-getter"
+> _my_access_token=$(./tools/athenz/fetch-access-token.sh \
+>   "./keys/idjag-learner.crt" \
+>   "./keys/idjag-learner.key" \
+>   "${_scope}" \
+>   "./keys/idjag-learner.jwt")
+>
+> claude mcp add --transport http --scope project \
+>   id-jag-the-hard-way-mcp "http://localhost:${_mcp_port}/mcp" \
+>   --header "Authorization: Bearer ${_my_access_token}"
 > ```
 >
 > This writes the server entry to `.mcp.json` (project scope). You still need to reload: run `/reload-plugins` inside Claude Code.
@@ -141,14 +164,24 @@ Open `/mcp`, select `id-jag-the-hard-way-mcp`, and confirm that the server is co
 - `post_k8s_doc`
 - `delete_k8s_doc`
 
+## Verify Working
+
+Ask Claude Code to call the document tool:
+
+```sh
+Get docs with id-jag-the-hard-way-mcp
+```
+
+The tool should return status `200` and the document list. If the API rejects an expired token, repeat the token and configuration steps above, then run `/reload-plugins` or restart Claude Code.
+
 ## Understand the Result
 
-Claude Code can connect to `idthw-demo-api-mcp` and discover its document tools without an access token. Discovery reads tool definitions; it does not retrieve documents from the protected API.
+Discovery reads tool definitions without calling the API. When Claude Code calls `get_k8s_docs`, the MCP server forwards the API token from that request's Authorization header. The API validates the token and its document-read permission.
 
 ![The AI client connects to MCP and discovers the tools](./assets/core_09_mcp_success.svg)
 
 ## Next Steps
 
-The AI client can now discover the MCP tools. In the next chapter, we will add Runtime Proxy to validate access tokens before allowing tool execution.
+The AI client can now retrieve documents through MCP. In the next chapter, we will add Runtime Proxy to validate access tokens before allowing tool execution.
 
 Next: [Protect MCP Server](./10-protect-mcp-server.md)

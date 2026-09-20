@@ -51,10 +51,18 @@ _my_access_token=$(./tools/athenz/fetch-access-token.sh \
 
 ## Verify
 
-Repeat the request that returned `403`:
+Fetch a fresh MCP-audience token and repeat the request that returned `403`:
 
 ```sh
 _mcp_port=$(./tools/port.sh mcp)
+_scope="mcp:role.mcp-accessor api:role.docs-getter"
+_my_access_token=$(./tools/athenz/fetch-access-token.sh \
+  "./keys/idjag-learner.crt" \
+  "./keys/idjag-learner.key" \
+  "${_scope}" \
+  "./keys/idjag-learner.jwt" \
+  --audience mcp)
+
 curl -sS "http://localhost:${_mcp_port}/mcp" \
   -H 'Content-Type: application/json' \
   -H "Authorization: Bearer ${_my_access_token}" \
@@ -79,18 +87,25 @@ If Athenz still returns the same exchange denial immediately after the change, a
 
 ## Update the AI Client
 
-For Claude Code, update `.mcp.json` with the new MCP-audience token:
+For Claude Code, fetch a fresh MCP-audience token and update `.mcp.json` in the same block:
 
 ```sh
 _mcp_port=$(./tools/port.sh mcp)
-_at=$(cat ./keys/idjag-learner.jwt)
+_scope="mcp:role.mcp-accessor api:role.docs-getter"
+_my_access_token=$(./tools/athenz/fetch-access-token.sh \
+  "./keys/idjag-learner.crt" \
+  "./keys/idjag-learner.key" \
+  "${_scope}" \
+  "./keys/idjag-learner.jwt" \
+  --audience mcp)
+
 cat > .mcp.json <<EOF
 {
   "mcpServers": {
     "id-jag-the-hard-way-mcp": {
       "type": "http",
       "url": "http://localhost:${_mcp_port}/mcp",
-      "headers": { "Authorization": "Bearer ${_at}" }
+      "headers": { "Authorization": "Bearer ${_my_access_token}" }
     }
   }
 }

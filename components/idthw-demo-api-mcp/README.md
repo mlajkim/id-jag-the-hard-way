@@ -13,7 +13,7 @@ No mode switch is needed. A request-specific file takes precedence over the bear
 
 ## Core tutorial
 
-Chapter 08 deploys the MCP server and verifies initialization and tool discovery without a proxy or access token. Chapter 09 connects an AI client; the Codex path sends the learner's API token in the Authorization header to retrieve documents. Document retrieval requires an API-audience token with the requested tool's permission.
+Chapter 08 deploys the MCP server and verifies initialization and tool discovery without a proxy or access token. Chapter 09 connects Claude Code, Codex, or Open WebUI; each path fetches a fresh learner API token and sends it in the Authorization header to retrieve documents. Document retrieval requires an API-audience token with the requested tool's permission.
 
 Chapter 10 adds Runtime Proxy and sets `HOST=127.0.0.1` so requests enter through the proxy in the same pod. The proxy validates MCP access and performs downstream exchange using the service identity. Chapter 11 grants that identity the missing exchange permissions.
 

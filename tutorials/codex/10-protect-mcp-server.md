@@ -287,10 +287,18 @@ The MCP role permits tool execution. The API role permits the later exchange int
 
 ## Verify Token Exchange Is Denied
 
-Send the new token:
+Fetch a fresh MCP-audience token and send the tool request:
 
 ```sh
 _mcp_port=$(./tools/port.sh mcp)
+_scope="mcp:role.mcp-accessor api:role.docs-getter"
+_my_access_token=$(./tools/athenz/fetch-access-token.sh \
+  "./keys/idjag-learner.crt" \
+  "./keys/idjag-learner.key" \
+  "${_scope}" \
+  "./keys/idjag-learner.jwt" \
+  --audience mcp)
+
 curl -sS -w '\nHTTP %{http_code}\n' "http://localhost:${_mcp_port}/mcp" \
   -H 'Content-Type: application/json' \
   -H "Authorization: Bearer ${_my_access_token}" \

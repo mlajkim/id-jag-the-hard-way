@@ -59,18 +59,21 @@ Choose **Sign in with ChatGPT** or another available authentication method. See 
 
 ## Add the MCP Server to Codex
 
-Create a local Codex config file using the saved access token and append the provided settings:
-
-Use the token from chapter 07 with audience `api` and scope `api:role.docs-getter`. The MCP server forwards the bearer token from each request to the API. No access token is configured in the MCP server's environment.
+Fetch a fresh API access token, create the local Codex config, and append the provided settings in the same block. The MCP server forwards this bearer token from each request to the API:
 
 ```sh
 _mcp_port=$(./tools/port.sh mcp)
-_at=$(cat ./keys/idjag-learner.jwt)
+_scope="api:role.docs-getter"
+_my_access_token=$(./tools/athenz/fetch-access-token.sh \
+  "./keys/idjag-learner.crt" \
+  "./keys/idjag-learner.key" \
+  "${_scope}" \
+  "./keys/idjag-learner.jwt")
 
 cat > .codex/config.toml <<EOF
 [mcp_servers.id-jag-the-hard-way-mcp]
 url = "http://localhost:${_mcp_port}/mcp"
-http_headers = { Authorization = "Bearer ${_at}" }
+http_headers = { Authorization = "Bearer ${_my_access_token}" }
 EOF
 
 cat .codex/settings.toml >> .codex/config.toml
@@ -136,7 +139,7 @@ Ask Codex to call the document tool:
 Get docs with id-jag-the-hard-way-mcp
 ```
 
-The tool should return status `200` and the document list. If the API rejects an expired token, repeat chapter 07's token issuance step, update the bearer header in the Codex config, and restart Codex.
+The tool should return status `200` and the document list. If the API rejects an expired token, repeat the token and configuration steps above, then restart Codex.
 
 ## Understand the Result
 
