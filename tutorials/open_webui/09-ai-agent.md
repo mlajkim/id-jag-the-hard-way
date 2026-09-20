@@ -237,7 +237,7 @@ The tool should return status `200` and the document list. If the API rejects an
 
 Discovery reads tool definitions without calling the API. When Open WebUI calls `get_k8s_docs`, the MCP server forwards the API token from that request's Authorization header. The API validates the token and its document-read permission.
 
-![The AI client connects to MCP and discovers the tools](../assets/core_09_mcp_success.svg)
+![The AI agent retrieves documents through MCP using the same API access token](../assets/core_09_mcp_success.svg)
 
 ## Next Steps
 

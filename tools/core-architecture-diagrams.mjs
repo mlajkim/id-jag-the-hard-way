@@ -1,5 +1,30 @@
 import { Architecture, COMPONENT_SIZE } from './architecture-svg.mjs'
 
+export function createMcpSuccessDiagram() {
+  const d = new Architecture(1432, 392,
+    'The AI agent retrieves documents through MCP using an API access token',
+    'Claude Code, Codex, or Open WebUI calls get_k8s_docs with the learner\'s API access token in the Authorization bearer header. The MCP server forwards the same token with GET /api/docs. The Resource Server validates the token\'s API audience and document-read permission, then returns 200 OK and documents. MCP returns the document tool result to the AI agent.')
+  const client = d.card('client', 48, 96, 'AI Agent', { sub: ['Claude Code, Codex,', 'Open WebUI'] })
+  const mcp = d.card('mcp', 576, 96, 'MCP server', { sub: ['idthw-demo-api-mcp'] })
+  const api = d.card('api', 1104, 96, 'Resource Server', { sub: ['api.idthw-api'], tag: 'api' })
+
+  d.edge([client.right(.3), mcp.left(.3)], {
+    label: 'get_k8s_docs', secondary: 'Bearer API token', at: [452, 118], size: 17,
+    token: 'access', tokenAt: [452, 196]
+  })
+  d.edge([mcp.right(.3), api.left(.3)], {
+    label: 'GET /api/docs', secondary: 'Same API token', at: [980, 118], size: 17,
+    token: 'access', tokenAt: [980, 196]
+  })
+  d.edge([api.left(.74), mcp.right(.74)], {
+    tone: 'green', dash: true, label: '200 OK · documents', at: [980, 278], size: 17
+  })
+  d.edge([mcp.left(.74), client.right(.74)], {
+    tone: 'green', dash: true, label: 'Tool result · docs', at: [452, 278], size: 17
+  })
+  return d
+}
+
 // Diagram labels describe the current core tutorial; prose remains in Markdown.
 export function addCoreDiagrams(add) {
   const save = (name, diagram) => add(`tutorials/assets/core_${name}.svg`, diagram)
@@ -51,6 +76,8 @@ export function addCoreDiagrams(add) {
     d.edge([api.left(.74), mcp.right(.74)], { tone: 'green', dash: true, label: 'Documents', at: [580, 278] })
     save('08_mcp_api', d)
   }
+
+  save('09_mcp_success', createMcpSuccessDiagram())
 
   for (const allowed of [false, true]) {
     const d = new Architecture(1440, 746, 'MCP tool call and downstream token exchange')

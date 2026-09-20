@@ -139,13 +139,15 @@ Ask Codex to call the document tool:
 Get docs with id-jag-the-hard-way-mcp
 ```
 
+![Codex retrieves two documents with get_k8s_docs](./assets/09_codex_get_k8s_docs_success.png)
+
 The tool should return status `200` and the document list. If the API rejects an expired token, repeat the token and configuration steps above, then restart Codex.
 
 ## Understand the Result
 
 Discovery reads tool definitions without calling the API. When Codex calls `get_k8s_docs`, the MCP server forwards the API token from that request's Authorization header. The API validates the token and its document-read permission.
 
-![The AI client connects to MCP and discovers the tools](../assets/core_09_mcp_success.svg)
+![The AI agent retrieves documents through MCP using the same API access token](../assets/core_09_mcp_success.svg)
 
 ## Next Steps
 
