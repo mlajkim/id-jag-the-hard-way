@@ -50,6 +50,31 @@ export function createMcpRejectedDiagram() {
   return d
 }
 
+export function createMcpSharedTokenDirectoryDiagram() {
+  const d = new Architecture(1104, 776,
+    'Runtime Proxy and MCP share an in-memory API token directory',
+    'Inside one MCP pod, Runtime Proxy and the MCP server mount the same access-tokens emptyDir volume at /var/run/idthw-access-tokens. The volume uses memory. After a successful downstream token exchange, the proxy writes a request-specific API token file through its read-write mount, then sends its path in tools/call metadata. MCP reads the same file through its read-only mount. The pod setting fsGroup: 1000 provides shared group access. The proxy removes the file after the response.')
+  const proxy = d.card('proxy', 96, 112, ['MCP Runtime', 'Proxy'], { sub: ['auth-proxy'], tag: 'container' })
+  const mcp = d.card('mcp', 728, 112, 'MCP server', { sub: ['idthw-demo-api-mcp'], tag: 'container' })
+  const volume = d.card('volume', 412, 464, 'Shared token files', {
+    kind: 'file', tag: 'Memory', sub: ['access-tokens · emptyDir', '/var/run/idthw-access-tokens']
+  })
+  d.group([proxy, mcp, volume], 'MCP POD', { product: 'fsGroup: 1000' })
+
+  d.edge([proxy.bottom(), [236, 564], volume.left()], {
+    label: '1. Write API token', secondary: 'Read-write mount', at: [236, 392], size: 17,
+    token: 'exchanged', tokenAt: [236, 476]
+  })
+  d.edge([proxy.right(), mcp.left()], {
+    tone: 'purple', label: '2. tools/call', secondary: 'File path in _meta', at: [552, 168], size: 17
+  })
+  d.edge([volume.right(), [868, 564], mcp.bottom()], {
+    label: '3. Read API token', secondary: 'Read-only mount', at: [868, 392], size: 17,
+    token: 'exchanged', tokenAt: [868, 476]
+  })
+  return d
+}
+
 // Diagram labels describe the current core tutorial; prose remains in Markdown.
 export function addCoreDiagrams(add) {
   const save = (name, diagram) => add(`tutorials/assets/core_${name}.svg`, diagram)
@@ -104,6 +129,7 @@ export function addCoreDiagrams(add) {
 
   save('09_mcp_success', createMcpSuccessDiagram())
   save('10_mcp_rejected', createMcpRejectedDiagram())
+  save('10_shared_api_token_directory', createMcpSharedTokenDirectoryDiagram())
 
   for (const allowed of [false, true]) {
     const d = new Architecture(1440, 746, 'MCP tool call and downstream token exchange')

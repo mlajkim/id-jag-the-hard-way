@@ -242,6 +242,10 @@ EOF
 
 Give the proxy an in-memory directory for exchanged API tokens. Mount the same directory read-only in the MCP container so it can use those tokens. `fsGroup: 1000` lets the MCP process read the shared files.
 
+The diagram shows how both containers use the same files after token exchange succeeds:
+
+![Inside the MCP pod, Runtime Proxy writes an API token to shared memory, passes its file path to MCP, and MCP reads the file through a read-only mount](../assets/core_10_shared_api_token_directory.svg)
+
 ```sh
 kubectl patch deploy mcp -n mcp --patch "$(cat <<'EOF'
 spec:
