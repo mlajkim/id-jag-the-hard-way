@@ -154,12 +154,16 @@ Check the proxy log for the reason behind Codex's authentication message:
 kubectl logs deploy/mcp -n mcp -c auth-proxy --tail=2
 ```
 
+Example output from the updated proxy for an unexpired API-audience token:
+
 ```sh
 # 2026-XX-XXT03:20:11.552Z → INFO  [mcp-runtime-proxy] [request] request received | requestId=434926ee-eba7-4770-aca3-6a292410b19c method=POST path=/mcp accessTokenPresent=true
-# 2026-XX-XXT03:20:11.583Z ! WARN  [mcp-runtime-proxy] [auth] access denied | requestId=434926ee-eba7-4770-aca3-6a292410b19c method=POST path=/mcp accessTokenPresent=true code=invalid_access_token durationMs=32 message="The Athenz access token is invalid or expired." status=401
+# 2026-XX-XXT03:20:11.583Z ! WARN  [mcp-runtime-proxy] [auth] access denied | requestId=434926ee-eba7-4770-aca3-6a292410b19c method=POST path=/mcp accessTokenPresent=true code=invalid_access_token durationMs=31 message="The Athenz access token is invalid or expired." status=401 expectedAudience=mcp requiredScope=mcp:role.mcp-accessor keyId=athenz-zts-server-example signatureVerified=true expiresAt=2026-XX-XXT04:20:11.000Z expiresInSeconds=3600 audiences=["api"] reason=audience_mismatch
 ```
 
-`invalid_access_token` also covers expired tokens. If Codex sends no bearer token, the log instead shows `accessTokenPresent=false` and `code=missing_access_token`, also with `status=401`. In either case, the request stops at MCP access validation, before any downstream exchange or API call.=
+`reason=audience_mismatch`, `expectedAudience=mcp`, and `audiences=["api"]` identify the failed check. `signatureVerified=true` and the positive `expiresInSeconds` show that the signature and expiration checks passed.
+
+`invalid_access_token` is the client-facing error code. An expired token instead logs `reason=token_expired`, its `expiresAt`, and a nonpositive `expiresInSeconds`; expiration is checked before audience. If Codex sends no bearer token, the log shows `accessTokenPresent=false`, `code=missing_access_token`, and `reason=missing_authorization`, also with `status=401`. These failures stop the request at MCP access validation, before any downstream exchange or API call.
 
 ![Runtime Proxy returns 401 to the AI agent; the MCP server and API are not called](../assets/core_10_mcp_rejected.svg)
 
@@ -281,9 +285,15 @@ Check the proxy log:
 kubectl logs deploy/mcp -n mcp -c auth-proxy --tail=3
 ```
 
-For the same `requestId`, look for "access token verified", followed by "downstream token exchange failed" with `code=downstream_token_exchange_unavailable` and `status=502`.
+```sh
+# 2026-09-23T07:05:21.309Z → INFO  [mcp-runtime-proxy] [request] request received | requestId=eb1c16b4-6ec0-445f-905d-7baa32cb4952 method=POST path=/mcp accessTokenPresent=true
+# 2026-09-23T07:05:21.312Z ✓ INFO  [mcp-runtime-proxy] [auth] access token verified | requestId=eb1c16b4-6ec0-445f-905d-7baa32cb4952 method=POST path=/mcp audiences=["mcp"] clientId=human.idjag-learner expiresAt=2026-09-23T08:04:16.000Z expiresInSeconds=3535 keyId=athenz-zts-server-5fcdbc67f4-lwctf scopes=["api:role.docs-getter","mcp-accessor"] subject=human.idjag-learner userId=human.idjag-learner
+# 2026-09-23T07:05:21.312Z × ERROR [mcp-runtime-proxy] [exchange] downstream token exchange failed | requestId=eb1c16b4-6ec0-445f-905d-7baa32cb4952 method=POST path=/mcp code=downstream_token_exchange_unavailable durationMs=3 message="Downstream access-token publication is not enabled for this MCP server." status=502
+```
 
-MCP access is protected. The proxy knows the tool needs an API token and stops the request because token exchange is not configured. The request has not reached the MCP tool or the API.
+For the same `requestId`, "access token verified" is followed by "downstream token exchange failed" with `code=downstream_token_exchange_unavailable` and `status=502`.
+
+The MCP token passed validation, but the tool needs a separate API token. Token exchange is not yet configured, so the proxy stops the request before contacting Athenz for exchange or calling the MCP tool or API.
 
 ## Next Steps
 

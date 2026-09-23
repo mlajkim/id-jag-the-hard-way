@@ -1,4 +1,5 @@
 import assert from "node:assert/strict"
+import { generateKeyPairSync, sign } from "node:crypto"
 import http, { type Server } from "node:http"
 import test from "node:test"
 import { AccessTokenError, createAthenzAccessTokenVerifier, JwksUnavailableError } from "../src/auth.ts"
@@ -462,8 +463,76 @@ for (const [expectedAudience, requiredScope] of [
     assert.equal(warnings[0].fields.message, message)
     assert.equal(warnings[0].fields.code, "missing_access_token")
     assert.equal(warnings[0].fields.status, 401)
+    assert.equal(warnings[0].fields.reason, "missing_authorization")
+    assert.equal(warnings[0].fields.expectedAudience, expectedAudience)
+    assert.equal(warnings[0].fields.requiredScope, requiredScope)
   })
 }
+
+test("logs the audience mismatch and verified expiry without exposing the token or changing the client response", async (t) => {
+  const now = 1_800_000_000_000
+  const keys = generateKeyPairSync("rsa", { modulusLength: 2048 })
+  const header = Buffer.from(JSON.stringify({ alg: "RS256", typ: "at+jwt", kid: "zts-test-key" })).toString("base64url")
+  const payload = Buffer.from(JSON.stringify({
+    aud: "api", exp: now / 1000 + 300, scp: ["docs-getter"], extra: "unlogged-custom-claim",
+  })).toString("base64url")
+  const signingInput = `${header}.${payload}`
+  const signature = sign("RSA-SHA256", Buffer.from(signingInput), keys.privateKey).toString("base64url")
+  const token = `${signingInput}.${signature}`
+  const logs: Array<{ event: string; fields: Record<string, unknown> }> = []
+  let upstreamCalls = 0
+  const upstream = http.createServer((_request, response) => {
+    upstreamCalls += 1
+    response.end("must not be called")
+  })
+  const upstreamPort = await listen(upstream)
+  t.after(() => close(upstream))
+  const proxy = createRuntimeProxyServer(
+    new URL(`http://127.0.0.1:${upstreamPort}`),
+    createAthenzAccessTokenVerifier({
+      expectedAudience: "mcp",
+      requiredScope: "mcp:role.mcp-accessor",
+      now: () => now,
+      resolveSigningKey: async () => keys.publicKey,
+    }),
+    {
+      info: (event, fields = {}) => logs.push({ event, fields }),
+      warn: (event, fields = {}) => logs.push({ event, fields }),
+      error: (event, fields = {}) => logs.push({ event, fields }),
+    },
+  )
+  const proxyPort = await listen(proxy)
+  t.after(() => close(proxy))
+
+  const response = await fetch(`http://127.0.0.1:${proxyPort}/mcp`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "get_k8s_docs" } }),
+  })
+
+  assert.equal(response.status, 401)
+  assert.equal(response.headers.get("www-authenticate"), 'Bearer realm="mcp-runtime-proxy", error="invalid_token"')
+  assert.deepEqual(await response.json(), {
+    error: "invalid_access_token",
+    message: "The Athenz access token is invalid or expired.",
+  })
+  assert.equal(upstreamCalls, 0)
+  assert.deepEqual(logs.map(({ event }) => event), ["request_received", "access_denied"])
+  const denial = logs[1].fields
+  assert.equal(denial.requestId, logs[0].fields.requestId)
+  assert.equal(denial.code, "invalid_access_token")
+  assert.equal(denial.reason, "audience_mismatch")
+  assert.equal(denial.expectedAudience, "mcp")
+  assert.deepEqual(denial.audiences, ["api"])
+  assert.equal(denial.requiredScope, "mcp:role.mcp-accessor")
+  assert.equal(denial.keyId, "zts-test-key")
+  assert.equal(denial.signatureVerified, true)
+  assert.equal(denial.expiresAt, new Date(now + 300_000).toISOString())
+  assert.equal(denial.expiresInSeconds, 300)
+  for (const sensitiveValue of [token, payload, signature, "unlogged-custom-claim"]) {
+    assert.equal(JSON.stringify(logs).includes(sensitiveValue), false)
+  }
+})
 
 test("logs safe verified access-token metadata without logging the raw token", async (t) => {
   const logs: Array<{ event: string; fields: Record<string, unknown>; level: string }> = []

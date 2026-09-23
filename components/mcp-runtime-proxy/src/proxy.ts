@@ -194,6 +194,7 @@ async function handleRequest(
         durationMs: Date.now() - startedAt,
         message: error.message,
         status: error.status,
+        ...error.diagnostics,
       })
       sendAccessTokenError(response, error)
       return
