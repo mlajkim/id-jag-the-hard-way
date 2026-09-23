@@ -51,10 +51,6 @@ export function createRuntimeProxyServer(
   if (target.username || target.password) {
     throw new Error("MCP_TARGET_URL must not contain credentials")
   }
-  if (readiness.toolScopes && !tokenPublisher) {
-    throw new Error("MCP_TOOL_SCOPES requires ATHENZ_TOKEN_FILE_EXCHANGE_ENABLED=true")
-  }
-
   const server = http.createServer((request, response) => {
     void handleRequest(request, response, target, accessTokenVerifier, logger, tokenPublisher, readiness)
   })
