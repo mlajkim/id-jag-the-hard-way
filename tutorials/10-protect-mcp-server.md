@@ -137,37 +137,28 @@ Restart `./tools/keep-k8s-port-forward.sh` after this change so the local connec
 
 ## Verify MCP Access Is Rejected
 
-Before creating the MCP domain or service identity in Athenz, try a tool call without a token:
+Before creating the MCP domain or service identity in Athenz, ask Claude Code to retrieve documents again using the same configuration as in the previous chapter:
 
 ```sh
-_mcp_port=$(./tools/port.sh mcp)
-curl -sS -w '\nHTTP %{http_code}\n' "http://localhost:${_mcp_port}/mcp" \
-  -H 'Content-Type: application/json' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"get_k8s_docs","arguments":{}}}'
+Get docs with id-jag-the-hard-way-mcp
+```
+
+The tool call should be rejected with `401 invalid_access_token`.
+
+Claude Code can still connect and discover tools, but Runtime Proxy rejects this tool call. The token configured in the previous chapter has audience `api`; the proxy now requires audience `mcp`. Even an unexpired API token fails this check. The next steps issue an MCP-audience token.
+
+Check the proxy log for the reason behind Claude Code's authentication message:
+
+```sh
+kubectl logs deploy/mcp -n mcp -c auth-proxy --tail=2
 ```
 
 ```sh
-# {"error":"missing_access_token","message":"Pass an Athenz access token with aud=mcp and scope=mcp:role.mcp-accessor as Authorization: Bearer <token>."}
-# HTTP 401
+# 2026-XX-XXT03:20:11.552Z → INFO  [mcp-runtime-proxy] [request] request received | requestId=434926ee-eba7-4770-aca3-6a292410b19c method=POST path=/mcp accessTokenPresent=true
+# 2026-XX-XXT03:20:11.583Z ! WARN  [mcp-runtime-proxy] [auth] access denied | requestId=434926ee-eba7-4770-aca3-6a292410b19c method=POST path=/mcp accessTokenPresent=true code=invalid_access_token durationMs=32 message="The Athenz access token is invalid or expired." status=401
 ```
 
-The AI client can still connect and discover tools. Runtime Proxy rejects tool calls without a token. The API-audience token configured in Claude Code in the previous chapter also fails the proxy's MCP audience check; the next steps issue an MCP-audience token.
-
-Check the proxy log:
-
-```sh
-kubectl logs deploy/mcp -n mcp -c auth-proxy --tail=30
-```
-
-Sample output:
-
-```text
-2026-09-20T07:17:00.597Z ✓ INFO  [mcp-runtime-proxy] [server] server started | expectedAudience=mcp listenAddress=0.0.0.0:8082 requiredScope=mcp:role.mcp-accessor readinessPath=/mcp readinessTimeoutMs=4000 target=http://127.0.0.1:8080/
-2026-09-20T07:17:36.826Z → INFO  [mcp-runtime-proxy] [request] request received | requestId=e6289ff0-1e87-4e67-86ce-b4d0fedfa06b method=POST path=/mcp accessTokenPresent=false
-2026-09-20T07:17:36.827Z ! WARN  [mcp-runtime-proxy] [auth] access denied | requestId=e6289ff0-1e87-4e67-86ce-b4d0fedfa06b method=POST path=/mcp accessTokenPresent=false code=missing_access_token durationMs=1 message="Pass an Athenz access token with aud=mcp and scope=mcp:role.mcp-accessor as Authorization: Bearer <token>." status=401
-```
-
-Look for "access denied" with `code=missing_access_token` and `status=401`. The message tells you to use `aud=mcp` and `scope=mcp:role.mcp-accessor`. The request stops at MCP access validation, before any downstream exchange or API call.
+`invalid_access_token` also covers expired tokens. If Claude Code sends no bearer token, the log instead shows `accessTokenPresent=false` and `code=missing_access_token`, also with `status=401`. In either case, the request stops at MCP access validation, before any downstream exchange or API call.
 
 ![Runtime Proxy returns 401 to the AI agent; the MCP server and API are not called](./assets/core_10_mcp_rejected.svg)
 
@@ -380,7 +371,7 @@ The same document request stops at two different checks as you build the setup:
 
 | Stage | Result | Proxy log |
 |---|---|---|
-| Proxy running; request has no token | `401 missing_access_token` | "access denied" |
+| Proxy running; Claude Code sends the previous chapter's API token | `401 invalid_access_token` | "access denied" |
 | MCP identity configured; learner has an MCP token | `403 downstream_token_exchange_denied` | "access token verified", then "downstream token exchange failed" |
 
 The second failure shows why token exchange is needed: the learner's token is addressed to MCP, while the API requires an API-audience token. The proxy is configured to perform that exchange, but Athenz has not authorized it yet. Both failures occur before the tool call reaches the MCP application or API; discovery remains available.

@@ -13,6 +13,58 @@ const toolScopes = { get_k8s_docs: "api:role.docs-getter" }
 const call = { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "get_k8s_docs", arguments: {} } }
 const quietLogger = { info() {}, warn() {}, error() {} }
 
+test("tutorial: MCP discovery works before exchange is configured, but protected tools cannot reach the API", { timeout: 5000 }, async (t) => {
+  let apiRequests = 0
+  const api = http.createServer((_request, response) => {
+    apiRequests++
+    response.end("must not reach the API")
+  })
+  const apiPort = await listen(api)
+  t.after(() => close(api))
+  const mcp = createDelegatedK8sDocsMcpServer({ upstreamBaseUrl: new URL(`http://127.0.0.1:${apiPort}`) })
+  const mcpPort = await listen(mcp)
+  t.after(() => close(mcp))
+  const exchangeErrors: Array<Record<string, unknown>> = []
+  const proxy = createRuntimeProxyServer(new URL(`http://127.0.0.1:${mcpPort}`), {
+    verify: async (authorization) => {
+      if (!authorization) throw new AccessTokenError(401, "missing_access_token", "Token required")
+      if (authorization !== "Bearer learner.mcp.fixture") throw new AccessTokenError(401, "invalid_access_token", "Wrong audience")
+      return {
+        audiences: ["mcp"], keyId: "fixture", expiresAt: "2099-01-01", expiresInSeconds: 3600,
+        scopes: ["mcp-accessor", "api:role.docs-getter"],
+      }
+    },
+  }, {
+    ...quietLogger,
+    error(event, fields = {}) {
+      if (event === "downstream_token_exchange_failed") exchangeErrors.push(fields)
+    },
+  }, undefined, { publicOpenApi: true, toolScopes })
+  const port = await listen(proxy)
+  t.after(() => close(proxy))
+
+  assert.equal((await fetch(`http://127.0.0.1:${port}/readyz`)).status, 200)
+  const initialized = await post(port, "/mcp", { jsonrpc: "2.0", id: 1, method: "initialize", params: {} }, "learner.api.fixture")
+  assert.equal((await initialized.json() as any).result.serverInfo.name, "idthw-demo-api-mcp")
+  const listed = await post(port, "/mcp", { jsonrpc: "2.0", id: 2, method: "tools/list" }, "learner.api.fixture")
+  assert.equal((await listed.json() as any).result.tools.length, 3)
+  assert.equal((await fetch(`http://127.0.0.1:${port}/openapi.json`)).status, 200)
+  assert.equal((await post(port, "/mcp", call)).status, 401)
+  assert.equal((await post(port, "/mcp", call, "learner.api.fixture")).status, 401)
+
+  for (const [path, body] of [["/mcp", call], ["/tools/get_k8s_docs", {}]] as const) {
+    const response = await post(port, path, body, "learner.mcp.fixture")
+    assert.equal(response.status, 502)
+    assert.deepEqual(await response.json(), {
+      error: "downstream_token_exchange_unavailable",
+      message: "Downstream access-token publication is not enabled for this MCP server.",
+    })
+  }
+  assert.equal(apiRequests, 0)
+  assert.equal(exchangeErrors.length, 2)
+  assert.ok(exchangeErrors.every(({ code, status }) => code === "downstream_token_exchange_unavailable" && status === 502))
+})
+
 test("tutorial: use an API bearer token directly, then require MCP access and exchange through Runtime Proxy", { timeout: 5000 }, async (t) => {
   const directory = await mkdtemp(join(tmpdir(), "idthw-tutorial-test-"))
   t.after(() => rm(directory, { recursive: true, force: true }))
@@ -165,13 +217,12 @@ test("Hub: the downstream scope header exchanges the caller token and MCP uses t
   assert.deepEqual(await readdir(join(directory, "get_k8s_docs")), [])
 })
 
-test("configured tool scopes reject invalid deployment configuration", () => {
+test("configured tool scopes reject malformed scope mappings", () => {
   assert.deepEqual(toolScopesFromEnvironment(JSON.stringify(toolScopes)), toolScopes)
   assert.equal(toolScopesFromEnvironment(undefined), undefined)
   for (const value of ["{}", "[]", "null", '{"get_k8s_docs":"docs-getter"}', '{"../escape":"api:role.docs-getter"}']) {
     assert.throws(() => toolScopesFromEnvironment(value))
   }
-  assert.throws(() => createRuntimeProxyServer(new URL("http://localhost:8080"), { verify: async () => undefined }, quietLogger, undefined, { toolScopes }), /requires/)
 })
 
 function post(port: number, path: string, body: unknown, token?: string, headers = {}) {
