@@ -153,12 +153,16 @@ Check the proxy log for the reason behind Open WebUI's authentication message:
 kubectl logs deploy/mcp -n mcp -c auth-proxy --tail=2
 ```
 
+Example output from the updated proxy for an unexpired API-audience token:
+
 ```sh
 # 2026-XX-XXT03:20:11.552Z → INFO  [mcp-runtime-proxy] [request] request received | requestId=434926ee-eba7-4770-aca3-6a292410b19c method=POST path=/tools/get_k8s_docs accessTokenPresent=true
-# 2026-XX-XXT03:20:11.583Z ! WARN  [mcp-runtime-proxy] [auth] access denied | requestId=434926ee-eba7-4770-aca3-6a292410b19c method=POST path=/tools/get_k8s_docs accessTokenPresent=true code=invalid_access_token durationMs=32 message="The Athenz access token is invalid or expired." status=401
+# 2026-XX-XXT03:20:11.583Z ! WARN  [mcp-runtime-proxy] [auth] access denied | requestId=434926ee-eba7-4770-aca3-6a292410b19c method=POST path=/tools/get_k8s_docs accessTokenPresent=true code=invalid_access_token durationMs=31 message="The Athenz access token is invalid or expired." status=401 expectedAudience=mcp requiredScope=mcp:role.mcp-accessor keyId=athenz-zts-server-example signatureVerified=true expiresAt=2026-XX-XXT04:20:11.000Z expiresInSeconds=3600 audiences=["api"] reason=audience_mismatch
 ```
 
-`invalid_access_token` also covers expired tokens. If Open WebUI sends no bearer token, the log instead shows `accessTokenPresent=false` and `code=missing_access_token`, also with `status=401`. In either case, the request stops at MCP access validation, before any downstream exchange or API call.
+`reason=audience_mismatch`, `expectedAudience=mcp`, and `audiences=["api"]` identify the failed check. `signatureVerified=true` and the positive `expiresInSeconds` show that the signature and expiration checks passed.
+
+`invalid_access_token` is the client-facing error code. An expired token instead logs `reason=token_expired`, its `expiresAt`, and a nonpositive `expiresInSeconds`; expiration is checked before audience. If Open WebUI sends no bearer token, the log shows `accessTokenPresent=false`, `code=missing_access_token`, and `reason=missing_authorization`, also with `status=401`. These failures stop the request at MCP access validation, before any downstream exchange or API call.
 
 ![Runtime Proxy returns 401 to the AI agent; the MCP server and API are not called](../assets/core_10_mcp_rejected.svg)
 

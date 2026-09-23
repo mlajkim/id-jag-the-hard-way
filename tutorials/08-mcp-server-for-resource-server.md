@@ -65,7 +65,7 @@ Keep `./tools/keep-k8s-port-forward.sh` running in another terminal so you can r
 
 ## Discover the Tools
 
-Initialize the stateless MCP connection:
+Check the stateless MCP server's initialization response:
 
 ```sh
 _mcp_port=$(./tools/port.sh mcp)
@@ -81,15 +81,6 @@ curl -sS "http://localhost:${_mcp_port}/mcp" \
 #   "title": "IDTHW Demo API MCP",
 #   "version": "0.1.0"
 # }
-```
-
-Notify the server that initialization is complete:
-
-```sh
-_mcp_port=$(./tools/port.sh mcp)
-curl -sS "http://localhost:${_mcp_port}/mcp" \
-  -H 'Content-Type: application/json' \
-  -d '{"jsonrpc":"2.0","method":"notifications/initialized"}'
 ```
 
 List the document tools:

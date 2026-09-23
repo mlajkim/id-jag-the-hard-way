@@ -6,7 +6,19 @@ The proxy verifies the JWT's RS256 signature against ZTS JWKS, requires an unexp
 
 MCP protocol bootstrap, `ping`, and `tools/list` remain public so the Hub can discover tools before a user has access. Other requests fail closed with `401` for a missing or invalid token, `403` for a missing scope, and `503` when ZTS signing keys cannot be loaded. Denials are logged without logging the token.
 
-Missing-token responses name the configured audience and full required scope. Access-denial logs include the same diagnostic message.
+Missing-token responses name the configured audience and full required scope. Access-token validation denials log the client-facing message plus a specific `reason`, `expectedAudience`, and `requiredScope`. The response body and `WWW-Authenticate` challenge retain their existing error codes; use the proxy log to identify the failed check.
+
+| Log reason | Diagnostic fields |
+|---|---|
+| `audience_mismatch` | `expectedAudience` and the signed token's `audiences` |
+| `token_expired` | `expiresAt` and `expiresInSeconds` (zero or negative) |
+| `token_not_yet_valid` | `notBefore` and `validInSeconds` |
+| `missing_required_scope` | `requiredScope` and the signed token's `scopes` |
+| `invalid_signature` | `keyId` and `signatureVerified=false`, after retrying with refreshed signing keys |
+| `unknown_signing_key` | The requested `keyId` was not found after refreshing JWKS |
+| `missing_authorization` | No Authorization header was supplied |
+
+Malformed headers, oversized tokens, unsupported algorithms, invalid token types, missing key IDs, malformed JWTs, and invalid claim formats also have distinct reasons. The log reports the first failed check: signature, expiration, not-before, audience, then scope. Claim values are included only after signature verification; `keyId` identifies the key lookup and is not itself proof of verification. Tokens and Authorization headers are never included.
 
 Runtime logs default to one-line text with a timestamp, severity, event category, and request ID. Each line has one small marker: `→` for incoming requests, `✓` for successful steps, `·` for other information, `!` for warnings, and `×` for errors. Terminal output colors only the severity marker and label; redirected output stays free of color codes. Set `NO_COLOR=1` to disable terminal colors or `LOG_FORMAT=json` to retain the original structured JSON format.
 
@@ -15,7 +27,7 @@ Protected calls emit `request_received`, `access_token_verified`, and `request_c
 ```text
 2026-09-17T09:00:00.000Z → INFO  [mcp-runtime-proxy] [request] request received | requestId=demo-request method=POST path=/mcp accessTokenPresent=true
 2026-09-17T09:00:00.012Z ✓ INFO  [mcp-runtime-proxy] [request] request completed | requestId=demo-request method=POST path=/mcp durationMs=12 upstreamStatus=200
-2026-09-17T09:00:01.002Z ! WARN  [mcp-runtime-proxy] [auth] access denied | requestId=demo-denied method=POST path=/mcp code=insufficient_scope status=403
+2026-09-17T09:00:01.002Z ! WARN  [mcp-runtime-proxy] [auth] access denied | requestId=demo-denied method=POST path=/mcp accessTokenPresent=true code=insufficient_scope durationMs=2 message="The Athenz access token must grant mcp:role.mcp-accessor." status=403 expectedAudience=mcp requiredScope=mcp:role.mcp-accessor keyId=zts-example signatureVerified=true expiresAt=2026-09-17T10:00:01.000Z expiresInSeconds=3600 audiences=["mcp"] scopes=["reader"] reason=missing_required_scope
 ```
 
 ## Request path

@@ -24,18 +24,35 @@ export type AthenzAccessTokenVerifier = {
   verify(authorization: string | undefined): Promise<VerifiedAthenzAccessToken | void>
 }
 
+export type AccessTokenDiagnostics = {
+  reason: string
+  expectedAudience?: string
+  requiredScope?: string
+  keyId?: string
+  signatureVerified?: boolean
+  audiences?: string[]
+  scopes?: string[]
+  expiresAt?: string
+  expiresInSeconds?: number
+  notBefore?: string
+  validInSeconds?: number
+}
+
 export class AccessTokenError extends Error {
   readonly status: 401 | 403
   readonly code: "missing_access_token" | "invalid_access_token" | "insufficient_scope"
+  readonly diagnostics?: AccessTokenDiagnostics
 
   constructor(
     status: 401 | 403,
     code: "missing_access_token" | "invalid_access_token" | "insufficient_scope",
     message: string,
+    diagnostics?: AccessTokenDiagnostics,
   ) {
     super(message)
     this.status = status
     this.code = code
+    this.diagnostics = diagnostics
   }
 }
 
@@ -61,51 +78,71 @@ export function createAthenzAccessTokenVerifier({
 
   return {
     async verify(authorization) {
-      const token = bearerToken(authorization, expectedAudience, requiredScope)
-      const parsed = parseJwt(token)
-      let signingKey = await resolveSigningKey(parsed.header.kid)
-      let signatureValid = verifySignature(parsed, signingKey)
-      if (!signatureValid) {
-        signingKey = await resolveSigningKey(parsed.header.kid, true)
-        signatureValid = verifySignature(parsed, signingKey)
-      }
-      if (!signatureValid) throw invalidToken()
+      const diagnostics: Omit<AccessTokenDiagnostics, "reason"> = { expectedAudience, requiredScope }
+      try {
+        const token = bearerToken(authorization, expectedAudience, requiredScope)
+        const parsed = parseJwt(token)
+        diagnostics.keyId = parsed.header.kid
+        diagnostics.signatureVerified = false
+        let signingKey = await resolveSigningKey(parsed.header.kid)
+        let signatureValid = verifySignature(parsed, signingKey)
+        if (!signatureValid) {
+          signingKey = await resolveSigningKey(parsed.header.kid, true)
+          signatureValid = verifySignature(parsed, signingKey)
+        }
+        if (!signatureValid) throw invalidToken("invalid_signature")
+        diagnostics.signatureVerified = true
 
-      const currentTime = Math.floor(now() / 1000)
-      if (!Number.isFinite(parsed.claims.exp) || typeof parsed.claims.exp !== "number" || parsed.claims.exp <= currentTime) {
-        throw invalidToken()
-      }
-      if (parsed.claims.nbf !== undefined && (
-        typeof parsed.claims.nbf !== "number"
-        || !Number.isFinite(parsed.claims.nbf)
-        || parsed.claims.nbf > currentTime
-      )) {
-        throw invalidToken()
-      }
+        // Only include claim values in denial logs after verifying the signature.
+        const currentTime = Math.floor(now() / 1000)
+        if (!validNumericDate(parsed.claims.exp)) throw invalidToken("invalid_expiration")
+        diagnostics.expiresAt = new Date(parsed.claims.exp * 1000).toISOString()
+        diagnostics.expiresInSeconds = parsed.claims.exp - currentTime
+        if (parsed.claims.exp <= currentTime) throw invalidToken("token_expired")
 
-      const audiences = tokenAudiences(parsed.claims.aud)
-      if (!audiences.includes(expectedAudience)) throw invalidToken()
+        if (parsed.claims.nbf !== undefined) {
+          if (!validNumericDate(parsed.claims.nbf)) throw invalidToken("invalid_not_before")
+          diagnostics.notBefore = new Date(parsed.claims.nbf * 1000).toISOString()
+          diagnostics.validInSeconds = parsed.claims.nbf - currentTime
+          if (parsed.claims.nbf > currentTime) throw invalidToken("token_not_yet_valid")
+        }
 
-      const scopes = tokenScopes(parsed.claims)
-      const hasRequiredScope = scopes.has(requiredScope)
-        || (audiences.length === 1 && scopes.has(shortScope))
-      if (!hasRequiredScope) {
-        throw new AccessTokenError(
-          403,
-          "insufficient_scope",
-          `The Athenz access token must grant ${requiredScope}.`,
-        )
-      }
+        const audiences = tokenAudiences(parsed.claims.aud)
+        diagnostics.audiences = [...audiences].sort()
+        if (!audiences.includes(expectedAudience)) throw invalidToken("audience_mismatch")
 
-      return {
-        audiences: [...audiences].sort(),
-        clientId: stringClaim(parsed.claims.client_id),
-        expiresAt: new Date(parsed.claims.exp * 1000).toISOString(),
-        expiresInSeconds: parsed.claims.exp - currentTime,
-        keyId: parsed.header.kid,
-        scopes: [...scopes].sort(),
-        subject: stringClaim(parsed.claims.sub),
-        userId: stringClaim(parsed.claims.uid),
+        const scopes = tokenScopes(parsed.claims)
+        diagnostics.scopes = [...scopes].sort()
+        const hasRequiredScope = scopes.has(requiredScope)
+          || (audiences.length === 1 && scopes.has(shortScope))
+        if (!hasRequiredScope) {
+          throw new AccessTokenError(
+            403,
+            "insufficient_scope",
+            `The Athenz access token must grant ${requiredScope}.`,
+            { reason: "missing_required_scope" },
+          )
+        }
+
+        return {
+          audiences: diagnostics.audiences,
+          clientId: stringClaim(parsed.claims.client_id),
+          expiresAt: diagnostics.expiresAt,
+          expiresInSeconds: diagnostics.expiresInSeconds,
+          keyId: parsed.header.kid,
+          scopes: diagnostics.scopes,
+          subject: stringClaim(parsed.claims.sub),
+          userId: stringClaim(parsed.claims.uid),
+        }
+      } catch (error) {
+        if (error instanceof AccessTokenError) {
+          throw new AccessTokenError(error.status, error.code, error.message, {
+            ...diagnostics,
+            reason: error.code,
+            ...error.diagnostics,
+          })
+        }
+        throw error
       }
     },
   }
@@ -156,7 +193,7 @@ export function createRemoteJwksKeyResolver({
       keys = await load(true)
       key = keys.get(kid)
     }
-    if (!key) throw invalidToken()
+    if (!key) throw invalidToken("unknown_signing_key")
     return key
   }
 }
@@ -167,10 +204,12 @@ function bearerToken(authorization: string | undefined, expectedAudience: string
       401,
       "missing_access_token",
       `Pass an Athenz access token with aud=${expectedAudience} and scope=${requiredScope} as Authorization: Bearer <token>.`,
+      { reason: "missing_authorization" },
     )
   }
   const match = /^Bearer ([A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)$/i.exec(authorization)
-  if (!match || Buffer.byteLength(match[1]) > MAX_TOKEN_BYTES) throw invalidToken()
+  if (!match) throw invalidToken("malformed_authorization")
+  if (Buffer.byteLength(match[1]) > MAX_TOKEN_BYTES) throw invalidToken("token_too_large")
   return match[1]
 }
 
@@ -178,17 +217,17 @@ function parseJwt(token: string) {
   const [encodedHeader, encodedClaims, encodedSignature] = token.split(".")
   const header = decodeRecord(encodedHeader)
   const claims = decodeRecord(encodedClaims)
-  if (header.alg !== "RS256" || header.typ !== "at+jwt" || typeof header.kid !== "string" || !header.kid) {
-    throw invalidToken()
-  }
+  if (header.alg !== "RS256") throw invalidToken("unsupported_algorithm")
+  if (header.typ !== "at+jwt") throw invalidToken("invalid_token_type")
+  if (typeof header.kid !== "string" || !header.kid) throw invalidToken("missing_key_id")
 
   let signature: Buffer
   try {
     signature = Buffer.from(encodedSignature, "base64url")
   } catch {
-    throw invalidToken()
+    throw invalidToken("malformed_jwt")
   }
-  if (signature.length === 0) throw invalidToken()
+  if (signature.length === 0) throw invalidToken("malformed_jwt")
 
   return {
     claims,
@@ -216,7 +255,7 @@ function decodeRecord(value: string) {
   } catch {
     // Return the stable token error below.
   }
-  throw invalidToken()
+  throw invalidToken("malformed_jwt")
 }
 
 function tokenAudiences(value: unknown) {
@@ -226,7 +265,7 @@ function tokenAudiences(value: unknown) {
       ? value
       : []
   const normalized = [...new Set(audiences.map((audience) => audience.trim()).filter(Boolean))]
-  if (normalized.length === 0) throw invalidToken()
+  if (normalized.length === 0) throw invalidToken("invalid_audience")
   return normalized
 }
 
@@ -242,7 +281,7 @@ function tokenScopes(claims: JwtRecord) {
       for (const scope of value) if (scope) scopes.add(scope)
       continue
     }
-    throw invalidToken()
+    throw invalidToken("invalid_scope")
   }
   return scopes
 }
@@ -325,12 +364,18 @@ function requestJson(endpoint: URL, ca: Buffer | undefined, timeoutMs: number) {
   })
 }
 
-function invalidToken() {
+function invalidToken(reason: string) {
   return new AccessTokenError(
     401,
     "invalid_access_token",
     "The Athenz access token is invalid or expired.",
+    { reason },
   )
+}
+
+function validNumericDate(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value)
+    && Number.isFinite(new Date(value * 1000).getTime())
 }
 
 function validAthenzName(value: string) {
