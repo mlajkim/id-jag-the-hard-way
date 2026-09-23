@@ -150,16 +150,12 @@ Codex can still connect and discover tools, but Runtime Proxy rejects this tool 
 Check the proxy log for the reason behind Codex's authentication message:
 
 ```sh
-kubectl logs deploy/mcp -n mcp -c auth-proxy --tail=30
+kubectl logs deploy/mcp -n mcp -c auth-proxy --tail=2
 ```
 
-When Codex sends the previous chapter's API token, look for an "access denied" entry with these fields:
-
-```text
-accessTokenPresent=true
-code=invalid_access_token
-message="The Athenz access token is invalid or expired."
-status=401
+```sh
+# 2026-XX-XXT03:20:11.552Z → INFO  [mcp-runtime-proxy] [request] request received | requestId=434926ee-eba7-4770-aca3-6a292410b19c method=POST path=/mcp accessTokenPresent=true
+# 2026-XX-XXT03:20:11.583Z ! WARN  [mcp-runtime-proxy] [auth] access denied | requestId=434926ee-eba7-4770-aca3-6a292410b19c method=POST path=/mcp accessTokenPresent=true code=invalid_access_token durationMs=32 message="The Athenz access token is invalid or expired." status=401
 ```
 
 `invalid_access_token` also covers expired tokens. If Codex sends no bearer token, the log instead shows `accessTokenPresent=false` and `code=missing_access_token`, also with `status=401`. In either case, the request stops at MCP access validation, before any downstream exchange or API call.
