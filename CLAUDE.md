@@ -145,6 +145,23 @@ The provider Dockerfiles are export-only — they copy their built JARs into a m
 
 The `tutorials/` directory contains the canonical learning path (01–15, with alternative AI client paths). They are Markdown files intended to be read in order. The `tutorials/challenges/` subdirectory contains challenge exercises. Always keep tutorial content consistent with the code behavior when making changes.
 
+### English Source and Translations
+
+- English is the source of truth for the README and tutorials. Make changes to the content, procedures, and technical behavior in the English pages first, then update translations from the revised English source
+- Do not introduce independent technical changes in a translation. If a translation reveals an error or missing explanation, fix the English source first and reflect that change in the translated pages
+- Preserve commands, configuration values, identifiers, and example output when translating. Translate the surrounding explanations and link labels, and adjust relative links and navigation for the translated directory
+- The Korean tutorial under `tutorials/korean/` covers the Codex path: translate chapters 01–08 from the shared English pages and chapters 09–15 from `tutorials/codex/`. Translate `tutorials/korean/00-README.md` from the root English README
+- Introduce the Korean tutorial's Codex scope in chapter 09, where readers choose an AI client, and link to the English Claude Code and Open WebUI paths there. Keep language links in the root README and Korean introduction independent of client choice
+- Use the root README for language selection and previous/current/next links for chapter navigation. Do not add repeated language or source-link rows such as `English · 한국어 소개` to translated pages
+
+### Korean Writing Style and Terminology
+
+- Use clear Korean engineering prose, with [NAVER D2](https://d2.naver.com/), [우아한형제들 기술블로그](https://techblog.woowahan.com/), [Coupang Engineering](https://medium.com/coupang-engineering), and [Kakao Developers](https://developers.kakao.com/docs/ko/kakaologin/common) as writing references. Prefer practical explanations over literal English sentence structure or marketing language
+- Explain a step's purpose before its command, then describe the expected result and the reason for an intentional failure. Use short sentences and direct verbs such as `설정합니다`, `요청합니다`, and `확인합니다`
+- The English source is also the source of truth for technical terms. In chapter titles and at first use, write the Korean term followed by its canonical English name in parentheses, for example `인가 서버 (Authorization Server)`, `리소스 서버 (Resource Server)`, `인가 프록시 (Authorization Proxy)`, `액세스 토큰 (Access Token)`, and `ID 제공자 (Identity Provider, IdP)`
+- After introducing a term, use the Korean form or the established English abbreviation consistently. Keep authentication (`인증`) distinct from authorization (`인가`); explain `audience` as the token's intended recipient and `principal` as the authenticated identity
+- Preserve English UI labels, protocol names, claim names, error messages, and identifiers exactly. Improve Korean phrasing without changing the procedure or technical meaning, and keep commands and example output identical to the English source
+
 ## Architecture Diagrams
 
 - Use editable, self-contained SVGs for architecture and flow diagrams.

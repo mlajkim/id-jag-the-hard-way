@@ -8,6 +8,8 @@ The tutorial uses Identity Assertion JWT Authorization Grant (ID-JAG), an [IETF 
 
 [![Start Tutorial](./assets/start-tutorial-glow.svg)](./tutorials/01-working-directory.md)
 
+[![한국어](./assets/start-tutorial-korean.svg)](./tutorials/korean/00-README.md) ![日本語 — Upcoming](./assets/start-tutorial-japanese.svg) ![中文 — Upcoming](./assets/start-tutorial-chinese.svg)
+
 ## What You Will Build
 
 By the end of this tutorial, you will be able to sign in through Keycloak and ask an AI agent to retrieve documents from an API running in your local Kubernetes cluster:
@@ -120,3 +122,5 @@ Have a question or a problem? [Open an issue](https://github.com/mlajkim/id-jag-
 Start with the working directory setup:
 
 [![Start Tutorial](./assets/start-tutorial-glow.svg)](./tutorials/01-working-directory.md)
+
+[![한국어](./assets/start-tutorial-korean.svg)](./tutorials/korean/00-README.md) ![日本語 — Upcoming](./assets/start-tutorial-japanese.svg) ![中文 — Upcoming](./assets/start-tutorial-chinese.svg)
