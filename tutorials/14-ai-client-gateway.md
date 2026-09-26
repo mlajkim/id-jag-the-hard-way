@@ -44,19 +44,22 @@ kubectl create deploy claude-idjag-learner-ai-client-gateway -n human \
 # deployment.apps/claude-idjag-learner-ai-client-gateway created
 ```
 
-Check the logs — you will see an error about missing certificates (this is expected and you will fix it shortly):
+Check the logs from the `ai-client-gateway` container:
 
 ```sh
-kubectl logs deploy/claude-idjag-learner-ai-client-gateway -n human
+kubectl logs deploy/claude-idjag-learner-ai-client-gateway -n human -c ai-client-gateway
 ```
 
 ```sh
 # ...
-# Error: ENOENT: no such file or directory, open '...certs/ai-client-gateway.crt'
+# Error: ENOENT: no such file or directory, open '/app/certs/ai-client-gateway.crt'
 # ...
 ```
 
 This is expected. The gateway needs an X.509 certificate to identify itself to Athenz ZTS, and we have not provided one yet. The next two sections take care of that.
+
+> [!NOTE]
+> If the result is `ContainerCreating`, the current container instance has not started yet. Wait briefly and retry, or add `--previous` to the command above if an earlier instance has already terminated.
 
 ## Generate the Required Certificates
 
@@ -125,10 +128,20 @@ EOF
 # deployment.apps/claude-idjag-learner-ai-client-gateway patched
 ```
 
-Verify the gateway started without errors:
+Wait for the new pod with the certificate mount to become available:
 
 ```sh
-kubectl logs deploy/claude-idjag-learner-ai-client-gateway -n human
+kubectl rollout status deployment/claude-idjag-learner-ai-client-gateway -n human --timeout=180s
+```
+
+```sh
+# deployment "claude-idjag-learner-ai-client-gateway" successfully rolled out
+```
+
+Check the current container's logs to verify the gateway started successfully:
+
+```sh
+kubectl logs deploy/claude-idjag-learner-ai-client-gateway -n human -c ai-client-gateway
 ```
 
 ```sh
@@ -162,47 +175,16 @@ Create the Kubernetes Secret from the Keycloak client credentials:
 #   ✔  Secret created: human/human-idjag-learner-claude-keycloak
 ```
 
-<a id="set-env-vars-for-the-gateway"></a>
-
-## Configure the Gateway
-
-Configure the gateway's upstream address, ZTS endpoint, and Keycloak client settings:
-
-<details>
-<summary>What each variable does</summary>
-
-- `UPSTREAM_BASE_URL` — the in-cluster MCP server the gateway proxies requests to.
-- `ZTS_URL` — the Athenz ZTS endpoint used to exchange ID-JAG tokens for scoped access tokens.
-- `ATHENZ_ACCESS_TOKEN_AUDIENCE` — `mcp`, the recipient of the gateway's access token. The token can carry both MCP and API scopes; the ID-JAG audience remains the ZTS URL.
-- `KEYCLOAK_URL` / `KEYCLOAK_REALM` — in-cluster Keycloak address used for server-side authorization-code exchange during the OAuth callback.
-- `KEYCLOAK_CLIENT_ID` / `KEYCLOAK_CLIENT_SECRET` — pulled from the Kubernetes Secret you just created; used to authenticate this gateway as a registered OAuth2 client.
-- `PUBLIC_BASE_URL` — the port-forwarded gateway address the browser is redirected back to after login.
-- `KEYCLOAK_PUBLIC_URL` — the port-forwarded Keycloak address used in the browser-facing login redirect URL.
-
-</details>
+Configure `KEYCLOAK_CLIENT_ID` and `KEYCLOAK_CLIENT_SECRET` so the gateway can authenticate to Keycloak as the registered OAuth2 client. Reference the `client-id` and `client-secret` keys in the `human-idjag-learner-claude-keycloak` Secret just created:
 
 ```sh
-_gateway_port=$(./tools/port.sh ai-client-gateway)
-_keycloak_port=$(./tools/port.sh keycloak)
-
-kubectl patch deploy claude-idjag-learner-ai-client-gateway -n human --patch "$(cat <<EOF
+kubectl patch deploy claude-idjag-learner-ai-client-gateway -n human --type=strategic --patch "$(cat <<'EOF'
 spec:
   template:
     spec:
       containers:
         - name: ai-client-gateway
-          imagePullPolicy: Always
           env:
-            - name: UPSTREAM_BASE_URL
-              value: "http://mcp.mcp:8081"
-            - name: ATHENZ_ACCESS_TOKEN_AUDIENCE
-              value: "mcp"
-            - name: ZTS_URL
-              value: "https://athenz-zts-server.athenz:4443/zts/v1"
-            - name: KEYCLOAK_URL
-              value: "http://keycloak.idp:8080"
-            - name: KEYCLOAK_REALM
-              value: "master"
             - name: KEYCLOAK_CLIENT_ID
               valueFrom:
                 secretKeyRef:
@@ -213,10 +195,6 @@ spec:
                 secretKeyRef:
                   name: human-idjag-learner-claude-keycloak
                   key: client-secret
-            - name: PUBLIC_BASE_URL
-              value: "http://localhost:${_gateway_port}"
-            - name: KEYCLOAK_PUBLIC_URL
-              value: "http://localhost:${_keycloak_port}"
 EOF
 )"
 ```
@@ -225,15 +203,101 @@ EOF
 # deployment.apps/claude-idjag-learner-ai-client-gateway patched
 ```
 
-> [!NOTE]
-> `KEYCLOAK_URL` uses the in-cluster address `keycloak.idp:8080` because the server-side token exchange happens inside the cluster during the OAuth callback. `KEYCLOAK_PUBLIC_URL` uses the port-forwarded address because the browser's login redirect must be reachable from your local machine.
+<a id="set-env-vars-for-the-gateway"></a>
 
-Expose the deployment as a service and confirm the logs look healthy:
+## Configure the Gateway
+
+Configure the gateway one connection at a time. Each command updates only the named variables, so settings from earlier steps remain in place.
+
+### 1. Set the MCP Server Address
+
+First, tell the gateway where to forward MCP requests. Set `UPSTREAM_BASE_URL` to the in-cluster address of the MCP Service deployed earlier:
+
+```sh
+kubectl set env deployment/claude-idjag-learner-ai-client-gateway -n human \
+  --containers=ai-client-gateway \
+  UPSTREAM_BASE_URL=http://mcp.mcp:8081
+```
+
+```sh
+# deployment.apps/claude-idjag-learner-ai-client-gateway env updated
+```
+
+### 2. Configure Token Issuance through Athenz
+
+Next, configure where the gateway obtains access tokens for MCP requests. `ZTS_URL` is the Athenz ZTS endpoint for the ID token → ID-JAG → access token exchanges. `ATHENZ_ACCESS_TOKEN_AUDIENCE=mcp` specifies the recipient of the resulting access token. The ID-JAG audience remains the ZTS URL:
+
+```sh
+kubectl set env deployment/claude-idjag-learner-ai-client-gateway -n human \
+  --containers=ai-client-gateway \
+  ZTS_URL=https://athenz-zts-server.athenz:4443/zts/v1 \
+  ATHENZ_ACCESS_TOKEN_AUDIENCE=mcp
+```
+
+```sh
+# deployment.apps/claude-idjag-learner-ai-client-gateway env updated
+```
+
+### 3. Connect to the Keycloak Login Server
+
+After the user signs in, the gateway exchanges the authorization code from Keycloak for tokens. Set `KEYCLOAK_URL` to the in-cluster address for that server-to-server request, and `KEYCLOAK_REALM` to the realm where the client was registered:
+
+```sh
+kubectl set env deployment/claude-idjag-learner-ai-client-gateway -n human \
+  --containers=ai-client-gateway \
+  KEYCLOAK_URL=http://keycloak.idp:8080 \
+  KEYCLOAK_REALM=master
+```
+
+```sh
+# deployment.apps/claude-idjag-learner-ai-client-gateway env updated
+```
+
+### 4. Set the Browser-Facing Addresses
+
+Set the port-forwarded addresses the browser can reach. `KEYCLOAK_PUBLIC_URL` points to the Keycloak login page. `PUBLIC_BASE_URL` is the gateway address used for the `/oauth/callback` after login; the AI client also connects through this address:
+
+```sh
+_gateway_port=$(./tools/port.sh ai-client-gateway)
+_keycloak_port=$(./tools/port.sh keycloak)
+
+kubectl set env deployment/claude-idjag-learner-ai-client-gateway -n human \
+  --containers=ai-client-gateway \
+  PUBLIC_BASE_URL="http://localhost:${_gateway_port}" \
+  KEYCLOAK_PUBLIC_URL="http://localhost:${_keycloak_port}"
+```
+
+```sh
+# deployment.apps/claude-idjag-learner-ai-client-gateway env updated
+```
+
+### 5. Expose and Verify the Gateway
+
+Expose the deployment as a Service:
 
 ```sh
 kubectl delete -n human svc ai-client-gateway --ignore-not-found=true
 kubectl expose deploy claude-idjag-learner-ai-client-gateway -n human --port 3101 --name ai-client-gateway
-kubectl logs deploy/claude-idjag-learner-ai-client-gateway -n human --tail=5
+```
+
+```sh
+# service/ai-client-gateway exposed
+```
+
+Wait for the rollout to apply the gateway configuration:
+
+```sh
+kubectl rollout status deployment/claude-idjag-learner-ai-client-gateway -n human --timeout=180s
+```
+
+```sh
+# deployment "claude-idjag-learner-ai-client-gateway" successfully rolled out
+```
+
+Check the current container's startup logs:
+
+```sh
+kubectl logs deploy/claude-idjag-learner-ai-client-gateway -n human -c ai-client-gateway --tail=5
 ```
 
 ```sh
@@ -266,7 +330,7 @@ Then you will see the following after successful logout:
 
 ## Verify
 
-Point Claude Code at the gateway by writing an `.mcp.json` configuration file:
+Point Claude Code at the gateway by writing an `.mcp.json` configuration file. The gateway now handles the entire ID-JAG flow, so you no longer need to obtain an access token in advance and manually add it to the `Authorization` header:
 
 ```sh
 _gateway_port=$(./tools/port.sh ai-client-gateway)
@@ -319,9 +383,34 @@ After signing in, you will see the authentication succeed but the MCP connection
 
 ![15_got_new_credential_but_reconnection_failed](./assets/15_got_new_credential_but_reconnection_failed.png)
 
-The sign-in succeeded, but Athenz rejected the delegation request. The gateway service, `human.idjag-learner.claude`, needs `zts.jag_exchange` permission for the requested MCP and API roles. The learner's own role memberships do not grant that permission to the gateway.
+The sign-in succeeded, but Athenz rejected the delegation request. The gateway service, `human.idjag-learner.claude`, needs `zts.jag_exchange` permission for the requested MCP role. The learner's own role memberships do not grant that permission to the gateway.
 
 ![IdP sign-in succeeds, but the IdP AS denies the gateway's ID-JAG request](./assets/core_14_idjag_denied.svg)
+
+In another terminal, inspect the last 8 lines of the AI Client Gateway log to see where the exchange failed:
+
+```sh
+kubectl logs deploy/claude-idjag-learner-ai-client-gateway -n human -c ai-client-gateway --tail=8
+```
+
+Example output:
+
+```sh
+# [Athenz ID-JAG] 🔑 Resolved ID token from bearer session (Claude Code path)
+# [Athenz ID-JAG] 🔄 Attempting to exchange new ID-JAG with id-token for scope [mcp:role.mcp-accessor] ...
+# [Athenz ID-JAG] 🎯 Target ZTS for ID-JAG: https://athenz-zts-server.athenz:4443/zts/v1/oauth2/token
+# [2026-09-26T10:45:04.305Z] Proxy request failed: Error: Athenz ZTS Error: HTTP 403 - {"code":403,"message":"Principal not authorized for token exchange for the requested role"}
+#     at IncomingMessage.<anonymous> (file:///app/src/utils/idtokenIntoIdjag.js:63:18)
+#     at IncomingMessage.emit (node:events:531:35)
+#     at endReadableNT (node:internal/streams/readable:1698:12)
+#     at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+```
+
+The log shows how far the request progressed:
+
+- `Resolved ID token from bearer session`: the gateway found the signed-in user's ID token in its session
+- `scope [mcp:role.mcp-accessor]`: the gateway requested an ID-JAG for the MCP role from the ZTS `/oauth2/token` endpoint
+- `HTTP 403` and `Principal not authorized for token exchange for the requested role`: ZTS denied the gateway's exchange request. In addition to the user's role membership, `human.idjag-learner.claude` needs `zts.jag_exchange` permission for that role
 
 <a id="whats-next"></a>
 

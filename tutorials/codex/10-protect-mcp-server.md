@@ -138,7 +138,19 @@ Restart `./tools/keep-k8s-port-forward.sh` after this change so the local connec
 
 ## Verify MCP Access Is Rejected
 
-With the proxy in place, ask Codex to retrieve documents again using the same configuration as in the previous chapter:
+Exit the current Codex session before checking the new connection:
+
+```sh
+/quit
+```
+
+From the project directory, restart Codex and resume the conversation so it reconnects through the proxy:
+
+```sh
+codex resume --last
+```
+
+Using the same configuration as in the previous chapter, ask Codex to retrieve documents again:
 
 ```sh
 Get docs with id-jag-the-hard-way-mcp
@@ -254,7 +266,7 @@ cat .codex/settings.toml >> .codex/config.toml
 
 Exit the current Codex session:
 
-```text
+```sh
 /quit
 ```
 

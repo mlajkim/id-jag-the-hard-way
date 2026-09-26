@@ -320,8 +320,8 @@ EOF
 
 Reload the configuration with `/reload-plugins` (or restart Claude Code), then ask:
 
-```text
-get docs from k8s doc server!
+```sh
+Get docs with id-jag-the-hard-way-mcp
 ```
 
 The client now retrieves documents through the protected MCP service. For other clients, use the [Codex instructions](./codex/11-token-exchange.md#update-the-client) or [Open WebUI instructions](./open_webui/11-token-exchange.md#update-the-client).

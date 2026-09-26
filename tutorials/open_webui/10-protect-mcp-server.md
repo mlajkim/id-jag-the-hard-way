@@ -140,7 +140,7 @@ Restart `./tools/keep-k8s-port-forward.sh` after this change so the local connec
 With the proxy in place, ask Open WebUI to retrieve documents again using the same configuration as in the previous chapter. Start a new chat with the document tool enabled and ask:
 
 ```sh
-Get docs with the API MCP Server
+Get docs with id-jag-the-hard-way-mcp
 ```
 
 The tool call should be rejected with `401 invalid_access_token`.

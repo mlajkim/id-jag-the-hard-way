@@ -11,8 +11,8 @@ Authorize the AI Client Gateway to exchange your Keycloak ID token for an ID-JAG
 - [Grant Permissions to `human.idjag-learner.claude`](#grant-permissions-to-humanidjag-learnerclaude)
 - [Verify](#verify)
 - [Understand the Result](#understand-the-result)
-- [Full Architecture](#full-architecture)
 - [Finally](#finally)
+- [Closing](#closing)
 
 <!-- /TOC -->
 
@@ -28,10 +28,10 @@ Create one JAG-exchange role in each target domain: `api` for document access an
 ```
 
 ```sh
-  # ·  Creating Role: api:role.docs-getter-jag-exchanger...
-  # ✔  Role created: api:role.docs-getter-jag-exchanger
-  # ·  Creating Role: mcp:role.mcp-accessor-jag-exchanger...
-  # ✔  Role created: mcp:role.mcp-accessor-jag-exchanger
+#   ·  Creating Role: api:role.docs-getter-jag-exchanger...
+#   ✔  Role created: api:role.docs-getter-jag-exchanger
+#   ·  Creating Role: mcp:role.mcp-accessor-jag-exchanger...
+#   ✔  Role created: mcp:role.mcp-accessor-jag-exchanger
 ```
 
 In Athenz, the `zts.jag_exchange` action controls whether a principal can exchange an ID token for an ID-JAG token scoped to a given role. Grant it for `api:role.docs-getter` and `mcp:role.mcp-accessor`:
@@ -66,22 +66,30 @@ Now add `human.idjag-learner.claude` as a member of both roles:
 
 Reload the MCP configuration in Claude Code:
 
-```text
+```sh
 /reload-plugins
 ```
 
 Open the MCP connection menu:
 
-```text
+```sh
 /mcp
 ```
 
 Select **1. Re-Authenticate** to reconnect. This time, with the token exchange permission in place, you will see the connection succeed.
 
+The connection should expose these three tools:
+
+```sh
+# get_k8s_docs
+# post_k8s_doc
+# delete_k8s_doc
+```
+
 Then send the same prompt that failed in the previous tutorial:
 
-```
-get docs from k8s doc server!
+```sh
+Get docs with id-jag-the-hard-way-mcp
 ```
 
 ![16_successful_retrieval_from_server](./assets/16_successful_retrieval_from_server.png)
@@ -92,12 +100,14 @@ The response should contain the documents returned by the API.
 
 ## Understand the Result
 
-The logs show each authorization boundary in the chain. The gateway requests `mcp:role.mcp-accessor api:role.docs-getter` with access-token audience `mcp`. MCP Runtime Proxy, acting as `mcp.idthw-api-mcp`, then exchanges that token for audience `api`, retaining only `api:role.docs-getter`.
+The AI Client Gateway resolved the signed-in user's Keycloak ID token, exchanged it for an ID-JAG token, and then fetched an Athenz access token.
 
-1. The AI Client Gateway resolved the signed-in user's Keycloak ID token, exchanged it for an ID-JAG token, and then fetched an Athenz access token.
+The gateway also logs requests and responses. Filter for token-exchange messages and show the latest seven lines:
 
 ```sh
-kubectl logs -n human deployment/claude-idjag-learner-ai-client-gateway --tail=300
+kubectl logs deploy/claude-idjag-learner-ai-client-gateway -n human -c ai-client-gateway --tail=100 \
+  | grep -E '^\[Athenz (ID-JAG|AT)\]' \
+  | tail -n 7
 ```
 
 ```sh
@@ -110,56 +120,19 @@ kubectl logs -n human deployment/claude-idjag-learner-ai-client-gateway --tail=3
 # [Athenz AT] 🔑 Successfully fetched Athenz Access Token. Granted scope: ["api:role.docs-getter","mcp-accessor"]
 ```
 
-2. MCP Runtime Proxy validates the token before forwarding a protected call. Its [verifier](../components/mcp-runtime-proxy/src/auth.ts) accepts only `alg=RS256` and `typ=at+jwt`, verifies the signature against trusted ZTS signing keys, checks `exp` and any `nbf` restriction, requires audience `mcp`, and checks the `mcp:role.mcp-accessor` scope.
+## Finally
 
-Inspect the `auth-proxy` container, which runs MCP Runtime Proxy:
+🎉 Congratulations! You've completed the "ID-JAG The Hard Way" tutorial.
 
-```sh
-kubectl logs -n mcp deployment/mcp -c auth-proxy --tail=50
-```
+You have connected user sign-in to delegated API access. Athenz policies control token issuance and exchange; the proxy and API enforce each token's audience and scopes. Changes to role membership affect new grants after ZTS observes them, while issued tokens can remain usable until they expire.
 
-Find an `access token verified` line in the default text logs. It is emitted only after all of those checks pass. Check its `audiences`, `scopes`, `keyId`, and `expiresInSeconds`, then match its `requestId` to a `request completed` line with `upstreamStatus=200`. Short scopes such as `mcp-accessor` are accepted only when `mcp` is the sole audience.
+<a id="full-architecture"></a>
 
-A public discovery request can also complete successfully, so `request completed` alone does not confirm token validation. Reading the JWT's `alg` header alone does not verify its signature either.
-
-With `LOG_FORMAT=json` set on the `auth-proxy` container, the same events appear as `access_token_verified` and `request_completed`, with `"upstreamStatus":200` in the JSON record. Older Runtime Proxy images also use this JSON format by default.
-
-3. MCP Runtime Proxy performs the downstream token exchange as `mcp.idthw-api-mcp`. It writes the API-specific `docs-getter` token to a unique request file and injects the path into the tool call. `idthw-demo-api-mcp` reads that file before calling the API; the proxy removes it after the response.
-
-<details>
-<summary>Confirm Runtime Proxy's token exchange</summary>
-
-```sh
-kubectl logs -n mcp deployment/mcp -c auth-proxy --tail=20
-```
-
-Look for `downstream access token published` with scope `api:role.docs-getter`, followed by `downstream access token removed` for the same request. The exchanged token has audience `api`.
-
-</details>
-
-4. The API independently [validates the exchanged token](../components/idthw-demo-api/src/auth.ts) using trusted ZTS signing keys, checks its type, lifetime, and audience, and requires `api:role.docs-getter` before returning the docs.
-
-```sh
-kubectl logs -n api deployment/api-server --tail=20
-```
-
-```sh
-# Look for event "request_completed", method "GET", status 200.
-```
-
-The proxy checks MCP access, and the API checks document access. The downstream exchange changes the audience from `mcp` to `api` and retains only the document-reading scope.
-
-## Full Architecture
-
-This is the complete architecture you have built, from user sign-in to protected document access:
+The diagram below shows the complete flow you have built:
 
 ![Core tutorial architecture: IdP, IdP AS, Authorization Server, AI Agent, gateway, MCP, and Resource Server](./assets/core_15_idjag_flow.svg)
 
-## Finally
-
-Thank you for following along. Hope it was helpful.
-
-You have connected user sign-in to delegated API access. Athenz policies control token issuance and exchange; the proxy and API enforce each token's audience and scopes. Changes to role membership affect new grants after ZTS observes them, while issued tokens can remain usable until they expire.
+## Closing
 
 If you found this tutorial useful, please consider giving either repository a ⭐ on GitHub!
 

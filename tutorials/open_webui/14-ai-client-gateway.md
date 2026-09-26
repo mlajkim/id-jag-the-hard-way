@@ -53,28 +53,38 @@ kubectl create deploy ai-client-gateway -n ai \
   --image=ghcr.io/mlajkim/ai-client-gateway:latest
 ```
 
-Configure the gateway to forward requests to the MCP service:
+Configure the gateway one connection at a time. Each command updates only the named variables, so settings from earlier steps remain in place.
 
-```yaml
-kubectl patch deploy ai-client-gateway -n ai --patch "$(cat <<'EOF'
-spec:
-  template:
-    spec:
-      containers:
-        - name: ai-client-gateway
-          imagePullPolicy: Always
-          env:
-            - name: UPSTREAM_BASE_URL
-              value: "http://mcp.mcp:8081"
-            - name: ATHENZ_ACCESS_TOKEN_AUDIENCE
-              value: "mcp"
-            - name: ZTS_URL
-              value: "https://athenz-zts-server.athenz:4443/zts/v1"
-EOF
-)"
+### 1. Set the MCP Server Address
+
+First, tell the gateway where to forward MCP requests. Set `UPSTREAM_BASE_URL` to the in-cluster address of the MCP Service deployed earlier:
+
+```sh
+kubectl set env deployment/ai-client-gateway -n ai \
+  --containers=ai-client-gateway \
+  UPSTREAM_BASE_URL=http://mcp.mcp:8081
 ```
 
-`ATHENZ_ACCESS_TOKEN_AUDIENCE=mcp` selects the recipient of the access token carrying MCP and API scopes. The ID-JAG audience remains the ZTS URL.
+```sh
+# deployment.apps/ai-client-gateway env updated
+```
+
+### 2. Configure Token Issuance through Athenz
+
+Next, configure where the gateway obtains access tokens for MCP requests. `ZTS_URL` is the Athenz ZTS endpoint for the ID token → ID-JAG → access token exchanges. `ATHENZ_ACCESS_TOKEN_AUDIENCE=mcp` specifies the recipient of the resulting access token. The ID-JAG audience remains the ZTS URL:
+
+```sh
+kubectl set env deployment/ai-client-gateway -n ai \
+  --containers=ai-client-gateway \
+  ZTS_URL=https://athenz-zts-server.athenz:4443/zts/v1 \
+  ATHENZ_ACCESS_TOKEN_AUDIENCE=mcp
+```
+
+```sh
+# deployment.apps/ai-client-gateway env updated
+```
+
+### 3. Expose the Gateway
 
 Expose the deployment so it can be accessed:
 
@@ -84,21 +94,22 @@ kubectl expose deploy ai-client-gateway -n ai --port 3101 --name ai-client-gatew
 
 ## Check the Logs
 
-Let's check if the AI Client Gateway started successfully:
+Check the logs from the `ai-client-gateway` container:
 
 ```sh
-kubectl logs deploy/ai-client-gateway -n ai
+kubectl logs deploy/ai-client-gateway -n ai -c ai-client-gateway
 ```
-
-You will likely encounter an error similar to this:
 
 ```sh
 # ...
-# Error: ENOENT: no such file or directory, open '...certs/ai-client-gateway.crt'
+# Error: ENOENT: no such file or directory, open '/app/certs/ai-client-gateway.crt'
 # ...
 ```
 
 The gateway requires its X.509 certificate and private key to authenticate to ZTS. The next steps create and mount those files.
+
+> [!NOTE]
+> If the result is `ContainerCreating`, the current container instance has not started yet. Wait briefly and retry, or add `--previous` to the command above if an earlier instance has already terminated.
 
 ## Generate the Required Certificates
 
@@ -195,7 +206,7 @@ kubectl -n ai create secret generic ai-client-gateway-cert \
 ```
 
 ```sh
-#   ✔  Secret created: ai/ai-client-gateway-cert
+# secret/ai-client-gateway-cert created
 ```
 
 Mount the Secret to the Deployment:
@@ -219,10 +230,24 @@ EOF
 )"
 ```
 
-Check the logs again to ensure it started successfully:
+```sh
+# deployment.apps/ai-client-gateway patched
+```
+
+Wait for the new pod with the certificate mount to become available:
 
 ```sh
-kubectl logs deploy/ai-client-gateway -n ai
+kubectl rollout status deployment/ai-client-gateway -n ai --timeout=180s
+```
+
+```sh
+# deployment "ai-client-gateway" successfully rolled out
+```
+
+Check the current container's logs to verify the gateway started successfully:
+
+```sh
+kubectl logs deploy/ai-client-gateway -n ai -c ai-client-gateway
 ```
 
 ```sh
@@ -242,7 +267,7 @@ AI Client Gateway is now deployed. Next, configure Open WebUI to send tool reque
 
 ## Modify the Tool Target
 
-Instead of pointing the Open WebUI directly to the MCP server, we will route it through our new `ai_client_gateway`.
+Route Open WebUI tool requests through `ai_client_gateway`. The gateway now handles the ID token → ID-JAG → MCP access token exchanges, so you no longer need to obtain an Athenz access token in advance and enter it in the tool connection settings.
 
 Open the Open WebUI in your browser:
 
@@ -276,7 +301,7 @@ _open_webui_port=$(./tools/port.sh open-webui)
 Now, test the setup by asking the AI agent:
 
 ```
-Get docs!
+Get docs with id-jag-the-hard-way-mcp
 ```
 
 The request should fail because the gateway does not yet have ID-JAG exchange permission:
@@ -290,6 +315,31 @@ The request should fail because the gateway does not yet have ID-JAG exchange pe
 The user is signed in, and the gateway authenticates to ZTS as `ai.open-webui`. ZTS rejects the exchange because that service lacks `zts.jag_exchange` permission for the requested MCP and API roles.
 
 ![15_arc_not_enough_permission_into_idjag](./assets/15_arc_not_enough_permission_into_idjag.svg)
+
+In another terminal, inspect the last 8 lines of the AI Client Gateway log to see where the exchange failed:
+
+```sh
+kubectl logs deploy/ai-client-gateway -n ai -c ai-client-gateway --tail=8
+```
+
+Open WebUI sends the user's ID token in the `oauth_id_token` cookie. Example output for a document-read request:
+
+```sh
+# [Athenz AT] Cache Feature for Athenz AT is now disabled
+# [Athenz ID-JAG] 🔄 Attempting to exchange new ID-JAG with id-token for scope [api:role.docs-getter mcp:role.mcp-accessor] ...
+# [Athenz ID-JAG] 🎯 Target ZTS for ID-JAG: https://athenz-zts-server.athenz:4443/zts/v1/oauth2/token
+# [2026-09-26T10:45:04.305Z] Proxy request failed: Error: Athenz ZTS Error: HTTP 403 - {"code":403,"message":"Principal not authorized for token exchange for the requested role"}
+#     at IncomingMessage.<anonymous> (file:///app/src/utils/idtokenIntoIdjag.js:63:18)
+#     at IncomingMessage.emit (node:events:531:35)
+#     at endReadableNT (node:internal/streams/readable:1698:12)
+#     at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+```
+
+The log shows how far the request progressed:
+
+- `scope [api:role.docs-getter mcp:role.mcp-accessor]`: the gateway requested an ID-JAG covering MCP access and document retrieval
+- `Target ZTS for ID-JAG`: the request reached the token-exchange step targeting the ZTS `/oauth2/token` endpoint
+- `HTTP 403` and `Principal not authorized for token exchange for the requested role`: ZTS denied the gateway's exchange request. In addition to the user's role memberships, `ai.open-webui` needs `zts.jag_exchange` permission for the requested roles
 
 <a id="whats-next"></a>
 

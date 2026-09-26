@@ -27,9 +27,10 @@ export async function proxyMiddleware(req: Request, res: Response) {
   }
 
   if (!isAuthenticated(req)) {
+    const resourcePath = req.path === "/mcp" ? "/mcp" : "";
     res.setHeader(
       "WWW-Authenticate",
-      `Bearer realm="${PUBLIC_BASE_URL}", resource_metadata="${PUBLIC_BASE_URL}/.well-known/oauth-authorization-server"`
+      `Bearer realm="${PUBLIC_BASE_URL}", resource_metadata="${PUBLIC_BASE_URL}/.well-known/oauth-protected-resource${resourcePath}"`
     );
     return res.status(401).json({
       error: "unauthorized",
