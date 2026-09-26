@@ -10,27 +10,25 @@ The [MCP authorization specification](https://modelcontextprotocol.io/specificat
 
 > *If the MCP server makes requests to upstream APIs, it may act as an OAuth client to them. The access token used at the upstream API is a separate token, issued by the upstream authorization server. The MCP server **MUST NOT** pass through the token it received from the MCP client.*
 
-In this chapter, we will deploy `MCP Runtime Proxy` to require an AT with audience `mcp` and scope `mcp:role.mcp-accessor` before allowing tool calls. The proxy will attempt to exchange that AT for a separate API AT with audience `api` and scope `api:role.docs-getter`.
+In this chapter, we will deploy `MCP Runtime Proxy` as an authorization proxy in front of the MCP server. It will require an AT with audience `mcp` and scope `mcp:role.mcp-accessor` for tool calls. We will verify that it rejects the previous API token, then grant the learner MCP access.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
-- [Deploy MCP Runtime Proxy](#deploy-mcp-runtime-proxy)
+- [Deploy MCP Runtime Proxy as an Authorization Proxy](#deploy-mcp-runtime-proxy-as-an-authorization-proxy)
 - [Verify MCP Access Is Rejected](#verify-mcp-access-is-rejected)
-- [Create the MCP Service Identity](#create-the-mcp-service-identity)
-- [Create a Kubernetes Secret](#create-a-kubernetes-secret)
-- [Configure Downstream Token Exchange](#configure-downstream-token-exchange)
 - [Grant the Learner MCP Access](#grant-the-learner-mcp-access)
-- [Verify Token Exchange Is Denied](#verify-token-exchange-is-denied)
-- [Understand the Result](#understand-the-result)
+- [Verify MCP Access Is Accepted](#verify-mcp-access-is-accepted)
 - [Next Steps](#next-steps)
 
 <!-- /TOC -->
 
-## Deploy MCP Runtime Proxy
+## Deploy MCP Runtime Proxy as an Authorization Proxy
+
+The proxy checks Athenz access tokens before forwarding tool calls to the MCP server.
 
 ### Attach the Proxy
 
-Add Runtime Proxy as a second container in the MCP pod. It will require audience `mcp` and scope `mcp:role.mcp-accessor` for tool calls. These are local validation settings; the Athenz domain and role will be created later.
+Add Runtime Proxy as a second container in the MCP pod. Configure the required audience and MCP scope, along with the API permission each tool needs in `MCP_TOOL_SCOPES`. We will create the Athenz domain and learner role below.
 
 ```sh
 kubectl patch deploy mcp -n mcp --patch "$(cat <<'EOF'
@@ -48,6 +46,8 @@ spec:
               value: "mcp:role.mcp-accessor"
             - name: MCP_PUBLIC_OPENAPI_ENABLED
               value: "true"
+            - name: MCP_TOOL_SCOPES
+              value: '{"get_k8s_docs":"api:role.docs-getter","post_k8s_doc":"api:role.docs-poster","delete_k8s_doc":"api:role.docs-deleter"}'
           ports:
             - containerPort: 8082
           readinessProbe:
@@ -72,7 +72,7 @@ The proxy reads `/var/run/athenz/ca.crt` at startup. Until you mount the CA in t
 
 ### Create and Attach the CA Secret
 
-Create a Secret containing the existing Athenz CA certificate. Runtime Proxy uses it to trust ZTS when loading signing keys and exchanging tokens:
+Create a Secret containing the existing Athenz CA certificate. Runtime Proxy uses it to trust ZTS when loading the signing keys needed to validate access tokens:
 
 ```sh
 kubectl -n mcp create secret generic mcp-runtime-proxy-athenz-ca \
@@ -137,7 +137,7 @@ Restart `./tools/keep-k8s-port-forward.sh` after this change so the local connec
 
 ## Verify MCP Access Is Rejected
 
-Before creating the MCP domain or service identity in Athenz, ask Claude Code to retrieve documents again using the same configuration as in the previous chapter:
+With the proxy in place, ask Claude Code to retrieve documents again using the same configuration as in the previous chapter:
 
 ```sh
 Get docs with id-jag-the-hard-way-mcp
@@ -162,150 +162,17 @@ Example output from the updated proxy for an unexpired API-audience token:
 
 `reason=audience_mismatch`, `expectedAudience=mcp`, and `audiences=["api"]` identify the failed check. `signatureVerified=true` and the positive `expiresInSeconds` show that the signature and expiration checks passed.
 
-`invalid_access_token` is the client-facing error code. An expired token instead logs `reason=token_expired`, its `expiresAt`, and a nonpositive `expiresInSeconds`; expiration is checked before audience. If Claude Code sends no bearer token, the log shows `accessTokenPresent=false`, `code=missing_access_token`, and `reason=missing_authorization`, also with `status=401`. These failures stop the request at MCP access validation, before any downstream exchange or API call.
+`invalid_access_token` is the client-facing error code. An expired token instead logs `reason=token_expired`, its `expiresAt`, and a nonpositive `expiresInSeconds`; expiration is checked before audience. If Claude Code sends no bearer token, the log shows `accessTokenPresent=false`, `code=missing_access_token`, and `reason=missing_authorization`, also with `status=401`. These failures stop the request at the proxy before it reaches the MCP application.
 
 ![Runtime Proxy returns 401 to the AI agent; the MCP server and API are not called](./assets/core_10_mcp_rejected.svg)
 
-## Create the MCP Service Identity
+## Grant the Learner MCP Access
 
-The first failure confirms that Runtime Proxy protects tool calls. Now set up the MCP domain and the identities needed to proceed. Runtime Proxy needs a service identity to authenticate downstream token exchange requests to ZTS. The MCP application itself will not mount the private key. Create the service `idthw-api-mcp` under the Athenz top-level domain (TLD) `mcp`. Its principal is `mcp.idthw-api-mcp`; the API keeps the `api` domain. Athenz domains and Kubernetes namespaces are independent, even when both are named `mcp`.
-
-Use the identity and certificate helper scripts to create the MCP service identity, `mcp.idthw-api-mcp`:
+Create the `mcp` domain:
 
 ```sh
 ./tools/athenz/create-tld.sh "mcp"
-./tools/athenz/create-private-key.sh "./keys/api-mcp"
-./tools/athenz/create-service.sh "mcp" "idthw-api-mcp" "./keys/api-mcp.public.key"
-./tools/athenz/enable-cert-provider.sh "mcp" "idthw-api-mcp"
-./tools/athenz/fetch-cert.sh "mcp" "idthw-api-mcp" "./keys/api-mcp.key" "v1"
 ```
-
-```sh
-#   ·  Generating RSA key pair for: ./keys/api-mcp...
-#   ✔  Keys generated: ./keys/api-mcp.key, ./keys/api-mcp.public.key
-#   ·  Registering Service: mcp.idthw-api-mcp...
-#   ✔  Service registered: mcp.idthw-api-mcp
-#   ·  Enabling ZTS Certificate Provider for mcp.idthw-api-mcp...
-# [Template(s) successfully applied to domain]
-#   ✔  ZTS Certificate Provider enabled for mcp.idthw-api-mcp
-#   ·  Fetching X.509 Certificate for mcp.idthw-api-mcp...
-#   ✔  Certificate saved to: ./keys/api-mcp.crt
-```
-
-<a id="create-k8s-secret"></a>
-
-## Create a Kubernetes Secret
-
-Store the service certificate and private key in the `mcp` namespace. Only Runtime Proxy will mount this Secret; the CA remains in the separate CA Secret attached earlier:
-
-```sh
-kubectl -n mcp create secret generic api-mcp-cert \
-  --from-file=api-mcp.crt=./keys/api-mcp.crt \
-  --from-file=api-mcp.key=./keys/api-mcp.key \
-  --dry-run=client -o yaml | kubectl apply -f -
-```
-
-```sh
-# secret/api-mcp-cert created
-```
-
-## Configure Downstream Token Exchange
-
-### Mount the Service Identity
-
-Mount the service identity in Runtime Proxy, separately from the CA certificate:
-
-```sh
-kubectl patch deploy mcp -n mcp --patch "$(cat <<'EOF'
-spec:
-  template:
-    spec:
-      containers:
-        - name: auth-proxy
-          volumeMounts:
-            - name: mcp-identity
-              mountPath: /var/run/athenz-identity
-              readOnly: true
-      volumes:
-        - name: mcp-identity
-          secret:
-            secretName: api-mcp-cert
-EOF
-)"
-```
-
-```sh
-# deployment.apps/mcp patched
-```
-
-### Share the API Token Directory
-
-Give the proxy an in-memory directory for exchanged API tokens. Mount the same directory read-only in the MCP container so it can use those tokens. `fsGroup: 1000` lets the MCP process read the shared files.
-
-The diagram shows how both containers use the same files after token exchange succeeds:
-
-![Inside the MCP pod, Runtime Proxy writes an API token to shared memory, passes its file path to MCP, and MCP reads the file through a read-only mount](./assets/core_10_shared_api_token_directory.svg)
-
-```sh
-kubectl patch deploy mcp -n mcp --patch "$(cat <<'EOF'
-spec:
-  template:
-    spec:
-      securityContext:
-        fsGroup: 1000
-      containers:
-        - name: auth-proxy
-          volumeMounts:
-            - name: access-tokens
-              mountPath: /var/run/idthw-access-tokens
-        - name: idthw-demo-api-mcp
-          volumeMounts:
-            - name: access-tokens
-              mountPath: /var/run/idthw-access-tokens
-              readOnly: true
-      volumes:
-        - name: access-tokens
-          emptyDir:
-            medium: Memory
-EOF
-)"
-```
-
-```sh
-# deployment.apps/mcp patched
-```
-
-### Enable Downstream Token Exchange
-
-Configure Runtime Proxy to exchange tokens using the mounted service identity. `MCP_TOOL_SCOPES` selects the API scope for each tool; the verified incoming token must also grant that scope.
-
-```sh
-kubectl set env deploy/mcp -n mcp --containers=auth-proxy \
-  ATHENZ_TOKEN_FILE_EXCHANGE_ENABLED=true \
-  ATHENZ_TOKEN_EXCHANGE_CERT_PATH=/var/run/athenz-identity/api-mcp.crt \
-  ATHENZ_TOKEN_EXCHANGE_KEY_PATH=/var/run/athenz-identity/api-mcp.key \
-  MCP_TOOL_SCOPES='{"get_k8s_docs":"api:role.docs-getter","post_k8s_doc":"api:role.docs-poster","delete_k8s_doc":"api:role.docs-deleter"}'
-```
-
-```sh
-# deployment.apps/mcp env updated
-```
-
-For each tool call, the proxy writes the exchanged token to a request-specific file and passes its path to MCP. The MCP server uses that token to call the API. The proxy removes the file after the response. Athenz still needs to authorize the exchange; we will verify that denial below.
-
-Wait for the updated pod to be ready:
-
-```sh
-kubectl rollout status deploy/mcp -n mcp
-```
-
-```sh
-# deployment "mcp" successfully rolled out
-```
-
-Restart `./tools/keep-k8s-port-forward.sh` so the local connection reaches the updated pod.
-
-## Grant the Learner MCP Access
 
 Create the MCP accessor role:
 
@@ -340,11 +207,11 @@ The relevant claims are:
 }
 ```
 
-The MCP role permits tool execution. The API role permits the later exchange into document access; the API still rejects this MCP-audience token directly.
+The MCP role permits tool execution, and the API role records the learner's permission to read documents. This token is addressed to MCP.
 
-## Verify Token Exchange Is Denied
+## Verify MCP Access Is Accepted
 
-Repeat the same tool call, this time with the MCP-audience token from the preceding step. If you took a break and it has expired, rerun that token command first:
+Call the tool through the proxy with the MCP-audience token from the preceding step. If the token has expired, rerun that token command first:
 
 ```sh
 _mcp_port=$(./tools/port.sh mcp)
@@ -354,34 +221,16 @@ curl -sS -w '\nHTTP %{http_code}\n' "http://localhost:${_mcp_port}/mcp" \
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"get_k8s_docs","arguments":{}}}'
 ```
 
-```sh
-# {"error":"downstream_token_exchange_denied","message":"Athenz denied the downstream token exchange."}
-# HTTP 403
-```
-
-This time MCP access passes. Runtime Proxy authenticates as `mcp.idthw-api-mcp` and attempts to exchange the incoming token for `aud=api` with `api:role.docs-getter`. Athenz rejects that exchange because the service has not been granted exchange permission.
+Document retrieval still returns `502 downstream_token_exchange_unavailable` at this stage. Check the proxy log to confirm that MCP access now passes:
 
 ```sh
-kubectl logs deploy/mcp -n mcp -c auth-proxy --tail=50
+kubectl logs deploy/mcp -n mcp -c auth-proxy --tail=3
 ```
 
-For the same `requestId`, look for "access token verified", then "downstream token exchange failed" with `code=downstream_token_exchange_denied` and `status=403`. This is a different failure from the earlier "access denied": the learner can now access MCP, but the proxy's service identity still lacks permission to exchange the token for the API.
-
-![MCP access passes, but Athenz denies Runtime Proxy's downstream exchange](./assets/core_10_exchange_denied.svg)
-
-## Understand the Result
-
-The same document request stops at two different checks as you build the setup:
-
-| Stage | Result | Proxy log |
-|---|---|---|
-| Proxy running; Claude Code sends the previous chapter's API token | `401 invalid_access_token` | "access denied" |
-| MCP identity configured; learner has an MCP token | `403 downstream_token_exchange_denied` | "access token verified", then "downstream token exchange failed" |
-
-The second failure shows why token exchange is needed: the learner's token is addressed to MCP, while the API requires an API-audience token. The proxy is configured to perform that exchange, but Athenz has not authorized it yet. Both failures occur before the tool call reaches the MCP application or API; discovery remains available.
+Look for `access token verified` with `audiences=["mcp"]` and `mcp-accessor` in `scopes`. This confirms that the MCP access check passed. We will resolve the remaining error in chapter 11.
 
 ## Next Steps
 
-MCP access now passes, but Athenz rejects the downstream token exchange. In the next chapter, you will grant the service exchange permissions and retry the request.
+In the next chapter, you will configure token exchange so MCP can retrieve documents from the protected API.
 
 Next: [Token Exchange](./11-token-exchange.md)

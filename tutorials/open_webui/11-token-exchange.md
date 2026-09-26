@@ -4,7 +4,7 @@
 
 # Token Exchange — Open WebUI
 
-Complete the shared [Authorize the Downstream Exchange](../11-token-exchange.md#authorize-the-downstream-exchange), [Refresh the Learner Token](../11-token-exchange.md#refresh-the-learner-token), and [Verify](../11-token-exchange.md#verify) steps first. The same `mcp.idthw-api-mcp` service and Athenz policies apply to every client path.
+Complete the shared steps from [Understand the Remaining Error](../11-token-exchange.md#understand-the-remaining-error) through [Verify](../11-token-exchange.md#verify) first. These steps create the proxy's service identity, configure the shared API token directory, and grant exchange permissions. Then update Open WebUI below.
 
 ## Update the Client
 

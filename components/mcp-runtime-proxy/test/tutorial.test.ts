@@ -7,13 +7,13 @@ import test from "node:test"
 import { createDelegatedK8sDocsMcpServer } from "../../idthw-demo-api-mcp/src/server.ts"
 import { AccessTokenError } from "../src/auth.ts"
 import { createRuntimeProxyServer, toolScopesFromEnvironment } from "../src/proxy.ts"
-import { createAthenzTokenFilePublisher, DownstreamTokenExchangeError } from "../src/tokenExchange.ts"
+import { createAthenzTokenFilePublisher, DownstreamTokenExchangeError, tokenExchangeConfigFromEnvironment } from "../src/tokenExchange.ts"
 
 const toolScopes = { get_k8s_docs: "api:role.docs-getter" }
 const call = { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "get_k8s_docs", arguments: {} } }
 const quietLogger = { info() {}, warn() {}, error() {} }
 
-test("tutorial: MCP discovery works before exchange is configured, but protected tools cannot reach the API", { timeout: 5000 }, async (t) => {
+test("tutorial: check learner scopes before loading the service identity, while keeping discovery available", { timeout: 5000 }, async (t) => {
   let apiRequests = 0
   const api = http.createServer((_request, response) => {
     apiRequests++
@@ -24,14 +24,24 @@ test("tutorial: MCP discovery works before exchange is configured, but protected
   const mcp = createDelegatedK8sDocsMcpServer({ upstreamBaseUrl: new URL(`http://127.0.0.1:${apiPort}`) })
   const mcpPort = await listen(mcp)
   t.after(() => close(mcp))
+  const credentialReads: string[] = []
+  const publisher = createAthenzTokenFilePublisher(tokenExchangeConfigFromEnvironment({}), {
+    readCredential: async (path) => {
+      credentialReads.push(path)
+      throw Object.assign(new Error("missing test certificate"), { code: "ENOENT" })
+    },
+  })
   const exchangeErrors: Array<Record<string, unknown>> = []
+  const scopeErrors: Array<Record<string, unknown>> = []
   const proxy = createRuntimeProxyServer(new URL(`http://127.0.0.1:${mcpPort}`), {
     verify: async (authorization) => {
       if (!authorization) throw new AccessTokenError(401, "missing_access_token", "Token required")
-      if (authorization !== "Bearer learner.mcp.fixture") throw new AccessTokenError(401, "invalid_access_token", "Wrong audience")
+      if (!["Bearer learner.mcp.fixture", "Bearer learner.no-api-scope.fixture"].includes(authorization)) {
+        throw new AccessTokenError(401, "invalid_access_token", "Wrong audience")
+      }
       return {
         audiences: ["mcp"], keyId: "fixture", expiresAt: "2099-01-01", expiresInSeconds: 3600,
-        scopes: ["mcp-accessor", "api:role.docs-getter"],
+        scopes: authorization === "Bearer learner.mcp.fixture" ? ["mcp-accessor", "api:role.docs-getter"] : ["mcp-accessor"],
       }
     },
   }, {
@@ -39,7 +49,10 @@ test("tutorial: MCP discovery works before exchange is configured, but protected
     error(event, fields = {}) {
       if (event === "downstream_token_exchange_failed") exchangeErrors.push(fields)
     },
-  }, undefined, { publicOpenApi: true, toolScopes })
+    warn(event, fields = {}) {
+      if (event === "downstream_token_exchange_failed") scopeErrors.push(fields)
+    },
+  }, publisher, { publicOpenApi: true, toolScopes })
   const port = await listen(proxy)
   t.after(() => close(proxy))
 
@@ -51,18 +64,29 @@ test("tutorial: MCP discovery works before exchange is configured, but protected
   assert.equal((await fetch(`http://127.0.0.1:${port}/openapi.json`)).status, 200)
   assert.equal((await post(port, "/mcp", call)).status, 401)
   assert.equal((await post(port, "/mcp", call, "learner.api.fixture")).status, 401)
+  for (const [path, body] of [["/mcp", call], ["/tools/get_k8s_docs", {}]] as const) {
+    assert.equal((await post(port, path, body, "learner.no-api-scope.fixture")).status, 403)
+  }
+  assert.deepEqual(credentialReads, [])
+  assert.equal(scopeErrors.length, 2)
+  assert.ok(scopeErrors.every(({ reason, athenzRequestSent }) => reason === "missing_downstream_scope" && athenzRequestSent === false))
 
   for (const [path, body] of [["/mcp", call], ["/tools/get_k8s_docs", {}]] as const) {
     const response = await post(port, path, body, "learner.mcp.fixture")
     assert.equal(response.status, 502)
     assert.deepEqual(await response.json(), {
       error: "downstream_token_exchange_unavailable",
-      message: "Downstream access-token publication is not enabled for this MCP server.",
+      message: "Token exchange failed: the required MCP service certificate could not be read. Check ATHENZ_TOKEN_EXCHANGE_CERT_PATH.",
     })
   }
   assert.equal(apiRequests, 0)
   assert.equal(exchangeErrors.length, 2)
   assert.ok(exchangeErrors.every(({ code, status }) => code === "downstream_token_exchange_unavailable" && status === 502))
+  assert.ok(exchangeErrors.every(({ reason, credentialPath, fileErrorCode, athenzRequestSent }) => (
+    reason === "service_certificate_unavailable" && credentialPath === "/var/run/athenz/service.cert.pem"
+    && fileErrorCode === "ENOENT" && athenzRequestSent === false
+  )))
+  assert.deepEqual(credentialReads, ["/var/run/athenz/service.cert.pem", "/var/run/athenz/service.cert.pem"])
 })
 
 test("tutorial: use an API bearer token directly, then require MCP access and exchange through Runtime Proxy", { timeout: 5000 }, async (t) => {

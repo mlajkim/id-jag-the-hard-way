@@ -41,10 +41,7 @@ const serviceIdentityConfig = serviceIdentityConfigFromEnvironment()
 const serviceIdentityManager = serviceIdentityConfig
   ? await startServiceIdentityManager(serviceIdentityConfig, runtimeProxyLogger)
   : undefined
-const tokenExchangeConfig = tokenExchangeConfigFromEnvironment()
-const tokenPublisher = tokenExchangeConfig
-  ? createAthenzTokenFilePublisher(tokenExchangeConfig)
-  : undefined
+const tokenPublisher = createAthenzTokenFilePublisher(tokenExchangeConfigFromEnvironment())
 const server = createRuntimeProxyServer(
   target,
   accessTokenVerifier,
