@@ -238,10 +238,6 @@ test("adds request-scoped token delivery to an existing managed-identity deploym
     name: "downstream-access-tokens",
     mountPath: "/var/run/idthw-access-tokens",
   })
-  assert.deepEqual(proxy?.env?.find(({ name }) => name === "ATHENZ_TOKEN_FILE_EXCHANGE_ENABLED"), {
-    name: "ATHENZ_TOKEN_FILE_EXCHANGE_ENABLED",
-    value: "true",
-  })
   assert.deepEqual(proxy?.env?.find(({ name }) => name === "ATHENZ_SERVICE_KEY_ID"), {
     name: "ATHENZ_SERVICE_KEY_ID",
     value: "idthw-hub-generated",

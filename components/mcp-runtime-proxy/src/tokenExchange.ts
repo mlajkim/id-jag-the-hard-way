@@ -34,20 +34,33 @@ type TokenExchangeConfig = {
 
 type TokenExchangeDependencies = {
   exchange?: typeof exchangeAthenzAccessToken
+  readCredential?: (path: string) => Promise<Buffer>
+}
+
+type TokenExchangeDiagnostics = {
+  reason: string
+  credentialPath?: string
+  fileErrorCode?: string
+  athenzRequestSent?: boolean
+  athenzStatus?: number
+  missingScopes?: string[]
 }
 
 export class DownstreamTokenExchangeError extends Error {
   readonly status: 403 | 502
   readonly code: "downstream_token_exchange_denied" | "downstream_token_exchange_unavailable"
+  readonly diagnostics?: TokenExchangeDiagnostics
 
   constructor(
     status: 403 | 502,
     code: "downstream_token_exchange_denied" | "downstream_token_exchange_unavailable",
     message: string,
+    diagnostics?: TokenExchangeDiagnostics,
   ) {
     super(message)
     this.status = status
     this.code = code
+    this.diagnostics = diagnostics
   }
 }
 
@@ -84,6 +97,7 @@ export function createAthenzTokenFilePublisher(
         sourceToken,
         scopes.join(" "),
         audiences[0],
+        dependencies.readCredential,
       )
       const directory = join(config.outputDirectory, toolDirectory)
       const filePath = join(directory, fileName)
@@ -119,8 +133,7 @@ export function createAthenzTokenFilePublisher(
 
 export function tokenExchangeConfigFromEnvironment(
   environment: Record<string, string | undefined> = process.env,
-): TokenExchangeConfig | undefined {
-  if (environment.ATHENZ_TOKEN_FILE_EXCHANGE_ENABLED !== "true") return undefined
+): TokenExchangeConfig {
   return {
     caPath: environment.ATHENZ_TOKEN_EXCHANGE_CA_PATH ?? "/var/run/athenz/ca.crt",
     certificatePath: environment.ATHENZ_TOKEN_EXCHANGE_CERT_PATH ?? "/var/run/athenz/service.cert.pem",
@@ -139,12 +152,20 @@ async function exchangeAthenzAccessToken(
   sourceToken: string,
   scope: string,
   audience: string,
+  readCredential: (path: string) => Promise<Buffer> = readFile,
 ) {
-  const [cert, key, ca] = await Promise.all([
-    readFile(config.certificatePath),
-    readFile(config.keyPath),
-    readFile(config.caPath),
-  ])
+  const cert = await readExchangeCredential(
+    config.certificatePath, "MCP service certificate", "ATHENZ_TOKEN_EXCHANGE_CERT_PATH",
+    "service_certificate_unavailable", readCredential,
+  )
+  const key = await readExchangeCredential(
+    config.keyPath, "MCP service private key", "ATHENZ_TOKEN_EXCHANGE_KEY_PATH",
+    "service_private_key_unavailable", readCredential,
+  )
+  const ca = await readExchangeCredential(
+    config.caPath, "Athenz CA certificate", "ATHENZ_TOKEN_EXCHANGE_CA_PATH",
+    "athenz_ca_unavailable", readCredential,
+  )
   const encodedBody = new URLSearchParams({
     audience,
     grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
@@ -189,6 +210,11 @@ async function exchangeAthenzAccessToken(
             status === 400 || status === 401 || status === 403
               ? "Athenz denied the downstream token exchange."
               : "Athenz token exchange is unavailable.",
+            {
+              reason: "athenz_error_response",
+              athenzStatus: status,
+              athenzRequestSent: true,
+            },
           ))
           return
         }
@@ -225,6 +251,31 @@ async function exchangeAthenzAccessToken(
   }
   assertExchangedTokenGrant(accessToken, audience, scope)
   return accessToken
+}
+
+async function readExchangeCredential(
+  path: string,
+  description: string,
+  setting: string,
+  reason: string,
+  readCredential: (path: string) => Promise<Buffer>,
+) {
+  try {
+    return await readCredential(path)
+  } catch (error) {
+    throw new DownstreamTokenExchangeError(
+      502,
+      "downstream_token_exchange_unavailable",
+      `Token exchange failed: the required ${description} could not be read. Check ${setting}.`,
+      {
+        reason,
+        credentialPath: path,
+        fileErrorCode: error && typeof error === "object" && "code" in error && typeof error.code === "string"
+          ? error.code : "UNKNOWN",
+        athenzRequestSent: false,
+      },
+    )
+  }
 }
 
 export function assertExchangedTokenGrant(token: string, audience: string, requestedScope: string) {

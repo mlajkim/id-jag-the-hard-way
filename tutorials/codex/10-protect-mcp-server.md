@@ -8,28 +8,28 @@ In the previous chapter, the AI client retrieved documents with an Athenz access
 
 The [MCP authorization specification](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization#access-token-privilege-restriction) states:
 
-> If the MCP server makes requests to upstream APIs, it may act as an OAuth client to them. The access token used at the upstream API is a separate token, issued by the upstream authorization server. The MCP server **MUST NOT** pass through the token it received from the MCP client.
+> *If the MCP server makes requests to upstream APIs, it may act as an OAuth client to them. The access token used at the upstream API is a separate token, issued by the upstream authorization server. The MCP server **MUST NOT** pass through the token it received from the MCP client.*
 
-In this chapter, we will deploy `MCP Runtime Proxy` to require an AT with audience `mcp` and scope `mcp:role.mcp-accessor` before allowing tool calls. After MCP access passes, we will see why the proxy needs token exchange to obtain a separate API AT.
+In this chapter, we will deploy `MCP Runtime Proxy` as an authorization proxy in front of the MCP server. It will require an AT with audience `mcp` and scope `mcp:role.mcp-accessor` for tool calls. We will verify that it rejects the previous API token, then grant the learner MCP access.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
-- [Deploy MCP Runtime Proxy](#deploy-mcp-runtime-proxy)
+- [Deploy MCP Runtime Proxy as an Authorization Proxy](#deploy-mcp-runtime-proxy-as-an-authorization-proxy)
 - [Verify MCP Access Is Rejected](#verify-mcp-access-is-rejected)
 - [Grant the Learner MCP Access](#grant-the-learner-mcp-access)
 - [Update Codex with the MCP Token](#update-codex-with-the-mcp-token)
-- [Verify Token Exchange Is Required](#verify-token-exchange-is-required)
+- [Verify MCP Access Is Accepted](#verify-mcp-access-is-accepted)
 - [Next Steps](#next-steps)
 
 <!-- /TOC -->
 
-## Deploy MCP Runtime Proxy
+## Deploy MCP Runtime Proxy as an Authorization Proxy
 
-The Runtime Proxy image must support declaring `MCP_TOOL_SCOPES` before token exchange is enabled. Earlier images reject this combination at startup; use an image built with the updated proxy behavior.
+The proxy checks Athenz access tokens before forwarding tool calls to the MCP server.
 
 ### Attach the Proxy
 
-Add Runtime Proxy as a second container in the MCP pod. It will require audience `mcp` and scope `mcp:role.mcp-accessor` for tool calls. `MCP_TOOL_SCOPES` declares the API scope each tool needs. Token exchange remains disabled until chapter 11. The Athenz domain and learner role will be created below.
+Add Runtime Proxy as a second container in the MCP pod. Configure the required audience and MCP scope, along with the API permission each tool needs in `MCP_TOOL_SCOPES`. We will create the Athenz domain and learner role below.
 
 ```sh
 kubectl patch deploy mcp -n mcp --patch "$(cat <<'EOF'
@@ -73,7 +73,7 @@ The proxy reads `/var/run/athenz/ca.crt` at startup. Until you mount the CA in t
 
 ### Create and Attach the CA Secret
 
-Create a Secret containing the existing Athenz CA certificate. Runtime Proxy uses it to trust ZTS when loading signing keys and exchanging tokens:
+Create a Secret containing the existing Athenz CA certificate. Runtime Proxy uses it to trust ZTS when loading the signing keys needed to validate access tokens:
 
 ```sh
 kubectl -n mcp create secret generic mcp-runtime-proxy-athenz-ca \
@@ -134,9 +134,11 @@ kubectl patch svc mcp -n mcp --patch '{"spec":{"ports":[{"port":8081,"targetPort
 # service/mcp patched
 ```
 
+Restart `./tools/keep-k8s-port-forward.sh` after this change so the local connection targets the proxy.
+
 ## Verify MCP Access Is Rejected
 
-Before creating the MCP domain or service identity in Athenz, ask Codex to retrieve documents again using the same configuration as in the previous chapter:
+With the proxy in place, ask Codex to retrieve documents again using the same configuration as in the previous chapter:
 
 ```sh
 Get docs with id-jag-the-hard-way-mcp
@@ -163,7 +165,7 @@ Example output from the updated proxy for an unexpired API-audience token:
 
 `reason=audience_mismatch`, `expectedAudience=mcp`, and `audiences=["api"]` identify the failed check. `signatureVerified=true` and the positive `expiresInSeconds` show that the signature and expiration checks passed.
 
-`invalid_access_token` is the client-facing error code. An expired token instead logs `reason=token_expired`, its `expiresAt`, and a nonpositive `expiresInSeconds`; expiration is checked before audience. If Codex sends no bearer token, the log shows `accessTokenPresent=false`, `code=missing_access_token`, and `reason=missing_authorization`, also with `status=401`. These failures stop the request at MCP access validation, before any downstream exchange or API call.
+`invalid_access_token` is the client-facing error code. An expired token instead logs `reason=token_expired`, its `expiresAt`, and a nonpositive `expiresInSeconds`; expiration is checked before audience. If Codex sends no bearer token, the log shows `accessTokenPresent=false`, `code=missing_access_token`, and `reason=missing_authorization`, also with `status=401`. These failures stop the request at the proxy before it reaches the MCP application.
 
 ![Runtime Proxy returns 401 to the AI agent; the MCP server and API are not called](../assets/core_10_mcp_rejected.svg)
 
@@ -231,7 +233,7 @@ Example output:
 }
 ```
 
-The MCP role permits tool execution. The API role permits the later exchange into document access; the API still rejects this MCP-audience token directly.
+The MCP role permits tool execution, and the API role records the learner's permission to read documents. This token is addressed to MCP.
 
 ## Update Codex with the MCP Token
 
@@ -262,7 +264,10 @@ From the project directory, restart Codex and resume the conversation so it load
 codex resume --last
 ```
 
-## Verify Token Exchange Is Required
+<a id="verify-token-exchange-is-required"></a>
+<a id="verify-the-service-certificate-is-required"></a>
+
+## Verify MCP Access Is Accepted
 
 Ask Codex to retrieve the documents again:
 
@@ -270,33 +275,22 @@ Ask Codex to retrieve the documents again:
 Get docs with id-jag-the-hard-way-mcp
 ```
 
-The MCP token now passes validation, but the proxy cannot obtain the API token yet. The tool request should fail with HTTP `502` and:
-
-```json
-{
-  "error": "downstream_token_exchange_unavailable",
-  "message": "Downstream access-token publication is not enabled for this MCP server."
-}
-```
-
-Check the proxy log:
+Document retrieval still fails at this stage. Check the proxy log to confirm that MCP access now passes:
 
 ```sh
 kubectl logs deploy/mcp -n mcp -c auth-proxy --tail=3
 ```
 
+Look for an entry like this:
+
 ```sh
-# 2026-09-23T07:05:21.309Z → INFO  [mcp-runtime-proxy] [request] request received | requestId=eb1c16b4-6ec0-445f-905d-7baa32cb4952 method=POST path=/mcp accessTokenPresent=true
-# 2026-09-23T07:05:21.312Z ✓ INFO  [mcp-runtime-proxy] [auth] access token verified | requestId=eb1c16b4-6ec0-445f-905d-7baa32cb4952 method=POST path=/mcp audiences=["mcp"] clientId=human.idjag-learner expiresAt=2026-09-23T08:04:16.000Z expiresInSeconds=3535 keyId=athenz-zts-server-5fcdbc67f4-lwctf scopes=["api:role.docs-getter","mcp-accessor"] subject=human.idjag-learner userId=human.idjag-learner
-# 2026-09-23T07:05:21.312Z × ERROR [mcp-runtime-proxy] [exchange] downstream token exchange failed | requestId=eb1c16b4-6ec0-445f-905d-7baa32cb4952 method=POST path=/mcp code=downstream_token_exchange_unavailable durationMs=3 message="Downstream access-token publication is not enabled for this MCP server." status=502
+# 2026-XX-XXT07:05:21.312Z ✓ INFO  [mcp-runtime-proxy] [auth] access token verified | requestId=eb1c16b4-6ec0-445f-905d-7baa32cb4952 method=POST path=/mcp audiences=["mcp"] clientId=human.idjag-learner expiresAt=2026-XX-XXT08:04:16.000Z expiresInSeconds=3535 keyId=athenz-zts-server-example scopes=["api:role.docs-getter","mcp-accessor"] subject=human.idjag-learner userId=human.idjag-learner
 ```
 
-For the same `requestId`, "access token verified" is followed by "downstream token exchange failed" with `code=downstream_token_exchange_unavailable` and `status=502`.
-
-The MCP token passed validation, but the tool needs a separate API token. Token exchange is not yet configured, so the proxy stops the request before contacting Athenz for exchange or calling the MCP tool or API.
+The `access token verified` entry confirms that the MCP access check passed. The remaining `502 downstream_token_exchange_unavailable` error is expected; we will resolve it in chapter 11.
 
 ## Next Steps
 
-In the next chapter, you will prepare Runtime Proxy's service identity and shared token directory, configure and authorize token exchange, and retry the request through Codex.
+In the next chapter, you will configure token exchange so MCP can retrieve documents from the protected API.
 
 Next: [Token Exchange — Codex](./11-token-exchange.md)

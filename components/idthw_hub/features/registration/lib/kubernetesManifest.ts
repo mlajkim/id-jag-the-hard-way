@@ -203,7 +203,6 @@ export function buildMcpKubernetesResources(
         { name: "ATHENZ_PUBLISHED_CERT_PATH", value: `/var/run/athenz/${SERVICE_CERTIFICATE_FILE}` },
         { name: "ATHENZ_IDENTITY_REFRESH_SECONDS", value: "86400" },
         { name: "ATHENZ_IDENTITY_RETRY_SECONDS", value: "300" },
-        { name: "ATHENZ_TOKEN_FILE_EXCHANGE_ENABLED", value: "true" },
         {
           name: "ATHENZ_TOKEN_EXCHANGE_URL",
           value: "https://athenz-zts-server.athenz:4443/zts/v1/oauth2/token",

@@ -51,6 +51,10 @@ For a configured downstream tool scope, Gateway also sends the selected scope in
 
 The forwarded `tools/call` receives the path in `params._meta["mcp.idthw.dev/access-token-file"]`. The MCP container mounts this directory read-only and must reread the file immediately before the downstream request. Runtime Proxy removes the file after the MCP response ends. Per-request paths prevent concurrent users of the same tool from overwriting each other's delegated tokens. The initial implementation accepts downstream scopes from exactly one Athenz domain per tool call.
 
+Exchange runs automatically when a tool has a downstream scope. The proxy first validates the learner's token and required scopes, then reads the service certificate, private key, and CA. Athenz checks the service's exchange permissions when the authenticated request reaches ZTS. There is no separate exchange-enable flag.
+
+Credential read failures return `502 downstream_token_exchange_unavailable` with a message naming the required credential and its configuration variable. The exchange log includes `reason=service_certificate_unavailable`, `service_private_key_unavailable`, or `athenz_ca_unavailable`, plus `credentialPath`, `fileErrorCode` (for example `ENOENT` or `EACCES`), and `athenzRequestSent=false`. Credential contents are never logged. If ZTS rejects the exchange, the log includes `reason=athenz_error_response`, `athenzStatus`, and `athenzRequestSent=true`.
+
 For new Hub-managed servers, Runtime Proxy also manages the selected Athenz service identity. Its bootstrap private-key Secret is mounted only in this container. On startup, the proxy uses `zts-svccert` and the per-server key ID supplied by MCP Hub to obtain a service certificate, verifies that the certificate matches the private key, and publishes both into a separate Kubernetes Secret. Runtime Proxy and the MCP container both mount that published identity read-only as `/var/run/athenz/service.cert.pem` and `/var/run/athenz/service.key.pem`. The proxy refreshes the identity every 24 hours and retries a failed scheduled refresh after five minutes without deleting the last good identity.
 
 ## Configuration
@@ -62,7 +66,7 @@ For new Hub-managed servers, Runtime Proxy also manages the selected Athenz serv
 | `MCP_READINESS_PATH` | `/mcp` | MCP endpoint used by the readiness probe |
 | `MCP_READINESS_TIMEOUT_MS` | `4000` | Total timeout for the MCP readiness lifecycle |
 | `MCP_PUBLIC_OPENAPI_ENABLED` | `false` | Allow public `GET /openapi.json` and CORS preflight for the tutorial adapter; keep MCP discovery public even with an old token |
-| `MCP_TOOL_SCOPES` | Unset | JSON object mapping tool names to fully qualified downstream scopes. For direct tutorial clients, selects the scope without a Gateway header and rejects unconfigured tools or conflicting headers. Tool calls require token-file exchange; discovery can run before exchange is enabled |
+| `MCP_TOOL_SCOPES` | Unset | JSON object mapping tool names to fully qualified downstream scopes. For direct tutorial clients, selects the scope without a Gateway header and rejects unconfigured tools or conflicting headers. Mapped tool calls automatically require token exchange; discovery remains public |
 | `LOG_FORMAT` | `text` | Log output format: readable `text` or structured `json` |
 | `NO_COLOR` | Unset | Disable terminal log colors when set |
 | `ATHENZ_JWKS_URL` | `https://athenz-zts-server.athenz:4443/zts/v1/oauth2/keys?rfc=true` | ZTS signing-key endpoint |
@@ -81,7 +85,6 @@ For new Hub-managed servers, Runtime Proxy also manages the selected Athenz serv
 | `ATHENZ_PUBLISHED_CERT_PATH` | `/var/run/athenz-identity/service.cert.pem` | Projected identity Secret path used to confirm publication |
 | `ATHENZ_IDENTITY_REFRESH_SECONDS` | `86400` | Successful certificate refresh interval |
 | `ATHENZ_IDENTITY_RETRY_SECONDS` | `300` | Retry interval after a scheduled refresh failure |
-| `ATHENZ_TOKEN_FILE_EXCHANGE_ENABLED` | `false` | Enables request-scoped downstream AT exchange and publication |
 | `ATHENZ_TOKEN_EXCHANGE_URL` | `https://athenz-zts-server.athenz:4443/zts/v1/oauth2/token` | ZTS RFC 8693 token endpoint |
 | `ATHENZ_TOKEN_EXCHANGE_CERT_PATH` | `/var/run/athenz/service.cert.pem` | MCP service certificate used for exchange |
 | `ATHENZ_TOKEN_EXCHANGE_KEY_PATH` | `/var/run/athenz/service.key.pem` | MCP service private key used for exchange |
@@ -96,11 +99,11 @@ Hub-managed deployments set the audience to `mcp-hub.mcps.<project>`, require `m
 
 The incoming path and query string are appended to `MCP_TARGET_URL`. For example, `/mcp` is forwarded to `http://127.0.0.1:8080/mcp` with request and response streaming preserved.
 
-The core tutorial uses `idthw-demo-api-mcp` with `MCP_PUBLIC_OPENAPI_ENABLED=true`, `ATHENZ_TOKEN_FILE_EXCHANGE_ENABLED=true`, and `MCP_TOOL_SCOPES` mapping each document tool to its API role. Public MCP methods are recognized only on the configured MCP path (`MCP_READINESS_PATH`, default `/mcp`). The proxy selects the scope from the tool name, checks it against the verified token, and performs downstream exchange using the certificate mounted only in the proxy. The MCP container mounts the shared token-file volume read-only and listens on loopback. No identity refresh is enabled for the manually issued tutorial certificate.
+The core tutorial uses `idthw-demo-api-mcp` with `MCP_PUBLIC_OPENAPI_ENABLED=true` and `MCP_TOOL_SCOPES` mapping each document tool to its API role. Public MCP methods are recognized only on the configured MCP path (`MCP_READINESS_PATH`, default `/mcp`). The proxy selects the scope from the tool name, checks it against the verified token, and performs downstream exchange using the certificate mounted only in the proxy. The MCP container mounts the shared token-file volume read-only and listens on loopback. No identity refresh is enabled for the manually issued tutorial certificate.
 
 With `MCP_TOOL_SCOPES` configured, `POST /tools/<tool-name>` accepts a JSON object of tool arguments for OpenAPI clients. The proxy applies the same access and scope checks, translates it into `tools/call` on the configured MCP path, and returns the MCP JSON-RPC result. With this option unset, Hub-managed deployments continue selecting scopes through the Gateway's internal header.
 
-Tool scopes can be declared before `ATHENZ_TOKEN_FILE_EXCHANGE_ENABLED` is enabled. Startup, readiness, and public discovery remain available; after access-token validation, configured tool calls return `502 downstream_token_exchange_unavailable` without reaching the MCP application or API. This supports the Codex tutorial's chapter 10 boundary; chapter 11 configures the service identity, shared token directory, and exchange permissions.
+Tool scopes can be declared before the service identity is mounted. Startup, readiness, and public discovery remain available; configured tool calls check learner scopes and then fail with `502 downstream_token_exchange_unavailable` and `reason=service_certificate_unavailable` if the service certificate cannot be read. This supports the Codex tutorial's chapter 10 boundary; chapter 11 supplies the service identity and shared token directory, demonstrates Athenz's permission denial, and grants exchange permissions.
 
 `GET /healthz` is a process liveness check. `GET /readyz` performs an MCP-standard lifecycle against the colocated server: `initialize`, `notifications/initialized`, `ping`, and `tools/list`, followed by best-effort session cleanup. It returns `503` until that lifecycle succeeds, so Kubernetes readiness reflects the MCP protocol rather than only the proxy process.
 

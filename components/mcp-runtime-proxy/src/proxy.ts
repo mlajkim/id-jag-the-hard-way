@@ -9,9 +9,11 @@ import {
 } from "./auth.ts"
 import { runtimeProxyLogger, type RuntimeProxyLogger } from "./logger.ts"
 import {
+  createAthenzTokenFilePublisher,
   DownstreamTokenExchangeError,
   MCP_ACCESS_TOKEN_FILE_META_KEY,
   MCP_DOWNSTREAM_SCOPE_HEADER,
+  tokenExchangeConfigFromEnvironment,
   type ToolAccessTokenPublication,
   type ToolAccessTokenPublisher,
 } from "./tokenExchange.ts"
@@ -42,7 +44,7 @@ export function createRuntimeProxyServer(
   target: URL,
   accessTokenVerifier: AthenzAccessTokenVerifier,
   logger: RuntimeProxyLogger = runtimeProxyLogger,
-  tokenPublisher?: ToolAccessTokenPublisher,
+  tokenPublisher: ToolAccessTokenPublisher = createAthenzTokenFilePublisher(tokenExchangeConfigFromEnvironment()),
   readiness: RuntimeProxyOptions = {},
 ) {
   if (!(["http:", "https:"] as string[]).includes(target.protocol)) {
@@ -64,7 +66,7 @@ async function handleRequest(
   target: URL,
   accessTokenVerifier: AthenzAccessTokenVerifier,
   logger: RuntimeProxyLogger,
-  tokenPublisher?: ToolAccessTokenPublisher,
+  tokenPublisher: ToolAccessTokenPublisher,
   readiness: RuntimeProxyOptions = {},
 ) {
   const requestUrl = new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`)
@@ -149,13 +151,6 @@ async function handleRequest(
       if (!authorization.accessTokenVerified) {
         throw downstreamDenied("A downstream Athenz scope is allowed only for a protected MCP tool call.")
       }
-      if (!tokenPublisher) {
-        throw new DownstreamTokenExchangeError(
-          502,
-          "downstream_token_exchange_unavailable",
-          "Downstream access-token publication is not enabled for this MCP server.",
-        )
-      }
       bufferedBody ??= await readRequestBody(request)
       toolCall ??= parseToolCall(bufferedBody)
       assertGrantedDownstreamScopes(downstreamScope, authorization.verification)
@@ -216,6 +211,7 @@ async function handleRequest(
         durationMs: Date.now() - startedAt,
         message: error.message,
         status: error.status,
+        ...error.diagnostics,
       })
       if (error.status === 403) {
         response.setHeader("www-authenticate", 'Bearer realm="mcp-runtime-proxy", error="insufficient_scope"')
@@ -559,7 +555,12 @@ function assertGrantedDownstreamScopes(
   const granted = new Set(verification?.scopes ?? [])
   const missing = normalizedScopes(downstreamScope).filter((scope) => !granted.has(scope))
   if (missing.length > 0) {
-    throw downstreamDenied("The verified Athenz access token does not grant the requested downstream scope.")
+    throw new DownstreamTokenExchangeError(
+      403,
+      "downstream_token_exchange_denied",
+      "The verified Athenz access token does not grant the requested downstream scope.",
+      { reason: "missing_downstream_scope", missingScopes: missing, athenzRequestSent: false },
+    )
   }
 }
 

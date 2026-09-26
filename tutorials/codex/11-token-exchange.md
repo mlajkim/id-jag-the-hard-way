@@ -4,12 +4,13 @@
 
 # Token Exchange — Codex
 
-In the previous chapter, Runtime Proxy accepted the learner's MCP token, then returned `502 downstream_token_exchange_unavailable` because token exchange was not configured.
+In the previous chapter, Runtime Proxy accepted the learner's MCP token, but document retrieval still failed with `502 downstream_token_exchange_unavailable`.
 
 In this chapter, we will create Runtime Proxy's service identity, configure the exchange and shared token files, grant the required Athenz permissions, and retrieve the documents through Codex.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
+- [Understand the Remaining Error](#understand-the-remaining-error)
 - [How Token Exchange Works](#how-token-exchange-works)
 - [Create the MCP Service Identity](#create-the-mcp-service-identity)
 - [Create a Kubernetes Secret](#create-a-kubernetes-secret)
@@ -23,9 +24,36 @@ In this chapter, we will create Runtime Proxy's service identity, configure the 
 
 <!-- /TOC -->
 
+## Understand the Remaining Error
+
+The learner's MCP token and API scope pass validation, but Runtime Proxy needs its own service identity to authenticate token exchange requests to Athenz. The service certificate has not been mounted yet, so the tool request returns HTTP `502`:
+
+```json
+{
+  "error": "downstream_token_exchange_unavailable",
+  "message": "Token exchange failed: the required MCP service certificate could not be read. Check ATHENZ_TOKEN_EXCHANGE_CERT_PATH."
+}
+```
+
+Check the proxy log:
+
+```sh
+kubectl logs deploy/mcp -n mcp -c auth-proxy --tail=3
+```
+
+Look for an entry like this:
+
+```sh
+# 2026-XX-XXT07:05:21.312Z × ERROR [mcp-runtime-proxy] [exchange] downstream token exchange failed | requestId=eb1c16b4-6ec0-445f-905d-7baa32cb4952 method=POST path=/mcp code=downstream_token_exchange_unavailable durationMs=3 message="Token exchange failed: the required MCP service certificate could not be read. Check ATHENZ_TOKEN_EXCHANGE_CERT_PATH." status=502 reason=service_certificate_unavailable credentialPath=/var/run/athenz/service.cert.pem fileErrorCode=ENOENT athenzRequestSent=false
+```
+
+`reason=service_certificate_unavailable` identifies the failure. `credentialPath` names the required file, and `fileErrorCode=ENOENT` means it is missing. The learner's scopes are checked before the proxy reads its service credentials.
+
+`athenzRequestSent=false` confirms that no exchange request reached Athenz, so Athenz has not checked the proxy's exchange permissions yet. The MCP tool and API have not been called.
+
 ## How Token Exchange Works
 
-Codex sends the learner's access token with audience `mcp`. Runtime Proxy validates that token, then authenticates to Athenz ZTS as `mcp.idthw-api-mcp` using its service certificate. It submits the learner's token and requests a new token with audience `api` and scope `api:role.docs-getter`.
+Codex sends the learner's access token with audience `mcp`. Runtime Proxy first validates that token and checks both MCP access and the API scope required by the tool. It then reads its service certificate and private key and authenticates to Athenz ZTS as `mcp.idthw-api-mcp`. It submits the learner's token and requests a new token with audience `api` and scope `api:role.docs-getter`. The tool's configured scope triggers this exchange automatically.
 
 Athenz checks whether the service may exchange tokens from the `mcp` audience into the API's `docs-getter` role. After the exchange succeeds, Runtime Proxy writes the API token to a request-specific file and passes the file path to the MCP server. The MCP server uses that token to call the API. The proxy removes the file when the request finishes.
 
@@ -139,16 +167,14 @@ EOF
 # deployment.apps/mcp patched
 ```
 
-### Enable Downstream Token Exchange
+### Configure the Service Credential Paths
 
-Configure Runtime Proxy to exchange tokens using the mounted service identity. `MCP_TOOL_SCOPES` selects the API scope for each tool; the verified incoming token must also grant that scope.
+Point Runtime Proxy at the mounted service certificate and private key. The `MCP_TOOL_SCOPES` mapping from chapter 10 already triggers exchange after the learner's scopes pass validation.
 
 ```sh
 kubectl set env deploy/mcp -n mcp --containers=auth-proxy \
-  ATHENZ_TOKEN_FILE_EXCHANGE_ENABLED=true \
   ATHENZ_TOKEN_EXCHANGE_CERT_PATH=/var/run/athenz-identity/api-mcp.crt \
-  ATHENZ_TOKEN_EXCHANGE_KEY_PATH=/var/run/athenz-identity/api-mcp.key \
-  MCP_TOOL_SCOPES='{"get_k8s_docs":"api:role.docs-getter","post_k8s_doc":"api:role.docs-poster","delete_k8s_doc":"api:role.docs-deleter"}'
+  ATHENZ_TOKEN_EXCHANGE_KEY_PATH=/var/run/athenz-identity/api-mcp.key
 ```
 
 ```sh
@@ -236,7 +262,9 @@ Example output:
 # 2026-09-23T04:44:42.190Z ! WARN  [mcp-runtime-proxy] [exchange] downstream token exchange failed | requestId=7dd7e8b3-f274-4708-90a0-3dd28c48e2a3 method=POST path=/mcp code=downstream_token_exchange_denied durationMs=53 message="Athenz denied the downstream token exchange." status=403
 ```
 
-For the same `requestId`, look for "access token verified", then "downstream token exchange failed" with `code=downstream_token_exchange_denied` and `status=403`. This is a different failure from the earlier "access denied": the learner can now access MCP, but the proxy's service identity still lacks permission to exchange the token for the API.
+For the same `requestId`, look for "access token verified", then "downstream token exchange failed" with `code=downstream_token_exchange_denied` and `status=403`. The updated proxy also logs `reason=athenz_error_response`, `athenzRequestSent=true`, and `athenzStatus` with Athenz's response status. The proxy can now read its service credentials and contact Athenz, but its service identity still lacks exchange permission.
+
+If the log instead shows `reason=service_certificate_unavailable` or `reason=service_private_key_unavailable`, check the Secret mount and credential paths above. `athenzRequestSent=false` means the request stopped before Athenz could check exchange permissions.
 
 ![MCP access passes, but Athenz denies Runtime Proxy's downstream exchange](../assets/core_10_exchange_denied.svg)
 

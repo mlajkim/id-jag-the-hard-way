@@ -151,10 +151,6 @@ test("builds namespace, secret, deployment, and service resources", () => {
     { name: "KUBERNETES_IDENTITY_SECRET_NAME", value: "docs-mcp-athenz-identity" },
   )
   assert.deepEqual(
-    proxyEnvironment.find(({ name }) => name === "ATHENZ_TOKEN_FILE_EXCHANGE_ENABLED"),
-    { name: "ATHENZ_TOKEN_FILE_EXCHANGE_ENABLED", value: "true" },
-  )
-  assert.deepEqual(
     proxyEnvironment.find(({ name }) => name === "ATHENZ_TOKEN_FILE_DIR"),
     { name: "ATHENZ_TOKEN_FILE_DIR", value: "/var/run/idthw-access-tokens" },
   )
