@@ -140,7 +140,7 @@ Restart `./tools/keep-k8s-port-forward.sh` after this change so the local connec
 
 Exit the current Codex session before checking the new connection:
 
-```text
+```sh
 /quit
 ```
 
@@ -266,7 +266,7 @@ cat .codex/settings.toml >> .codex/config.toml
 
 Exit the current Codex session:
 
-```text
+```sh
 /quit
 ```
 

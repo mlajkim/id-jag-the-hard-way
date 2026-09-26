@@ -237,7 +237,7 @@ Open the registered tool server and confirm that its OpenAPI specification lists
 Start a new chat with the document tool enabled and ask:
 
 ```sh
-Get docs with the API MCP Server
+Get docs with id-jag-the-hard-way-mcp
 ```
 
 The tool should return status `200` and the document list. If the API rejects an expired token, repeat the token issuance step above, replace the API key in the tool server settings with the fresh token, save, and start a new chat.

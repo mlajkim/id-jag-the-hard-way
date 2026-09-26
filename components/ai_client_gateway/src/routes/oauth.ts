@@ -1,8 +1,8 @@
 /**
- * OAuth2 Authorization Server routes for Claude Code MCP integration.
+ * OAuth2 discovery and Authorization Server routes for MCP clients.
  *
- * Claude Code discovers the gateway acts as an OAuth2 AS via
- * GET /.well-known/oauth-authorization-server, then drives a
+ * Clients discover the gateway's OAuth2 AS through protected resource
+ * metadata and GET /.well-known/oauth-authorization-server, then drive a
  * standard PKCE authorization_code flow. The gateway acts as a
  * thin shell that redirects to Keycloak and stores the resulting
  * ID token in a local session. The rest of the ID-JAG chain
@@ -55,6 +55,18 @@ function deriveChallenge(verifier: string): string {
 }
 
 // ── metadata ──────────────────────────────────────────────────────────────────
+
+router.get(
+  ["/.well-known/oauth-protected-resource", "/.well-known/oauth-protected-resource/mcp"],
+  (req: Request, res: Response) => {
+    const resourcePath = req.path.endsWith("/mcp") ? "/mcp" : "";
+    res.json({
+      resource: `${PUBLIC_BASE_URL}${resourcePath}`,
+      authorization_servers: [PUBLIC_BASE_URL],
+      bearer_methods_supported: ["header"],
+    });
+  },
+);
 
 router.get("/.well-known/oauth-authorization-server", (_req: Request, res: Response) => {
   res.json({

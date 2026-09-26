@@ -252,7 +252,7 @@ cat .codex/settings.toml >> .codex/config.toml
 
 현재 Codex 세션을 종료합니다:
 
-```text
+```sh
 /quit
 ```
 

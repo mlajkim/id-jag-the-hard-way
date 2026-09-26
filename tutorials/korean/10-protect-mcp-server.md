@@ -152,7 +152,7 @@ kubectl patch svc mcp -n mcp --patch '{"spec":{"ports":[{"port":8081,"targetPort
 
 변경된 연결을 확인하기 전에 현재 Codex 세션을 종료합니다:
 
-```text
+```sh
 /quit
 ```
 
@@ -282,7 +282,7 @@ cat .codex/settings.toml >> .codex/config.toml
 
 현재 Codex 세션을 종료합니다:
 
-```text
+```sh
 /quit
 ```
 

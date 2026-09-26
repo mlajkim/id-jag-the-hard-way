@@ -230,7 +230,7 @@ cat .codex/settings.toml >> .codex/config.toml
 
 Exit the current Codex session:
 
-```text
+```sh
 /quit
 ```
 

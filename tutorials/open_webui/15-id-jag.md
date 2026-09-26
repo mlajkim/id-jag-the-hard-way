@@ -12,6 +12,7 @@ Authorize AI Client Gateway to exchange your Keycloak ID token for an ID-JAG wit
 - [Verify](#verify)
 - [Understand the Result](#understand-the-result)
 - [Finally](#finally)
+- [Closing](#closing)
 
 <!-- /TOC -->
 
@@ -24,6 +25,13 @@ Create one JAG-exchange role in each target domain: `api` for document access an
 ```sh
 ./tools/athenz/create-role.sh "api" "docs-getter-jag-exchanger"
 ./tools/athenz/create-role.sh "mcp" "mcp-accessor-jag-exchanger"
+```
+
+```sh
+#   ·  Creating Role: api:role.docs-getter-jag-exchanger...
+#   ✔  Role created: api:role.docs-getter-jag-exchanger
+#   ·  Creating Role: mcp:role.mcp-accessor-jag-exchanger...
+#   ✔  Role created: mcp:role.mcp-accessor-jag-exchanger
 ```
 
 In Athenz, you must allow the `zts.jag_exchange` action on the target roles:
@@ -60,8 +68,8 @@ Follow the steps below to verify the setup.
 
 Now, return to the AI agent UI and test the exact same prompt that failed previously:
 
-```
-get docs!
+```sh
+Get docs with id-jag-the-hard-way-mcp
 ```
 
 ![16_successful_attrival_from_server](./assets/16_successful_attrival_from_server.png)
@@ -72,12 +80,14 @@ The response should contain the documents returned by the API.
 
 ## Understand the Result
 
-The logs show each authorization boundary in the chain. The gateway requests `mcp:role.mcp-accessor api:role.docs-getter` with access-token audience `mcp`. MCP Runtime Proxy, acting as `mcp.idthw-api-mcp`, then exchanges that token for audience `api`, retaining only `api:role.docs-getter`.
+The AI Client Gateway resolved the signed-in user's Keycloak ID token from the Open WebUI session, exchanged it for an ID-JAG token, and then fetched an Athenz access token.
 
-1. The AI Client Gateway resolved the signed-in user's Keycloak ID token from the Open WebUI session, exchanged it for an ID-JAG token, and then fetched an Athenz access token.
+The gateway also logs requests and responses. Filter for token-exchange messages and show the latest seven lines:
 
 ```sh
-kubectl logs -n ai deployment/ai-client-gateway --tail=30
+kubectl logs deploy/ai-client-gateway -n ai -c ai-client-gateway --tail=100 \
+  | grep -E '^\[Athenz (ID-JAG|AT)\]' \
+  | tail -n 7
 ```
 
 ```sh
@@ -89,50 +99,19 @@ kubectl logs -n ai deployment/ai-client-gateway --tail=30
 # [Athenz AT] 🔑 Successfully fetched Athenz Access Token. Granted scope: ["api:role.docs-getter","mcp-accessor"]
 ```
 
-2. MCP Runtime Proxy validates the token before forwarding a protected call. Its [verifier](../../components/mcp-runtime-proxy/src/auth.ts) accepts only `alg=RS256` and `typ=at+jwt`, verifies the signature against trusted ZTS signing keys, checks `exp` and any `nbf` restriction, requires audience `mcp`, and checks the `mcp:role.mcp-accessor` scope.
-
-Inspect the `auth-proxy` container, which runs MCP Runtime Proxy:
-
-```sh
-kubectl logs -n mcp deployment/mcp -c auth-proxy --tail=50
-```
-
-Find an `access token verified` line in the default text logs. It is emitted only after all of those checks pass. Check its `audiences`, `scopes`, `keyId`, and `expiresInSeconds`, then match its `requestId` to a `request completed` line with `upstreamStatus=200`. Short scopes such as `mcp-accessor` are accepted only when `mcp` is the sole audience.
-
-A public discovery request can also complete successfully, so `request completed` alone does not confirm token validation. Reading the JWT's `alg` header alone does not verify its signature either.
-
-With `LOG_FORMAT=json` set on the `auth-proxy` container, the same events appear as `access_token_verified` and `request_completed`, with `"upstreamStatus":200` in the JSON record. Older Runtime Proxy images also use this JSON format by default.
-
-3. MCP Runtime Proxy performs the downstream token exchange as `mcp.idthw-api-mcp`. It writes the API-specific `docs-getter` token to a unique request file and injects the path into the tool call. `idthw-demo-api-mcp` reads that file before calling the API; the proxy removes it after the response.
-
-<details>
-<summary>Confirm Runtime Proxy's token exchange</summary>
-
-```sh
-kubectl logs -n mcp deployment/mcp -c auth-proxy --tail=20
-```
-
-Look for `downstream access token published` with scope `api:role.docs-getter`, followed by `downstream access token removed` for the same request. The exchanged token has audience `api`.
-
-</details>
-
-4. The API independently [validates the exchanged token](../../components/idthw-demo-api/src/auth.ts) using trusted ZTS signing keys, checks its type, lifetime, and audience, and requires `api:role.docs-getter` before returning the docs.
-
-```sh
-kubectl logs -n api deployment/api-server --tail=20
-```
-
-```sh
-# Look for event "request_completed", method "GET", status 200.
-```
-
-The proxy checks MCP access, and the API checks document access. The downstream exchange changes the audience from `mcp` to `api` and retains only the document-reading scope.
-
 ## Finally
 
-Thank you for following along. Hope it was helpful.
+🎉 Congratulations! You've completed the "ID-JAG The Hard Way" tutorial.
 
-If you found this tutorial helpful, please consider giving either repository a ⭐ on GitHub!
+You have connected user sign-in to delegated API access. Athenz policies control token issuance and exchange; the proxy and API enforce each token's audience and scopes. Changes to role membership affect new grants after ZTS observes them, while issued tokens can remain usable until they expire.
+
+The diagram below shows the complete flow you have built:
+
+![Core tutorial architecture: IdP, IdP AS, Authorization Server, AI Agent, gateway, MCP, and Resource Server](./assets/core_15_idjag_flow.svg)
+
+## Closing
+
+If you found this tutorial useful, please consider giving either repository a ⭐ on GitHub!
 
 | Repository                                                                       | Stars                                                                                                                                                                                                   | Forks                                                                                                                                                                                              |
 |----------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
