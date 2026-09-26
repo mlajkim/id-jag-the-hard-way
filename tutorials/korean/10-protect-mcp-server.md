@@ -1,12 +1,12 @@
 | 이전 | 현재 | 다음 |
 |:---:|:---:|:---:|
-| [Codex](./09-ai-agent.md) | **MCP 서버 보호** | [토큰 교환](./11-token-exchange.md) |
+| [Codex](./09-ai-agent.md) | **MCP 서버 보호** | [토큰 교환 (Token Exchange)](./11-token-exchange.md) |
 
 <a id="protect-mcp-server--codex"></a>
 
 # MCP 서버 보호 — Codex
 
-이전 장에서는 AI 클라이언트가 Athenz 액세스 토큰 (Access Token, AT)으로 문서를 조회했습니다. AT로 API 서버를 보호한 것처럼 MCP 서버도 보호해 보겠습니다.
+저번 장에서는 AI 클라이언트가 Athenz 액세스 토큰 (Access Token, AT)으로 문서를 조회했습니다. AT로 API 서버를 보호한 것처럼 MCP 서버도 보호해 보겠습니다.
 
 [MCP 인가 명세](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization#access-token-privilege-restriction)의 관련 내용은 다음과 같습니다(번역):
 
@@ -150,7 +150,7 @@ kubectl patch svc mcp -n mcp --patch '{"spec":{"ports":[{"port":8081,"targetPort
 
 ## MCP 접근 거부 확인
 
-프록시를 배치했으므로 이전 장의 설정을 그대로 사용해 Codex에 문서 조회를 다시 요청합니다:
+프록시를 배치했으므로 저번 장의 설정을 그대로 사용해 Codex에 문서 조회를 다시 요청합니다:
 
 ```sh
 Get docs with id-jag-the-hard-way-mcp
@@ -160,7 +160,7 @@ Codex에 **Authentication required**가 표시되어야 합니다:
 
 ![get_k8s_docs가 거부되어 Authentication required를 표시하는 Codex](../codex/assets/10_codex_get_k8s_docs_authentication_required.png)
 
-Codex는 계속 연결하고 도구 목록을 조회할 수 있지만, Runtime Proxy는 이 도구 호출을 거부합니다. 이전 장의 토큰은 수신 대상(audience)이 `api`이지만, 프록시는 `mcp`를 요구하기 때문입니다. 만료되지 않은 API 토큰도 이 검사에서 거부됩니다. 다음 단계에서는 audience가 `mcp`인 토큰을 발급받습니다.
+Codex는 계속 연결하고 도구 목록을 조회할 수 있지만, Runtime Proxy는 이 도구 호출을 거부합니다. 저번 장의 토큰은 수신 대상(audience)이 `api`이지만, 프록시는 `mcp`를 요구하기 때문입니다. 만료되지 않은 API 토큰도 이 검사에서 거부됩니다. 다음 단계에서는 audience가 `mcp`인 토큰을 발급받습니다.
 
 Codex의 인증 메시지가 발생한 이유를 프록시 로그에서 확인합니다:
 
@@ -255,7 +255,7 @@ MCP 역할은 도구 실행 권한을, API 역할은 문서 조회 권한을 나
 
 이전 단계에서 발급받은 MCP용 액세스 토큰으로 `.codex/config.toml`을 업데이트합니다. `_my_access_token`을 발급받은 셸에서 아래 블록을 실행합니다. 토큰이 만료되었다면 먼저 토큰 발급 명령을 다시 실행해 주세요.
 
-09장의 튜토리얼 설정을 사용 중이라면 아래 블록을 실행합니다. 다른 설정을 추가했다면 파일 전체를 바꾸지 말고 해당 서버의 `http_headers` 항목만 수정해 주세요:
+저번 장의 튜토리얼 설정을 사용 중이라면 아래 블록을 실행합니다. 다른 설정을 추가했다면 파일 전체를 바꾸지 말고 해당 서버의 `http_headers` 항목만 수정해 주세요:
 
 ```sh
 _mcp_port=$(./tools/port.sh mcp)
@@ -305,7 +305,7 @@ kubectl logs deploy/mcp -n mcp -c auth-proxy --tail=3
 # 2026-XX-XXT07:05:21.312Z ✓ INFO  [mcp-runtime-proxy] [auth] access token verified | requestId=eb1c16b4-6ec0-445f-905d-7baa32cb4952 method=POST path=/mcp audiences=["mcp"] clientId=human.idjag-learner expiresAt=2026-XX-XXT08:04:16.000Z expiresInSeconds=3535 keyId=athenz-zts-server-example scopes=["api:role.docs-getter","mcp-accessor"] subject=human.idjag-learner userId=human.idjag-learner
 ```
 
-`access token verified`는 MCP 접근 검사를 통과했다는 뜻입니다. 뒤이어 발생하는 `502 downstream_token_exchange_unavailable`은 이 단계에서 예상되는 오류이며, 11장에서 해결합니다.
+`access token verified`는 MCP 접근 검사를 통과했다는 뜻입니다. 뒤이어 발생하는 `502 downstream_token_exchange_unavailable`은 이 단계에서 예상되는 오류이며, 다음 장에서 해결합니다.
 
 <a id="next-steps"></a>
 
@@ -313,4 +313,4 @@ kubectl logs deploy/mcp -n mcp -c auth-proxy --tail=3
 
 다음 장에서는 MCP가 보호된 API에서 문서를 조회할 수 있도록 토큰 교환 (Token Exchange)을 설정합니다.
 
-다음: [토큰 교환 — Codex](./11-token-exchange.md)
+다음: [토큰 교환 (Token Exchange) — Codex](./11-token-exchange.md)

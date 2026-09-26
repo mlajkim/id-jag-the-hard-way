@@ -1,6 +1,6 @@
 | 이전 | 현재 | 다음 |
 |:---:|:---:|:---:|
-| [Kubernetes 클러스터](./03-kubernetes-cluster.md) | **리소스 서버** | [인가 서버](./05-authorization-server.md) |
+| [Kubernetes 클러스터](./03-kubernetes-cluster.md) | **리소스 서버 (Resource Server)** | [인가 서버 (Authorization Server)](./05-authorization-server.md) |
 
 <a id="resource-server"></a>
 
@@ -148,4 +148,4 @@ kubectl exec deploy/api-server -n api \
 
 이제 API에 접근하려면 액세스 토큰이 필요합니다. 다음 장에서는 인가 서버 (Authorization Server)로 Athenz를 배포합니다.
 
-다음: [인가 서버](./05-authorization-server.md)
+다음: [인가 서버 (Authorization Server)](./05-authorization-server.md)

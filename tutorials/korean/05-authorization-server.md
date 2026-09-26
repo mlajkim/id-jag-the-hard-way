@@ -1,6 +1,6 @@
 | 이전 | 현재 | 다음 |
 |:---:|:---:|:---:|
-| [리소스 서버](./04-resource-server.md) | **인가 서버** | [액세스 토큰](./06-access-token.md) |
+| [리소스 서버 (Resource Server)](./04-resource-server.md) | **인가 서버 (Authorization Server)** | [액세스 토큰 (Access Token)](./06-access-token.md) |
 
 <a id="authorization-server"></a>
 
@@ -156,4 +156,4 @@ _athenz_ui_port=$(./tools/port.sh athenz-ui)
 
 다음 장에서는 API 도메인을 만들고 스코프가 지정된 액세스 토큰 (Access Token)을 요청합니다:
 
-다음: [액세스 토큰](./06-access-token.md)
+다음: [액세스 토큰 (Access Token)](./06-access-token.md)

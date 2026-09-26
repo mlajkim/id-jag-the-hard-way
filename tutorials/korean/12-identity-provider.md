@@ -1,6 +1,6 @@
 | 이전 | 현재 | 다음 |
 |:---:|:---:|:---:|
-| [토큰 교환](./11-token-exchange.md) | **ID 제공자** | [신뢰할 수 있는 ID 제공자](./13-trusted-identity-provider.md) |
+| [토큰 교환 (Token Exchange)](./11-token-exchange.md) | **ID 제공자 (Identity Provider, IdP)** | [신뢰할 수 있는 ID 제공자 (Identity Provider, IdP)](./13-trusted-identity-provider.md) |
 
 <a id="identity-provider--codex"></a>
 
@@ -235,4 +235,4 @@ Keycloak은 실행 중이고 설정도 완료되었지만, 인가 서버 (Author
 
 Keycloak이 준비되었지만 Athenz는 아직 Keycloak의 ID 토큰을 신뢰하지 않습니다. 다음 장에서는 Athenz가 이 토큰을 받아들이고 검증하도록 설정합니다.
 
-다음: [신뢰할 수 있는 ID 제공자](./13-trusted-identity-provider.md)
+다음: [신뢰할 수 있는 ID 제공자 (Identity Provider, IdP)](./13-trusted-identity-provider.md)

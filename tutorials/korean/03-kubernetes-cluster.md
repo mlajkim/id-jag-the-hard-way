@@ -1,6 +1,6 @@
 | 이전 | 현재 | 다음 |
 |:---:|:---:|:---:|
-| [사전 준비](./02-prerequisites.md) | **Kubernetes 클러스터** | [리소스 서버](./04-resource-server.md) |
+| [사전 준비](./02-prerequisites.md) | **Kubernetes 클러스터** | [리소스 서버 (Resource Server)](./04-resource-server.md) |
 
 <a id="kubernetes-cluster"></a>
 
@@ -21,7 +21,7 @@
 
 ## 로컬 Kubernetes 클러스터 생성
 
-이전 장에서 설치한 kind로 로컬 클러스터를 만듭니다:
+저번 장에서 설치한 kind로 로컬 클러스터를 만듭니다:
 
 ```sh
 kind create cluster
@@ -78,4 +78,4 @@ kubectl get ns
 
 Kubernetes 클러스터가 실행 중입니다. 다음 장에서는 문서 API를 배포하고 접근할 수 있는지 확인합니다.
 
-다음: [리소스 서버](./04-resource-server.md)
+다음: [리소스 서버 (Resource Server)](./04-resource-server.md)

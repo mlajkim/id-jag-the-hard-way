@@ -1,12 +1,12 @@
 | 이전 | 현재 | 다음 |
 |:---:|:---:|:---:|
-| [액세스 토큰](./06-access-token.md) | **권한 세분화** | [리소스 서버를 위한 MCP 서버](./08-mcp-server-for-resource-server.md) |
+| [액세스 토큰 (Access Token)](./06-access-token.md) | **권한 세분화** | [리소스 서버 (Resource Server)를 위한 MCP 서버](./08-mcp-server-for-resource-server.md) |
 
 <a id="granular-permission"></a>
 
 # 권한 세분화
 
-이전 장에서는 관리자 인증서로 액세스 토큰 (Access Token)을 발급받았습니다. 이번 장에서는 관리자 인증 정보 대신 별도의 실습용 ID를 사용하고, `api:role.docs-getter` 스코프 (Scope)로 접근할 수 있는지 확인합니다:
+저번 장에서는 관리자 인증서로 액세스 토큰 (Access Token)을 발급받았습니다. 이번 장에서는 관리자 인증 정보 대신 별도의 실습용 ID를 사용하고, `api:role.docs-getter` 스코프 (Scope)로 접근할 수 있는지 확인합니다:
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
@@ -227,4 +227,4 @@ curl -sS -k -H "Authorization: Bearer $_my_access_token" http://localhost:14443/
 
 이제 실습자는 스코프가 지정된 액세스 토큰으로 문서를 조회할 수 있습니다. 다음 장에서는 MCP 서버를 통해 API를 사용할 수 있도록 구성합니다.
 
-다음: [리소스 서버를 위한 MCP 서버](./08-mcp-server-for-resource-server.md)
+다음: [리소스 서버 (Resource Server)를 위한 MCP 서버](./08-mcp-server-for-resource-server.md)

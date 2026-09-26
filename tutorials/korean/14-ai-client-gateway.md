@@ -1,6 +1,6 @@
 | 이전 | 현재 | 다음 |
 |:---:|:---:|:---:|
-| [신뢰할 수 있는 ID 제공자](./13-trusted-identity-provider.md) | **AI Client Gateway** | [ID-JAG](./15-id-jag.md) |
+| [신뢰할 수 있는 ID 제공자 (Identity Provider, IdP)](./13-trusted-identity-provider.md) | **AI Client Gateway** | [ID-JAG](./15-id-jag.md) |
 
 <a id="ai-client-gateway--codex"></a>
 
@@ -28,7 +28,7 @@ Codex CLI와 MCP 서비스 사이에 AI Client Gateway를 배포합니다. 게�
 
 게이트웨이는 사람이 제어하는 클라이언트 측 구성 요소이므로 `human` 네임스페이스에 배포합니다.
 
-`human` 네임스페이스를 만듭니다. 이전 장에서 이미 만들었다면 건너뜁니다:
+`human` 네임스페이스를 만듭니다. 앞서 이미 만들었다면 건너뜁니다:
 
 ```sh
 kubectl create ns human

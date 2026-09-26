@@ -1,12 +1,12 @@
 | 이전 | 현재 | 다음 |
 |:---:|:---:|:---:|
-| [MCP 서버 보호](./10-protect-mcp-server.md) | **토큰 교환** | [ID 제공자](./12-identity-provider.md) |
+| [MCP 서버 보호](./10-protect-mcp-server.md) | **토큰 교환 (Token Exchange)** | [ID 제공자 (Identity Provider, IdP)](./12-identity-provider.md) |
 
 <a id="token-exchange--codex"></a>
 
 # 토큰 교환 (Token Exchange) — Codex
 
-이전 장에서는 Runtime Proxy가 실습자의 MCP 토큰을 받아들였지만, 문서 조회는 여전히 `502 downstream_token_exchange_unavailable`로 실패했습니다.
+저번 장에서는 Runtime Proxy가 실습자의 MCP 토큰을 받아들였지만, 문서 조회는 여전히 `502 downstream_token_exchange_unavailable`로 실패했습니다.
 
 이번 장에서는 Runtime Proxy의 서비스 ID (Service Identity)를 만들고, 토큰 교환과 토큰 파일 공유를 설정한 뒤, 필요한 Athenz 권한을 부여해 Codex로 문서를 조회합니다.
 
@@ -69,7 +69,7 @@ Athenz는 해당 서비스가 `mcp` audience의 토큰을 API의 `docs-getter` �
 
 ## MCP 서비스 ID 생성
 
-Runtime Proxy가 Athenz ZTS에 토큰 교환을 요청할 때 사용할 서비스 ID를 만듭니다. 10장에서 만든 `mcp` 도메인에 `idthw-api-mcp`를 생성합니다. 인증 주체 (Principal)는 `mcp.idthw-api-mcp`이며, 개인 키는 Runtime Proxy에만 마운트합니다.
+Runtime Proxy가 Athenz ZTS에 토큰 교환을 요청할 때 사용할 서비스 ID를 만듭니다. 저번 장에서 만든 `mcp` 도메인에 `idthw-api-mcp`를 생성합니다. 인증 주체 (Principal)는 `mcp.idthw-api-mcp`이며, 개인 키는 Runtime Proxy에만 마운트합니다.
 
 실습용 ID 및 인증서 생성 스크립트로 MCP 서비스 ID인 `mcp.idthw-api-mcp`를 만듭니다:
 
@@ -98,7 +98,7 @@ Runtime Proxy가 Athenz ZTS에 토큰 교환을 요청할 때 사용할 서비�
 
 ## Kubernetes Secret 생성
 
-서비스 인증서와 개인 키를 `mcp` 네임스페이스에 저장합니다. 이 Secret은 Runtime Proxy에만 마운트합니다. CA는 10장에서 마운트한 별도의 CA Secret에 그대로 둡니다:
+서비스 인증서와 개인 키를 `mcp` 네임스페이스에 저장합니다. 이 Secret은 Runtime Proxy에만 마운트합니다. CA는 저번 장에서 마운트한 별도의 CA Secret에 그대로 둡니다:
 
 ```sh
 kubectl -n mcp create secret generic api-mcp-cert \
@@ -187,7 +187,7 @@ EOF
 
 ### 서비스 인증 정보 경로 설정
 
-Runtime Proxy가 마운트된 서비스 인증서와 개인 키를 사용하도록 경로를 설정합니다. 10장에서 지정한 `MCP_TOOL_SCOPES` 매핑에 따라 실습자의 스코프 검증이 통과하면 교환이 실행됩니다.
+Runtime Proxy가 마운트된 서비스 인증서와 개인 키를 사용하도록 경로를 설정합니다. 저번 장에서 지정한 `MCP_TOOL_SCOPES` 매핑에 따라 실습자의 스코프 검증이 통과하면 교환이 실행됩니다.
 
 ```sh
 kubectl set env deploy/mcp -n mcp --containers=auth-proxy \
@@ -217,7 +217,7 @@ kubectl rollout status deploy/mcp -n mcp
 
 ## 실습자 토큰 갱신
 
-10장에서 사용한 audience와 두 스코프로 새 실습자 토큰을 발급받습니다:
+저번 장에서 사용한 audience와 두 스코프로 새 실습자 토큰을 발급받습니다:
 
 ```sh
 _scope="mcp:role.mcp-accessor api:role.docs-getter"
@@ -396,4 +396,4 @@ kubectl logs deploy/mcp -n mcp -c auth-proxy --tail=5
 
 다음 장에서는 사용자가 로그인하고 ID 토큰을 받을 수 있도록 Keycloak을 배포합니다.
 
-다음: [ID 제공자](./12-identity-provider.md)
+다음: [ID 제공자 (Identity Provider, IdP)](./12-identity-provider.md)

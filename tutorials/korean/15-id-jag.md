@@ -61,11 +61,11 @@ AI Client Gateway에 Keycloak ID 토큰 (ID Token)을 ID-JAG로 교환할 권한
 /new
 ```
 
-이전 장에서 나타났던 MCP 시작 경고가 사라집니다:
+저번 장에서 나타났던 MCP 시작 경고가 사라집니다:
 
 ![MCP 시작 경고가 사라진 Codex](../codex/assets/16_codex_mcp_startup_warning_gone.png)
 
-이전 장에서 실패했던 프롬프트를 다시 보냅니다:
+저번 장에서 실패했던 프롬프트를 다시 보냅니다:
 
 ```
 get docs from k8s doc server!

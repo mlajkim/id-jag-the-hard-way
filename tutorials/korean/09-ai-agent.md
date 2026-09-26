@@ -1,6 +1,6 @@
 | 이전 | 현재 | 다음 |
 |:---:|:---:|:---:|
-| [리소스 서버를 위한 MCP 서버](./08-mcp-server-for-resource-server.md) | **Codex** | [MCP 서버 보호](./10-protect-mcp-server.md) |
+| [리소스 서버 (Resource Server)를 위한 MCP 서버](./08-mcp-server-for-resource-server.md) | **Codex** | [MCP 서버 보호](./10-protect-mcp-server.md) |
 
 <a id="codex"></a>
 

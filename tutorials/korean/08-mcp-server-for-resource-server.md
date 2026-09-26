@@ -1,6 +1,6 @@
 | 이전 | 현재 | 다음 |
 |:---:|:---:|:---:|
-| [권한 세분화](./07-granular-permission.md) | **리소스 서버를 위한 MCP 서버** | [Codex](./09-ai-agent.md) |
+| [권한 세분화](./07-granular-permission.md) | **리소스 서버 (Resource Server)를 위한 MCP 서버** | [Codex](./09-ai-agent.md) |
 
 <a id="mcp-server-for-resource-server"></a>
 

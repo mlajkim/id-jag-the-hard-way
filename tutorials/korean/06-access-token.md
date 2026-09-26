@@ -1,12 +1,12 @@
 | 이전 | 현재 | 다음 |
 |:---:|:---:|:---:|
-| [인가 서버](./05-authorization-server.md) | **액세스 토큰** | [권한 세분화](./07-granular-permission.md) |
+| [인가 서버 (Authorization Server)](./05-authorization-server.md) | **액세스 토큰 (Access Token)** | [권한 세분화](./07-granular-permission.md) |
 
 <a id="access-token"></a>
 
 # 액세스 토큰 (Access Token)
 
-04장에서는 액세스 토큰 검증을 켜고 인증 정보가 없는 요청이 실패하는 것을 확인했습니다. 이제 API가 Athenz를 신뢰하도록 설정하고, 액세스 토큰을 발급받아 문서를 조회합니다.
+지금까지 리소스 서버에 액세스 토큰 검증을 켜고 인증 정보가 없는 요청이 실패하는 것을 확인했습니다. 이제 API가 Athenz를 신뢰하도록 설정하고, 액세스 토큰을 발급받아 문서를 조회합니다.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
@@ -37,7 +37,7 @@ API를 나타내는 Athenz 도메인을 만듭니다:
 #   ✔  TLD created: api
 ```
 
-이 도메인은 04장에서 만든 Kubernetes 네임스페이스 `api`와 별개입니다.
+이 도메인은 리소스 서버를 배포할 때 만든 Kubernetes 네임스페이스 `api`와 별개입니다.
 
 <a id="trust-the-zts-signing-key-endpoint"></a>
 
@@ -71,7 +71,7 @@ EOF
 kubectl rollout status deploy/api-server -n api
 ```
 
-컨테이너 이름은 04장에서 사용한 이미지와 같은 `idthw-demo-api`입니다. Deployment와 Service 이름은 `api-server`입니다.
+컨테이너 이름은 리소스 서버를 배포할 때 사용한 이미지와 같은 `idthw-demo-api`입니다. Deployment와 Service 이름은 `api-server`입니다.
 
 API가 ZTS의 HTTPS 인증서를 신뢰할 수 없으면 액세스 토큰을 포함한 요청에 `503 Service Unavailable`을 반환합니다:
 
@@ -210,7 +210,7 @@ _root_user_at=$(./tools/athenz/fetch-access-token.sh \
 
 ## 보호된 API 호출
 
-04장에서는 액세스 토큰이 없어 API가 요청을 거부했습니다. 이제 이전 단계에서 발급받은 토큰을 `Authorization: Bearer <token>`으로 전달합니다:
+앞서 액세스 토큰 없이 요청했을 때는 API가 요청을 거부했습니다. 이제 이전 단계에서 발급받은 토큰을 `Authorization: Bearer <token>`으로 전달합니다:
 
 > [!NOTE]
 > `curl: (52) Empty reply from server`가 표시되면 몇 초 기다린 뒤 다시 시도해 주세요.

@@ -1,6 +1,6 @@
 | 이전 | 현재 | 다음 |
 |:---:|:---:|:---:|
-| [ID 제공자](./12-identity-provider.md) | **신뢰할 수 있는 ID 제공자** | [AI Client Gateway](./14-ai-client-gateway.md) |
+| [ID 제공자 (Identity Provider, IdP)](./12-identity-provider.md) | **신뢰할 수 있는 ID 제공자 (Identity Provider, IdP)** | [AI Client Gateway](./14-ai-client-gateway.md) |
 
 <a id="trusted-identity-provider--codex"></a>
 
