@@ -150,7 +150,19 @@ kubectl patch svc mcp -n mcp --patch '{"spec":{"ports":[{"port":8081,"targetPort
 
 ## MCP 접근 거부 확인
 
-프록시를 배치했으므로 저번 장의 설정을 그대로 사용해 Codex에 문서 조회를 다시 요청합니다:
+변경된 연결을 확인하기 전에 현재 Codex 세션을 종료합니다:
+
+```text
+/quit
+```
+
+프로젝트 디렉터리에서 Codex를 다시 실행하고 대화를 이어가 프록시를 통해 새로 연결하도록 합니다:
+
+```sh
+codex resume --last
+```
+
+저번 장의 설정을 그대로 사용해 Codex에 문서 조회를 다시 요청합니다:
 
 ```sh
 Get docs with id-jag-the-hard-way-mcp

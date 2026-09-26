@@ -10,14 +10,14 @@
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
-- [Keycloak 이미지 불러오기](#load-the-keycloak-image)
-- [Kubernetes에 Keycloak 배포](#deploy-keycloak-in-k8s)
-- [브라우저에서 Keycloak 열기](#open-keycloak-in-your-browser)
-- [Keycloak 클라이언트 등록](#register-the-keycloak-client)
-- [실습자 계정 생성](#create-the-learner-account)
-- [토큰 유효기간 설정](#configure-the-token-lifespan)
-- [결과 확인](#review-the-result)
-- [다음 단계](#next-steps)
+- [Keycloak 이미지 다운로드 및 불러오기](#keycloak-이미지-다운로드-및-불러오기)
+- [Kubernetes에 Keycloak 배포](#kubernetes에-keycloak-배포)
+- [브라우저에서 Keycloak 열기](#브라우저에서-keycloak-열기)
+- [Keycloak 클라이언트 등록](#keycloak-클라이언트-등록)
+- [실습자 계정 생성](#실습자-계정-생성)
+- [토큰 유효기간 설정](#토큰-유효기간-설정)
+- [결과 확인](#결과-확인)
+- [다음 단계](#다음-단계)
 
 <!-- /TOC -->
 
@@ -25,29 +25,25 @@
 
 <a id="load-the-keycloak-image"></a>
 
-## Keycloak 이미지 불러오기
+## Keycloak 이미지 다운로드 및 불러오기
 
-**kind**를 사용한다면 다음 단계를 진행합니다:
-
-> [!NOTE]
-> **Apple Silicon(arm64)**에서는 여러 플랫폼을 포함한 매니페스트 이미지로 `kind load docker-image`를 실행하면 실패합니다. 먼저 단일 플랫폼 이미지를 빌드합니다:
->
-> ```sh
-> docker buildx build --platform linux/arm64 --load --provenance=false \
->   -t keycloak:kind-load - <<'EOF'
-> FROM quay.io/keycloak/keycloak:latest
-> EOF
-> kind load docker-image keycloak:kind-load
-> ```
->
-> 이후 아래의 `kubectl create deployment` 명령에서 `quay.io/keycloak/keycloak:latest`를 `keycloak:kind-load`로 바꿔 주세요.
-
-**amd64**에서는 이미지를 내려받고 불러옵니다:
+Docker의 아키텍처(`arm64` 또는 `amd64`)에 맞는 `quay.io/keycloak/keycloak:latest` 이미지를 준비합니다. 현재 `kubectl` 컨텍스트가 kind 클러스터라면 같은 이미지 이름으로 해당 클러스터에 불러옵니다:
 
 ```sh
-docker pull quay.io/keycloak/keycloak:latest
-kind load docker-image quay.io/keycloak/keycloak:latest
+./scripts/keycloak/download-and-load-keycloak.sh
 ```
+
+```sh
+# Preparing quay.io/keycloak/keycloak:latest for linux/arm64...
+# [+] Building 1.4s (5/5) FINISHED                                                                              docker:desktop-linux
+# ...
+
+# View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/qqbttlri10dikdejvpcem98up
+# Image: "quay.io/keycloak/keycloak:latest" with ID "sha256:dc0f6a6c61f4170f154b6dd89dfc160c839fd24989d2c798af2a7072498bfbac" not yet present on node "test-control-plane", loading...
+# Loaded quay.io/keycloak/keycloak:latest into kind cluster test.
+```
+
+예를 들어 `kind-test` 컨텍스트에서는 `test` 클러스터에 이미지를 불러옵니다. 다른 Kubernetes 환경에서는 배포할 때 원본 이미지를 내려받습니다.
 
 <a id="deploy-keycloak-in-k8s"></a>
 
@@ -59,13 +55,21 @@ kind load docker-image quay.io/keycloak/keycloak:latest
 kubectl create ns idp
 ```
 
-Keycloak을 배포합니다:
+```sh
+# namespace/idp created
+```
+
+모든 환경에서 같은 이미지 이름으로 Keycloak을 배포합니다:
 
 ```sh
 kubectl create deployment keycloak --image=quay.io/keycloak/keycloak:latest -n idp
 ```
 
-관리자 로그인 정보를 설정하고 개발 모드로 시작합니다:
+```sh
+# deployment.apps/keycloak created
+```
+
+관리자 로그인 정보를 설정하고 개발 모드로 시작합니다. `imagePullPolicy: IfNotPresent`도 설정해 kind에 불러온 이미지를 사용하도록 합니다. 이 설정이 없으면 `latest` 태그의 기본 정책인 `Always`가 적용되어 이미지가 있어도 레지스트리에 접속합니다:
 
 ```sh
 _keycloak_admin=$(./tools/config.sh keycloak admin)
@@ -89,6 +93,10 @@ EOF
 )"
 ```
 
+```sh
+# deployment.apps/keycloak patched
+```
+
 Pod가 다시 시작되어도 Keycloak 데이터가 유지되도록 PVC를 만듭니다:
 
 ```sh
@@ -104,6 +112,10 @@ spec:
     requests:
       storage: 1Gi
 EOF
+```
+
+```sh
+# persistentvolumeclaim/keycloak-data-pvc created
 ```
 
 PVC를 마운트합니다:
@@ -126,10 +138,18 @@ EOF
 )"
 ```
 
+```sh
+# deployment.apps/keycloak patched
+```
+
 Deployment에 접근할 수 있도록 Service를 만듭니다:
 
 ```sh
 kubectl expose deployment keycloak --port=8080 -n idp
+```
+
+```sh
+# service/keycloak exposed
 ```
 
 <a id="open-keycloak-on-browser"></a>
@@ -145,6 +165,10 @@ kubectl wait -n idp \
   --for=condition=ready pod \
   --selector=app=keycloak \
   --timeout=180s
+```
+
+```sh
+# pod/keycloak-<pod-suffix> condition met
 ```
 
 브라우저에서 Keycloak을 엽니다(사용자 이름: `admin`, 비밀번호: `admin`):
@@ -224,8 +248,6 @@ Keycloak을 배포하고 다음 항목을 만들었습니다:
 
 - AI 클라이언트(Codex CLI)를 나타내는 클라이언트 `human.idjag-learner.codex`
 - API 접근을 요청하는 사람을 나타내는 사용자 `idjag-learner`
-
-Keycloak은 실행 중이고 설정도 완료되었지만, 인가 서버 (Authorization Server)인 Athenz는 아직 Keycloak을 신뢰하지 않습니다. 다음 장에서 이 신뢰 관계를 설정합니다.
 
 <a id="whats-next"></a>
 

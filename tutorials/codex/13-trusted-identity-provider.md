@@ -4,7 +4,9 @@
 
 # Trusted Identity Provider — Codex
 
-Configure Athenz to validate Keycloak ID tokens with the following steps. This establishes the identity provider trust needed for ID-JAG exchange.
+As an Authorization Server, Athenz cannot accept ID tokens from just any Identity Provider (IdP). An Athenz administrator must explicitly configure which IdPs it trusts.
+
+In the previous chapter, you deployed Keycloak, but Athenz does not yet trust it. In this chapter, you will configure Athenz to trust Keycloak and validate its ID tokens so they can be exchanged for ID-JAGs.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
@@ -39,6 +41,10 @@ kubectl patch deployment athenz-zts-server \
   --patch-file components/keycloak_token_exchange_provider/hack/static/zts-plugin-jar-mount-patch.yaml
 ```
 
+```sh
+# deployment.apps/athenz-zts-server patched
+```
+
 Wait for the rollout:
 
 ```sh
@@ -61,6 +67,8 @@ kubectl -n athenz exec deployment/athenz-zts-server \
 ```sh
 # -rw-r--r-- 1 root root 3237 May 1 14:26 keycloak-token-provider.jar
 ```
+
+We have now mounted the `KeycloakTokenExchangeProvider` plugin JAR in the ZTS server:
 
 ![Plugin mounted in ZTS server](../assets/14_place_plugin.svg)
 
@@ -87,11 +95,28 @@ data:
 EOF
 ```
 
+```sh
+# configmap/zts-providers-config created
+```
+
 Verify the ZTS server can reach Keycloak's JWKS endpoint:
 
 ```sh
 kubectl -n athenz exec deployment/athenz-zts-server -c athenz-zts-server -- \
   sh -c "curl -k http://keycloak.idp:8080/realms/master/protocol/openid-connect/certs | jq ."
+```
+
+The response should contain a nonempty `keys` array. This example omits the remaining key fields; key IDs and the number of keys vary by environment:
+
+```sh
+# {
+#   "keys": [
+#     {
+#       "kid": "<key-id>",
+#       ...
+#     }
+#   ]
+# }
 ```
 
 Mount the ConfigMap into the ZTS server:
@@ -136,7 +161,7 @@ Follow these steps inside `vim`:
 
 1. Type `/zts.prop` and press **Enter** to jump to the properties section.
 2. Press `o` to open a new line below in Insert mode.
-3. Match the indentation of the other properties under `zts.properties: |` (four spaces).
+3. Press **Space** four times to indent the line by four spaces (if Vim adds indentation automatically, adjust it to four spaces in total)
 4. Paste the following line:
 
 ```
@@ -157,7 +182,21 @@ Restart the ZTS server to load the new configuration:
 
 ```sh
 kubectl -n athenz rollout restart deployment athenz-zts-server
+```
+
+```sh
+# deployment.apps/athenz-zts-server restarted
+```
+
+Wait for the rollout:
+
+```sh
 kubectl rollout status deployment/athenz-zts-server -n athenz
+```
+
+```sh
+# Waiting for deployment "athenz-zts-server" rollout to finish: 0 of 1 updated replicas are available...
+# deployment "athenz-zts-server" successfully rolled out
 ```
 
 Verify the configuration was picked up:

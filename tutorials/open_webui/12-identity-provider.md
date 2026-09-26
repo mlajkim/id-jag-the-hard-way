@@ -8,6 +8,7 @@ Configure [Keycloak](https://www.keycloak.org/) as the identity provider for Ope
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
+- [Download and Load the Keycloak Image](#download-and-load-the-keycloak-image)
 - [Deploy Keycloak in K8s](#deploy-keycloak-in-k8s)
 - [Open Keycloak in Your Browser](#open-keycloak-in-your-browser)
 - [Register the Keycloak Client](#register-the-keycloak-client)
@@ -22,6 +23,28 @@ Configure [Keycloak](https://www.keycloak.org/) as the identity provider for Ope
 
 <!-- /TOC -->
 
+<a id="load-the-keycloak-image"></a>
+
+## Download and Load the Keycloak Image
+
+Prepare `quay.io/keycloak/keycloak:latest` for Docker's architecture (`arm64` or `amd64`). If the current `kubectl` context is a kind cluster, the helper also loads the image into that cluster using the same image name:
+
+```sh
+./scripts/keycloak/download-and-load-keycloak.sh
+```
+
+```sh
+# Preparing quay.io/keycloak/keycloak:latest for linux/arm64...
+# [+] Building 1.4s (5/5) FINISHED                                                                              docker:desktop-linux
+# ...
+
+# View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/qqbttlri10dikdejvpcem98up
+# Image: "quay.io/keycloak/keycloak:latest" with ID "sha256:dc0f6a6c61f4170f154b6dd89dfc160c839fd24989d2c798af2a7072498bfbac" not yet present on node "test-control-plane", loading...
+# Loaded quay.io/keycloak/keycloak:latest into kind cluster test.
+```
+
+For example, context `kind-test` selects cluster `test`. Other Kubernetes environments pull the upstream image during deployment.
+
 ## Deploy Keycloak in K8s
 
 Create the Keycloak namespace:
@@ -30,13 +53,21 @@ Create the Keycloak namespace:
 kubectl create ns idp
 ```
 
-Deploy Keycloak:
+```sh
+# namespace/idp created
+```
+
+Deploy Keycloak using the same image name in every environment:
 
 ```sh
 kubectl create deployment keycloak --image=quay.io/keycloak/keycloak:latest -n idp
 ```
 
-Set the administrator credentials and start Keycloak in development mode:
+```sh
+# deployment.apps/keycloak created
+```
+
+Set the administrator credentials and start Keycloak in development mode. The configuration also sets `imagePullPolicy: IfNotPresent` so kind uses the loaded image. Without this setting, the `latest` tag defaults to `Always`, which contacts the registry even when the image is present:
 
 ```sh
 _keycloak_admin=$(./tools/config.sh keycloak admin)
@@ -60,6 +91,10 @@ EOF
 )"
 ```
 
+```sh
+# deployment.apps/keycloak patched
+```
+
 Create a PersistentVolumeClaim (PVC) to preserve Keycloak data across pod restarts:
 
 ```sh
@@ -75,6 +110,10 @@ spec:
     requests:
       storage: 1Gi
 EOF
+```
+
+```sh
+# persistentvolumeclaim/keycloak-data-pvc created
 ```
 
 Mount the volume we just created:
@@ -97,35 +136,23 @@ EOF
 )"
 ```
 
+```sh
+# deployment.apps/keycloak patched
+```
+
 And finally expose the deployment:
 
 ```sh
 kubectl expose deployment keycloak --port=8080 -n idp
 ```
 
+```sh
+# service/keycloak exposed
+```
+
 <a id="open-keycloak-on-browser"></a>
 
 ## Open Keycloak in Your Browser
-
-> [!NOTE]
-> If you are using `kind` and facing `ImagePullBackOff`, load the image manually:
->
-> ```sh
-> docker pull quay.io/keycloak/keycloak:latest
-> kind load docker-image quay.io/keycloak/keycloak:latest
-> ```
->
-> On **Apple Silicon (arm64)** this may still fail with a content digest error. Use a single-platform build instead:
->
-> ```sh
-> docker buildx build --platform linux/arm64 --load --provenance=false \
->   -t keycloak:kind-load - <<'EOF'
-> FROM quay.io/keycloak/keycloak:latest
-> EOF
-> kind load docker-image keycloak:kind-load
-> ```
->
-> Then patch the deployment to use `keycloak:kind-load` as the image.
 
 Make sure the Keycloak pod is running before opening the browser:
 
@@ -134,6 +161,10 @@ kubectl wait -n idp \
   --for=condition=ready pod \
   --selector=app=keycloak \
   --timeout=180s
+```
+
+```sh
+# pod/keycloak-<pod-suffix> condition met
 ```
 
 Open your browser and log in using admin for both the username `admin` and password `admin`:
@@ -254,6 +285,10 @@ EOF
 )"
 ```
 
+```sh
+# deployment.apps/open-webui patched
+```
+
 > [!NOTE]
 > `OPENID_PROVIDER_URL` uses the in-cluster Keycloak service address (`keycloak.idp:8080`) instead of `localhost`, so Open WebUI can reach Keycloak from inside the cluster.
 
@@ -264,6 +299,10 @@ Wait for the Open WebUI pod to be ready after the patch:
 
 ```sh
 kubectl rollout status deploy/open-webui -n ai
+```
+
+```sh
+# deployment "open-webui" successfully rolled out
 ```
 
 Open a separate browser profile or private window for `idjag-learner` so the learner and administrator sessions stay separate.

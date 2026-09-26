@@ -6,7 +6,9 @@
 
 # 신뢰할 수 있는 ID 제공자 (Identity Provider, IdP) — Codex
 
-Athenz가 Keycloak의 ID 토큰 (ID Token)을 신뢰하고 검증하도록 설정합니다. 이 신뢰 관계가 있어야 ID 토큰을 ID-JAG로 교환할 수 있습니다.
+인가 서버 (Authorization Server)인 Athenz는 아무 ID 제공자 (Identity Provider, IdP)가 발급한 토큰이나 신뢰할 수는 없습니다. Athenz 관리자가 어떤 IdP를 신뢰할지 명시적으로 설정해야 합니다.
+
+저번 장에서 Keycloak을 배포했지만, Athenz는 아직 Keycloak을 신뢰하지 않습니다. 이번 장에서는 Keycloak을 신뢰할 IdP로 등록하고, Keycloak이 발급한 ID 토큰 (ID Token)을 검증해 ID-JAG로 교환할 수 있도록 설정합니다.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
@@ -45,6 +47,10 @@ kubectl patch deployment athenz-zts-server \
   --patch-file components/keycloak_token_exchange_provider/hack/static/zts-plugin-jar-mount-patch.yaml
 ```
 
+```sh
+# deployment.apps/athenz-zts-server patched
+```
+
 롤아웃이 끝날 때까지 기다립니다:
 
 ```sh
@@ -67,6 +73,8 @@ kubectl -n athenz exec deployment/athenz-zts-server \
 ```sh
 # -rw-r--r-- 1 root root 3237 May 1 14:26 keycloak-token-provider.jar
 ```
+
+이제 `KeycloakTokenExchangeProvider` 플러그인의 JAR 파일을 ZTS 서버에 마운트했습니다:
 
 ![ZTS 서버에 마운트된 플러그인](../assets/14_place_plugin.svg)
 
@@ -95,11 +103,28 @@ data:
 EOF
 ```
 
+```sh
+# configmap/zts-providers-config created
+```
+
 ZTS 서버에서 Keycloak의 JWKS 엔드포인트에 접근할 수 있는지 확인합니다:
 
 ```sh
 kubectl -n athenz exec deployment/athenz-zts-server -c athenz-zts-server -- \
   sh -c "curl -k http://keycloak.idp:8080/realms/master/protocol/openid-connect/certs | jq ."
+```
+
+응답의 `keys` 배열에 공개 키가 들어 있어야 합니다. 아래는 나머지 키 필드를 생략한 예시이며, 키 ID와 키 개수는 환경마다 다릅니다:
+
+```sh
+# {
+#   "keys": [
+#     {
+#       "kid": "<key-id>",
+#       ...
+#     }
+#   ]
+# }
 ```
 
 ConfigMap을 ZTS 서버에 마운트합니다:
@@ -146,7 +171,7 @@ KUBE_EDITOR=vim kubectl edit configmap athenz-zts-conf -n athenz
 
 1. `/zts.prop`을 입력하고 **Enter**를 눌러 properties 섹션으로 이동
 2. `o`를 눌러 아래에 새 줄을 만들고 입력 모드로 전환
-3. `zts.properties: |` 아래의 다른 속성과 들여쓰기 맞추기(공백 네 칸)
+3. 스페이스바를 네 번 눌러 공백 네 칸으로 들여쓰기(자동 들여쓰기가 있다면 총 네 칸으로 맞추기)
 4. 다음 줄 붙여 넣기
 
 ```
@@ -167,7 +192,21 @@ athenz.zts.oauth_provider_config_file=/opt/athenz/zts/conf/providers.json
 
 ```sh
 kubectl -n athenz rollout restart deployment athenz-zts-server
+```
+
+```sh
+# deployment.apps/athenz-zts-server restarted
+```
+
+롤아웃이 끝날 때까지 기다립니다:
+
+```sh
 kubectl rollout status deployment/athenz-zts-server -n athenz
+```
+
+```sh
+# Waiting for deployment "athenz-zts-server" rollout to finish: 0 of 1 updated replicas are available...
+# deployment "athenz-zts-server" successfully rolled out
 ```
 
 설정이 적용되었는지 확인합니다:

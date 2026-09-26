@@ -8,7 +8,7 @@ Deploy [Keycloak](https://www.keycloak.org/) as an identity provider (IdP) with 
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
-- [Load the Keycloak Image](#load-the-keycloak-image)
+- [Download and Load the Keycloak Image](#download-and-load-the-keycloak-image)
 - [Deploy Keycloak in K8s](#deploy-keycloak-in-k8s)
 - [Open Keycloak in Your Browser](#open-keycloak-in-your-browser)
 - [Register the Keycloak Client](#register-the-keycloak-client)
@@ -21,29 +21,27 @@ Deploy [Keycloak](https://www.keycloak.org/) as an identity provider (IdP) with 
 
 <a id="docker-pull-keycloak"></a>
 
-## Load the Keycloak Image
+<a id="load-the-keycloak-image"></a>
 
-If you are using **kind**, do the following:
+## Download and Load the Keycloak Image
 
-> [!NOTE]
-> On **Apple Silicon (arm64)**, `kind load docker-image` fails with multi-platform manifest images. Build a single-platform image first:
->
-> ```sh
-> docker buildx build --platform linux/arm64 --load --provenance=false \
->   -t keycloak:kind-load - <<'EOF'
-> FROM quay.io/keycloak/keycloak:latest
-> EOF
-> kind load docker-image keycloak:kind-load
-> ```
->
-> Then replace `quay.io/keycloak/keycloak:latest` with `keycloak:kind-load` in the `kubectl create deployment` command below.
-
-On **amd64**, pull and load the image:
+Prepare `quay.io/keycloak/keycloak:latest` for Docker's architecture (`arm64` or `amd64`). If the current `kubectl` context is a kind cluster, the helper also loads the image into that cluster using the same image name:
 
 ```sh
-docker pull quay.io/keycloak/keycloak:latest
-kind load docker-image quay.io/keycloak/keycloak:latest
+./scripts/keycloak/download-and-load-keycloak.sh
 ```
+
+```sh
+# Preparing quay.io/keycloak/keycloak:latest for linux/arm64...
+# [+] Building 1.4s (5/5) FINISHED                                                                              docker:desktop-linux
+# ...
+
+# View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/qqbttlri10dikdejvpcem98up
+# Image: "quay.io/keycloak/keycloak:latest" with ID "sha256:dc0f6a6c61f4170f154b6dd89dfc160c839fd24989d2c798af2a7072498bfbac" not yet present on node "test-control-plane", loading...
+# Loaded quay.io/keycloak/keycloak:latest into kind cluster test.
+```
+
+For example, context `kind-test` selects cluster `test`. Other Kubernetes environments pull the upstream image during deployment.
 
 ## Deploy Keycloak in K8s
 
@@ -53,13 +51,21 @@ Create the `idp` namespace:
 kubectl create ns idp
 ```
 
-Deploy Keycloak:
+```sh
+# namespace/idp created
+```
+
+Deploy Keycloak using the same image name in every environment:
 
 ```sh
 kubectl create deployment keycloak --image=quay.io/keycloak/keycloak:latest -n idp
 ```
 
-Set the admin credentials and start in dev mode:
+```sh
+# deployment.apps/keycloak created
+```
+
+Set the admin credentials and start in dev mode. The configuration also sets `imagePullPolicy: IfNotPresent` so kind uses the loaded image. Without this setting, the `latest` tag defaults to `Always`, which contacts the registry even when the image is present:
 
 ```sh
 _keycloak_admin=$(./tools/config.sh keycloak admin)
@@ -83,6 +89,10 @@ EOF
 )"
 ```
 
+```sh
+# deployment.apps/keycloak patched
+```
+
 Create a PVC so Keycloak data survives pod restarts:
 
 ```sh
@@ -98,6 +108,10 @@ spec:
     requests:
       storage: 1Gi
 EOF
+```
+
+```sh
+# persistentvolumeclaim/keycloak-data-pvc created
 ```
 
 Mount the PVC:
@@ -120,10 +134,18 @@ EOF
 )"
 ```
 
+```sh
+# deployment.apps/keycloak patched
+```
+
 Expose the deployment:
 
 ```sh
 kubectl expose deployment keycloak --port=8080 -n idp
+```
+
+```sh
+# service/keycloak exposed
 ```
 
 <a id="open-keycloak-on-browser"></a>
@@ -137,6 +159,10 @@ kubectl wait -n idp \
   --for=condition=ready pod \
   --selector=app=keycloak \
   --timeout=180s
+```
+
+```sh
+# pod/keycloak-<pod-suffix> condition met
 ```
 
 Open Keycloak in your browser (username: `admin`, password: `admin`):
@@ -210,8 +236,6 @@ We have deployed Keycloak and created:
 
 - A client `human.idjag-learner.claude` that will represent our AI client (Claude Code)
 - A user `idjag-learner` who represents the person requesting API access
-
-At this point, Keycloak is running and configured, but our Authorization Server (Athenz) does not yet trust it. The next tutorial establishes that trust.
 
 ![The IdP is configured, but the IdP AS does not yet trust its tokens](./assets/core_12_idp_untrusted.svg)
 
