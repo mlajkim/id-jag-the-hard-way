@@ -6,7 +6,8 @@ Build an AI agent that accesses protected APIs on behalf of a signed-in user. Yo
 
 The tutorial uses Identity Assertion JWT Authorization Grant (ID-JAG), an [IETF draft specification](https://datatracker.ietf.org/doc/draft-ietf-oauth-identity-assertion-authz-grant/) used in Cross-App Access (XAA). For an introduction, see the [ID-JAG overview on the LY Tech Blog](https://techblog.lycorp.co.jp/en/20260417a).
 
-[![Start Tutorial](./assets/start-tutorial-glow.svg)](./tutorials/01-working-directory.md)
+[![Start Tutorial](./assets/start-tutorial-glow.svg)](./tutorials/01-working-directory.md)<br>
+[![한국어](./assets/start-tutorial-korean.svg)](./tutorials/korean/00-README.md) ![日本語 — Upcoming](./assets/start-tutorial-japanese.svg) ![中文 — Upcoming](./assets/start-tutorial-chinese.svg)
 
 ## What You Will Build
 
@@ -119,4 +120,5 @@ Have a question or a problem? [Open an issue](https://github.com/mlajkim/id-jag-
 
 Start with the working directory setup:
 
-[![Start Tutorial](./assets/start-tutorial-glow.svg)](./tutorials/01-working-directory.md)
+[![Start Tutorial](./assets/start-tutorial-glow.svg)](./tutorials/01-working-directory.md)<br>
+[![한국어](./assets/start-tutorial-korean.svg)](./tutorials/korean/00-README.md) ![日本語 — Upcoming](./assets/start-tutorial-japanese.svg) ![中文 — Upcoming](./assets/start-tutorial-chinese.svg)

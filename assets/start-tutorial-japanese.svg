@@ -1,0 +1,7 @@
+<svg width="160" height="44" viewBox="0 0 160 44" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title description">
+  <title id="title">日本語 — Upcoming</title>
+  <desc id="description">Japanese tutorial translation is upcoming</desc>
+  <rect x="4" y="4" width="152" height="36" rx="12" fill="#111827" stroke="#475569"/>
+  <text x="80" y="22" text-anchor="middle" font-family="Hiragino Sans, Noto Sans JP, Meiryo, sans-serif" font-size="14" font-weight="700" fill="#cbd5e1">日本語</text>
+  <text x="80" y="34" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="9" font-weight="500" letter-spacing="0.4" fill="#94a3b8">Upcoming</text>
+</svg>
