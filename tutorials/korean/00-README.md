@@ -2,6 +2,7 @@
 
 # ID-JAG The Hard Way
 
+*Build Cross-App Access for AI agents with ID-JAG, the hard way.*<br>
 *ID-JAG로 AI 에이전트의 Cross-App Access를 하나씩 직접 구성해 봅니다.*
 
 로그인한 사용자를 대신해 보호된 API에 접근하는 AI 에이전트를 만듭니다. 사용자와 서비스의 ID, 정책, 토큰 교환 (Token Exchange)을 차례로 설정합니다. 일부 요청을 의도적으로 실패시키면서 각 구성 요소가 어디에서 권한을 확인하는지 살펴봅니다.
