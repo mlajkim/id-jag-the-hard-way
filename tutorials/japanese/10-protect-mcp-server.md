@@ -6,11 +6,17 @@
 
 # MCP サーバーの保護 — Codex
 
+Credentialが変わらないといけないという話と、MCPに認可制御をかけるということなる話が混じっている気がしました。
+
 前の章では AI クライアントが Athenz アクセストークン（Access Token, AT）を使って文書を取得しました。API サーバーと同様に、MCP サーバーも AT で保護します。
+
+前のところでも少し気になったのですが、AI クライアントという言葉は一般的なのですか？ AI エージェントの方がわかりやすいのではと思いましたが.
 
 [MCP 認可仕様](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization#access-token-privilege-restriction)には次のように記されています（訳）：
 
 > *MCP サーバーが上流の API にリクエストを送る場合、その API の OAuth クライアントとして動作できます。上流 API で使うアクセストークンは、上流の認可サーバー（Authorization Server）が発行した別のトークンです。MCP サーバーは MCP クライアントから受け取ったトークンをそのまま転送しては**なりません（MUST NOT）**。*
+
+このRuntime Proxyという名前は一般的なものですか？少し名前から実態がイメージしづらかったです。
 
 この章では MCP サーバーの前段に `MCP Runtime Proxy` を認可プロキシ（Authorization Proxy）としてデプロイします。ツールの呼び出しには、受信先（audience）が `mcp` で、スコープ（Scope）が `mcp:role.mcp-accessor` の AT を要求します。以前使った API トークンが拒否されることを確認してから、演習用 ID に MCP へのアクセス権限を付与します。
 
@@ -75,13 +81,13 @@ EOF
 
 二つのコンテナは Pod のネットワークを共有します。Runtime Proxy はポート `8082` でリクエストを受け、既定のループバックアドレス `http://127.0.0.1:8080` で MCP アプリケーションにアクセスします。
 
-プロキシは起動時に `/var/run/athenz/ca.crt` を読みます。次の手順で CA をマウントするまでは、コンテナが終了と再起動を繰り返します。CA のマウント後に準備状態を確認してください。
+プロキシは起動時に `/var/run/athenz/ca.crt` を読みます。次の手順で証明書をマウントするまでは、コンテナが終了と再起動を繰り返します。証明書のマウント後に準備状態を確認してください。
 
 <a id="create-and-attach-the-ca-secret"></a>
 
 ### CA Secret を作成して接続する
 
-既存の Athenz CA 証明書を含む Secret を作成します。Runtime Proxy はアクセストークンの検証に必要な署名鍵を取得するとき、この CA を使って ZTS を信頼します：
+既存の Athenz CA 証明書を含む Secret を作成します。Runtime Proxy はアクセストークンの検証に必要な署名鍵を取得するとき、この証明書を使って ZTS を信頼します：
 
 ```sh
 kubectl -n mcp create secret generic mcp-runtime-proxy-athenz-ca \
@@ -172,7 +178,7 @@ Codex に **Authentication required** と表示されるはずです：
 
 ![get_k8s_docs が拒否され Authentication required と表示する Codex](../codex/assets/10_codex_get_k8s_docs_authentication_required.png)
 
-Codex は接続してツール一覧を取得できますが、Runtime Proxy はツールの呼び出しを拒否します。前の章のトークンの受信先（audience）は `api` で、プロキシが要求するのは `mcp` だからです。期限内の API トークンもここで拒否されます。次は audience が `mcp` のトークンを取得します。
+Codex は接続してツール一覧を取得できますが、Runtime Proxy はツールの呼び出しを拒否します。前の章のアクセストークンの受信先（audience）は `api` で、プロキシが要求するのは `mcp` だからです。期限内の アクセストークンでもここで拒否されます。次は audience が `mcp` のトークンを取得します。
 
 プロキシのログで、Codex に認証メッセージが表示された理由を確認します：
 
@@ -189,7 +195,7 @@ kubectl logs deploy/mcp -n mcp -c auth-proxy --tail=2
 
 `reason=audience_mismatch`、`expectedAudience=mcp`、`audiences=["api"]` から失敗した検証を特定できます。`signatureVerified=true` と正の `expiresInSeconds` は、署名と有効期限の検証を通過したことを示します。
 
-`invalid_access_token` はクライアントに返すエラーコードです。トークンが期限切れなら、ログに `reason=token_expired`、`expiresAt`、ゼロ以下の `expiresInSeconds` が記録されます。有効期限の検証は audience の検証より先に行われます。Codex が Bearer トークンを送らなかった場合は `accessTokenPresent=false`、`code=missing_access_token`、`reason=missing_authorization` が記録され、この場合も `status=401` です。これらのリクエストは MCP アプリケーションに届く前にプロキシで遮断されます。
+`invalid_access_token` はクライアントに返すエラーコードです。トークンが期限切れなら、ログに `reason=token_expired`、`expiresAt`、ゼロ以下の `expiresInSeconds` が記録されます。有効期限の検証は audience の検証より先に行われます。Codex が Bearer トークンを送らなかった場合は `accessTokenPresent=false`、`code=missing_access_token`、`reason=missing_authorization` が記録され、この場合も `status=401` です。これらのリクエストは MCP サーバー(?)に届く前にプロキシで遮断されます。
 
 ![Runtime Proxy が AI エージェントに 401 を返し、MCP サーバーと API は呼ばれない流れ](../assets/core_10_mcp_rejected.svg)
 
