@@ -40,15 +40,16 @@ make -C athenz_dist clean-kubernetes-athenz deploy-kubernetes-athenz
 ```
 
 > [!NOTE]
-> デプロイの詳細は[Athenz の配布版ガイド](https://github.com/athenz-community/athenz-distribution/blob/main/README.md)を参照してください。
+> デプロイの詳細は[Athenz の配布ガイド](https://github.com/athenz-community/athenz-distribution/blob/main/README.md)を参照してください。
 
 <a id="enable-scopes-across-two-domains"></a>
 
 <a id="enable-scopes-across-multiple-domains"></a>
 
-## 複数ドメインのスコープを許可する
+## 複数ドメインのスコープを許可する (簡単にドメインの説明を入れた方が良いかもです、読者想定はAthenzに通じている人ですか？）
 
 このチュートリアルで使う `mcp` と `api` の両ドメインのスコープを許可するよう、ZTS を設定します：
+(自分の知識不足ですが、この文章の意味があんまりわからなかったです)
 
 ```sh
 _zts_java_opts=$(kubectl -n athenz get deployment/athenz-zts-server \
@@ -132,7 +133,7 @@ Pod が再起動すると `kubectl port-forward` は終了することがあり�
 ポート転送ツールを起動します。既定のポートが使用中の場合は、別のポートを選ぶよう案内されます。
 
 > [!IMPORTANT]
-> 後のコマンドを実行するターミナルを使えるように、ポート転送ツールは別のタブで起動してください。
+> 後のコマンドを実行するためにターミナルが使えるように、ポート転送ツールは別のタブで起動してください。
 
 ```sh
 ./tools/keep-k8s-port-forward.sh
