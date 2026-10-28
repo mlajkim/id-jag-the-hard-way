@@ -75,6 +75,8 @@ kubectl rollout status deploy/mcp -n mcp
 
 ステートレスな MCP サーバーの初期化レスポンスを確認します：
 
+ 初期化レスポンスが何かわからなかったです..
+
 ```sh
 _mcp_port=$(./tools/port.sh mcp)
 curl -sS "http://localhost:${_mcp_port}/mcp" \
@@ -106,17 +108,19 @@ curl -sS "http://localhost:${_mcp_port}/mcp" \
 # "delete_k8s_doc"
 ```
 
-ツールの検出に認証は必要ありません。ツールが文書を取得するときは、API が有効なトークンを要求します。
+ツールの読み取りに認証は必要ありません。ツールが文書を取得するときには、APIサーバー は有効なトークンを要求します。
 
 <a id="understand-the-result"></a>
 
 ## 結果を確認する
 
-MCP サーバーが起動し、初期化に成功しました。ツール一覧には `get_k8s_docs`、`post_k8s_doc`、`delete_k8s_doc` が表示されます。この検出処理にはアクセストークン（Access Token）も Runtime Proxy も必要ありません。
+MCP サーバーが起動し、初期化に成功しました。ツール一覧には `get_k8s_docs`、`post_k8s_doc`、`delete_k8s_doc` が表示されます。この読み取り操作にはアクセストークン（Access Token）も Runtime Proxy も必要ありません。
+
+Discovery?という言葉はどこかからきていますか？
 
 ![MCP クライアントがサーバーを初期化し、ツール一覧を取得する流れ](../assets/core_08_mcp_api.svg)
 
-ツール一覧の取得では API を呼び出しません。文書操作用ツールは渡された API アクセストークンでリソースサーバーを呼び出し、リソースサーバーが引き続きトークンを検証します。MCP サーバー自体はトークンを交換しません。
+ツール一覧の取得では API を呼び出しません。文書操作用ツールは渡された 文書API 用のアクセストークンでリソースサーバーを呼び出し、リソースサーバーが引き続きトークンを検証します。MCP サーバー自体はトークンを交換しません。
 
 <a id="next-steps"></a>
 
