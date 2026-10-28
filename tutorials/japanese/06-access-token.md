@@ -26,7 +26,8 @@
 
 ## API ドメインを作成する
 
-API を表す Athenz ドメインを作成します：
+文書API に対応する Athenz ドメインを作成します：
+(representsを表すというのはここでは少し違和感がありました)
 
 ```sh
 ./tools/athenz/create-tld.sh "api"
@@ -43,7 +44,8 @@ API を表す Athenz ドメインを作成します：
 
 ## ZTS の署名鍵エンドポイントを信頼する
 
-API は ZTS の公開署名鍵でアクセストークンを検証します。Node.js が ZTS との HTTPS 接続を検証できるよう、チュートリアルの CA をマウントします：
+API は ZTS の公開署名鍵でアクセストークンを検証します。Node.js が ZTS との HTTPS 接続を検証できるよう、チュートリアルの CAの証明書 をマウントします：
+( アクセストークンの検証と HTTPS接続の関係の話があんまりわからなかったです）
 
 ```sh
 kubectl -n api create configmap api-zts-ca \
@@ -73,7 +75,7 @@ kubectl rollout status deploy/api-server -n api
 
 コンテナ名は、リソースサーバーのイメージに対応する `idthw-demo-api` です。Deployment と Service の名前は `api-server` です。
 
-API が ZTS の HTTPS 証明書を信頼できない場合、アクセストークンを付けたリクエストにも `503 Service Unavailable` を返します：
+API が ZTS の サーバー証明書(?)を信頼できない場合、アクセストークンを付けたリクエストにも `503 Service Unavailable` を返します：
 
 ```json
 {
@@ -88,8 +90,8 @@ API が ZTS の HTTPS 証明書を信頼できない場合、アクセストー�
 
 <a id="create-the-document-reading-role"></a>
 
-## 文書閲覧用のロールを作成する
-
+## 文書閲覧用のロールを作成する 
+(RBACの話をここでするなら、Athenzを導入した時点で軽くAthenzはRBACのサービスの認証認可のためのツールです、みたいな話をしても良いかなと思いました）
 Athenz は**ロールベースのアクセス制御（Role-Based Access Control, RBAC）**を使います。ZTS はリクエスト元が対象ロール（Role）のメンバーか確認し、そのスコープ（Scope）を含むトークンを発行します。API はスコープに要求された操作の権限があるか確認します。
 
 文書の閲覧には `api:role.docs-getter` スコープが必要です。まずこのロールを作成します。
@@ -117,7 +119,8 @@ UI_OPEN=true ./tools/athenz/create-role.sh "api" "docs-getter"
 
 ## API に必要なスコープを理解する
 
-API は信頼する ZTS の署名鍵でトークンの署名を検証し、有効期限と受信先（audience）が `api` であることを確認します。操作ごとに次のスコープが必要です：
+API サーバーは信頼する ZTS の署名鍵に対応する公開鍵でトークンの署名を検証し、有効期限と受信先（audience）が `api` であることを確認します。操作ごとに次のスコープが必要です：
+（このスコープが必要なことはAthenzの仕様 (provider sidecarの仕様)にすぎない、ことを伝えるべきかと思いました。なんでこうなのって思ってしまう気もします）
 
 | 操作 | 必要なスコープ |
 |---|---|
@@ -125,17 +128,24 @@ API は信頼する ZTS の署名鍵でトークンの署名を検証し、有�
 | `POST /api/docs` | `api:role.docs-poster` |
 | `DELETE /api/docs/{doc_id}` | `api:role.docs-deleter` |
 
-API は `scope` または `scp` クレームを読みます。audience が `api` だけなら、`docs-getter` のようなドメイン名を省略したロール名も受け付けます。閲覧用トークンでは文書を作成・削除できません。
+API サーバーはアクセストークンの`scope` または `scp` クレームを読みます。audience が [`api`] のように単一ドメインだけなら、`docs-getter` のようなドメイン名を省略したロール名も受け付けます。閲覧用トークンでは文書を作成・削除できません。
 
-操作とスコープの対応は API 内で定義します。API は Athenz の action/resource ポリシーを取得・評価しません。トークンの発行は ZTS が制御します。ロールからメンバーを削除すると、ZTS が変更を反映した後は新しいトークンを取得できなくなります。ただし発行済みのトークンは有効期限まで利用できる場合があります。
+操作とスコープの対応は API サーバー内で定義します。API サーバーは Athenz の リアルタイムのaction/resource ポリシーを取得・評価しません。トークンの発行は ZTS が制御します。ロールからメンバーを削除すると、ZTS が変更を反映した後は新しいトークンを取得できなくなります。ただし発行済みのトークンは有効期限まで利用できる場合があります。
+
+（伝えたいことが伝わりづらい気がします。）
 
 <a id="add-root-user-as-a-member"></a>
 
 <a id="add-the-administrator-to-the-role"></a>
 
-## 管理者をロールに追加する
+## 管理者ユーザを文書読み取りのロールに追加する
+(ここでprincipalが急に出てくるとなんだろうとなりそうなので、簡単に補足してあげても良さそうです)
 
-Athenz のデプロイには、管理者プリンシパル（Principal）`user.athenz_admin` の証明書が含まれます。最初のトークン取得ではこの証明書を使います。ZTS はリクエスト元が要求するスコープのロールに属している場合にトークンを発行します。
+Athenz のデプロイメント (Kubernetes) には、管理者プリンシパル（Principal）`user.athenz_admin` の証明書が含まれます。最初のトークン取得ではこのユーザーの証明書を使います。ZTS はリクエスト元のユーザーが要求するスコープのロールに属している場合にトークンを発行します。
+
+(ここの文章が少しわかりづらい気がします、やりたいことはロール追加したいから、adminのアクセストークンを取りたいということだと思いますが、それが伝わりづらい気がします）
+
+単にデプロイだと, kubeのdeploymentだとわかりませんでした。
 
 > [!NOTE]
 > `add-role-member.sh` は ZMS API を通じてロールにメンバーを PUT し、そのプリンシパルにロールの権限を与えます。`cat ./tools/athenz/add-role-member.sh` で内容を確認できます。
@@ -162,7 +172,7 @@ _athenz_ui_port=$(./tools/port.sh athenz-ui)
 ## 管理者としてトークンをリクエストする
 
 > [!NOTE]
-> `fetch-access-token.sh` は ZTS のトークンエンドポイントに `client_credentials` グラントを POST し、要求したロールのスコープを含む署名済み Athenz アクセストークンを返します。`cat ./tools/athenz/fetch-access-token.sh` で内容を確認できます。
+> `fetch-access-token.sh` は ZTS のトークン発行エンドポイントに `client_credentials` グラントを POST し、要求したロールのスコープを含む署名済み Athenz アクセストークンを返します。`cat ./tools/athenz/fetch-access-token.sh` で内容を確認できます。
 
 Athenz のデプロイで生成された管理者の証明書と鍵でスクリプトを実行し、出力を `_root_user_at` 変数に保存します。
 
@@ -241,6 +251,8 @@ curl -sS -k -H "Authorization: Bearer $_root_user_at" http://localhost:14443/api
 <a id="review-the-result"></a>
 
 ## 結果を確認する
+図の中でZTSに対してX.509を渡ししていることが少しわかりづらいと思いました。
+
 
 `user.athenz_admin` として Athenz アクセストークンを取得し、そのトークンで保護された API にアクセスできました。
 
@@ -252,6 +264,6 @@ curl -sS -k -H "Authorization: Bearer $_root_user_at" http://localhost:14443/api
 
 ## 次のステップ
 
-管理者は Athenz のドメインやポリシーも管理できます。通常の API 呼び出しにはそこまでの権限は必要ありません。次の章では演習専用の ID を作成し、文書閲覧用のロールを付与します。
+管理者ユーザは Athenz のドメインやポリシーも管理できる権限を持ちます。通常の API 呼び出しにはそこまでの権限は必要ありません。次の章では演習専用の 実行主体(?) を作成し、文書閲覧用のロールを付与します。
 
 次へ：[権限の細分化](./07-granular-permission.md)
