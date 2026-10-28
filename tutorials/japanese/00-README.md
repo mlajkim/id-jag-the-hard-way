@@ -5,7 +5,7 @@
 *Build Cross-App Access for AI agents with ID-JAG, the hard way.*<br>
 *ID-JAG を使った AI エージェントの Cross-App Access を、一つずつ自分で構築します。*
 
-ログインしたユーザーに代わって保護された API にアクセスする AI エージェントを作ります。ユーザーとサービスの ID、ポリシー、トークン交換（Token Exchange）を順に設定します。リクエストを意図的に失敗させながら、各コンポーネントがどこで権限を確認するかを学びます。
+ログインしたユーザーに代わって認可制御のかかった(?) API にアクセスする AI エージェントを作ります。ユーザーとサービスの ID、ポリシー、トークン交換（Token Exchange）を順に設定します。リクエストを意図的に失敗させながら、各コンポーネントがどこで権限を確認するかを学びます。
 
 このチュートリアルでは、Cross-App Access（XAA）で使われる Identity Assertion JWT Authorization Grant（ID-JAG）という [IETF のドラフト仕様](https://datatracker.ietf.org/doc/draft-ietf-oauth-identity-assertion-authz-grant/)を扱います。概要は [LY Tech Blog の ID-JAG 解説（英語）](https://techblog.lycorp.co.jp/en/20260417a)を参照してください。
 
@@ -16,7 +16,7 @@
 
 ## このチュートリアルで作るもの
 
-チュートリアルを終えると、Keycloak でログインし、AI エージェントにローカル Kubernetes クラスター上の API から文書を取得するよう依頼できます：
+チュートリアルを終えると、Keycloak でログインし、AI エージェントに対して、ローカル Kubernetes クラスター上の認可制御のかかった API から文書を取得するよう依頼できます：
 
 ![ID-JAG The Hard Way の Claude デモ](../../assets/id-jag-demo-claude.gif)
 
@@ -25,10 +25,11 @@ Open WebUI でも同じ認可（Authorization）の流れを使えます：
 ![ID-JAG The Hard Way の Open WebUI デモ](../../assets/id-jag-demo.gif)
 
 どちらも次の手順で動きます：
+↓自分の前提知識の足りないからなのですが、この段階では読んでもあまり理解できなかったです。
 
 1. **ユーザー**がログインし、AI エージェントに文書の取得を依頼する
-2. **AI Client Gateway** がユーザーに代わってスコープ（Scope）を指定したアクセストークン（Access Token）を取得し、MCP サービスにツールの呼び出しを渡す
-3. **MCP Runtime Proxy** が受け取ったトークンを検証して API アクセストークンに交換し、**MCP サーバー**がリクエストごとのファイルからトークンを読んで API を呼び出す
+2. **AI Client Gateway** がユーザーに代わってスコープ（Scope）の指定されたアクセストークン（Access Token）を取得し、MCP サービスにツールの呼び出しを渡す
+3. **MCP Runtime Proxy** が受け取ったトークンを検証して API アクセストークンに交換し、**MCP サーバー**がリクエストごとに固有のファイルからトークンを読んで API を呼び出す
 4. **リソースサーバー（Resource Server）**が交換されたトークンを検証し、操作に必要なスコープを確認する
 
 <a id="technical-spec"></a>
@@ -54,13 +55,15 @@ Open WebUI でも同じ認可（Authorization）の流れを使えます：
     <td><strong>AI クライアント</strong><br>Claude、Codex、Open WebUI が MCP ツールを呼び出します。</td>
     <td><strong>実行環境</strong><br>Kubernetes 上で API、MCP、ゲートウェイ、認可コンポーネントを動かします。</td>
     <td><strong>認可</strong><br>Athenz ZMS/ZTS がポリシーを評価し、ID-JAG とスコープを指定したアクセストークンを発行します。</td>
-    <td><strong>ID プロバイダー（Identity Provider, IdP）</strong><br>Keycloak が OIDC を通じてログインしたユーザーの ID を提供します。</td>
+    <td><strong>ID プロバイダー（Identity Provider, IdP）</strong><br>Keycloak が OIDC でログインしたユーザーの ID を提供します。</td>
   </tr>
 </table>
 
 <a id="full-architecture"></a>
 
 ## 全体アーキテクチャ
+
+IdPASって何だって？なりました, 英語の方みたく, IdP ASの説明をして欲しい気持ちがあります..
 
 次の図に各コンポーネントの役割を示します。このチュートリアルでは Keycloak を IdP として使います。Athenz は IdP AS として ID-JAG を発行し、認可サーバー（Authorization Server, AS）としてアクセストークンを発行・交換します。必要なプロトコルとポリシーをサポートしていれば、ほかの製品でもこれらの役割を実装できます。
 
@@ -70,7 +73,7 @@ Open WebUI でも同じ認可（Authorization）の流れを使えます：
 2. AI Client Gateway がログインセッションからユーザーの ID トークン（ID Token）を取得する
 3. ゲートウェイが Athenz ZTS に認証し、必要な MCP と API のスコープを含む ID-JAG を要求する
 4. ZTS が ID トークンを検証し、ユーザーとゲートウェイにそのスコープの権限があるか確認する
-5. ゲートウェイが ID-JAG を audience が `mcp` のアクセストークンに交換し、ツールの呼び出しを渡す
+5. ゲートウェイが ID-JAG を `mcp` の audience を持つアクセストークンに交換し、ツールの呼び出しを渡す
 6. MCP Runtime Proxy がトークンを検証して `mcp:role.mcp-accessor` を確認し、MCP サービス ID（Service Identity）で API トークンに交換する
 7. プロキシが `idthw-demo-api-mcp` にリクエストごとのトークンファイルを渡し、MCP が audience `api` とスコープ `api:role.docs-getter` で API を呼び出す
 8. リソースサーバーが交換されたトークンと必要なスコープを確認し、文書を返す
