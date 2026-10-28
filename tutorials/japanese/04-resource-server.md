@@ -62,6 +62,7 @@ kubectl expose deploy api-server -n api --port 8080 --name api-server
 
 Deployment の準備が完了するまで待ちます：
 
+ここのrolloutって必要なんでしたっけ？
 ```sh
 kubectl rollout status deploy/api-server -n api
 ```
@@ -98,7 +99,8 @@ kubectl exec deploy/api-server -n api \
 
 <a id="learn-about-the-api"></a>
 
-## API の動作を理解する
+## API の動作について
+(理解するは少し重たい気がします)
 
 この API サーバーは学習用にシンプルな構成になっています。
 
@@ -113,7 +115,7 @@ kubectl exec deploy/api-server -n api \
 
 ## アクセストークンの検証を有効にする
 
-`ACCESS_TOKEN_ENABLED=true` を設定し、有効な Athenz アクセストークンと、各文書操作に必要なスコープを要求します：
+`ACCESS_TOKEN_ENABLED=true` を設定し、有効な Athenz アクセストークンと、各文書の操作に必要なスコープを要求します：
 
 ```sh
 kubectl set env deploy/api-server -n api ACCESS_TOKEN_ENABLED=true
@@ -134,7 +136,7 @@ kubectl exec deploy/api-server -n api \
 # }
 ```
 
-API は `401 Unauthorized` を返します。トークンの検証を有効にした一方で、リクエストにアクセストークンがないためです。この失敗は意図した結果です。
+API は `401 Unauthorized` を返します。トークンの検証を有効にした上で、リクエストにアクセストークンがないためです。この失敗は意図された結果です。
 
 ![アクセストークンのない文書リクエストを拒否する API](../assets/core_04_api_rejected.svg)
 
