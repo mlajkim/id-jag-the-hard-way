@@ -292,7 +292,7 @@ cat .codex/settings.toml >> .codex/config.toml
 /quit
 ```
 
-プロジェクトのディレクトリで Codex を再起動し、会話を続けて新しいトークンを読み込みます：
+プロジェクトのディレクトリで Codex を再起動し、会話を再開して新しいトークンを読み込みます：
 
 ```sh
 codex resume --last
@@ -303,7 +303,7 @@ codex resume --last
 
 <a id="verify-mcp-access-is-accepted"></a>
 
-## MCP へのアクセスが許可されることを確認する
+## MCP サーバへのアクセスが許可されることを確認する
 
 Codex にもう一度文書の取得を依頼します：
 
@@ -311,7 +311,9 @@ Codex にもう一度文書の取得を依頼します：
 Get docs with id-jag-the-hard-way-mcp
 ```
 
-この段階では文書の取得はまだ失敗します。プロキシのログで MCP アクセスの検証を通過したことを確認します：
+**この段階では文書の取得はまだ失敗します。**プロキシのログで MCP アクセスの検証を通過したことを確認します：
+
+目立つように書いておいて欲しいです！なんで落ちるんだろうって理由を探してしまいました。
 
 ```sh
 kubectl logs deploy/mcp -n mcp -c auth-proxy --tail=3
