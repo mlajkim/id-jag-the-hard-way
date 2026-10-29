@@ -8,6 +8,7 @@
 
 [Keycloak](https://www.keycloak.org/) を ID プロバイダーとしてデプロイします。ユーザーは Keycloak にログインし、ID トークン（ID Token）を受け取ります。
 
+
 <!-- TOC depthFrom:2 depthTo:2 -->
 
 - [Keycloak イメージを取得して読み込む](#load-the-keycloak-image)
@@ -27,7 +28,7 @@
 
 ## Keycloak イメージを取得して読み込む
 
-Docker のアーキテクチャ（`arm64` または `amd64`）に合う `quay.io/keycloak/keycloak:latest` イメージを用意します。現在の `kubectl` コンテキストが kind クラスターなら、同じイメージ名でそのクラスターに読み込みます：
+ご利用中のハードウェアの CPU アーキテクチャ（`arm64` または `amd64`）に合う `quay.io/keycloak/keycloak:latest` イメージを用意します。現在の `kubectl` コンテキストが kind クラスターなら、同じイメージ名でそのクラスターに読み込みます：
 
 ```sh
 ./scripts/keycloak/download-and-load-keycloak.sh
@@ -59,7 +60,10 @@ kubectl create ns idp
 # namespace/idp created
 ```
 
-どの環境でも同じイメージ名で Keycloak をデプロイします：
+Keycloak のイメージ名を指定して Keycloak をデプロイします：
+
+英語の方にも少し違和感がありました..
+Deploy Keycloak using the same image name in every environment:
 
 ```sh
 kubectl create deployment keycloak --image=quay.io/keycloak/keycloak:latest -n idp
@@ -97,7 +101,7 @@ EOF
 # deployment.apps/keycloak patched
 ```
 
-Pod を再起動しても Keycloak のデータが残るよう、PVC を作成します：
+Pod を再起動しても Keycloak のデータが残るよう、PVC (Persistent Volume Claim) を作成します：
 
 ```sh
 cat <<EOF | kubectl apply -f -
@@ -144,6 +148,8 @@ EOF
 
 Deployment にアクセスするための Service を作成します：
 
+Deploymentでしたっけ? Pod? 
+
 ```sh
 kubectl expose deployment keycloak --port=8080 -n idp
 ```
@@ -188,6 +194,8 @@ _keycloak_port=$(./tools/port.sh keycloak)
 
 Keycloak の **Client** は、ユーザーに代わって認証（Authentication）を要求するアプリケーションです。ここでは既定の `master` realm を使います。
 
+ここの説明もう少し丁寧にしてほしいです、自分は疎いのでピンと来なかったです。
+
 AI クライアント（`human.idjag-learner.codex`）を Keycloak に登録します：
 
 ```sh
@@ -207,6 +215,11 @@ _acg_port=$(./tools/port.sh ai-client-gateway-codex)
 ## 演習用ユーザーを作成する
 
 演習者を表すユーザーアカウントを作成します：
+
+今更ですが「演習者」というのは少し違和感があります、
+案: デモユーザー, チュートリアルユーザ, テストアカウント... どれもしっくりこない.
+演習者よりは演習用ユーザの方が良いです。
+今画面の前にいる「あなた」だよってことを伝えたいです。
 
 ```sh
 OPEN_UI=true ./tools/keycloak/create-user.sh \
@@ -229,6 +242,8 @@ OPEN_UI=true ./tools/keycloak/create-user.sh \
 ./tools/keycloak/set-token-lifespan.sh 14400
 ```
 
+毎回コマンド実行時にkeycloakがOpenされるのが地味に嫌でした、そのあと確認する予定とかがある無しに関わらず開く気がします。
+
 ```sh
 #   ·  Fetching Keycloak admin token...
 #   ·  Setting access token lifespan to 14400s in realm master...
@@ -246,8 +261,8 @@ OPEN_UI=true ./tools/keycloak/create-user.sh \
 
 Keycloak をデプロイし、次のものを作成しました：
 
-- AI クライアント（Codex CLI）を表すクライアント `human.idjag-learner.codex`
-- API へのアクセスを要求する人を表すユーザー `idjag-learner`
+- AI クライアント（Codex）を表すクライアント `human.idjag-learner.codex`
+- 文書API へのアクセスを要求する人を表すユーザー `idjag-learner`
 
 <a id="whats-next"></a>
 
@@ -256,5 +271,6 @@ Keycloak をデプロイし、次のものを作成しました：
 ## 次のステップ
 
 Keycloak の準備はできましたが、Athenz はまだ Keycloak の ID トークンを信頼していません。次の章では Athenz がこのトークンを受け入れて検証できるよう設定します。
+（ここもなぜAthenzが信頼する必要があるのかを若干先出ししてくれると嬉しいです。 IdPが払い出したID tokenを Athenzの世界=athenzがissuerのaccess tokenに変換する? あれ id-tokenに変えるんだっけ? やべ仕様がちゃんとわかってない...) 
 
 次へ：[信頼する ID プロバイダー（Identity Provider, IdP）](./13-trusted-identity-provider.md)
