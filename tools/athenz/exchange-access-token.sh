@@ -6,7 +6,7 @@ source "${TOOLS_DIR}/color.sh"
 _zts_port=$("$TOOLS_DIR/port.sh" zts)
 
 if [ $# -lt 4 ]; then
-  fatal "Usage: $0 <cert_path> <key_path> <subject_access_token> <scope> [--actor-token <id_token>] [--actor <actor>] [--audience <audience>] [--token-only]"
+  fatal "Usage: $0 <cert_path> <key_path> <subject_access_token> <scope> [--actor-token <id_token>] [--actor <actor>] [--audience <audience>] [--expires-in <seconds>] [--token-only]"
 fi
 
 cert_path=$1
@@ -18,6 +18,7 @@ shift 4
 actor_token=""
 actor=""
 audience="api"
+expires_in="3600"
 token_only="false"
 ca_cert="./athenz_dist/certs/ca.cert.pem"
 zts_url="https://localhost:${_zts_port}/zts/v1/oauth2/token"
@@ -39,6 +40,11 @@ while [ $# -gt 0 ]; do
       audience=$2
       shift 2
       ;;
+    --expires-in)
+      [ $# -ge 2 ] || fatal "Missing value for --expires-in"
+      expires_in=$2
+      shift 2
+      ;;
     --token-only)
       token_only="true"
       shift
@@ -51,6 +57,11 @@ while [ $# -gt 0 ]; do
       ;;
   esac
 done
+
+[[ "${expires_in}" =~ ^[1-9][0-9]*$ ]] &&
+  [ "${#expires_in}" -le 10 ] &&
+  [ "${expires_in}" -le 2147483647 ] ||
+  fatal "--expires-in must be an integer between 1 and 2147483647 seconds"
 
 info "Exchanging access token for scope: ${scope}..." >&2
 
@@ -67,7 +78,7 @@ curl_args=(
   --data-urlencode "subject_token=${subject_access_token}"
   --data-urlencode "audience=${audience}"
   --data-urlencode "scope=${scope}"
-  --data-urlencode "expires_in=3600"
+  --data-urlencode "expires_in=${expires_in}"
 )
 
 if [ -n "${actor_token}" ]; then
