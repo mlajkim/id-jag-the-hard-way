@@ -25,7 +25,7 @@
 
 <a id="understand-the-trust-configuration"></a>
 
-## 信頼設定を理解する
+## 信頼設定を理解する (ここは「理解する」が望ましく感じます！今までと違って）
 
 現在のデプロイには Keycloak を信頼する設定がありません。Keycloak の ID トークンを ID-JAG に交換するには、次の作業が必要です：
 
@@ -40,6 +40,12 @@
 ## ZTS サーバーにプラグインをインストールする
 
 Keycloak トークン交換プロバイダーの JAR を ZTS サーバーにマウントするパッチを適用します：
+
+「Keycloak トークン交換プロバイダー」　この言葉はもう少しわかりやすくしてほしいです.
+KeycloakのID Token を Id-jagに交換する JAR
+プロバイダー？
+急にJARが出てくるのですが、ここまでJavaを意識してないので、 javaを知らない人からしたらなんだろうとなるかもです.
+パッケージ (jar)くらいにしても良いかもです。
 
 ```sh
 kubectl patch deployment athenz-zts-server \
@@ -62,7 +68,7 @@ kubectl rollout status deployment/athenz-zts-server -n athenz
 # deployment "athenz-zts-server" successfully rolled out
 ```
 
-JAR がマウントされたことを確認します：
+ZTS serverのコンテナでコマンドを実行し, JAR がマウントされたことを確認します：
 
 ```sh
 kubectl -n athenz exec deployment/athenz-zts-server \
@@ -82,7 +88,8 @@ kubectl -n athenz exec deployment/athenz-zts-server \
 
 ## プラグインを Keycloak に接続する
 
-プラグインが Keycloak インスタンスを参照するよう、`providers.json` ConfigMap を作成します：
+導入したプラグインが Keycloak インスタンスを参照するよう、`providers.json` ConfigMap を作成します：
+
 
 ```sh
 cat <<EOF | kubectl apply -f -
@@ -108,6 +115,11 @@ EOF
 ```
 
 ZTS サーバーから Keycloak の JWKS エンドポイントにアクセスできることを確認します：
+(この確認って,上のconfigの導入より前に持ってくるべきな気がします. 
+ZTSはjwks endpointからKeycloakの署名鍵に対応する公開鍵を取得できれば、Keycloakの発行するID tokenを検証できます.
+curlでZTSからKeycloakにアクセスできるか確認してみましょう. 
+
+→ この設定をZTSに読み込ませます。という流れの方が良い気がしました。)
 
 ```sh
 kubectl -n athenz exec deployment/athenz-zts-server -c athenz-zts-server -- \
@@ -161,7 +173,7 @@ kubectl -n athenz exec deployment/athenz-zts-server \
 
 ## ZTS がプラグインを読み込むよう設定する
 
-ファイルをマウントするだけでは足りません。ZTS サーバーにファイルの場所を指定します。`kubectl edit` で ZTS ConfigMap を編集します：
+ファイルをマウントするだけでは ZTS は設定ファイルを読み込みません. ZTS サーバーにファイルの場所を指定します。`kubectl edit` で ZTS ConfigMap を編集します：
 
 ```sh
 KUBE_EDITOR=vim kubectl edit configmap athenz-zts-conf -n athenz
@@ -220,7 +232,12 @@ kubectl logs -n athenz deployment/athenz-zts-server -c athenz-zts-server | grep 
 ```
 
 > [!NOTE]
-> プラグインは Keycloak トークンの `preferred_username` クレームを Athenz プリンシパル（Principal）`human.[preferred_username]` に対応付けます。そのため、Keycloak の `idjag-learner` は Athenz では `human.idjag-learner` になります。
+> 導入されたプラグインは Keycloak の発行する ID トークンの `preferred_username` クレームを Athenz プリンシパル（Principal）`human.[preferred_username]` に対応付けます。そのため、Keycloak の `idjag-learner` は Athenz では `human.idjag-learner` になります。
+>
+
+前の章にも書きましたが、プリンシパルの説明を一度してあげてあることがやはり望ましいです。
+再度ここで軽く復習として言及しても良いかもです
+(対象読者によりますが）
 
 <a id="review-summary-of-changes"></a>
 
@@ -228,7 +245,7 @@ kubectl logs -n athenz deployment/athenz-zts-server -c athenz-zts-server | grep 
 
 ## 結果を確認する
 
-`KeycloakTokenExchangeProvider` プラグインをインストールしました。このプラグインは Keycloak の ID トークンを受け取り、Keycloak の公開鍵で署名とクレームを検証して、認証された Athenz プリンシパルを返します：
+`KeycloakTokenExchangeProvider` プラグインをインストールしました。このプラグインは Keycloak の ID トークンを受け取り、Keycloak の公開鍵で署名を検証し, クレームを確認して、認証された Athenz プリンシパルを返します：
 
 ![IdP トークンを検証し、学習者の ID にマッピングする IdP AS](../assets/core_13_provider_trust.svg)
 
