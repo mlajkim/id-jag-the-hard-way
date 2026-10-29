@@ -6,7 +6,9 @@
 
 # AI Client Gateway — Codex
 
-Codex CLI と MCP サービスの間に AI Client Gateway をデプロイします。ゲートウェイはログインしたユーザーの Keycloak ID トークン（ID Token）を使って Athenz アクセストークン（Access Token）を取得します。その後、API にアクセスするための交換は MCP Runtime Proxy が行います。
+Codex CLI と MCP サービスの間に AI Client Gateway をデプロイします。ゲートウェイはログインしたユーザーの Keycloak ID トークン（ID Token）を使って Athenz アクセストークン（Access Token）を取得します。その後、API にアクセスするための交換は, N章からM章で行ってきた通り MCP Runtime Proxy が行います。
+
+（もう少し説明してあげてほしいかもです, id tokenから access tokenに変換することで何をしたいのか、何ができるようになるのか)
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
@@ -28,6 +30,8 @@ Codex CLI と MCP サービスの間に AI Client Gateway をデプロイしま�
 
 ゲートウェイは人が操作するクライアント側のコンポーネントなので、`human` ネームスペースにデプロイします。
 
+（人が操作するコンポーネントだから human ネームスペースは少し無理矢理な論理な気がしました笑... )
+
 `human` ネームスペースを作成します。すでに作成済みならスキップします：
 
 ```sh
@@ -46,6 +50,7 @@ kubectl create deploy codex-idjag-learner-ai-client-gateway -n human \
 ```
 
 `ai-client-gateway` コンテナのログを確認します：
+
 
 ```sh
 kubectl logs deploy/codex-idjag-learner-ai-client-gateway -n human -c ai-client-gateway
@@ -67,6 +72,37 @@ kubectl logs deploy/codex-idjag-learner-ai-client-gateway -n human -c ai-client-
 ## 必要な証明書を作成する
 
 サービス ID を作成し、X.509 証明書を取得します：
+
+前の章などでもう少し解説してあげてほしいかもです。サービスIDとは? 勝手に作った(ように見える)X.509証明書はなぜ有効なのか？
+
+‼️これ失敗しました... 多分前の章の patch適応が失敗した?
+
+前の章で,以下のエラーが出てました。
+  s.justCreate(Utilities.java:1060)
+	... 65 common frames omitted
+Caused by: java.lang.RuntimeException: java.io.FileNotFoundException: /var/run/athenz/keystore/zms_client_keystore.pkcs12 (No such file or directory)
+	at com.yahoo.athenz.common.utils.SSLUtils$ClientSSLContextBuilder.build(SSLUtils.java:158)
+	at com.yahoo.athenz.zms.ZMSClient.createSSLContext(ZMSClient.java:506)
+	at com.yahoo.athenz.zms.ZMSClient.initClient(ZMSClient.java:431)
+	at com.yahoo.athenz.zms.ZMSClient.<init>(ZMSClient.java:150)
+	at com.yahoo.athenz.common.server.store.impl.ZMSFileChangeLogStore.getZMSClient(ZMSFileChangeLogStore.java:137)
+	at com.yahoo.athenz.common.server.store.impl.ZMSFileChangeLogStore.getUpdatedSignedDomains(ZMSFileChangeLogStore.java:186)
+	at com.yahoo.athenz.zts.store.DataStore.processSignedDomainUpdates(DataStore.java:405)
+	at com.yahoo.athenz.zts.store.DataStore.processDomainUpdates(DataStore.java:929)
+	at com.yahoo.athenz.zts.store.DataStore.init(DataStore.java:900)
+	at com.yahoo.athenz.zts.ZTSImpl.<init>(ZTSImpl.java:391)
+	at com.yahoo.athenz.zts.ZTSImpl.<init>(ZTSImpl.java:315)
+	at com.yahoo.athenz.zts.ZTSImplFactory.<clinit>(ZTSImplFactory.java:20)
+	... 73 common frames omitted
+Caused by: java.io.FileNotFoundException: /var/run/athenz/keystore/zms_client_keystore.pkcs12 (No such file or directory)
+	at java.base/java.io.FileInputStream.open0(Native Method)
+	at java.base/java.io.FileInputStream.open(FileInputStream.java:185)
+	at java.base/java.io.FileInputStream.<init>(FileInputStream.java:139)
+	at java.base/java.io.FileInputStream.<init>(FileInputStream.java:109)
+	at com.yahoo.athenz.common.utils.SSLUtils$ClientSSLContextBuilder.loadStore(SSLUtils.java:177)
+	at com.yahoo.athenz.common.utils.SSLUtils$ClientSSLContextBuilder.build(SSLUtils.java:141)
+	... 84 common frames omitted
+  
 
 ```sh
 ./tools/athenz/create-private-key.sh "./keys/human-idjag-learner-codex"
