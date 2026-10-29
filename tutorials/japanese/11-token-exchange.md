@@ -30,7 +30,7 @@
 
 ## 残っているエラーの原因を確認する
 
-演習用 ID の MCP トークンと API スコープ（Scope）は検証を通過します。ただし、Runtime Proxy が Athenz にトークン交換を要求するには、Runtime Proxy としての身元を認証する必要があります。サービス証明書はまだマウントしていないため、ツールのリクエストは HTTP `502` を返します：
+演習用 ID の MCP トークンと API スコープ（Scope）は検証を通過します。ただし、Runtime Proxy が Athenz にトークン交換を要求するには、Runtime Proxy としての身元をZTSから認証される必要があります。Runtime Proxyのサービスを表現する証明書はまだマウントしていないため、Runtime Proxyはトークンの交換に失敗し, MCPサーバーからのツールのリクエストは HTTP `502` を返します： (自分の理解があってないかも... )
 
 サービスという言葉について解説してあげた方が良いかもと思いました。それかサービスの証明書ではなく、Runtime Proxyの身元をmTLSで認証するための証明書(と秘密鍵)をマウント
 
@@ -104,6 +104,8 @@ ID と証明書の作成用スクリプトで、MCP サービス ID `mcp.idthw-a
 
 サービス証明書と秘密鍵を `mcp` ネームスペースに保存します。この Secret は Runtime Proxy だけにマウントします。CA は前の章でマウントした別の CA Secret に残します：
 
+↑ CAって何を指しているのですか？ 
+
 ```sh
 kubectl -n mcp create secret generic api-mcp-cert \
   --from-file=api-mcp.crt=./keys/api-mcp.crt \
@@ -150,9 +152,9 @@ EOF
 
 <a id="share-the-api-token-directory"></a>
 
-### API トークン用ディレクトリを共有する
+### API のアクセストークンをPod内で共有する
 
-交換した API トークンを保存するため、プロキシにメモリベースのディレクトリを用意します。MCP コンテナには同じディレクトリを読み取り専用でマウントします。`fsGroup: 1000` によって MCP プロセスが共有ファイルを読めるようにします。
+交換した API アクセストークンを保存するため、プロキシにメモリベースのディレクトリを用意します。MCP コンテナには同じディレクトリを読み取り専用でマウントします。`fsGroup: 1000` によって MCP コンテナが共有ファイルを読めるようにします。
 
 次の図に、交換に成功した後、二つのコンテナが同じファイルを使う方法を示します：
 
@@ -387,17 +389,22 @@ kubectl logs deploy/mcp -n mcp -c auth-proxy --tail=5
 
 - `access token verified` — 演習用 ID の MCP トークンの検証に成功
 - `downstream access token published` — 交換に成功し、API トークンファイルの準備が完了
-- `upstreamStatus=200` の `request completed` — MCP サーバーがレスポンスを返す
+- `upstreamStatus=200` の `request completed` — MCP サーバーが成功のレスポンスを返す
 - `downstream access token removed` — プロキシがそのリクエストのトークンファイルを削除
 
 ポリシーの変更直後も `downstream_token_exchange_denied` が記録される場合は、Athenz のポリシーキャッシュが更新されるまで待ち、Codex で同じリクエストを再試行してください。
+
+
+※ なんかcodexのsessionを作り直さないと、反映されないこともあるかもしれないです、 codex sessionの中でMCP callの結果がキャッシュされる？
 
 <a id="next-steps"></a>
 
 ## 次のステップ
 
-これで Codex が保護された MCP サービスを通じて文書を取得できます。Runtime Proxy は演習用 ID の MCP トークンを、リクエストごとに必要な API トークンに交換します。
+これで Codex が保護された MCP サーバーを通じて文書を取得できます。Runtime Proxy は演習用 ID の MCP アクセストークンを、リクエストごとの API アクセストークンに交換します。
 
 次の章ではユーザーがログインして ID トークンを受け取れるよう、Keycloak をデプロイします。
+
+(なんでIDトークンってなるかもです！ 自分としては少し説明してくれた方が嬉しいです）
 
 次へ：[ID プロバイダー（Identity Provider, IdP）](./12-identity-provider.md)
