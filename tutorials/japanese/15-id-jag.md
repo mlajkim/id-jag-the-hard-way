@@ -20,6 +20,9 @@ AI Client Gateway に、Keycloak の ID トークン（ID Token）を ID-JAG に
 
 <a id="grant-permissions-to-humanidjag-learnercodex"></a>
 
+前の章でも若干思ったのですが gatewayと codexの権限が同じになってるのが、少し違和感があって、
+若干言及してくれるとうれしいです。
+
 ## `human.idjag-learner.codex` に権限を付与する
 
 `human.idjag-learner.codex` サービスには、対象ロールに対する JAG 交換権限が必要です。
@@ -39,6 +42,9 @@ AI Client Gateway に、Keycloak の ID トークン（ID Token）を ID-JAG に
 ```
 
 `api:role.docs-getter` と `mcp:role.mcp-accessor` を対象に `zts.jag_exchange` アクションを許可します：
+
+これはAthenzの仕様なので,ちょっと言及してあげてほしいです、
+急に魔法コマンドの押し付けのように見えます。
 
 ```sh
 ./tools/athenz/add-policy.sh "api" "docs-getter-jag-exchanger" "zts.jag_exchange" "role.docs-getter"
@@ -112,7 +118,13 @@ Get docs with id-jag-the-hard-way-mcp
 
 ## 動作を確認する
 
-AI Client Gateway はログインしたユーザーの Keycloak ID トークンを受け取り、ID-JAG に交換して Athenz アクセストークンを取得しました。
+‼️あれ、id-jag -> resource server access tokenは, mcp runtime proxyの仕事ではないですか？
+あ、違うのか、MCP serverアクセスするだけでアクセストークンが必要で、id-jagから一度変換する必要があるんですね。なるほど、そうなってくると、なぜid-jagを経由するんだろうってちょっとなっちゃいましたね。
+　ただ、ユーザが認証したという印があって、組織ポリシーで許可された権限集合の中から一部を id-jag として発行して, その部分集合として、今回のMCPサーバーとそのリソースサーバーへのアクエストークンを取得して、
+エージェントはそれを使って、MCPコールして、MCP runtimeがリソースサーバーへのアクセストークンに変換して、使ったっていう感じですかね... なんかやっぱり, id tokenから access tokenに直接言ってもいいんじゃないと思ってしまいましたが、よくわかりません。
+
+
+AI Client Gateway はログインしたユーザーの Keycloak ID トークンを受け取り、ID-JAG に交換して MCPサーバーにアクセスするための Athenz アクセストークンを取得しました。
 
 ゲートウェイはリクエストとレスポンスも記録するため、トークン交換に関するメッセージだけを抽出して直近 7 行を確認します：
 
@@ -138,7 +150,10 @@ kubectl logs deploy/codex-idjag-learner-ai-client-gateway -n human -c ai-client-
 
 🎉 これで「ID-JAG The Hard Way」チュートリアルは完了です。
 
-ユーザーのログインから委任された API アクセスまでをつなぎました。Athenz のポリシーはトークンの発行と交換を制御し、プロキシと API はそれぞれのトークンの audience とスコープを検証します。ロールのメンバーを変更すると、ZTS が変更を反映した後の新しいトークン発行に適用されます。発行済みのトークンは有効期限まで利用できる場合があります。
+委任という言葉に特段意図がなければ、依頼や指示の方が良いかと思います。
+
+ユーザーのログインからAI Agentのユーザに依頼された API アクセスまでをつなぎました。Athenz のポリシーはトークンの発行と交換を制御し、MCP Runtime プロキシと API サーバーはそれぞれのトークンの audience とスコープを検証します。~~ロールのメンバーを変更すると、ZTS が変更を反映した後の新しいトークン発行に適用されます。  発行済みのトークンは有効期限まで利用できる場合があります。~~
+(Athenzの話はここでは別にしなくても良いかなと思いました、逆にするならもう少し丁寧に書いてあげないとわかりづらい気がします。)
 
 構築した流れの全体像は次のとおりです：
 
