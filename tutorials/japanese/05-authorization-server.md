@@ -51,6 +51,11 @@ make -C athenz_dist clean-kubernetes-athenz deploy-kubernetes-athenz
 このチュートリアルで使う `mcp` と `api` の両ドメインのスコープを許可するよう、ZTS を設定します：
 (自分の知識不足ですが、この文章の意味があんまりわからなかったです)
 
+追記： 今ならわかります、やはりここで簡単に説明を入れた方が良いかもです。
+Athenzの世界とアクセストークンの対応、そしてドメインの説明を入れた方が良いと思います。
+プラスで、以下を入れると、この設定の意味がわかります。
+「Athenzは初期設定では, 複数のドメインに関するscopeを持つアクセストークンを発行できません。」
+
 ```sh
 _zts_java_opts=$(kubectl -n athenz get deployment/athenz-zts-server \
   -o jsonpath='{.spec.template.spec.containers[?(@.name=="athenz-zts-server")].env[?(@.name=="JAVA_OPTS")].value}')
