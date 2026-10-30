@@ -12,7 +12,7 @@
 
 > *MCP サーバーが上流の API にリクエストを送る場合、その API の OAuth クライアントとして動作できます。上流 API で使うアクセストークンは、上流の認可サーバー（Authorization Server）が発行した別のトークンです。MCP サーバーは MCP クライアントから受け取ったトークンをそのまま転送しては**なりません（MUST NOT）**。*
 
-この章では MCP サーバーの前段に `MCP Runtime Proxy` を認可プロキシ（Authorization Proxy）としてデプロイします。ツールの呼び出しには、受信先（audience）が `mcp` で、スコープ（Scope）が `mcp:role.mcp-accessor` の AT を要求します。以前使った API トークンが拒否されることを確認してから、演習用 ID に MCP へのアクセス権限を付与します。
+この章では MCP サーバーの前段に `MCP Runtime Proxy` を認可プロキシ（Authorization Proxy）としてデプロイします。これはこのチュートリアルで使うコンポーネントの名前で、MCP アプリケーションに渡す前にリクエストを検証します。ツールの呼び出しには、受信先（audience）が `mcp` で、スコープ（Scope）が `mcp:role.mcp-accessor` の AT を要求します。以前使った API トークンが拒否されることを確認してから、演習用 ID に MCP へのアクセス権限を付与します。API 用と MCP 用でトークンを分ける理由は、MCP が受け取ったトークンを API にそのまま渡さないためです。
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
@@ -298,6 +298,9 @@ codex resume --last
 <a id="verify-mcp-access-is-accepted"></a>
 
 ## MCP へのアクセスが許可されることを確認する
+
+> [!WARNING]
+> この段階では文書取得は `502 downstream_token_exchange_unavailable` で失敗します。MCP へのアクセスが通ることを確認し、次の章で API 用トークンへの交換を設定します。
 
 Codex にもう一度文書の取得を依頼します：
 

@@ -5,7 +5,7 @@
 *Build Cross-App Access for AI agents with ID-JAG, the hard way.*<br>
 *ID-JAG を使った AI エージェントの Cross-App Access を、一つずつ自分で構築します。*
 
-ログインしたユーザーに代わって保護された API にアクセスする AI エージェントを作ります。ユーザーとサービスの ID、ポリシー、トークン交換（Token Exchange）を順に設定します。リクエストを意図的に失敗させながら、各コンポーネントがどこで権限を確認するかを学びます。
+ログインしたユーザーに代わって、アクセス権を確認する文書 API を呼び出す AI エージェントを作ります。ユーザーとサービスの ID、ポリシー、トークン交換（Token Exchange）を順に設定します。リクエストを意図的に失敗させながら、各コンポーネントがどこで権限を確認するかを学びます。
 
 このチュートリアルでは、Cross-App Access（XAA）で使われる Identity Assertion JWT Authorization Grant（ID-JAG）という [IETF のドラフト仕様](https://datatracker.ietf.org/doc/draft-ietf-oauth-identity-assertion-authz-grant/)を扱います。概要は [LY Tech Blog の ID-JAG 解説（英語）](https://techblog.lycorp.co.jp/en/20260417a)を参照してください。
 
@@ -62,7 +62,7 @@ Open WebUI でも同じ認可（Authorization）の流れを使えます：
 
 ## 全体アーキテクチャ
 
-次の図に各コンポーネントの役割を示します。このチュートリアルでは Keycloak を IdP として使います。Athenz は IdP AS として ID-JAG を発行し、認可サーバー（Authorization Server, AS）としてアクセストークンを発行・交換します。必要なプロトコルとポリシーをサポートしていれば、ほかの製品でもこれらの役割を実装できます。
+次の図に各コンポーネントの役割を示します。このチュートリアルでは Keycloak を ID プロバイダー（IdP）として使い、ログインしたユーザーの ID トークンを発行します。Athenz は IdP 認可サーバー（IdP AS）としてその ID トークンを検証し、委任された権限を表す ID-JAG を発行します。さらに認可サーバー（Authorization Server, AS）としてアクセストークンを発行・交換します。必要なプロトコルとポリシーをサポートしていれば、ほかの製品でもこれらの役割を実装できます。
 
 ![IdP、IdP AS、認可サーバー、AI エージェント、ゲートウェイ、MCP、リソースサーバーからなる基本アーキテクチャ](../assets/core_15_idjag_flow.svg)
 

@@ -22,7 +22,7 @@ AI Client Gateway に、Keycloak の ID トークン（ID Token）を ID-JAG に
 
 ## `human.idjag-learner.codex` に権限を付与する
 
-`human.idjag-learner.codex` サービスには、対象ロールに対する JAG 交換権限が必要です。
+`human.idjag-learner.codex` は Codex 用ゲートウェイが Athenz に認証するときのサービス ID です。Codex 自体の ID やログインしたユーザーの ID ではありません。このサービスには、対象ロールに対する JAG 交換権限が必要です。
 
 文書アクセス用の `api` ドメインと MCP アクセス用の `mcp` ドメインに、それぞれ JAG 交換ロールを作成します。ゲートウェイは一つの ID-JAG で両方のスコープ（Scope）を要求し、受信先（audience）が `mcp` のアクセストークン（Access Token）に交換します：
 
@@ -38,7 +38,7 @@ AI Client Gateway に、Keycloak の ID トークン（ID Token）を ID-JAG に
 #   ✔  Role created: mcp:role.mcp-accessor-jag-exchanger
 ```
 
-`api:role.docs-getter` と `mcp:role.mcp-accessor` を対象に `zts.jag_exchange` アクションを許可します：
+ZTS は ID トークンから ID-JAG を発行する際、要求されたロールごとにゲートウェイの `zts.jag_exchange` 権限を確認します。`api:role.docs-getter` と `mcp:role.mcp-accessor` を対象にこのアクションを許可します：
 
 ```sh
 ./tools/athenz/add-policy.sh "api" "docs-getter-jag-exchanger" "zts.jag_exchange" "role.docs-getter"
@@ -112,7 +112,7 @@ Get docs with id-jag-the-hard-way-mcp
 
 ## 動作を確認する
 
-AI Client Gateway はログインしたユーザーの Keycloak ID トークンを受け取り、ID-JAG に交換して Athenz アクセストークンを取得しました。
+AI Client Gateway はログインしたユーザーの Keycloak ID トークンを使って ID-JAG を取得し、それを MCP 宛ての Athenz アクセストークンに交換しました。MCP Runtime Proxy はそのトークンを検証し、文書 API 宛てのアクセストークンに交換します。ID-JAG を間に置くことで、ログインしたユーザーの ID と、ポリシーで許された委任先の権限を Athenz が確認してから、各受信先に必要なトークンを発行できます。
 
 ゲートウェイはリクエストとレスポンスも記録するため、トークン交換に関するメッセージだけを抽出して直近 7 行を確認します：
 

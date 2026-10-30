@@ -26,7 +26,7 @@
 
 ## API ドメインを作成する
 
-API を表す Athenz ドメインを作成します：
+文書 API のロールとポリシーをまとめる Athenz ドメインを作成します：
 
 ```sh
 ./tools/athenz/create-tld.sh "api"
@@ -43,7 +43,7 @@ API を表す Athenz ドメインを作成します：
 
 ## ZTS の署名鍵エンドポイントを信頼する
 
-API は ZTS の公開署名鍵でアクセストークンを検証します。Node.js が ZTS との HTTPS 接続を検証できるよう、チュートリアルの CA をマウントします：
+API は ZTS から公開署名鍵を取得し、その鍵でアクセストークンの署名を検証します。鍵を取得するときの HTTPS 接続も検証できるよう、ZTS のサーバー証明書を発行した CA の証明書をマウントします。CA 証明書は通信先の確認に使い、トークンの署名検証には ZTS の公開署名鍵を使います：
 
 ```sh
 kubectl -n api create configmap api-zts-ca \
@@ -135,7 +135,7 @@ API は `scope` または `scp` クレームを読みます。audience が `api`
 
 ## 管理者をロールに追加する
 
-Athenz のデプロイには、管理者プリンシパル（Principal）`user.athenz_admin` の証明書が含まれます。最初のトークン取得ではこの証明書を使います。ZTS はリクエスト元が要求するスコープのロールに属している場合にトークンを発行します。
+プリンシパル（Principal）は、Athenz が認識するユーザーやサービスの ID です。Athenz のデプロイには、管理者プリンシパル `user.athenz_admin` の証明書が含まれます。まずこの証明書で ZTS にリクエスト元を示し、文書閲覧用のトークンを取得します。ZTS はこのプリンシパルが要求するスコープのロールに属している場合にトークンを発行します。
 
 > [!NOTE]
 > `add-role-member.sh` は ZMS API を通じてロールにメンバーを PUT し、そのプリンシパルにロールの権限を与えます。`cat ./tools/athenz/add-role-member.sh` で内容を確認できます。

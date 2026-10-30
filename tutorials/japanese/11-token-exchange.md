@@ -30,7 +30,7 @@
 
 ## 残っているエラーの原因を確認する
 
-演習用 ID の MCP トークンと API スコープ（Scope）は検証を通過します。ただし、Runtime Proxy が Athenz にトークン交換を要求するには、自身のサービス ID で認証する必要があります。サービス証明書はまだマウントしていないため、ツールのリクエストは HTTP `502` を返します：
+演習用 ID の MCP トークンと API スコープ（Scope）は検証を通過します。ただし、Runtime Proxy が Athenz にトークン交換を要求するには、自身のサービス ID を示す X.509 証明書と秘密鍵で認証する必要があります。証明書はまだマウントしていないため、ツールのリクエストは HTTP `502` を返します：
 
 ```json
 {
@@ -61,7 +61,7 @@ kubectl logs deploy/mcp -n mcp -c auth-proxy --tail=3
 
 Codex は受信先（audience）が `mcp` の、演習用 ID のアクセストークン（Access Token）を送ります。Runtime Proxy は最初にトークンを検証し、MCP へのアクセス権限とツールに必要な API スコープを確認します。その後、サービス証明書と秘密鍵を読み、`mcp.idthw-api-mcp` として Athenz ZTS に認証します。演習用 ID のトークンを提示し、audience が `api`、スコープが `api:role.docs-getter` の新しいトークンを要求します。ツールに設定されたスコープに基づき、この交換が自動的に実行されます。
 
-Athenz は、そのサービスが `mcp` audience のトークンを API の `docs-getter` ロールに交換できるか確認します。交換が成功すると、Runtime Proxy は API トークンをリクエストごとのファイルに書き、ファイルパスを MCP サーバーに渡します。MCP サーバーはこのトークンで API を呼び出します。リクエストが終わると、プロキシがファイルを削除します。
+Athenz は、そのサービスが `mcp` audience のトークンを API の `docs-getter` ロールに交換できるか確認します。交換が成功すると、Runtime Proxy は `api` audience のトークンをリクエストごとのファイルに書き、ファイルパスを MCP サーバーに渡します。MCP サーバーはこのトークンで API を呼び出します。リクエストが終わると、プロキシがファイルを削除し、後続のリクエストでそのトークンを再利用できないようにします。
 
 ![Runtime Proxy が演習用 ID の MCP トークンを API トークンに交換し、MCP が API を呼び出す流れ](../assets/core_11_exchange_allowed.svg)
 
