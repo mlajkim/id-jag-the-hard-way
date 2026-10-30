@@ -8,7 +8,8 @@
 
 Codex CLI と MCP サービスの間に AI Client Gateway をデプロイします。ゲートウェイはログインしたユーザーの Keycloak ID トークン（ID Token）を使って Athenz アクセストークン（Access Token）を取得します。その後、API にアクセスするための交換は, N章からM章で行ってきた通り MCP Runtime Proxy が行います。
 
-（もう少し説明してあげてほしいかもです, id tokenから access tokenに変換することで何をしたいのか、何ができるようになるのか)
+（もう少し説明してあげてほしいかもです, id tokenから access tokenに変換することで何ができるようになるのか、意図など)
+あとは、Gatewayはおそらく, CodexのAPI serverへのproxyですかね？ そのことも説明した方が良いかもです)
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
@@ -130,7 +131,7 @@ Caused by: java.io.FileNotFoundException: /var/run/athenz/keystore/zms_client_ke
 
 ## 証明書をマウントする
 
-証明書、秘密鍵、CA 証明書を Kubernetes Secret に保存します：
+証明書、秘密鍵、CA 証明書を human ネームスペースの Kubernetes Secret に保存します：
 
 ```sh
 test -f ./keys/human-idjag-learner-codex.crt
@@ -204,6 +205,7 @@ OAuth2 ログインの流れに必要な Keycloak の認証情報をゲートウ
 
 Keycloak クライアントの認証情報で Kubernetes Secret を作成します：
 
+
 ```sh
 ./tools/keycloak/create-client-k8s-secret.sh \
   "human.idjag-learner.codex" \
@@ -220,7 +222,11 @@ Keycloak クライアントの認証情報で Kubernetes Secret を作成しま�
 #   ✔  Secret created: human/human-idjag-learner-codex-keycloak
 ```
 
-ゲートウェイが登録済み OAuth2 クライアントとして Keycloak に認証できるよう、`KEYCLOAK_CLIENT_ID` と `KEYCLOAK_CLIENT_SECRET` を設定します。作成した `human-idjag-learner-codex-keycloak` Secret の `client-id` と `client-secret` キーを参照させます：
+少し自分は疎いのでもう少し説明があった方が嬉しいです.
+ここの価値としては, Codexを使った時に, codexの proxy(gateway)がIdP (keycloak)への認証をユーザーに要求し, Id tokenを gatewayやagentが獲得できることですかね？
+
+
+ゲートウェイが登録済み OAuth2 クライアントとして Keycloak に認証できるよう、`KEYCLOAK_CLIENT_ID` と `KEYCLOAK_CLIENT_SECRET` を設定します。12章で作成した `human-idjag-learner-codex-keycloak` Secret の `client-id` と `client-secret` キーを参照させます：
 
 ```sh
 kubectl patch deploy codex-idjag-learner-ai-client-gateway -n human --type=strategic --patch "$(cat <<'EOF'
@@ -257,8 +263,9 @@ EOF
 ゲートウェイに必要な情報を接続先ごとに設定します。各コマンドは指定した変数だけを変更するため、それまでの設定値は維持されます。
 
 ### 1. MCP サーバーのアドレスを設定する
+(リクエストを転送する MCPサーバー がなんだか違和感が若干ありました）
 
-まず、ゲートウェイがリクエストを転送する MCP サーバーのアドレスを指定します。`UPSTREAM_BASE_URL` には、先ほどデプロイした MCP Service のクラスター内アドレスを設定します：
+まず、ゲートウェイに対して MCP サーバーのアドレスを指定します。`UPSTREAM_BASE_URL` には、先ほどデプロイした MCP Service のクラスター内アドレスを設定します：
 
 ```sh
 kubectl set env deployment/codex-idjag-learner-ai-client-gateway -n human \
@@ -272,7 +279,7 @@ kubectl set env deployment/codex-idjag-learner-ai-client-gateway -n human \
 
 ### 2. Athenz のトークン発行先を設定する
 
-MCP リクエストに使うアクセストークン（Access Token）の発行先を指定します。`ZTS_URL` は ID トークン → ID-JAG → アクセストークンの交換を要求する Athenz ZTS のアドレスです。`ATHENZ_ACCESS_TOKEN_AUDIENCE=mcp` は取得するアクセストークンの受信先を指定します。ID-JAG の audience には ZTS URL を使います：
+MCP リクエストに使うアクセストークン（Access Token）の発行先を指定します。`ZTS_URL` はゲートウェイが ID トークン → ID-JAG → アクセストークンの交換を要求する Athenz ZTS のアドレスです。`ATHENZ_ACCESS_TOKEN_AUDIENCE=mcp` は取得するアクセストークンの受信先を指定します。ID-JAG の audience には ZTS URL を使います：
 
 ```sh
 kubectl set env deployment/codex-idjag-learner-ai-client-gateway -n human \
@@ -286,6 +293,8 @@ kubectl set env deployment/codex-idjag-learner-ai-client-gateway -n human \
 ```
 
 ### 3. Keycloak のログインサーバーに接続する
+codexを使用したときに, Gatewayにproxyされてkeycloakのログイン画面に飛ぶことを明記しても良いと思います。
+以下だと、なんで急に「ユーザーのログイン?」ってなる気がしました。
 
 ユーザーのログイン後、ゲートウェイは Keycloak から受け取った認可コードをトークンに交換します。このサーバー間リクエストに使うアドレスを `KEYCLOAK_URL`、先ほどクライアントを登録した realm を `KEYCLOAK_REALM` に指定します：
 
@@ -300,9 +309,10 @@ kubectl set env deployment/codex-idjag-learner-ai-client-gateway -n human \
 # deployment.apps/codex-idjag-learner-ai-client-gateway env updated
 ```
 
-### 4. ブラウザーからアクセスするアドレスを設定する
+### 4. ブラウザからアクセスするアドレスを設定する
+ここの説明わかりづらいです。自分がこの認証関連の手続きに疎いからだと思いますが、
 
-次にブラウザーがアクセスするポート転送先のアドレスを設定します。`KEYCLOAK_PUBLIC_URL` はログイン画面に移動する Keycloak のアドレス、`PUBLIC_BASE_URL` はログイン後に `/oauth/callback` へ戻るゲートウェイのアドレスです。AI クライアントもこのゲートウェイのアドレスに接続します：
+次にブラウザがアクセスする転送先のアドレスを設定します。`KEYCLOAK_PUBLIC_URL` はログイン画面に移動する Keycloak のアドレス、`PUBLIC_BASE_URL` はログイン後に `/oauth/callback` へ戻るゲートウェイのアドレスです。AI クライアントもこのゲートウェイのアドレスに接続します：
 
 ```sh
 _gateway_port=$(./tools/port.sh ai-client-gateway-codex)
@@ -320,7 +330,7 @@ kubectl set env deployment/codex-idjag-learner-ai-client-gateway -n human \
 
 ### 5. Service を公開して動作を確認する
 
-Deployment を Service として公開します：
+Kubernetes Service を作成して Deployment を公開します：
 
 ```sh
 kubectl delete -n human svc ai-client-gateway-codex --ignore-not-found=true
@@ -342,6 +352,8 @@ kubectl rollout status deployment/codex-idjag-learner-ai-client-gateway -n human
 ```
 
 現在のコンテナの起動ログを確認します：
+以下のようになっていれば成功です、くらい書いても良いかもです。
+下のものを見せられても、何を意味してるのかわからない気がします。
 
 ```sh
 kubectl logs deploy/codex-idjag-learner-ai-client-gateway -n human -c ai-client-gateway --tail=5
@@ -373,6 +385,8 @@ Keycloak に **"Do you want to log out?"** と表示されたら **Logout** を�
 
 ## Codex の MCP 設定を変更する
 
+ここ重要なところだと思いますので、図解を入れてあげても良いかもです！
+
 `.codex/config.toml` を次の内容に変更し、示された設定を追記して Codex をゲートウェイに接続します。ここからはゲートウェイが ID-JAG の一連の処理を担うため、アクセストークンを事前に取得して `Authorization` ヘッダーへ直接設定する必要はありません：
 
 ```sh
@@ -389,7 +403,9 @@ cat .codex/settings.toml >> .codex/config.toml
 ```
 
 > [!NOTE]
-> `Authorization` ヘッダーや事前取得したアクセストークンを設定していないことを確認してください。ゲートウェイがユーザーに代わって ID-JAG の一連の処理を担います。
+> 今まで使用してきた`Authorization` ヘッダーや事前取得したアクセストークンが設定されていないことを確認してください。ゲートウェイがユーザーに代わって ID-JAG の一連の処理を担います。 
+
+確認してくださいだけだと、どうやって？ってなる気がしました
 
 <a id="verify"></a>
 
@@ -435,13 +451,16 @@ Codex 内で MCP の接続状態を確認します：
 /mcp
 ```
 
+失敗することをわかりやすくしてくれると親切かもしれないです
+成功することを期待してしまっていたため、「なんで失敗するの？」となりました。
+
 ```sh
 # 🔌  MCP Tools
 
 #   • id-jag-the-hard-way-mcp: failed (0 tools)
 ```
 
-ログインには成功しますが、MCP の接続状態は `failed (0 tools)` と表示されます。この段階では予想どおりです。ゲートウェイはログインしたユーザーの Keycloak ID トークンを Athenz ZTS で交換しようとしますが、`human.idjag-learner.codex` に要求した MCP ロールの `zts.jag_exchange` 権限がまだないため、Athenz は交換を拒否します。
+ログインには成功しますが、MCP の接続状態は `failed (0 tools)` と表示されます。この段階では予想どおりです。ゲートウェイはログインしたユーザーの Keycloak ID トークンを Athenz ZTS で MCPサーバー向けのアクセストークンへ交換しようとしますが、`human.idjag-learner.codex` に要求した MCP ロールの `zts.jag_exchange` 権限がまだないため、Athenz は交換を拒否します。
 
 別のターミナルで AI Client Gateway の直近 8 行のログを確認し、交換リクエストがどこで失敗したか調べます：
 
@@ -468,12 +487,15 @@ kubectl logs deploy/codex-idjag-learner-ai-client-gateway -n human -c ai-client-
 - `scope [mcp:role.mcp-accessor]`：ゲートウェイが ZTS の `/oauth2/token` エンドポイントに、MCP ロール用の ID-JAG を要求しました
 - `HTTP 403` と `Principal not authorized for token exchange for the requested role`：ZTS がゲートウェイの交換リクエストを拒否しました。ユーザーがロールのメンバーであることとは別に、ゲートウェイにもそのロールに対する `zts.jag_exchange` 権限が必要です
 
+claudeの話が出てくるのは, MCPが anthropicが提案したものだからですかね.ちょっとだけ困惑しました。
+Bearer セッション処理経路っていう言葉も少し違和感があります。
+
 <a id="whats-next"></a>
 
 <a id="next-steps"></a>
 
 ## 次のステップ
 
-ログインは成功しましたが、Athenz はゲートウェイの ID-JAG リクエストを拒否しました。次の章ではゲートウェイに必要な交換権限を付与し、文書リクエストを再試行します。
+ログインは成功しましたが、Athenz はゲートウェイの ID-JAG リクエストを拒否しました。次の章ではゲートウェイに必要なID トークンから ID-JAGへの交換権限をAthenz で設定し、文書リクエストを再試行します。
 
 次へ：[ID-JAG](./15-id-jag.md)
