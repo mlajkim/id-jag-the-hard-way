@@ -65,7 +65,7 @@ Keep `./tools/keep-k8s-port-forward.sh` running in another terminal so you can r
 
 ## Discover the Tools
 
-Check the stateless MCP server's initialization response:
+Send the `initialize` request that an MCP client uses when connecting, and check the response for the server's name and version:
 
 ```sh
 _mcp_port=$(./tools/port.sh mcp)
@@ -83,7 +83,7 @@ curl -sS "http://localhost:${_mcp_port}/mcp" \
 # }
 ```
 
-List the document tools:
+Use `tools/list` to get the document tools offered by the MCP server:
 
 ```sh
 _mcp_port=$(./tools/port.sh mcp)

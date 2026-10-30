@@ -26,7 +26,7 @@ In this chapter, we will create Runtime Proxy's service identity, configure the 
 
 ## Understand the Remaining Error
 
-The learner's MCP token and API scope pass validation, but Runtime Proxy needs its own service identity to authenticate token exchange requests to Athenz. The service certificate has not been mounted yet, so the tool request returns HTTP `502`:
+The learner's MCP token and API scope pass validation, but Runtime Proxy must authenticate token exchange requests to Athenz with the X.509 certificate and private key for its own service identity. The certificate has not been mounted yet, so the tool request returns HTTP `502`:
 
 ```json
 {
@@ -55,7 +55,7 @@ Look for an entry like this:
 
 Codex sends the learner's access token with audience `mcp`. Runtime Proxy first validates that token and checks both MCP access and the API scope required by the tool. It then reads its service certificate and private key and authenticates to Athenz ZTS as `mcp.idthw-api-mcp`. It submits the learner's token and requests a new token with audience `api` and scope `api:role.docs-getter`. The tool's configured scope triggers this exchange automatically.
 
-Athenz checks whether the service may exchange tokens from the `mcp` audience into the API's `docs-getter` role. After the exchange succeeds, Runtime Proxy writes the API token to a request-specific file and passes the file path to the MCP server. The MCP server uses that token to call the API. The proxy removes the file when the request finishes.
+Athenz checks whether the service may exchange tokens from the `mcp` audience into the API's `docs-getter` role. After the exchange succeeds, Runtime Proxy writes the `api`-audience token to a request-specific file and passes the file path to the MCP server. The MCP server uses that token to call the API. The proxy removes the file when the request finishes so later requests cannot reuse it.
 
 ![Runtime Proxy exchanges the learner's MCP token for an API token before MCP calls the API](../assets/core_11_exchange_allowed.svg)
 

@@ -178,9 +178,9 @@ _keycloak_port=$(./tools/port.sh keycloak)
 
 ## Register the Keycloak Client
 
-In Keycloak, a **Client** represents an application that requests authentication on behalf of a user. We use the default `master` realm.
+In Keycloak, a **Client** registers the application that requests sign-in and receives the authorization code. AI Client Gateway acts as that application here. The person signing in has a separate user account, created in the next section. We use the default `master` realm to manage both.
 
-Register the AI client (`human.idjag-learner.codex`) with Keycloak:
+Register the Gateway's OAuth client (`human.idjag-learner.codex`) with Keycloak:
 
 ```sh
 _acg_port=$(./tools/port.sh ai-client-gateway-codex)
@@ -239,6 +239,6 @@ We have deployed Keycloak and created:
 
 ## Next Steps
 
-Keycloak is ready, but Athenz does not yet trust its ID tokens. In the next chapter, you will configure Athenz to accept and verify them.
+Keycloak is ready, but Athenz does not yet trust its ID tokens. To exchange an ID token for an ID-JAG later, Athenz must check its issuer and signature. In the next chapter, you will configure that trust.
 
 Next: [Trusted Identity Provider](./13-trusted-identity-provider.md)

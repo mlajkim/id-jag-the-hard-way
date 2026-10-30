@@ -34,7 +34,7 @@ The token has audience `api` and scope `api:role.docs-getter`. This API accepts 
 
 ## Create a learner identity
 
-Use the identity and certificate helper scripts to create a learner identity, `human.idjag-learner`:
+Use the identity and certificate helper scripts to create a learner identity, `human.idjag-learner`. Register its public key and obtain an X.509 certificate for the service identity from ZTS. The next token request uses that certificate to identify the requester:
 
 ```sh
 ./tools/athenz/create-tld.sh "human"
@@ -73,7 +73,7 @@ Open the service page to double-check the learner identity:
 
 ## Fetch an Access Token as the learner
 
-Now request the same `api:role.docs-getter` scope, but authenticate as `human.idjag-learner` instead of the admin user.
+Now request the same `api:role.docs-getter` scope, but authenticate to ZTS with `human.idjag-learner`'s certificate and private key instead of the administrator's. ZTS will deny issuance because this identity is not yet a member of the role.
 
 > [!WARNING]
 > This command will fail. That is intentional.

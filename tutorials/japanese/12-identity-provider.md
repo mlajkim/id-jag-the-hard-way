@@ -186,9 +186,9 @@ _keycloak_port=$(./tools/port.sh keycloak)
 
 ## Keycloak クライアントを登録する
 
-Keycloak の **Client** は、ユーザーに代わって認証（Authentication）を要求するアプリケーションです。ここでは既定の `master` realm を使います。
+Keycloak の **Client** は、ユーザーのログインを要求し、認可コードを受け取るアプリケーションの登録情報です。ここでは AI Client Gateway がそのアプリケーションとして動作します。ログインする人のアカウントは次の節で別に作成します。Keycloak 内で Client とユーザーを管理する領域には、既定の `master` realm を使います。
 
-AI クライアント（`human.idjag-learner.codex`）を Keycloak に登録します：
+ゲートウェイの OAuth クライアント（`human.idjag-learner.codex`）を Keycloak に登録します：
 
 ```sh
 _acg_port=$(./tools/port.sh ai-client-gateway-codex)
@@ -206,7 +206,7 @@ _acg_port=$(./tools/port.sh ai-client-gateway-codex)
 
 ## 演習用ユーザーを作成する
 
-演習者を表すユーザーアカウントを作成します：
+チュートリアルを操作する人がログインする演習用ユーザーアカウントを作成します：
 
 ```sh
 OPEN_UI=true ./tools/keycloak/create-user.sh \
@@ -246,7 +246,7 @@ OPEN_UI=true ./tools/keycloak/create-user.sh \
 
 Keycloak をデプロイし、次のものを作成しました：
 
-- AI クライアント（Codex CLI）を表すクライアント `human.idjag-learner.codex`
+- Codex 用ゲートウェイの OAuth クライアント `human.idjag-learner.codex`
 - API へのアクセスを要求する人を表すユーザー `idjag-learner`
 
 <a id="whats-next"></a>
@@ -255,6 +255,6 @@ Keycloak をデプロイし、次のものを作成しました：
 
 ## 次のステップ
 
-Keycloak の準備はできましたが、Athenz はまだ Keycloak の ID トークンを信頼していません。次の章では Athenz がこのトークンを受け入れて検証できるよう設定します。
+Keycloak の準備はできましたが、Athenz はまだ Keycloak の ID トークンを信頼していません。後で ID トークンを ID-JAG に交換するには、Athenz が発行元と署名を確認する必要があります。次の章ではそのための設定をします。
 
 次へ：[信頼する ID プロバイダー（Identity Provider, IdP）](./13-trusted-identity-provider.md)

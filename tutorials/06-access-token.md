@@ -22,7 +22,7 @@ In chapter 04, you enabled access-token enforcement and saw an unauthenticated r
 
 ## Create the API domain
 
-Create the Athenz domain that represents the API:
+Create an Athenz domain to group the document API's roles and policies:
 
 ```sh
 ./tools/athenz/create-tld.sh "api"
@@ -37,7 +37,7 @@ This domain is separate from the Kubernetes namespace `api` created in chapter 0
 
 ## Trust the ZTS signing-key endpoint
 
-The API verifies access tokens using ZTS's public signing keys. Mount the tutorial CA so Node.js can authenticate the HTTPS connection to ZTS:
+The API fetches ZTS's public signing keys and uses them to verify access-token signatures. Mount the CA certificate that issued ZTS's server certificate so Node.js can also verify the HTTPS connection used to fetch those keys. The CA certificate authenticates the connection; ZTS's public signing keys verify the tokens:
 
 ```sh
 kubectl -n api create configmap api-zts-ca \
@@ -123,7 +123,7 @@ These mappings live in the API; it does not download or evaluate Athenz action/r
 
 ## Add the Administrator to the Role
 
-The Athenz deployment provides a certificate for the administrator principal, `user.athenz_admin`. Use it for this first token request. ZTS requires the requester to be a member of the role specified in the requested scope.
+A principal is a user or service identity recognized by Athenz. The Athenz deployment provides a certificate for the administrator principal, `user.athenz_admin`. Use that certificate to identify the requester to ZTS for this first document-reading token. ZTS issues the token only if that principal belongs to the role named by the requested scope.
 
 > [!NOTE]
 > `add-role-member.sh` — PUTs a member entry to a role via the ZMS API, granting that principal the permissions associated with the role. Run `cat ./tools/athenz/add-role-member.sh` to inspect.
