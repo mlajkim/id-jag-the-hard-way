@@ -48,7 +48,7 @@ make -C athenz_dist clean-kubernetes-athenz deploy-kubernetes-athenz
 
 ## 複数ドメインのスコープを許可する
 
-このチュートリアルで使う `mcp` と `api` の両ドメインのスコープを許可するよう、ZTS を設定します：
+Athenz のドメインはロールとポリシーをまとめる単位です。このチュートリアルでは MCP 用の `mcp` ドメインと文書 API 用の `api` ドメインを使い、それぞれのロールをアクセストークンのスコープで表します。ZTS の既定設定では、一つのトークンに複数ドメインのスコープを含められません。後のトークン交換で両方のスコープを扱えるよう、上限を変更します：
 
 ```sh
 _zts_java_opts=$(kubectl -n athenz get deployment/athenz-zts-server \

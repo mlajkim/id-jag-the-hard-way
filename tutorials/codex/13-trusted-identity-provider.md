@@ -33,7 +33,7 @@ This deployment is not yet configured to trust Keycloak. To exchange a Keycloak 
 
 ## Install Plugin into the ZTS Server
 
-Apply the patch that mounts the Keycloak token exchange provider JAR into the ZTS server:
+Add the plugin that validates Keycloak ID tokens to ZTS. A JAR is the file format used to distribute this Java plugin. Apply the patch that mounts it into the ZTS server:
 
 ```sh
 kubectl patch deployment athenz-zts-server \
@@ -74,7 +74,7 @@ We have now mounted the `KeycloakTokenExchangeProvider` plugin JAR in the ZTS se
 
 ## Connect Keycloak with the Plugin
 
-Create a `providers.json` ConfigMap that points the plugin at our Keycloak instance:
+Create a `providers.json` ConfigMap that tells the plugin where to find Keycloak's issuer and public signing keys. ZTS uses those keys to verify Keycloak ID tokens:
 
 ```sh
 cat <<EOF | kubectl apply -f -

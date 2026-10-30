@@ -53,7 +53,7 @@ The tutorial uses the following components:
 
 ## Full Architecture
 
-The diagram leads with architecture roles. This tutorial uses Keycloak as the IdP and Athenz for both the IdP AS (ID-JAG issuance) and Authorization Server (AS, access-token issuance and exchange). Other products can fill these roles if they support the required protocols and policies.
+The diagram leads with architecture roles. Keycloak is the identity provider (IdP): it signs in the user and issues an ID token. Athenz acts as the IdP Authorization Server (IdP AS): it validates that token and issues an ID-JAG representing the delegated permissions. Athenz also acts as the Authorization Server (AS), issuing and exchanging access tokens. Other products can fill these roles if they support the required protocols and policies.
 
 ![Core tutorial architecture: IdP, IdP AS, Authorization Server, AI Agent, gateway, MCP, and Resource Server](./tutorials/assets/core_15_idjag_flow.svg)
 

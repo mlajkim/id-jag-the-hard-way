@@ -162,6 +162,15 @@ New or revised shell tools must follow neighboring tools' output style and reuse
 - Introduce the Korean tutorial's Codex scope in chapter 09, where readers choose an AI client, and link to the English Claude Code and Open WebUI paths there. Keep language links in the root README and Korean introduction independent of client choice
 - Use the root README for language selection and previous/current/next links for chapter navigation. Do not add repeated language or source-link rows such as `English · 한국어 소개` to translated pages
 
+### Proposed Tutorial Review Checks
+
+- Explain a term before the first command or diagram that relies on it. Distinguish Athenz domains from Kubernetes namespaces, human users from OAuth clients and service identities, and HTTPS trust from token signature validation.
+- Follow each token through the system: say who holds, issues, exchanges, and validates it, and which audience and scope the receiver expects.
+- State each command's purpose and expected result. Warn readers before an intentional failure and name the later step that resolves it.
+- Describe network addresses from the perspective of the browser, AI client, Gateway, ZTS, or MCP process that uses them.
+- Keep reviewer notes, open questions, environment-specific error logs, and unverified success claims out of tutorial prose. Raise unresolved behavior in the PR discussion.
+- Preserve technical meaning when translating; use natural Japanese wording and check new explanations against the English source and implementation.
+
 ### Korean Writing Style and Terminology
 
 - Use clear Korean engineering prose, with [NAVER D2](https://d2.naver.com/), [우아한형제들 기술블로그](https://techblog.woowahan.com/), [Coupang Engineering](https://medium.com/coupang-engineering), and [Kakao Developers](https://developers.kakao.com/docs/ko/kakaologin/common) as writing references. Prefer practical explanations over literal English sentence structure or marketing language

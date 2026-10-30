@@ -4,7 +4,7 @@
 
 # AI Client Gateway — Codex
 
-Deploy AI Client Gateway between Codex CLI and the MCP service with the following steps. The gateway uses the signed-in user's Keycloak ID token to obtain an Athenz access token. MCP Runtime Proxy performs the later exchange for API access.
+Deploy AI Client Gateway between Codex CLI and the MCP service. The gateway receives Codex's MCP requests and prompts the user to sign in to Keycloak in a browser. It uses the resulting ID token to obtain an ID-JAG from Athenz, exchanges that for an MCP-audience access token, and attaches it to the MCP request. MCP Runtime Proxy performs the later exchange for API access.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
@@ -22,7 +22,7 @@ Deploy AI Client Gateway between Codex CLI and the MCP service with the followin
 
 ## Deploy AI Client Gateway in K8s
 
-The gateway belongs in the `human` namespace — it represents the human-controlled, client side of the architecture.
+In this tutorial, the gateway handles human sign-in and delegation, so we deploy it in the `human` namespace.
 
 Create the `human` namespace (skip if already created in a previous tutorial):
 
@@ -174,7 +174,7 @@ Create the Kubernetes Secret from the Keycloak client credentials:
 #   ✔  Secret created: human/human-idjag-learner-codex-keycloak
 ```
 
-Configure `KEYCLOAK_CLIENT_ID` and `KEYCLOAK_CLIENT_SECRET` so the gateway can authenticate to Keycloak as the registered OAuth2 client. Reference the `client-id` and `client-secret` keys in the `human-idjag-learner-codex-keycloak` Secret just created:
+Configure `KEYCLOAK_CLIENT_ID` and `KEYCLOAK_CLIENT_SECRET` so the gateway can authenticate to Keycloak as the registered OAuth2 client when it exchanges the authorization code for tokens. These are gateway credentials, separate from what the user enters on the sign-in page. Reference the `client-id` and `client-secret` keys in the `human-idjag-learner-codex-keycloak` Secret just created:
 
 ```sh
 kubectl patch deploy codex-idjag-learner-ai-client-gateway -n human --type=strategic --patch "$(cat <<'EOF'
@@ -254,7 +254,7 @@ kubectl set env deployment/codex-idjag-learner-ai-client-gateway -n human \
 
 ### 4. Set the Browser-Facing Addresses
 
-Set the port-forwarded addresses the browser can reach. `KEYCLOAK_PUBLIC_URL` points to the Keycloak login page. `PUBLIC_BASE_URL` is the gateway address used for the `/oauth/callback` after login; the AI client also connects through this address:
+Set the port-forwarded addresses the browser can reach. `KEYCLOAK_PUBLIC_URL` is where the browser opens the Keycloak login page. `PUBLIC_BASE_URL` is where the browser returns to the gateway's `/oauth/callback` after login; Codex also connects to this gateway address. The `KEYCLOAK_URL` from the previous step is the in-cluster address used by the gateway to contact Keycloak:
 
 ```sh
 _gateway_port=$(./tools/port.sh ai-client-gateway-codex)
@@ -337,7 +337,7 @@ cat .codex/settings.toml >> .codex/config.toml
 ```
 
 > [!NOTE]
-> Notice that there is no `Authorization` header or pre-fetched access token. The gateway handles the entire ID-JAG flow on your behalf.
+> Check that `[mcp_servers.id-jag-the-hard-way-mcp]` in the generated `.codex/config.toml` has no `Authorization` header or pre-fetched access token. The gateway handles the entire ID-JAG flow on your behalf.
 
 ## Verify
 
@@ -374,6 +374,9 @@ After login succeeds, restart Codex from the same project directory to load the 
 ```sh
 codex
 ```
+
+> [!WARNING]
+> The MCP connection shows `failed (0 tools)` at this stage. Sign-in succeeds, but the gateway does not yet have ID-JAG exchange permission. Chapter 15 grants it.
 
 In Codex, check the MCP connection status:
 

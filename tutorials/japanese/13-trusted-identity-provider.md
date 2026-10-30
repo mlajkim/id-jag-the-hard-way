@@ -39,7 +39,7 @@
 
 ## ZTS サーバーにプラグインをインストールする
 
-Keycloak トークン交換プロバイダーの JAR を ZTS サーバーにマウントするパッチを適用します：
+Keycloak の ID トークンを検証するプラグインを ZTS に追加します。JAR は Java のプラグインを配布するファイル形式です。この JAR を ZTS サーバーにマウントするパッチを適用します：
 
 ```sh
 kubectl patch deployment athenz-zts-server \
@@ -82,7 +82,7 @@ kubectl -n athenz exec deployment/athenz-zts-server \
 
 ## プラグインを Keycloak に接続する
 
-プラグインが Keycloak インスタンスを参照するよう、`providers.json` ConfigMap を作成します：
+プラグインが Keycloak の発行元と公開署名鍵の取得先を参照できるよう、`providers.json` ConfigMap を作成します。ZTS は取得した鍵で Keycloak の ID トークンを検証します：
 
 ```sh
 cat <<EOF | kubectl apply -f -

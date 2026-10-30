@@ -10,7 +10,7 @@ The [MCP authorization specification](https://modelcontextprotocol.io/specificat
 
 > *If the MCP server makes requests to upstream APIs, it may act as an OAuth client to them. The access token used at the upstream API is a separate token, issued by the upstream authorization server. The MCP server **MUST NOT** pass through the token it received from the MCP client.*
 
-In this chapter, we will deploy `MCP Runtime Proxy` as an authorization proxy in front of the MCP server. It will require an AT with audience `mcp` and scope `mcp:role.mcp-accessor` for tool calls. We will verify that it rejects the previous API token, then grant the learner MCP access.
+In this chapter, we will deploy `MCP Runtime Proxy` as an authorization proxy in front of the MCP server. That is the name of the tutorial component that checks requests before they reach the MCP application. It will require an AT with audience `mcp` and scope `mcp:role.mcp-accessor` for tool calls. We will verify that it rejects the previous API token, then grant the learner MCP access. Separate MCP and API tokens prevent MCP from forwarding the token it received directly to the API.
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
@@ -280,6 +280,9 @@ codex resume --last
 <a id="verify-the-service-certificate-is-required"></a>
 
 ## Verify MCP Access Is Accepted
+
+> [!WARNING]
+> Document retrieval still fails here with `502 downstream_token_exchange_unavailable`. This step verifies MCP access; chapter 11 configures the exchange for the API token.
 
 Ask Codex to retrieve the documents again:
 

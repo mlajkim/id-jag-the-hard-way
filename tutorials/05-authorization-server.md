@@ -42,7 +42,7 @@ make -C athenz_dist clean-kubernetes-athenz deploy-kubernetes-athenz
 
 ## Enable Scopes Across Multiple Domains
 
-Configure ZTS to allow scopes from both domains used by this tutorial, `mcp` and `api`:
+An Athenz domain groups roles and policies. This tutorial uses the `mcp` domain for MCP and the `api` domain for the document API; their roles appear as access-token scopes. By default, ZTS does not include scopes from multiple domains in one token. Raise that limit so the later token exchange can carry scopes from both domains:
 
 ```sh
 _zts_java_opts=$(kubectl -n athenz get deployment/athenz-zts-server \

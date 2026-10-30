@@ -110,7 +110,7 @@ Start Codex in this project directory:
 codex
 ```
 
-Codex should connect and discover the three document tools.
+Codex should connect and discover the three document tools. Starting and connecting to the MCP server can take time in some environments.
 
 ## Verify
 

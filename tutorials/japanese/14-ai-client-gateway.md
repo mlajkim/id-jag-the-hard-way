@@ -6,7 +6,7 @@
 
 # AI Client Gateway — Codex
 
-Codex CLI と MCP サービスの間に AI Client Gateway をデプロイします。ゲートウェイはログインしたユーザーの Keycloak ID トークン（ID Token）を使って Athenz アクセストークン（Access Token）を取得します。その後、API にアクセスするための交換は MCP Runtime Proxy が行います。
+Codex CLI と MCP サービスの間に AI Client Gateway をデプロイします。Codex の MCP リクエストを受けるゲートウェイは、ブラウザーで Keycloak へのログインを促し、受け取った ID トークン（ID Token）で Athenz から ID-JAG を取得します。さらに MCP 宛てのアクセストークン（Access Token）を取得してリクエストに付けます。API 宛てのトークンへの交換は MCP Runtime Proxy が行います。
 
 <!-- TOC depthFrom:2 depthTo:2 -->
 
@@ -26,7 +26,7 @@ Codex CLI と MCP サービスの間に AI Client Gateway をデプロイしま�
 
 ## AI Client Gateway を Kubernetes にデプロイする
 
-ゲートウェイは人が操作するクライアント側のコンポーネントなので、`human` ネームスペースにデプロイします。
+このチュートリアルでは、人のログインとその委任を扱うゲートウェイを `human` ネームスペースにデプロイします。
 
 `human` ネームスペースを作成します。すでに作成済みならスキップします：
 
@@ -184,7 +184,7 @@ Keycloak クライアントの認証情報で Kubernetes Secret を作成しま�
 #   ✔  Secret created: human/human-idjag-learner-codex-keycloak
 ```
 
-ゲートウェイが登録済み OAuth2 クライアントとして Keycloak に認証できるよう、`KEYCLOAK_CLIENT_ID` と `KEYCLOAK_CLIENT_SECRET` を設定します。作成した `human-idjag-learner-codex-keycloak` Secret の `client-id` と `client-secret` キーを参照させます：
+ゲートウェイが登録済み OAuth2 クライアントとして Keycloak に認証できるよう、`KEYCLOAK_CLIENT_ID` と `KEYCLOAK_CLIENT_SECRET` を設定します。これはゲートウェイが認可コードをトークンに交換するときの認証情報で、ユーザーがログイン画面に入力する情報とは異なります。作成した `human-idjag-learner-codex-keycloak` Secret の `client-id` と `client-secret` キーを参照させます：
 
 ```sh
 kubectl patch deploy codex-idjag-learner-ai-client-gateway -n human --type=strategic --patch "$(cat <<'EOF'
@@ -266,7 +266,7 @@ kubectl set env deployment/codex-idjag-learner-ai-client-gateway -n human \
 
 ### 4. ブラウザーからアクセスするアドレスを設定する
 
-次にブラウザーがアクセスするポート転送先のアドレスを設定します。`KEYCLOAK_PUBLIC_URL` はログイン画面に移動する Keycloak のアドレス、`PUBLIC_BASE_URL` はログイン後に `/oauth/callback` へ戻るゲートウェイのアドレスです。AI クライアントもこのゲートウェイのアドレスに接続します：
+ブラウザーがアクセスするポート転送先のアドレスを設定します。`KEYCLOAK_PUBLIC_URL` はブラウザーがログイン画面を開く Keycloak のアドレスです。`PUBLIC_BASE_URL` はログイン後にブラウザーが `/oauth/callback` へ戻るゲートウェイのアドレスで、Codex も同じアドレスに接続します。前の節の `KEYCLOAK_URL` は、ゲートウェイから Keycloak に接続するときのクラスター内アドレスです：
 
 ```sh
 _gateway_port=$(./tools/port.sh ai-client-gateway-codex)
@@ -353,7 +353,7 @@ cat .codex/settings.toml >> .codex/config.toml
 ```
 
 > [!NOTE]
-> `Authorization` ヘッダーや事前取得したアクセストークンを設定していないことを確認してください。ゲートウェイがユーザーに代わって ID-JAG の一連の処理を担います。
+> 生成した `.codex/config.toml` の `[mcp_servers.id-jag-the-hard-way-mcp]` に `Authorization` ヘッダーや事前取得したアクセストークンが残っていないことを確認してください。ゲートウェイがユーザーに代わって ID-JAG の一連の処理を担います。
 
 <a id="verify"></a>
 
@@ -392,6 +392,9 @@ codex mcp login id-jag-the-hard-way-mcp
 ```sh
 codex
 ```
+
+> [!WARNING]
+> この段階の MCP 接続は `failed (0 tools)` と表示されます。ログインは成功しても、ゲートウェイにはまだ ID-JAG の交換権限がありません。次の章で権限を付与します。
 
 Codex 内で MCP の接続状態を確認します：
 

@@ -18,7 +18,7 @@ Authorize the AI Client Gateway to exchange your Keycloak ID token for an ID-JAG
 
 ## Grant Permissions to `human.idjag-learner.codex`
 
-The `human.idjag-learner.codex` service needs permission to perform JAG exchange into the target roles it will use.
+`human.idjag-learner.codex` is the service identity the Codex gateway uses to authenticate to Athenz. It is separate from Codex itself and from the signed-in user. This service needs permission to perform JAG exchange into the target roles it will use.
 
 Create one JAG-exchange role in each target domain: `api` for document access and `mcp` for MCP access. The gateway will request both scopes in one ID-JAG, then exchange it for an access token with audience `mcp`:
 
@@ -34,7 +34,7 @@ Create one JAG-exchange role in each target domain: `api` for document access an
 #   ✔  Role created: mcp:role.mcp-accessor-jag-exchanger
 ```
 
-Grant the `zts.jag_exchange` action for `api:role.docs-getter` and `mcp:role.mcp-accessor`:
+When ZTS issues an ID-JAG from an ID token, it checks the gateway's `zts.jag_exchange` permission for each requested role. Grant that action for `api:role.docs-getter` and `mcp:role.mcp-accessor`:
 
 ```sh
 ./tools/athenz/add-policy.sh "api" "docs-getter-jag-exchanger" "zts.jag_exchange" "role.docs-getter"
@@ -104,7 +104,7 @@ The response should contain the documents returned by the API.
 
 ## Understand the Result
 
-The AI Client Gateway resolved the signed-in user's Keycloak ID token, exchanged it for an ID-JAG token, and then fetched an Athenz access token.
+AI Client Gateway used the signed-in user's Keycloak ID token to obtain an ID-JAG, then exchanged it for an MCP-audience Athenz access token. MCP Runtime Proxy validated that token and exchanged it for a document API-audience access token. The ID-JAG lets Athenz check the signed-in user's identity and policy-authorized delegated permissions before issuing tokens for the individual recipients.
 
 The gateway also logs requests and responses. Filter for token-exchange messages and show the latest seven lines:
 

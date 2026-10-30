@@ -73,7 +73,7 @@ kubectl rollout status deploy/mcp -n mcp
 
 ## ツール一覧を確認する
 
-ステートレスな MCP サーバーの初期化レスポンスを確認します：
+MCP クライアントが接続時に送る `initialize` リクエストを使い、サーバー名とバージョンを含む初期化レスポンスを確認します：
 
 ```sh
 _mcp_port=$(./tools/port.sh mcp)
@@ -91,7 +91,7 @@ curl -sS "http://localhost:${_mcp_port}/mcp" \
 # }
 ```
 
-文書操作用ツールの一覧を取得します：
+次に `tools/list` で、MCP サーバーが提供する文書操作用ツールの一覧を取得します：
 
 ```sh
 _mcp_port=$(./tools/port.sh mcp)
