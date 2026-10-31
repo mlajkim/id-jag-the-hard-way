@@ -3,10 +3,16 @@ set -euo pipefail
 
 TOOLS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "${TOOLS_DIR}/color.sh"
-_zms_port=$("$TOOLS_DIR/port.sh" zms)
 
-if [ $# -lt 2 ]; then
-  fatal "Usage: $0 <domain> <service_name> [--summary]"
+_athenz_service_context=''
+if [ "${1:-}" = '--context' ]; then
+  [ $# -ge 2 ] && [ -n "$2" ] || fatal 'Missing value for --context'
+  _athenz_service_context=$2
+  shift 2
+fi
+
+if [ $# -lt 2 ] || [ $# -gt 3 ]; then
+  fatal "Usage: $0 [--context <context>] <domain> <service_name> [--summary]"
 fi
 
 domain=$1
@@ -15,28 +21,47 @@ summary_output=false
 
 if [ "${3:-}" = "--summary" ]; then
   summary_output=true
+elif [ $# -eq 3 ]; then
+  fatal "Unknown option: $3"
 fi
 
+[[ "${domain}" =~ ^[A-Za-z0-9][A-Za-z0-9.-]*$ ]] || fatal "Invalid domain: ${domain}"
 if [[ "${service_name}" == *"_"* ]]; then
   fatal "Invalid service name '${service_name}': Athenz service names cannot contain underscores. Remove '_' from the service name, for example '${service_name//_/}'."
 fi
+[[ "${service_name}" =~ ^[A-Za-z0-9][A-Za-z0-9-]*$ ]] || fatal "Invalid service name: ${service_name}"
 
 info "Showing service ${domain}.${service_name}..." >&2
 
-response_file=$(mktemp)
-curl_status=0
-http_code=$(curl -s -k -o "${response_file}" -w "%{http_code}" \
-  "https://localhost:${_zms_port}/zms/v1/domain/${domain}/service/${service_name}" \
-  --cert ./athenz_dist/certs/athenz_admin.cert.pem \
-  --key ./athenz_dist/keys/athenz_admin.private.pem \
-  --cacert ./athenz_dist/certs/ca.cert.pem) || curl_status=$?
-response=$(cat "${response_file}")
-rm -f "${response_file}"
+if [ -n "${_athenz_service_context}" ]; then
+  _athenz_service_request=(kubectl --context "${_athenz_service_context}" -n athenz exec deploy/athenz-cli --
+    curl --cacert /etc/ssl/certs/ca-certificates.crt
+    --cert /var/run/athenz/athenz_admin.cert.pem
+    --key /var/run/athenz/athenz_admin.private.pem)
+  _athenz_service_zms=https://athenz-zms-server.athenz:4443/zms/v1
+else
+  _zms_port=$("$TOOLS_DIR/port.sh" zms)
+  _athenz_service_request=(curl -k --cacert ./athenz_dist/certs/ca.cert.pem
+    --cert ./athenz_dist/certs/athenz_admin.cert.pem
+    --key ./athenz_dist/keys/athenz_admin.private.pem)
+  _athenz_service_zms="https://localhost:${_zms_port}/zms/v1"
+fi
+
+read_service_response() {
+  curl_status=0
+  response=$("${_athenz_service_request[@]}" --silent --show-error --noproxy '*' \
+    --connect-timeout 10 --max-time 45 --write-out '\n%{http_code}' \
+    "${_athenz_service_zms}/domain/${domain}/service/${service_name}$1") || curl_status=$?
+  http_code=${response##*$'\n'}
+  response=${response%$'\n'*}
+}
+
+read_service_response ''
 
 if [ "${curl_status}" -ne 0 ] || [ "${http_code}" != "200" ]; then
   err "ZMS error response (HTTP ${http_code:-000}, curl ${curl_status}):"
   if [ -n "${response}" ]; then
-    echo "${response}" >&2
+    printf '%s\n' "${response}" >&2
   else
     err "No response body returned by ZMS."
   fi
@@ -52,15 +77,8 @@ if [ "$(echo "${service_response}" | jq -r 'if (has("clientId") or ((.service? |
 fi
 
 if [ "${client_id_present}" != "true" ]; then
-  response_file=$(mktemp)
-  curl_status=0
-  http_code=$(curl -s -k -o "${response_file}" -w "%{http_code}" \
-    "https://localhost:${_zms_port}/zms/v1/domain/${domain}/service/${service_name}/meta/system/clientId" \
-    --cert ./athenz_dist/certs/athenz_admin.cert.pem \
-    --key ./athenz_dist/keys/athenz_admin.private.pem \
-    --cacert ./athenz_dist/certs/ca.cert.pem) || curl_status=$?
-  metadata_response=$(cat "${response_file}")
-  rm -f "${response_file}"
+  read_service_response '/meta/system/clientId'
+  metadata_response=${response}
 
   if [ "${curl_status}" -eq 0 ] && [ "${http_code}" = "200" ] && [ -n "${metadata_response}" ]; then
     client_id=$(echo "${metadata_response}" | jq -r '.clientId // .value // .service.clientId // empty')

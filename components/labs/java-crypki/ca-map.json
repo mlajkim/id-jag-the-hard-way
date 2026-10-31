@@ -1,0 +1,10 @@
+{
+  "default-ca": {
+    "keyId": "default",
+    "caCertPath": "/var/run/idthw-crypki/default-ca.crt"
+  },
+  "special-ca": {
+    "keyId": "special",
+    "caCertPath": "/var/run/idthw-crypki/special-ca.crt"
+  }
+}

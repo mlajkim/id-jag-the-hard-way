@@ -8,3 +8,4 @@ The normal component workflows use explicit component paths. They do not select 
 |---|---|---|
 | [Athenz Node.js provider](./athenz-nodejs-provider/) | Version-selected provider images and HTTP authorization tests | [v1.12.46 setup](../../research/athenz/nodejs-client/261025-reproduce-nodejs-token-parsing-v1.12.46.md) · [v1.12.50 setup](../../research/athenz/nodejs-client/261026-verify-nodejs-token-parsing-v1.12.50.md) |
 | [Athenz hostname resolver](./hostname-resolver/) | Resolve instance hostnames from ZTS for the certificate-issuance lab | [zts-svccert hostname tests](../../research/athenz/service-cert/261030-test-athenz-feature-zts-svccert-hostname.md) |
+| [Java Crypki](./java-crypki/) | Configure the existing ZTS with Java Crypki, keeping its default CA and adding a domain CA | [Default, domain, and service CA tests](../../research/athenz/java-crypki/261030-test-athenz-feature-java-crypki-per-service-ca.md) |
