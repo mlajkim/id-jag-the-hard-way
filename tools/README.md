@@ -229,10 +229,15 @@ Use these from tutorials and research setup steps instead of repeating low-level
 ./tools/athenz/delete-role.sh <domain> <role>
 ./tools/athenz/delete-role-member.sh <domain> <role_name> <member_name>
 ./tools/athenz/delete-service.sh <domain> <service_name>
-./tools/athenz/show-domain.sh <domain>
-./tools/athenz/show-service.sh <domain> <service_name> [--summary]
+./tools/athenz/show-domain.sh [--context <context>] <domain>
+./tools/athenz/show-service.sh [--context <context>] <domain> <service_name> [--summary]
+./tools/athenz/set-system-meta.sh [--context <context>] [--service <service>] [--json] <domain> <field> <value>
 ./tools/athenz/set-service-client-id.sh <domain> <service_name> <client_id>
 ```
+
+`set-system-meta.sh` updates one domain system-metadata field, or one service field when `--service` is supplied. Pass the JSON field name, such as `x509CertSignerKeyId`; the helper lowercases the URL attribute and safely encodes the JSON body. Values are strings by default. Use `--json` with `null` to clear a setting, or with a JSON boolean, number, or other JSON value. It runs curl in `deploy/athenz-cli` in namespace `athenz`, uses the pod's admin identity and CA trust, prints the response and HTTP status, and requires HTTP `204` for success. `--context kind-kind` selects the lab explicitly; otherwise kubectl uses its current context.
+
+`show-domain.sh` and `show-service.sh` also accept `--context kind-kind` to read through that CLI pod without a port-forward. Without `--context`, they retain their local ZMS endpoint and host-side admin-file behavior. Progress goes to stderr and JSON to stdout, so each record can be checked independently with `jq`. The [Java Crypki guide](../research/athenz/java-crypki/261030-test-athenz-feature-java-crypki-per-service-ca.md#step-7-select-the-special-ca-at-the-domain-level) shows the metadata updates and five separate read-back checks.
 
 `create-role.sh` and `create-group.sh` keep their original two-argument behavior. Use `--self-renew` to enable membership self-renewal when creating the object and `--self-renew-mins <minutes>` to set its renewal duration. ZMS requires a positive duration whenever self-renewal is enabled.
 

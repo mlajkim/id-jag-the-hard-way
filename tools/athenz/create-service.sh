@@ -3,17 +3,29 @@ set -euo pipefail
 
 TOOLS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "${TOOLS_DIR}/color.sh"
-_zms_port=$("$TOOLS_DIR/port.sh" zms)
 UI_OPEN="${UI_OPEN:-false}"
 
-if [ $# -lt 2 ]; then
-  fatal "Usage: $0 <domain> <service_name> [public_key_path]"
+_athenz_service_kubectl=(kubectl)
+_athenz_service_context=''
+if [ "${1:-}" = "--context" ]; then
+  [ $# -ge 2 ] && [ -n "$2" ] || fatal "Missing value for --context"
+  _athenz_service_context=$2
+  _athenz_service_kubectl+=(--context "${_athenz_service_context}")
+  shift 2
+fi
+
+if [ $# -lt 2 ] || [ $# -gt 3 ]; then
+  fatal "Usage: $0 [--context <context>] <domain> <service_name> (no public key), or $0 <domain> <service_name> <public_key_path>"
 fi
 
 domain=$1
 service_name=$2
 pub_key_path=${3:-}
 key_id="v1"
+
+if [ -n "${_athenz_service_context}" ] && [ -n "${pub_key_path}" ]; then
+  fatal "--context selects the CLI pod for registration without a public key; public-key registration uses the host's local ZMS endpoint"
+fi
 
 if [[ "${service_name}" == *"_"* ]]; then
   fatal "Invalid service name '${service_name}': Athenz service names cannot contain underscores. Remove '_' from the service name, for example '${service_name//_/}'."
@@ -32,7 +44,7 @@ open_service_page() {
 }
 
 if [ -z "${pub_key_path}" ]; then
-  if kubectl -n athenz exec -i deploy/athenz-cli -- \
+  if "${_athenz_service_kubectl[@]}" -n athenz exec -i deploy/athenz-cli -- \
     zms-cli \
       -i user.athenz_admin \
       -z https://athenz-zms-server.athenz:4443/zms/v1 \
@@ -45,7 +57,7 @@ if [ -z "${pub_key_path}" ]; then
     exit 0
   fi
 
-  if ! response=$(kubectl -n athenz exec -i deploy/athenz-cli -- \
+  if ! response=$("${_athenz_service_kubectl[@]}" -n athenz exec -i deploy/athenz-cli -- \
     zms-cli \
       -i user.athenz_admin \
       -z https://athenz-zms-server.athenz:4443/zms/v1 \
@@ -83,6 +95,7 @@ if [ -n "${pub_key_path}" ]; then
   }'
 fi
 
+_zms_port=$("$TOOLS_DIR/port.sh" zms)
 response_file=$(mktemp)
 curl_status=0
 http_code=$(curl -s -k -o "${response_file}" -w "%{http_code}" -X PUT "https://localhost:${_zms_port}/zms/v1/domain/${domain}/service/${service_name}" \
