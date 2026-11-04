@@ -92,7 +92,11 @@ Want to try XAA without building everything from scratch? Visit **XAA.dev** at <
 
 Also, ID-JAG The Hard Way was selected for inclusion in the [XERJ Corpus Hub](https://hub.xerj.org/corpus/mlajkim--id-jag-the-hard-way), a public index of open-source implementations for AI coding agents.
 
-![ID-JAG The Hard Way listed in the XERJ Corpus Hub](image.png)
+![ID-JAG The Hard Way listed in the XERJ Corpus Hub](assets/xerj-corpus-hub-recognition.png)
+
+[Aaron Jeongwoo Kim](https://github.com/mlajkim), one of the authors of this tutorial, is an acknowledged contributor to and reviewer of the [IETF ID-JAG (Identity Assertion JWT Authorization Grant) draft](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-06#name-acknowledgments), used in Cross-App Access (XAA):
+
+![Aaron Jeongwoo Kim listed in the ID-JAG draft's Acknowledgments](assets/id-jag-draft-acknowledgments.png)
 
 ## Community Mentions
 
