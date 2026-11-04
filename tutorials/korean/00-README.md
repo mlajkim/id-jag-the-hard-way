@@ -107,7 +107,11 @@ ID-JAG The Hard Way의 바탕이 된 ID-JAG 소개 글은 [Okta xaa.dev의 Exter
 
 또한 ID-JAG The Hard Way는 AI 코딩 에이전트를 위한 오픈소스 구현 사례를 모은 공개 인덱스 [XERJ Corpus Hub](https://hub.xerj.org/corpus/mlajkim--id-jag-the-hard-way)에 선정되어 등재되었습니다.
 
-![XERJ Corpus Hub에 등재된 ID-JAG The Hard Way](../../image.png)
+![XERJ Corpus Hub에 등재된 ID-JAG The Hard Way](../../assets/xerj-corpus-hub-recognition.png)
+
+이 튜토리얼의 저자 중 한 명인 [Aaron Jeongwoo Kim](https://github.com/mlajkim)은 Cross-App Access(XAA)에 사용되는 [IETF ID-JAG(Identity Assertion JWT Authorization Grant) 초안](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-06#name-acknowledgments)에 기여자이자 검토자로 이름이 올라 있습니다:
+
+![ID-JAG 초안에 기여자이자 검토자로 이름이 올라 있는 Aaron Jeongwoo Kim](../../assets/id-jag-draft-acknowledgments.png)
 
 <a id="community-mentions"></a>
 
