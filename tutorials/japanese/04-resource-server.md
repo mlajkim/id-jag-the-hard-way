@@ -60,7 +60,7 @@ kubectl expose deploy api-server -n api --port 8080 --name api-server
 
 ## API サーバーにリクエストを送る
 
-Deployment の準備が完了するまで待ちます：
+API Pod が起動し、Deployment が利用可能になるまで待ちます：
 
 ```sh
 kubectl rollout status deploy/api-server -n api
@@ -98,7 +98,7 @@ kubectl exec deploy/api-server -n api \
 
 <a id="learn-about-the-api"></a>
 
-## API の動作を理解する
+## API の動作を確認する
 
 この API サーバーは学習用にシンプルな構成になっています。
 

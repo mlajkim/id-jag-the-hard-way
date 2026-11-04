@@ -38,7 +38,7 @@
 
 ## 演習用 ID を作成する
 
-ID と証明書の作成用スクリプトで `human.idjag-learner` を作成します：
+ID と証明書の作成用スクリプトで `human.idjag-learner` を作成します。公開鍵を登録し、対応する秘密鍵を持つサービス ID の X.509 証明書を ZTS から取得します。この証明書は次のトークン要求でリクエスト元を示すために使います：
 
 ```sh
 ./tools/athenz/create-tld.sh "human"
@@ -79,7 +79,7 @@ ID と証明書の作成用スクリプトで `human.idjag-learner` を作成し
 
 ## 演習用 ID でアクセストークンをリクエストする
 
-同じ `api:role.docs-getter` スコープを要求しますが、管理者の代わりに `human.idjag-learner` として認証します。
+同じ `api:role.docs-getter` スコープを要求しますが、管理者の代わりに `human.idjag-learner` の証明書と秘密鍵で ZTS に認証します。この ID はまだロールのメンバーではないため、トークン発行は拒否されます。
 
 > [!WARNING]
 > このコマンドは失敗します。意図した結果です。
