@@ -219,11 +219,14 @@ Use these from tutorials and research setup steps instead of repeating low-level
 ./tools/athenz/fetch-access-token-with-rfc7523.sh <jwt_assertion|-> [scope] [--mode <jwt-bearer|client-assertion>] [--expect <200|400> [expected-error-text]]
 ./tools/athenz/fetch-role-token.sh <cert_path> <key_path> <domain> <role_name> [output_file] [--output <output_file>]
 ./tools/athenz/fetch-access-token.sh <cert_path> <key_path> <scope> [output_file] [--actor <actor>] [--output <output_file>]
+./tools/athenz/fetch-role-token.sh <cert_path> <key_path> <domain> <role_name> [output_file] [--output <output_file>]
+./tools/athenz/fetch-access-token.sh <cert_path> <key_path> <scope> [output_file] [--actor <actor>] [--audience <audience>] [--expires-in <seconds>] [--output <output_file>]
 ./tools/athenz/fetch-access-token-with-id-jag.sh <cert_path> <key_path> <id_jag_token> <scope> [output_file] [--actor <actor>] [--output <output_file>]
 ./tools/athenz/fetch-id-jag.sh <cert_path> <key_path> <id_token> <scope>
 ./tools/athenz/exchange-id-token-for-id-jag.sh <cert_path> <key_path> <id_token> <scope> [--audience <audience>] [--token-only]
 ./tools/athenz/fetch-actor-token.sh <cert_path> <key_path> <client_id>
-./tools/athenz/exchange-access-token.sh <cert_path> <key_path> <subject_access_token> <scope> [--actor-token <id_token>] [--actor <actor>] [--audience <audience>] [--token-only]
+./tools/athenz/exchange-access-token.sh <cert_path> <key_path> <subject_access_token> <scope> [--actor-token <id_token>] [--actor <actor>] [--audience <audience>] [--expires-in <seconds>] [--token-only]
+./tools/athenz/check-exchange-expiry.sh <subject_cert> <subject_key> <exchanger_cert> <exchanger_key> <scope> [--audience <domain>] [--actor <principal>]
 ./tools/athenz/delete-policy.sh <domain> <policy>
 ./tools/athenz/delete-group.sh <domain> <group>
 ./tools/athenz/delete-role.sh <domain> <role>
@@ -293,6 +296,10 @@ python3 -m unittest discover -s tools/athenz/tests -p 'test_jwt_assertion.py'
 `set-direct-access-grants.sh` updates an existing Keycloak client so password-grant token fetching works for local research flows.
 
 `exchange-access-token.sh` prints pretty JSON to stdout by default. With `--token-only`, it writes only the raw exchanged token to stdout so it can be used in command substitution. Status lines and decoded JWT header/claims are printed to stderr when a token is returned.
+
+`fetch-access-token.sh` and `exchange-access-token.sh` accept `--expires-in <seconds>` to request a positive lifetime, with the existing 3600-second default. ZTS still applies its configured lifetime limits.
+
+`check-exchange-expiry.sh` issues one short-lived subject token, then repeatedly exchanges the latest child with the same audience and scopes. It requires the original to be rejected as expired before a final child exchange succeeds. Pass `--actor <principal>` to repeat this as delegation. The [MCP Hub expiry research](../research/athenz/rfc8693_token_exchange/261027-expiry-security-check.md) contains the setup and expected results. The helper prints decoded metadata and per-hop expiry values, without emitting raw tokens or saving token files.
 
 `fetch-access-token-with-id-jag.sh` supports `--actor` for delegated ID-JAG access-token requests that must mint a `may_act` token for a specific actor service.
 

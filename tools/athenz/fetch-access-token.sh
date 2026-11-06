@@ -6,7 +6,7 @@ source "${TOOLS_DIR}/color.sh"
 _zts_port=$("$TOOLS_DIR/port.sh" zts)
 
 if [ $# -lt 3 ]; then
-  fatal "Usage: $0 <cert_path> <key_path> <scope> [output_file] [--actor <actor>] [--audience <audience>] [--output <output_file>]"
+  fatal "Usage: $0 <cert_path> <key_path> <scope> [output_file] [--actor <actor>] [--audience <audience>] [--expires-in <seconds>] [--output <output_file>]"
 fi
 
 cert_path=$1
@@ -17,6 +17,7 @@ shift 3
 output=""
 actor=""
 audience=""
+expires_in="3600"
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -28,6 +29,11 @@ while [ $# -gt 0 ]; do
     --audience)
       [ $# -ge 2 ] || fatal "Missing value for --audience"
       audience=$2
+      shift 2
+      ;;
+    --expires-in)
+      [ $# -ge 2 ] || fatal "Missing value for --expires-in"
+      expires_in=$2
       shift 2
       ;;
     --output)
@@ -48,6 +54,11 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+[[ "${expires_in}" =~ ^[1-9][0-9]*$ ]] &&
+  [ "${#expires_in}" -le 10 ] &&
+  [ "${expires_in}" -le 2147483647 ] ||
+  fatal "--expires-in must be an integer between 1 and 2147483647 seconds"
+
 zts_url="https://localhost:${_zts_port}/zts/v1/oauth2/token"
 
 # Print logs to stderr so stdout only outputs the pure token string
@@ -62,7 +73,7 @@ curl_args=(
   -H "Content-Type: application/x-www-form-urlencoded"
   --data-urlencode "grant_type=client_credentials"
   --data-urlencode "scope=${scope}"
-  --data-urlencode "expires_in=3600"
+  --data-urlencode "expires_in=${expires_in}"
 )
 
 if [ -n "${actor}" ]; then
